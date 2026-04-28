@@ -249,6 +249,11 @@ export function Calculator() {
         <aside className="calc-summary">
           <span className="eyebrow">Живой расчёт</span>
           <h3>{result.recommendation.title}</h3>
+          <div className="config-preview" aria-label="Визуальное превью конфигурации">
+            {Array.from({ length: Math.min(Math.max(input.shelfCount, input.cassetteCount, 4), 8) }).map((_, index) => (
+              <i key={index} />
+            ))}
+          </div>
           <div className="summary-price">
             от {formatRub(animatedPrice)}
             <small>стартовая сумма по расчёту</small>
