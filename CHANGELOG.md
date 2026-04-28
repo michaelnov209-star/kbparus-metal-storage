@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-04-28 — Excel calculator alignment
+
+### Что изменилось
+
+- Калькулятор повторно сверён с формульной структурой `Калькулятор New.xlsx`.
+- Расчёт в `lib/calculator/pricing.ts` перестроен ближе к Excel: отдельно считаются коэффициенты габаритов, нагрузки, башни, полки/кассеты, выкатные секции, автоматизированный модуль и опции.
+- Из публичного интерфейса убран ценовой диапазон. Вместо него сайт показывает стартовую сумму в формате «от …», рассчитанную модулем калькулятора.
+- API `/api/leads` теперь передаёт `UF_PRELIMINARY_PRICE_FROM` и структурированный расчёт без `min/max` диапазона.
+- Обновлены unit-тесты и документация под новую модель цены.
+
+### Затронутые файлы и папки
+
+- `lib/calculator/pricing.ts`
+- `lib/calculator/types.ts`
+- `components/Calculator.tsx`
+- `app/api/leads/route.ts`
+- `data/storageSystems/content.ts`
+- `data/storageSystems/priceFactors.ts`
+- `tests/calculator.test.ts`
+- `README.md`
+- `CHANGELOG.md`
+
+### Что проверить
+
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- В калькуляторе отображается «от …», а не диапазон.
+- При изменении габаритов, нагрузки, башен, полок и кассет сумма пересчитывается.
+- `/api/leads` отвечает `200` в mock-режиме и содержит поле `UF_PRELIMINARY_PRICE_FROM`.
+
 ## 2026-04-28 — Industrial MVP release
 
 ### Что изменилось

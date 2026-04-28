@@ -37,10 +37,7 @@ export interface RecommendedConfig {
 export interface CalculatorResult {
   recommendation: RecommendedConfig;
   preliminaryPrice: number;
-  priceRange: {
-    min: number;
-    max: number;
-  };
+  fromPrice: number;
   factors: {
     heightFactor: number;
     widthFactor: number;

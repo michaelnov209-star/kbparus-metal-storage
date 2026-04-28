@@ -31,8 +31,8 @@ export async function POST(request: Request) {
     UF_CITY: payload.city ?? calculatorInput.city,
     UF_CALCULATOR_INPUT: calculatorInput,
     UF_RECOMMENDED_CONFIG: result.recommendation,
-    UF_PRELIMINARY_PRICE_MIN: result.priceRange.min,
-    UF_PRELIMINARY_PRICE_MAX: result.priceRange.max,
+    UF_PRELIMINARY_PRICE_FROM: result.fromPrice,
+    UF_PRELIMINARY_PRICE: result.preliminaryPrice,
     UF_UTM: payload.utm ?? {}
   };
 

@@ -60,15 +60,12 @@ export function Calculator() {
   const [input, setInput] = useState<CalculatorInput>(initialInput);
   const [leadStatus, setLeadStatus] = useState("");
   const result = useMemo(() => calculateStorageSystem(input), [input]);
-  const [animatedMin, setAnimatedMin] = useState(result.priceRange.min);
-  const [animatedMax, setAnimatedMax] = useState(result.priceRange.max);
+  const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
   const progress = ((step + 1) / steps.length) * 100;
 
   useEffect(() => {
-    const fromMin = animatedMin;
-    const fromMax = animatedMax;
-    const toMin = result.priceRange.min;
-    const toMax = result.priceRange.max;
+    const fromValue = animatedPrice;
+    const toValue = result.fromPrice;
     const start = performance.now();
     const duration = 420;
     let frame = 0;
@@ -76,15 +73,14 @@ export function Calculator() {
     function tick(now: number) {
       const ratio = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - ratio, 3);
-      setAnimatedMin(Math.round(fromMin + (toMin - fromMin) * eased));
-      setAnimatedMax(Math.round(fromMax + (toMax - fromMax) * eased));
+      setAnimatedPrice(Math.round(fromValue + (toValue - fromValue) * eased));
       if (ratio < 1) frame = requestAnimationFrame(tick);
     }
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result.priceRange.min, result.priceRange.max]);
+  }, [result.fromPrice]);
 
   function setField<T extends FieldName>(field: T, value: CalculatorInput[T]) {
     setInput((current) => ({ ...current, [field]: value }));
@@ -115,7 +111,7 @@ export function Calculator() {
       <div className="calculator-header">
         <div>
           <span className="eyebrow">Инженерный калькулятор</span>
-          <h2>Подберите систему хранения и получите предварительный диапазон</h2>
+          <h2>Подберите систему хранения и получите стартовую оценку “от”</h2>
           <p>
             Это ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки нагрузки,
             помещения и состава системы.
@@ -248,8 +244,8 @@ export function Calculator() {
           <span className="eyebrow">Живой расчёт</span>
           <h3>{result.recommendation.title}</h3>
           <div className="summary-price">
-            {formatRub(animatedMin)} - {formatRub(animatedMax)}
-            <small>предварительный диапазон</small>
+            от {formatRub(animatedPrice)}
+            <small>стартовая сумма по расчёту</small>
           </div>
           <div className="summary-note">
             Финальная стоимость уточняется после инженерной проверки. Калькулятор не является коммерческим предложением.

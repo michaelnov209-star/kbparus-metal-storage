@@ -65,9 +65,5 @@ export const priceFactors = {
   longShelfFactor: {
     thresholdMm: 3100,
     factor: 1.2
-  },
-  range: {
-    low: 0.84,
-    high: 1.18
   }
 } as const;
