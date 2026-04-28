@@ -123,7 +123,7 @@ export default function Home() {
         </div>
         <div className="storage-grid">
           <div className="storage-photo">
-            <img src={visualAssets.steelProfile} alt="Металл, профиль и балки на складе" />
+            <img src={visualAssets.tubesProfile} alt="Металл, профиль и балки на складе" />
           </div>
           <div className="storage-list">
             {whatToStore.map((item, index) => {
@@ -168,6 +168,7 @@ export default function Home() {
         <div className="before-after-grid">
           <article className="before-card reveal">
             <div className="ba-media ba-before">
+              <img src={visualAssets.beforeWarehouse} alt="Склад до внедрения: металл на полу и хаос" />
               <div className="floor-chaos">
                 {Array.from({ length: 10 }).map((_, index) => <span key={index} />)}
               </div>
@@ -181,6 +182,7 @@ export default function Home() {
           </article>
           <article className="after-card reveal">
             <div className="ba-media ba-after">
+              <img src={visualAssets.afterWarehouse} alt="Склад после внедрения: система хранения и порядок" />
               <div className="ordered-rack">
                 {Array.from({ length: 6 }).map((_, index) => <span key={index} />)}
               </div>

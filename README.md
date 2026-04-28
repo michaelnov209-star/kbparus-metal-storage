@@ -41,7 +41,8 @@ Production URL: https://kbparus-metal-storage.vercel.app
 
 - Логотип: `public/brand/logo-g.png`
 - Favicon: `app/icon.svg`
-- Временные изображения/пути для замены: `data/storageSystems/visualAssets.ts`
+- Визуальные ассеты сайта: `public/assets/images/*.svg`
+- Карта подключённых изображений: `data/storageSystems/visualAssets.ts`
 - Папка под будущие реальные изображения: `public/assets/images/`
 - Данные оборудования: `data/storageSystems/equipment.ts`
 - Категории решений: `data/storageSystems/productCategories.ts`
@@ -113,7 +114,7 @@ npx vercel@latest deploy --prod --yes --scope michaelnov209-3230s-projects
 - Next.js 16 App Router проект.
 - Современный промышленный landing/product-site с насыщенными секциями.
 - Настоящий логотип КБ Парус в шапке, hero, CTA и футере.
-- Заменяемые промышленные visual placeholders.
+- Заменяемые промышленные SVG-изображения, которые реально отображаются в hero, карточках, before/after и калькуляторе.
 - Favicon.
 - Иконки `lucide-react`.
 - Многошаговый калькулятор с live-рекомендацией и предварительным диапазоном цены.

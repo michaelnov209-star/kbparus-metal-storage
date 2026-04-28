@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Склад до внедрения системы хранения">
+  <rect width="1000" height="700" fill="#2b2724"/><rect y="500" width="1000" height="200" fill="#171412"/>
+  <g opacity=".16" stroke="#fff"><path d="M0 120h1000M0 240h1000M0 360h1000M0 480h1000"/><path d="M120 0v700M260 0v700M400 0v700M540 0v700M680 0v700M820 0v700"/></g>
+  <g stroke-linecap="round" stroke-width="24">
+    <path d="M110 475h520" stroke="#aab3bd" transform="rotate(-12 110 475)"/><path d="M270 410h610" stroke="#76818d" transform="rotate(17 270 410)"/><path d="M80 350h460" stroke="#cfd6dd" transform="rotate(28 80 350)"/><path d="M430 520h440" stroke="#8d98a4" transform="rotate(-25 430 520)"/><path d="M160 260h620" stroke="#e5e9ed" transform="rotate(-5 160 260)"/><path d="M510 300h350" stroke="#fc5413" transform="rotate(22 510 300)"/>
+  </g>
+  <text x="70" y="90" fill="#fff" font-family="Arial" font-size="46" font-weight="700">До: металл на полу</text>
+</svg>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Info, PackageSearch, Ruler, Settings2 } from "lucide-react";
 import { calculateStorageSystem, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
+import { visualAssets } from "@/data/storageSystems/visualAssets";
 
 const materialCards = [
   { value: "sheet", title: "Лист", hint: "Пачки листа, форматные заготовки, раскрой" },
@@ -112,12 +113,15 @@ export function Calculator() {
   return (
     <section className="calculator-shell reveal" id="calculator">
       <div className="calculator-header">
-        <span className="eyebrow">Инженерный калькулятор</span>
-        <h2>Подберите систему хранения и получите предварительный диапазон</h2>
-        <p>
-          Это ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки нагрузки,
-          помещения и состава системы.
-        </p>
+        <div>
+          <span className="eyebrow">Инженерный калькулятор</span>
+          <h2>Подберите систему хранения и получите предварительный диапазон</h2>
+          <p>
+            Это ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки нагрузки,
+            помещения и состава системы.
+          </p>
+        </div>
+        <img src={visualAssets.calculator} alt="Визуал конфигуратора системы хранения" />
       </div>
 
       <div className="calculator-product">

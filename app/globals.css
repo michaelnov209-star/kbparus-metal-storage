@@ -727,6 +727,14 @@ p {
   background-size: 34px 34px;
 }
 
+.ba-media > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .ba-before {
   background-color: #2b2724;
 }
@@ -739,6 +747,7 @@ p {
 .ordered-rack {
   position: absolute;
   inset: 38px;
+  z-index: 2;
 }
 
 .floor-chaos span {
@@ -997,13 +1006,26 @@ dd {
 }
 
 .calculator-header {
-  max-width: 980px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.34fr);
+  gap: 22px;
+  align-items: end;
+  max-width: 1240px;
   margin-bottom: 34px;
 }
 
 .calculator-header p {
   color: #d4dae0;
   font-size: 18px;
+}
+
+.calculator-header img {
+  width: 100%;
+  min-height: 190px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: var(--graphite);
 }
 
 .calculator-product {
@@ -1497,6 +1519,7 @@ details p {
 @media (max-width: 1120px) {
   .hero,
   .solution-stage,
+  .calculator-header,
   .calculator-product,
   .process-layout,
   .storage-grid,

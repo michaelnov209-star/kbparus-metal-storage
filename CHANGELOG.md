@@ -44,3 +44,29 @@
 - GitHub repository не создан из текущей среды: нет `gh`, GitHub token или авторизованного remote.
 - Визуалы пока временные и должны быть заменены на реальные фото/видео КБ Парус.
 - Bitrix24 webhook не подключён в окружении production.
+
+## 2026-04-28 — Visible local imagery update
+
+### Что изменилось
+
+- Добавлены локальные SVG-изображения в `public/assets/images`, чтобы сайт не зависел от внешних CDN и реально показывал визуалы на production.
+- Обновлена карта изображений `data/storageSystems/visualAssets.ts`.
+- Hero, блок «что можно хранить», карточки решений, каталог оборудования, «до/после» и калькулятор используют реальные `<img>` с локальными файлами.
+
+### Затронутые файлы и папки
+
+- `public/assets/images/`
+- `data/storageSystems/visualAssets.ts`
+- `app/page.tsx`
+- `components/Calculator.tsx`
+- `app/globals.css`
+- `README.md`
+- `CHANGELOG.md`
+
+### Что проверить
+
+- `npm run build`
+- Production URL открывается.
+- В DOM есть изображения из `/assets/images/*.svg`.
+- В браузере у изображений `naturalWidth > 0`.
+- Блоки hero, решения, каталог, до/после и калькулятор визуально не пустые.

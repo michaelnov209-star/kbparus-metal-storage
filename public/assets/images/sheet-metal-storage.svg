@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Хранение листового металла">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#151a20"/><stop offset="1" stop-color="#3a444f"/></linearGradient><linearGradient id="sheet" x1="0" x2="1"><stop stop-color="#f3f6f8"/><stop offset=".45" stop-color="#aab3bd"/><stop offset="1" stop-color="#727d89"/></linearGradient></defs>
+  <rect width="1000" height="700" fill="url(#bg)"/><rect y="540" width="1000" height="160" fill="#101419"/>
+  <g transform="translate(145 95)">
+    <g transform="skewX(-12)">
+      <rect x="0" y="0" width="90" height="430" fill="url(#sheet)"/><rect x="120" y="0" width="90" height="430" fill="url(#sheet)"/><rect x="240" y="0" width="90" height="430" fill="url(#sheet)"/><rect x="360" y="0" width="90" height="430" fill="url(#sheet)"/><rect x="480" y="0" width="90" height="430" fill="url(#sheet)"/>
+    </g>
+    <rect x="-40" y="420" width="720" height="26" fill="#fc5413"/>
+  </g>
+  <text x="70" y="632" fill="#fff" font-family="Arial" font-size="42" font-weight="700">Листовой металл: вертикально или в кассетах</text>
+</svg>

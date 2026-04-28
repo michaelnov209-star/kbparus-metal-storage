@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Склад после внедрения системы хранения">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#151a20"/><stop offset="1" stop-color="#303843"/></linearGradient><linearGradient id="s" x1="0" x2="1"><stop stop-color="#f4f6f8"/><stop offset=".5" stop-color="#9aa4ae"/><stop offset="1" stop-color="#d9dee4"/></linearGradient></defs>
+  <rect width="1000" height="700" fill="url(#bg)"/><rect y="520" width="1000" height="180" fill="#101419"/>
+  <g transform="translate(150 130)">
+    <rect x="0" y="0" width="16" height="410" fill="#8d98a4"/><rect x="300" y="0" width="16" height="410" fill="#8d98a4"/><rect x="600" y="0" width="16" height="410" fill="#8d98a4"/>
+    <g fill="url(#s)"><rect x="0" y="70" width="616" height="20" rx="5"/><rect x="0" y="150" width="616" height="20" rx="5"/><rect x="0" y="230" width="616" height="20" rx="5"/><rect x="0" y="310" width="616" height="20" rx="5"/></g>
+    <g fill="#fc5413"><rect x="44" y="100" width="220" height="30" rx="4"/><rect x="340" y="180" width="210" height="30" rx="4"/><rect x="80" y="340" width="310" height="30" rx="4"/></g>
+  </g>
+  <text x="70" y="90" fill="#fff" font-family="Arial" font-size="46" font-weight="700">После: адресное хранение</text>
+</svg>

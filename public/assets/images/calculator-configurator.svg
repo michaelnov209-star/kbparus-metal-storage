@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-label="Конфигуратор системы хранения">
+  <rect width="1000" height="700" fill="#151a20"/><rect x="80" y="70" width="840" height="560" rx="28" fill="#252c35" stroke="#49525d"/>
+  <rect x="120" y="120" width="360" height="90" rx="12" fill="#fc5413"/><rect x="120" y="245" width="360" height="90" rx="12" fill="#333c47"/><rect x="120" y="370" width="360" height="90" rx="12" fill="#333c47"/>
+  <rect x="540" y="120" width="330" height="340" rx="16" fill="#111418" stroke="#596370"/>
+  <path d="M585 390h240" stroke="#fc5413" stroke-width="16" stroke-linecap="round"/><path d="M585 330h200M585 270h240M585 210h160" stroke="#d9dee4" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="180" cy="165" r="22" fill="#fff"/><circle cx="180" cy="290" r="22" fill="#fc5413"/><circle cx="180" cy="415" r="22" fill="#fc5413"/>
+  <text x="120" y="565" fill="#fff" font-family="Arial" font-size="42" font-weight="700">Конфигуратор подбора</text>
+</svg>
