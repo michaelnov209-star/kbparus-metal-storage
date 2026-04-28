@@ -166,15 +166,21 @@ export function Calculator() {
                 <NumberInput label="Ширина листа, мм" value={input.sheetWidthMm} onChange={(value) => setField("sheetWidthMm", value)} />
                 <NumberInput label="Вес единицы, кг" value={input.unitWeightKg} onChange={(value) => setField("unitWeightKg", value)} />
                 <NumberInput label="Общий объём, кг" value={input.totalStorageWeightKg} onChange={(value) => setField("totalStorageWeightKg", value)} />
-                <NumberInput label="Рабочая высота, мм" value={input.heightMm} onChange={(value) => setField("heightMm", value)} />
-                <NumberInput label="Ширина системы, мм" value={input.widthMm} onChange={(value) => setField("widthMm", value)} />
-                <NumberInput label="Глубина, мм" value={input.depthMm} onChange={(value) => setField("depthMm", value)} />
-                <NumberInput label="Длина системы, мм" value={input.lengthMm} onChange={(value) => setField("lengthMm", value)} />
                 <NumberInput label="Нагрузка на уровень, кг" value={input.loadKg} onChange={(value) => setField("loadKg", value)} />
-                <NumberInput label="Башни" value={input.towerCount} onChange={(value) => setField("towerCount", value)} />
-                <NumberInput label="Полки" value={input.shelfCount} onChange={(value) => setField("shelfCount", value)} />
-                <NumberInput label="Выкатные кассеты" value={input.cassetteCount} onChange={(value) => setField("cassetteCount", value)} />
+                <NumberInput label="Желаемая вместимость" value={input.desiredCapacity} onChange={(value) => setField("desiredCapacity", value)} />
               </div>
+              <details className="advanced-fields">
+                <summary>Уточнить конструкцию: башни, полки, кассеты и габариты системы</summary>
+                <div className="metric-grid">
+                  <NumberInput label="Рабочая высота, мм" value={input.heightMm} onChange={(value) => setField("heightMm", value)} />
+                  <NumberInput label="Ширина системы, мм" value={input.widthMm} onChange={(value) => setField("widthMm", value)} />
+                  <NumberInput label="Глубина, мм" value={input.depthMm} onChange={(value) => setField("depthMm", value)} />
+                  <NumberInput label="Длина системы, мм" value={input.lengthMm} onChange={(value) => setField("lengthMm", value)} />
+                  <NumberInput label="Башни" value={input.towerCount} onChange={(value) => setField("towerCount", value)} />
+                  <NumberInput label="Полки" value={input.shelfCount} onChange={(value) => setField("shelfCount", value)} />
+                  <NumberInput label="Выкатные кассеты" value={input.cassetteCount} onChange={(value) => setField("cassetteCount", value)} />
+                </div>
+              </details>
             </div>
           )}
 

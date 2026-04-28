@@ -29,7 +29,7 @@ body {
 }
 
 body::before {
-  content: "";
+  content: none;
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -159,6 +159,10 @@ nav a:hover {
   min-height: calc(100vh - 78px);
   padding: clamp(58px, 8vw, 110px) clamp(18px, 4vw, 58px) clamp(42px, 5vw, 72px);
   overflow: hidden;
+  color: var(--white);
+  background:
+    linear-gradient(90deg, rgba(12, 15, 19, 0.92), rgba(12, 15, 19, 0.5)),
+    url("https://images.pexels.com/photos/36122954/pexels-photo-36122954.jpeg?auto=compress&cs=tinysrgb&w=1800") center / cover;
 }
 
 .hero::after {
@@ -220,6 +224,7 @@ p {
 }
 
 .hero-copy p {
+  color: #d9dee4;
   max-width: 760px;
   font-size: 20px;
 }
@@ -243,9 +248,9 @@ p {
   align-items: center;
   gap: 7px;
   padding: 8px 10px;
-  color: #2f3944;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(17, 20, 24, 0.08);
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 7px;
   font-weight: 800;
 }
@@ -307,16 +312,16 @@ p {
 .hero-stats span {
   min-height: 112px;
   padding: 18px;
-  color: #4c5661;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(17, 20, 24, 0.09);
+  color: #d9dee4;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
 }
 
 .hero-stats strong {
   display: block;
   margin-bottom: 8px;
-  color: var(--ink);
+  color: var(--white);
   font-size: 24px;
 }
 
@@ -1105,7 +1110,7 @@ dd {
 }
 
 .calc-panel {
-  min-height: 520px;
+  min-height: 420px;
 }
 
 .calc-panel h3 {
@@ -1422,6 +1427,23 @@ details {
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.advanced-fields {
+  margin-top: 14px;
+  padding: 16px;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.advanced-fields summary {
+  color: #eef2f6;
+  font-size: 15px;
+}
+
+.advanced-fields .metric-grid {
+  margin-top: 16px;
 }
 
 summary {

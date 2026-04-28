@@ -33,7 +33,6 @@ import {
   whatToStore,
   workflowSteps
 } from "@/data/storageSystems/content";
-import { equipment } from "@/data/storageSystems/equipment";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 
 export default function Home() {
@@ -45,8 +44,7 @@ export default function Home() {
           <a href="#problems">Задачи</a>
           <a href="#solutions">Решения</a>
           <a href="#calculator">Калькулятор</a>
-          <a href="#process">Проектирование</a>
-          <a href="#faq">FAQ</a>
+          <a href="#contacts">Контакты</a>
         </nav>
         <div className="header-contact">
           <a href={contacts.phones[0].href}>{contacts.phones[0].label}</a>
@@ -77,11 +75,6 @@ export default function Home() {
           </div>
         </div>
         <HeroVisual />
-      </section>
-
-      <section className="section logo-strip reveal">
-        <img src="/brand/logo-g.png" alt="КБ Парус" />
-        <p>Сайт собирает параметры склада так, чтобы менеджер и инженер быстрее перешли от «нам нужен стеллаж» к рабочей конфигурации.</p>
       </section>
 
       <section className="section about-section reveal">
@@ -144,7 +137,7 @@ export default function Home() {
           <p>Наполнение можно уточнять и расширять: структура уже рассчитана на реальные фото, характеристики и будущий каталог.</p>
         </div>
         <div className="solution-card-grid">
-          {solutionCards.map((card) => (
+          {solutionCards.slice(0, 6).map((card) => (
             <article className="solution-card reveal" key={card.title}>
               <div className="solution-card-media">
                 <img src={pickEquipmentImage(card.type)} alt={card.title} />
@@ -214,33 +207,6 @@ export default function Home() {
               </div>
               <h3>{step.title}</h3>
               <p>{step.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="section product-density">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">Каталог решений</span>
-          <h2>Плотное наполнение для первичного выбора</h2>
-          <p>Фото, тексты и характеристики легко заменить, но структура уже готова под боевой каталог.</p>
-        </div>
-        <div className="equipment-grid">
-          {equipment.map((item) => (
-            <article className="equipment-card reveal" key={item.product_id}>
-              <div className="equipment-media">
-                <img src={pickEquipmentImage(item.product_type)} alt={item.name} />
-              </div>
-              <div className="equipment-body">
-                <small>{item.name.includes("Автомат") ? "автоматизация" : "инженерная система"}</small>
-                <h3>{item.name}</h3>
-                <p>{item.description}</p>
-                <dl>
-                  <div><dt>Нагрузка</dt><dd>{item.load_kg} кг</dd></div>
-                  <div><dt>Исполнение</dt><dd>{item.execution === "automatic" ? "авто" : "ручное"}</dd></div>
-                  <div><dt>Вес</dt><dd>{item.weight_kg} кг</dd></div>
-                </dl>
-              </div>
             </article>
           ))}
         </div>
