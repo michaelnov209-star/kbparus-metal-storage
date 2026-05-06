@@ -256,12 +256,8 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div className="hero-video-control reveal">
-            <button type="button" aria-label="Видеообзор оборудования"><span /></button>
-            <p>Видеообзор оборудования и производственного процесса</p>
           </div>
-        </div>
-      </section>
+        </section>
 
       <section className="line-section" id="catalog">
         <div className="section-title-row reveal">
