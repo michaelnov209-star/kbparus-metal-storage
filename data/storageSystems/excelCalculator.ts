@@ -143,7 +143,7 @@ const automaticOptions = [
   { id: "infrared-safety", title: "Инфракрасные ограждения", price: 80000 },
   { id: "vacuum-grip", title: "Вакуумный захват", price: 450000 },
   { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 },
-  { id: "warehouse-accounting", title: "Интеграция со складским учётом", price: 350000 }
+  { id: "warehouse-accounting", title: "Интеграция со складским учетом", price: 350000 }
 ] satisfies CalculatorOption[];
 
 const rolloutOptions = [
@@ -157,9 +157,9 @@ export const calculatorProfiles: CalculatorProfile[] = [
     id: "auto-sheet-metal",
     title: "Автоматизированный склад листового металла",
     shortTitle: "Автоматический склад листа",
-    sourceSheet: "Авт.скл. лист. металл",
+    sourceSheet: "Авт. скл. лист. металл",
     productType: "automated",
-    description: "Башенная система для листового металла с подъёмным модулем, опциями безопасности и выдачи.",
+    description: "Башенная система для листового металла с подъемным модулем, опциями безопасности и выдачи.",
     ...sheetGeometry,
     loadOptions: automaticLoadOptions,
     shelfCountOptions: [10, 15, 20, 25],
@@ -187,7 +187,7 @@ export const calculatorProfiles: CalculatorProfile[] = [
     id: "auto-sort-metal",
     title: "Автоматизированный склад сортового и трубного металлопроката",
     shortTitle: "Автоматический склад сортового металла",
-    sourceSheet: "Авт.скл.сорт мет.",
+    sourceSheet: "Авт. скл. сорт. металл",
     productType: "automated",
     description: "Автоматизированная система для длинномера, труб, профиля и сортового проката.",
     heightOptions: [
@@ -264,7 +264,7 @@ export const calculatorProfiles: CalculatorProfile[] = [
     id: "forklift-cassette-rack",
     title: "Кассетный стеллаж под погрузчик",
     shortTitle: "Кассеты под погрузчик",
-    sourceSheet: "Касетный под погрузчик",
+    sourceSheet: "Кассетный под погрузчик",
     productType: "cassette",
     description: "Кассетное хранение листа с обслуживанием погрузчиком без сложной автоматики.",
     ...sheetGeometry,
@@ -291,7 +291,7 @@ export const calculatorProfiles: CalculatorProfile[] = [
     id: "two-side-rollout-rack",
     title: "Двухсторонний стеллаж с выкатными кассетами",
     shortTitle: "Двухсторонние кассеты",
-    sourceSheet: "Двухсторонний стеллаж с вык. к.",
+    sourceSheet: "Двухсторонний стеллаж с выкатными кассетами",
     productType: "rollout",
     description: "Выкатные кассеты с обслуживанием с одной или двух сторон склада.",
     ...sheetGeometry,

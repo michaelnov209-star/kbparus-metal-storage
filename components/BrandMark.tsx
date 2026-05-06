@@ -5,7 +5,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span>
           <strong>Системы хранения металла</strong>
-          <small>инженерный подбор и производство</small>
+          <small>проектирование и производство</small>
         </span>
       )}
     </a>

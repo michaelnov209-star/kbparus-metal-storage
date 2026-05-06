@@ -1,4 +1,5 @@
 app/taste/
+/api/
 index.html
 novikov-logo.png
 server-*.log

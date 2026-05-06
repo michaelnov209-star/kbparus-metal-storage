@@ -37,7 +37,6 @@ export function calculateStorageSystem(input: CalculatorInput): CalculatorResult
   const lengthFactor = findFactor(profile.lengthOptions, lengthMm);
   const dimensionFactor = heightFactor * widthFactor * lengthFactor;
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
-  const optionsPrice = selectedOptions.reduce((sum, option) => sum + option.price, 0);
   const lineItems: Array<{ label: string; amount: number }> = [];
   let loadFactor = 1;
   let shelvesPerTowerFactor = 1;
@@ -56,9 +55,9 @@ export function calculateStorageSystem(input: CalculatorInput): CalculatorResult
     shelvesPerTowerFactor = towerPrice / towerCount / profile.pricing.towerPricesByShelfCount[10];
 
     lineItems.push(
-      { label: "Полки по выбранным Д×Ш×В и нагрузке", amount: shelvesPrice },
+      { label: "Полки по выбранным размерам и нагрузке", amount: shelvesPrice },
       { label: "Башни автоматизированного склада", amount: towerPrice },
-      { label: "Подъёмный модуль / консоль", amount: consolePrice }
+      { label: "Подъемный модуль / консоль", amount: consolePrice }
     );
   }
 
@@ -92,7 +91,7 @@ export function calculateStorageSystem(input: CalculatorInput): CalculatorResult
 
     lineItems.push(
       { label: "Выкатные полки / кассеты", amount: shelvesPrice },
-      { label: gateMultiplier === 2 ? "Башни и двусторонние распашные ворота" : "Башни и распашные ворота", amount: towerPrice }
+      { label: gateMultiplier === 2 ? "Башни и двухсторонние распашные ворота" : "Башни и распашные ворота", amount: towerPrice }
     );
   }
 
@@ -131,7 +130,7 @@ export function calculateStorageSystem(input: CalculatorInput): CalculatorResult
     title: profile.title,
     rationale: [
       profile.description,
-      "Расчёт сделан по фиксированным вариантам из Excel: Д×Ш×В, нагрузка, количество полок, башен и опций."
+      "Расчет сделан по фиксированным ходовым вариантам: длина, ширина, высота, нагрузка, количество полок, башен и опций."
     ],
     keyParameters: [
       `Д×Ш×В: ${lengthMm}×${widthMm}×${heightMm} мм`,
