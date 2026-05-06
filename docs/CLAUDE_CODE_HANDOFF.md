@@ -73,6 +73,7 @@
 - `data/storageSystems/excelCatalog.ts` — 17 разделов каталога.
 - `data/storageSystems/excelCalculator.ts` — профили калькулятора и значения из Excel.
 - `data/storageSystems/visualAssets.ts` — временные remote-фото.
+- `public/assets/images/catalog/` — локальные фото категорий каталога.
 - `lib/calculator/pricing.ts` — формулы расчета.
 - `app/api/leads/route.ts` — API заявок.
 - `tests/calculator.test.ts` — тесты расчетов.
@@ -144,6 +145,7 @@ Bitrix24:
 - Hero должен быть сильным: темный фон, крупный заголовок, метрики, CTA.
 - Фото должны реально отображаться, а не быть alt-подписями.
 - Можно использовать временные remote-фото, но они должны быть легко заменяемыми в `visualAssets.ts`.
+- Для категорий 1, 3 и 4 уже используются локальные файлы из `public/assets/images/catalog/`.
 - Не показывать публичный блок конкурентов.
 
 ## Проверки перед передачей или деплоем

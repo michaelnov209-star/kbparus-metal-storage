@@ -11,3 +11,8 @@ Recommended names:
 - tubes-profile-storage.jpg
 - warehouse-before.jpg
 - warehouse-after.jpg
+
+Catalog category photos currently added from user-provided files:
+- `catalog/01-auto-sheet-metal.jpg` — category 1.
+- `catalog/03-sort-and-pipe-storage.jpg` — category 3.
+- `catalog/04-manual-sort-and-pipe-storage.webp` — category 4.

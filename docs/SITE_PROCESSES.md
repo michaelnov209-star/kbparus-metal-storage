@@ -69,6 +69,12 @@ Endpoint: `app/api/leads/route.ts`
 2. Обновить пути в `visualAssets.ts`.
 3. Проверить production, что изображения реально видны.
 
+Для изображений разделов каталога использовать `public/assets/images/catalog/` и подключать путь в `data/storageSystems/excelCatalog.ts`. Текущие пользовательские файлы:
+
+- `01-auto-sheet-metal.jpg`
+- `03-sort-and-pipe-storage.jpg`
+- `04-manual-sort-and-pipe-storage.webp`
+
 Ключевые блоки с изображениями:
 
 - hero

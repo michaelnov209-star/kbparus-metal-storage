@@ -15,7 +15,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
     title: "Автоматизированные системы для хранения листового металла",
     summary: "Башенные и кассетные решения для листа с механизированной выдачей.",
     scenario: "Для цехов резки, гибки и складов листового металла.",
-    image: visualAssets.engineering,
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
     featured: true
   },
   {
@@ -31,7 +31,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
     title: "Системы для хранения сортового и трубного металлопроката",
     summary: "Хранение труб, профиля, балок, швеллера и длинномерного проката.",
     scenario: "Когда важно быстро находить типоразмер и безопасно подавать металл.",
-    image: visualAssets.tubesProfile,
+    image: "/assets/images/catalog/03-sort-and-pipe-storage.jpg",
     featured: true
   },
   {
@@ -39,7 +39,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
     title: "Ручные системы для хранения сортового и трубного металлопроката",
     summary: "Конструкции для ручного или полумеханизированного обслуживания длинномера.",
     scenario: "Для складов с понятной номенклатурой и умеренным оборотом.",
-    image: visualAssets.steelProfile,
+    image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.webp",
     featured: true
   },
   {
