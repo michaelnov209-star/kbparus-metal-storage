@@ -1,6 +1,8 @@
 import type { ExecutionMode, FacilityKind, LoadingMethod, MaterialKind, ProductType } from "@/data/storageSystems/types";
+import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 
 export interface CalculatorInput {
+  systemId: CalculatorProfileId;
   material: MaterialKind;
   materialLengthMm: number;
   sheetWidthMm: number;
@@ -21,8 +23,11 @@ export interface CalculatorInput {
   loadKg: number;
   towerCount: number;
   shelfCount: number;
+  rolloutShelfCount: number;
+  rolloutSide: "one" | "two";
   cassetteCount: number;
   execution: ExecutionMode;
+  optionIds: string[];
   comment?: string;
 }
 
@@ -38,6 +43,16 @@ export interface CalculatorResult {
   recommendation: RecommendedConfig;
   preliminaryPrice: number;
   fromPrice: number;
+  profileId: CalculatorProfileId;
+  sourceSheet: string;
+  selectedOptions: string[];
+  engineeringSummary: {
+    dimensionsLabel: string;
+    totalStoredWeightKg: number;
+    rackWeightWithoutLoadKg: number;
+    rackWeightWithLoadKg: number;
+    supportLoadKg: number;
+  };
   factors: {
     heightFactor: number;
     widthFactor: number;

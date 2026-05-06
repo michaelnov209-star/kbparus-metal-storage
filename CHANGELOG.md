@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## 2026-05-06 — Strict Excel catalog and calculator
+
+### Что изменилось
+
+- Каталог на главной теперь строится строго по видимым ячейкам листа `Главная` из `Калькулятор-New.xls`.
+- Добавлен файл `data/storageSystems/excelCatalog.ts` с пунктами каталога, исправлением явных опечаток и ссылками на исходные ячейки Excel.
+- Добавлен файл `data/storageSystems/excelCalculator.ts` с Excel-профилями расчёта, фиксированными вариантами Д×Ш×В, нагрузок, полок, башен и опций.
+- Калькулятор переделан из формы со свободными полями в конфигуратор с выбором готовых Excel-значений.
+- Расчёт в `lib/calculator/pricing.ts` сверяется с 6 формульными листами Excel и показывает сумму в формате `от ... ₽`.
+- Hero и шапка переведены в светлую промышленную тему: большой заголовок, фото/video-placeholder, метрики, dropdown «Каталог», два телефона сразу.
+- Удалён старый правый hero-panel, из-за которого первый экран выглядел тяжёлым.
+- README обновлён как актуальная карта проекта.
+- Добавлен handoff-файл для Claude Code.
+
+### Затронутые файлы
+
+- `app/page.tsx`
+- `components/Calculator.tsx`
+- `components/LinePageStyles.tsx`
+- `data/storageSystems/excelCatalog.ts`
+- `data/storageSystems/excelCalculator.ts`
+- `lib/calculator/pricing.ts`
+- `lib/calculator/types.ts`
+- `lib/calculator/validation.ts`
+- `tests/calculator.test.ts`
+- `README.md`
+- `docs/CLAUDE_CODE_HANDOFF.md`
+- `CHANGELOG.md`
+
+### Что проверить
+
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- На главной в каталоге нет разделов, которых нет на листе `Главная`.
+- В шапке видно оба телефона.
+- Dropdown «Каталог» открывается и содержит Excel-пункты.
+- Калькулятор использует фиксированные значения, а не произвольные поля.
+- В интерфейсе нет слов про печь полимеризации и линии окраски.
+- `/api/leads` отвечает в mock-режиме.
+
 ## 2026-05-06 — Structure aligned with powder coating reference
 
 ### Что изменилось

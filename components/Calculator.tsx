@@ -1,64 +1,46 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Info, PackageSearch, Ruler, Settings2 } from "lucide-react";
+import { Check, Info, PackageSearch, Ruler, Send, Settings2 } from "lucide-react";
+import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
+import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
+import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { calculateStorageSystem, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
-import { visualAssets } from "@/data/storageSystems/visualAssets";
 
-const materialCards = [
-  { value: "sheet", title: "Лист", hint: "Пачки листа, форматные заготовки, раскрой" },
-  { value: "pipe", title: "Труба", hint: "Круглая и профильная труба, длинномер" },
-  { value: "profile", title: "Профиль", hint: "Профиль, уголок, швеллер, балка" },
-  { value: "longProduct", title: "Сортовой прокат", hint: "Пруток, полоса, заготовки" },
-  { value: "mixed", title: "Смешанный металл", hint: "Несколько групп материала на одном складе" }
-] as const;
+const steps = ["Система", "Размеры", "Опции", "Результат"];
 
-const loadingCards = [
-  { value: "crane", title: "Кран-балка", hint: "Для тяжёлых пачек и подачи сверху" },
-  { value: "forklift", title: "Погрузчик", hint: "Для кассет, пачек и фронтальной загрузки" },
-  { value: "manual", title: "Вручную", hint: "Для лёгких позиций и сервисных зон" }
-] as const;
+function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
+  const profile = getCalculatorProfile(profileId);
+  const defaults = profile.defaultValues;
 
-const facilityCards = [
-  { value: "workshop", title: "Цех", hint: "Рядом с оборудованием и рабочими постами" },
-  { value: "warehouse", title: "Склад", hint: "Адресное хранение и отгрузка" },
-  { value: "outdoor", title: "Улица", hint: "Защитное исполнение и окраска" }
-] as const;
-
-const steps = ["Материал", "Габариты", "Исполнение", "Итог"];
-
-const initialInput = normalizeCalculatorInput({
-  material: "sheet",
-  materialLengthMm: 3100,
-  sheetWidthMm: 1600,
-  unitWeightKg: 120,
-  totalStorageWeightKg: 8000,
-  loadingMethod: "crane",
-  facility: "workshop",
-  desiredCapacity: 10,
-  needsRolloutCassettes: true,
-  needsPainting: true,
-  needsMounting: true,
-  needsDelivery: false,
-  city: "Москва",
-  heightMm: 150,
-  widthMm: 1600,
-  depthMm: 150,
-  lengthMm: 3100,
-  loadKg: 2500,
-  towerCount: 1,
-  shelfCount: 7,
-  cassetteCount: 7,
-  execution: "manual"
-});
-
-type FieldName = keyof CalculatorInput;
+  return normalizeCalculatorInput({
+    systemId: profile.id,
+    heightMm: defaults.heightMm,
+    widthMm: defaults.widthMm,
+    lengthMm: defaults.lengthMm,
+    materialLengthMm: defaults.lengthMm,
+    sheetWidthMm: defaults.widthMm,
+    loadKg: defaults.loadKg,
+    totalStorageWeightKg: defaults.loadKg * defaults.shelfCount * defaults.towerCount,
+    desiredCapacity: defaults.shelfCount,
+    shelfCount: defaults.shelfCount,
+    rolloutShelfCount: defaults.rolloutShelfCount ?? defaults.shelfCount,
+    cassetteCount: defaults.rolloutShelfCount ?? defaults.shelfCount,
+    towerCount: defaults.towerCount,
+    rolloutSide: defaults.rolloutSide ?? "one",
+    optionIds: profile.options.filter((option) => option.defaultSelected).map((option) => option.id),
+    execution: profile.productType === "automated" ? "automatic" : "manual",
+    needsRolloutCassettes: profile.productType === "rollout" || profile.productType === "hybrid",
+    city: "Москва"
+  });
+}
 
 export function Calculator() {
   const [step, setStep] = useState(0);
-  const [input, setInput] = useState<CalculatorInput>(initialInput);
+  const [input, setInput] = useState<CalculatorInput>(() => buildInputForProfile("auto-sheet-metal"));
   const [leadStatus, setLeadStatus] = useState("");
+  const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
   const progress = ((step + 1) / steps.length) * 100;
@@ -82,8 +64,30 @@ export function Calculator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.fromPrice]);
 
-  function setField<T extends FieldName>(field: T, value: CalculatorInput[T]) {
-    setInput((current) => ({ ...current, [field]: value }));
+  function selectProfile(profileId: CalculatorProfileId) {
+    setInput(buildInputForProfile(profileId));
+    setLeadStatus("");
+  }
+
+  function setNumberField(field: keyof CalculatorInput, value: number) {
+    setInput((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === "lengthMm" ? { materialLengthMm: value } : {}),
+      ...(field === "widthMm" ? { sheetWidthMm: value } : {}),
+      ...(field === "loadKg" ? { totalStorageWeightKg: value * current.shelfCount * current.towerCount } : {}),
+      ...(field === "shelfCount" ? { desiredCapacity: value, cassetteCount: value } : {}),
+      ...(field === "rolloutShelfCount" ? { cassetteCount: value } : {})
+    }));
+  }
+
+  function toggleOption(id: string) {
+    setInput((current) => ({
+      ...current,
+      optionIds: current.optionIds.includes(id)
+        ? current.optionIds.filter((optionId) => optionId !== id)
+        : [...current.optionIds, id]
+    }));
   }
 
   async function submitLead() {
@@ -96,12 +100,15 @@ export function Calculator() {
         city: input.city,
         comment: input.comment,
         calculatorInput: input,
+        recommendedConfig: result.recommendation,
+        preliminaryPriceFrom: result.fromPrice,
         utm: {}
       })
     });
+
     setLeadStatus(
       response.ok
-        ? "Заявка сформирована. Инженер увидит параметры подбора и быстрее подготовит предложение."
+        ? "Заявка сформирована. Инженер увидит выбранные размеры, нагрузку, опции и стартовую сумму «от»."
         : "Не удалось сформировать заявку. Попробуйте ещё раз или отправьте параметры менеджеру."
     );
   }
@@ -110,14 +117,14 @@ export function Calculator() {
     <section className="calculator-shell reveal" id="calculator">
       <div className="calculator-header">
         <div>
-          <span className="eyebrow">Инженерный калькулятор</span>
-          <h2>Подберите систему хранения и получите стартовую оценку “от”</h2>
+          <span className="line-kicker">Калькулятор стоимости</span>
+          <h2>Конфигуратор по Excel: выбирайте только заложенные ходовые значения</h2>
           <p>
-            Это ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки нагрузки,
-            помещения и состава системы.
+            Размеры, нагрузки, количество полок, башен и опции взяты из обновлённого файла. Цена показывается как стартовая сумма
+            «от» и не заменяет инженерную проверку.
           </p>
         </div>
-        <img src={visualAssets.calculator} alt="Визуал конфигуратора системы хранения" />
+        <img src={visualAssets.calculator} alt="Конфигуратор системы хранения металла" />
       </div>
 
       <div className="calculator-product">
@@ -126,12 +133,7 @@ export function Calculator() {
             <div className="calc-progress-line"><span style={{ width: `${progress}%` }} /></div>
             <div className="calc-steps">
               {steps.map((item, index) => (
-                <button
-                  className={index === step ? "is-active" : ""}
-                  key={item}
-                  type="button"
-                  onClick={() => setStep(index)}
-                >
+                <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => setStep(index)}>
                   <span>{index + 1}</span>
                   {item}
                 </button>
@@ -141,17 +143,20 @@ export function Calculator() {
 
           {step === 0 && (
             <div className="calc-panel">
-              <h3><PackageSearch size={24} />Что нужно хранить?</h3>
-              <p>От материала зависит тип конструкции, доступ к ячейкам и способ безопасной загрузки.</p>
-              <div className="choice-grid">
-                {materialCards.map((card) => (
-                  <ChoiceCard
-                    active={input.material === card.value}
-                    key={card.value}
-                    title={card.title}
-                    hint={card.hint}
-                    onClick={() => setField("material", card.value)}
-                  />
+              <h3><PackageSearch size={24} />Выберите тип системы</h3>
+              <p>Это не расширенный каталог. Здесь только те формульные сценарии, которые уже заложены в Excel-калькулятор.</p>
+              <div className="profile-grid">
+                {calculatorProfiles.map((item) => (
+                  <button
+                    className={item.id === input.systemId ? "profile-card is-active" : "profile-card"}
+                    key={item.id}
+                    type="button"
+                    onClick={() => selectProfile(item.id)}
+                  >
+                    <span>{item.sourceSheet}</span>
+                    <strong>{item.shortTitle}</strong>
+                    <small>{item.description}</small>
+                  </button>
                 ))}
               </div>
             </div>
@@ -159,67 +164,62 @@ export function Calculator() {
 
           {step === 1 && (
             <div className="calc-panel">
-              <h3><Ruler size={24} />Какие габариты и нагрузка?</h3>
-              <p>Чем точнее исходные данные, тем быстрее инженер проверит конструкцию и запас прочности.</p>
-              <div className="metric-grid">
-                <NumberInput label="Длина материала, мм" value={input.materialLengthMm} onChange={(value) => setField("materialLengthMm", value)} />
-                <NumberInput label="Ширина листа, мм" value={input.sheetWidthMm} onChange={(value) => setField("sheetWidthMm", value)} />
-                <NumberInput label="Вес единицы, кг" value={input.unitWeightKg} onChange={(value) => setField("unitWeightKg", value)} />
-                <NumberInput label="Общий объём, кг" value={input.totalStorageWeightKg} onChange={(value) => setField("totalStorageWeightKg", value)} />
-                <NumberInput label="Нагрузка на уровень, кг" value={input.loadKg} onChange={(value) => setField("loadKg", value)} />
-                <NumberInput label="Желаемая вместимость" value={input.desiredCapacity} onChange={(value) => setField("desiredCapacity", value)} />
-              </div>
-              <details className="advanced-fields">
-                <summary>Уточнить конструкцию: башни, полки, кассеты и габариты системы</summary>
-                <div className="metric-grid">
-                  <NumberInput label="Рабочая высота, мм" value={input.heightMm} onChange={(value) => setField("heightMm", value)} />
-                  <NumberInput label="Ширина системы, мм" value={input.widthMm} onChange={(value) => setField("widthMm", value)} />
-                  <NumberInput label="Глубина, мм" value={input.depthMm} onChange={(value) => setField("depthMm", value)} />
-                  <NumberInput label="Длина системы, мм" value={input.lengthMm} onChange={(value) => setField("lengthMm", value)} />
-                  <NumberInput label="Башни" value={input.towerCount} onChange={(value) => setField("towerCount", value)} />
-                  <NumberInput label="Полки" value={input.shelfCount} onChange={(value) => setField("shelfCount", value)} />
-                  <NumberInput label="Выкатные кассеты" value={input.cassetteCount} onChange={(value) => setField("cassetteCount", value)} />
+              <h3><Ruler size={24} />Д×Ш×В, нагрузка и количество</h3>
+              <p>Выбор ограничен значениями из Excel. Так клиенту проще, а расчёт остаётся управляемым из “Админки”.</p>
+              <OptionGroup title="Высота, мм" values={profile.heightOptions.map((option) => option.value)} active={input.heightMm} onSelect={(value) => setNumberField("heightMm", value)} />
+              <OptionGroup title="Ширина, мм" values={profile.widthOptions.map((option) => option.value)} active={input.widthMm} onSelect={(value) => setNumberField("widthMm", value)} />
+              <OptionGroup title="Длина, мм" values={profile.lengthOptions.map((option) => option.value)} active={input.lengthMm} onSelect={(value) => setNumberField("lengthMm", value)} />
+              <OptionGroup title="Нагрузка на полку, кг" values={profile.loadOptions.map((option) => option.value)} active={input.loadKg} onSelect={(value) => setNumberField("loadKg", value)} />
+              <OptionGroup title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"} values={profile.shelfCountOptions} active={input.shelfCount} onSelect={(value) => setNumberField("shelfCount", value)} />
+              {profile.rolloutShelfCountOptions && (
+                <OptionGroup title="Выкатные кассеты" values={profile.rolloutShelfCountOptions} active={input.rolloutShelfCount} onSelect={(value) => setNumberField("rolloutShelfCount", value)} />
+              )}
+              <OptionGroup title="Количество башен" values={profile.towerCountOptions} active={input.towerCount} onSelect={(value) => setNumberField("towerCount", value)} />
+              {profile.pricing.kind === "rollout" && profile.pricing.sides && (
+                <div className="calc-option-group">
+                  <span>Вариант выката</span>
+                  <div className="calc-chip-row">
+                    {profile.pricing.sides.map((side) => (
+                      <button
+                        className={input.rolloutSide === side.value ? "calc-chip is-active" : "calc-chip"}
+                        key={side.value}
+                        type="button"
+                        onClick={() => setInput((current) => ({ ...current, rolloutSide: side.value }))}
+                      >
+                        {side.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </details>
+              )}
             </div>
           )}
 
           {step === 2 && (
             <div className="calc-panel">
-              <h3><Settings2 size={24} />Как система будет работать на объекте?</h3>
-              <p>Способ загрузки, помещение и опции влияют на конструкцию, покрытие, монтаж и логистику.</p>
-              <div className="choice-grid three">
-                {loadingCards.map((card) => (
-                  <ChoiceCard
-                    active={input.loadingMethod === card.value}
-                    key={card.value}
-                    title={card.title}
-                    hint={card.hint}
-                    onClick={() => setField("loadingMethod", card.value)}
-                  />
+              <h3><Settings2 size={24} />Опции и город</h3>
+              <p>Опции тоже берутся из Excel. Старые технические следы от линий окраски в интерфейс не выводим.</p>
+              <div className="option-list">
+                {profile.options.map((option) => (
+                  <button
+                    className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
+                    key={option.id}
+                    type="button"
+                    onClick={() => toggleOption(option.id)}
+                  >
+                    <Check size={18} />
+                    <span>{option.title}</span>
+                    <strong>+ {formatRub(option.price)}</strong>
+                  </button>
                 ))}
-              </div>
-              <div className="choice-grid three">
-                {facilityCards.map((card) => (
-                  <ChoiceCard
-                    active={input.facility === card.value}
-                    key={card.value}
-                    title={card.title}
-                    hint={card.hint}
-                    onClick={() => setField("facility", card.value)}
-                  />
-                ))}
-              </div>
-              <div className="toggle-grid">
-                <Toggle label="Выкатные кассеты" checked={input.needsRolloutCassettes} onChange={(value) => setField("needsRolloutCassettes", value)} />
-                <Toggle label="Промышленная окраска" checked={input.needsPainting} onChange={(value) => setField("needsPainting", value)} />
-                <Toggle label="Монтаж на объекте" checked={input.needsMounting} onChange={(value) => setField("needsMounting", value)} />
-                <Toggle label="Доставка" checked={input.needsDelivery} onChange={(value) => setField("needsDelivery", value)} />
-                <Toggle label="Автоматическая система" checked={input.execution === "automatic"} onChange={(value) => setField("execution", value ? "automatic" : "manual")} />
               </div>
               <label className="text-field">
                 Город клиента
-                <input value={input.city} onChange={(event) => setField("city", event.target.value)} />
+                <input value={input.city} onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))} />
+              </label>
+              <label className="text-field">
+                Комментарий
+                <textarea value={input.comment ?? ""} onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))} />
               </label>
             </div>
           )}
@@ -227,11 +227,13 @@ export function Calculator() {
           {step === 3 && (
             <div className="calc-panel final-panel">
               <h3>Предварительная конфигурация готова</h3>
-              <p>Теперь можно отправить параметры инженеру. Он проверит нагрузки, ограничения помещения и подготовит точное предложение.</p>
+              <p>Инженер проверит нагрузку, помещение, способ загрузки и подготовит точное предложение.</p>
               <div className="deliverable-grid">
                 {result.recommendation.keyParameters.map((item) => <span key={item}>{item}</span>)}
+                <span>Источник: {result.sourceSheet}</span>
+                <span>Нагрузка на опору: {result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU")} кг</span>
               </div>
-              <button className="primary-button" type="button" onClick={submitLead}>Получить инженерный расчёт</button>
+              <button className="primary-button" type="button" onClick={submitLead}><Send size={18} />Получить инженерный расчёт</button>
               {leadStatus && <p className="lead-status">{leadStatus}</p>}
             </div>
           )}
@@ -247,27 +249,24 @@ export function Calculator() {
         </div>
 
         <aside className="calc-summary">
-          <span className="eyebrow">Живой расчёт</span>
-          <h3>{result.recommendation.title}</h3>
+          <span className="line-kicker">Живой расчёт</span>
+          <h3>{profile.shortTitle}</h3>
           <div className="config-preview" aria-label="Визуальное превью конфигурации">
-            {Array.from({ length: Math.min(Math.max(input.shelfCount, input.cassetteCount, 4), 8) }).map((_, index) => (
-              <i key={index} />
-            ))}
+            {Array.from({ length: Math.min(Math.max(input.shelfCount, input.rolloutShelfCount, 4), 10) }).map((_, index) => <i key={index} />)}
           </div>
           <div className="summary-price">
             от {formatRub(animatedPrice)}
-            <small>стартовая сумма по расчёту</small>
+            <small>ориентир для первичного подбора</small>
           </div>
-          <div className="summary-note">
-            Финальная стоимость уточняется после инженерной проверки. Калькулятор не является коммерческим предложением.
-          </div>
-          <div className="summary-list">
-            <strong>Почему такая рекомендация</strong>
-            {result.recommendation.rationale.map((item) => <span key={item}>{item}</span>)}
-          </div>
-          <div className="summary-list">
-            <strong>Что уточнит инженер</strong>
-            {result.recommendation.engineerQuestions.map((item) => <span key={item}>{item}</span>)}
+          <ul>
+            <li>Д×Ш×В: {result.engineeringSummary.dimensionsLabel}</li>
+            <li>Материал под нагрузкой: {result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU")} кг</li>
+            <li>Система под нагрузкой: {result.engineeringSummary.rackWeightWithLoadKg.toLocaleString("ru-RU")} кг</li>
+            <li>Опции: {result.selectedOptions.length || "не выбраны"}</li>
+          </ul>
+          <div className="calc-note">
+            <Info size={18} />
+            <span>Финальная стоимость уточняется после инженерной проверки.</span>
           </div>
         </aside>
       </div>
@@ -275,31 +274,17 @@ export function Calculator() {
   );
 }
 
-function ChoiceCard({ active, title, hint, onClick }: { active: boolean; title: string; hint: string; onClick: () => void }) {
+function OptionGroup({ title, values, active, onSelect }: { title: string; values: readonly number[]; active: number; onSelect: (value: number) => void }) {
   return (
-    <button className={active ? "choice-card is-active" : "choice-card"} type="button" onClick={onClick}>
-      <span className="choice-icon" />
-      <strong>{title}</strong>
-      <small>{hint}</small>
-    </button>
-  );
-}
-
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return (
-    <label className="toggle">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <span />
-      {label}
-    </label>
-  );
-}
-
-function NumberInput({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return (
-    <label className="number-field">
-      <span>{label}<Info size={14} aria-hidden="true" /></span>
-      <input type="number" value={value} onChange={(event) => onChange(Number(event.target.value))} />
-    </label>
+    <div className="calc-option-group">
+      <span>{title}</span>
+      <div className="calc-chip-row">
+        {values.map((value) => (
+          <button className={active === value ? "calc-chip is-active" : "calc-chip"} key={value} type="button" onClick={() => onSelect(value)}>
+            {value.toLocaleString("ru-RU")}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
