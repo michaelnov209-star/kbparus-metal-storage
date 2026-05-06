@@ -1,229 +1,129 @@
 import { BrandMark } from "@/components/BrandMark";
 import { Calculator } from "@/components/Calculator";
-import { HeroVisual } from "@/components/HeroVisual";
-import { SolutionsShowcase } from "@/components/SolutionsShowcase";
+import { LeadForm } from "@/components/LeadForm";
+import { LinePageStyles } from "@/components/LinePageStyles";
 import {
   ArrowRight,
   CheckCircle2,
-  Gauge,
+  Factory,
   Mail,
   MapPin,
   Phone,
-  Ruler,
   ShieldCheck,
   Truck,
   Warehouse,
-  Zap
+  Wrench
 } from "lucide-react";
-import {
-  advantages,
-  beforeAfter,
-  cases,
-  clientDeliverables,
-  contacts,
-  faq,
-  problems,
-  processSteps,
-  solutionCards,
-  whatToStore
-} from "@/data/storageSystems/content";
+import { advantages, cases, contacts, faq, processSteps, solutionCards } from "@/data/storageSystems/content";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 
-const proofMetrics = [
-  { value: "2009", label: "проектируем и производим промышленное оборудование" },
-  { value: "5 т", label: "ориентир нагрузки на уровень хранения" },
-  { value: "1 маршрут", label: "расчёт, производство, окраска, доставка и монтаж" }
+const metrics = [
+  { value: "16+", label: "лет инженерного опыта" },
+  { value: "1000+", label: "проектов промышленного оборудования" },
+  { value: "500+", label: "городов поставок" },
+  { value: "1", label: "команда: расчёт, производство, монтаж" }
 ];
 
-const icons = [Gauge, Warehouse, ShieldCheck, Zap, Truck, Ruler];
+const reviews = [
+  {
+    name: "Производство металлоконструкций",
+    text: "После внедрения системы металл перестал занимать проходы. Погрузчик быстрее подаёт профиль в работу, меньше перекладок и повреждений."
+  },
+  {
+    name: "Склад металлопроката",
+    text: "Кассеты помогли разделить партии листа и сделать отбор понятным. Менеджеры быстрее отвечают клиентам по наличию и размерам."
+  },
+  {
+    name: "Машиностроительный цех",
+    text: "Важно было вписать хранение в существующий маршрут к станкам. Система получилась компактной и удобной для кран-балки."
+  }
+];
+
+const partners = ["Металлообработка", "Машиностроение", "Склады металла", "Порошковая окраска", "Сервисные цеха", "Производства МК"];
+const nav = [
+  ["Каталог", "#catalog"],
+  ["Калькулятор", "#calculator"],
+  ["Кейсы", "#cases"],
+  ["География", "#geography"],
+  ["Отзывы", "#reviews"],
+  ["FAQ", "#faq"],
+  ["Контакты", "#contacts"]
+] as const;
 
 export default function Home() {
   return (
-    <main id="top">
-      <header className="site-header">
+    <main className="line-page" id="top">
+      <LinePageStyles />
+      <header className="line-header">
         <BrandMark />
         <nav>
-          <a href="#solutions">Решения</a>
-          <a href="#calculator">Калькулятор</a>
-          <a href="#process">Проект</a>
-          <a href="#contacts">Контакты</a>
+          {nav.slice(0, 5).map(([label, href]) => <a href={href} key={href}>{label}</a>)}
         </nav>
-        <div className="header-contact">
+        <div className="line-header-contact">
           <a href={contacts.phones[0].href}>{contacts.phones[0].label}</a>
-          <a className="header-cta" href="#calculator">Рассчитать</a>
+          <a className="line-header-btn" href="#contacts">Заявка</a>
         </div>
       </header>
 
-      <section className="hero">
-        <div className="hero-copy reveal">
-          <span className="eyebrow">КБ Парус / системы хранения металла</span>
-          <h1>Порядок на складе металла начинается с инженерного расчёта</h1>
-          <p>
-            Подбираем консольные, кассетные, вертикальные, выкатные и автоматизированные системы под ваш металл,
-            нагрузку, помещение и способ загрузки.
-          </p>
-          <div className="hero-actions">
-            <a className="primary-button" href="#calculator">Рассчитать систему</a>
-            <a className="secondary-button" href="#contacts">Связаться с инженером</a>
+      <section className="line-hero">
+        <div className="line-hero-bg" />
+        <div className="line-hero-content">
+          <span className="line-kicker">КБ Парус / системы хранения металла</span>
+          <h1>Оборудование для хранения металла под ваш склад и производство</h1>
+          <p>Консольные, кассетные, вертикальные, выкатные и автоматизированные системы. Подбираем решение по металлу, нагрузке, помещению и способу загрузки.</p>
+          <div className="line-actions">
+            <a className="line-primary" href="#calculator">Рассчитать стоимость</a>
+            <a className="line-secondary" href="#contacts">Получить консультацию</a>
           </div>
         </div>
-        <HeroVisual />
-        <div className="hero-proof reveal">
-          {proofMetrics.map((item) => (
-            <article key={item.value}>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="problem-strip" id="problems">
-        <div className="section-heading reveal">
-          <span className="eyebrow">Зачем менять хранение</span>
-          <h2>Металл на полу съедает площадь, время и безопасность</h2>
-        </div>
-        <div className="problem-strip-grid">
-          {problems.slice(0, 4).map((problem, index) => (
-            <article className="reveal" key={problem.title}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{problem.title}</h3>
-              <p>{problem.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="split-story">
-        <div className="story-media reveal">
-          <img src={visualAssets.tubesProfile} alt="Металл, трубы и профиль на промышленном складе" />
-        </div>
-        <div className="story-copy reveal">
-          <span className="eyebrow">Что можно хранить</span>
-          <h2>Лист, трубы, профиль, балки и смешанные партии</h2>
-          <p>
-            Система хранения выбирается не “по картинке”, а по номенклатуре: длина, вес, частота доступа,
-            техника загрузки и ограничения цеха сразу влияют на конструкцию.
-          </p>
-          <div className="chip-grid">
-            {whatToStore.map((item) => <span key={item}>{item}</span>)}
+        <div className="line-hero-panel">
+          <img src={visualAssets.hero} alt="Промышленный склад металла" />
+          <div>
+            <strong>подбор под лист / трубу / профиль</strong>
+            <span>финальная стоимость уточняется после инженерной проверки</span>
           </div>
         </div>
       </section>
 
-      <SolutionsShowcase />
-
-      <section className="section solution-card-section">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">Типы систем</span>
-          <h2>Не витрина стеллажей, а набор решений под разные сценарии склада</h2>
+      <section className="line-section" id="catalog">
+        <div className="line-section-head">
+          <span className="line-kicker">Каталог оборудования</span>
+          <h2>Системы хранения металла</h2>
+          <p>Структура как у каталога оборудования: быстро понять тип решения, сценарий применения и перейти к расчёту.</p>
         </div>
-        <div className="solution-card-grid">
-          {solutionCards.slice(0, 6).map((card) => (
-            <article className="solution-card reveal" key={card.title}>
-              <img src={pickEquipmentImage(card.type)} alt={card.title} />
+        <div className="line-catalog">
+          {solutionCards.slice(0, 8).map((item) => (
+            <article key={item.title}>
+              <img src={pickImage(item.type)} alt={item.title} />
               <div>
-                <h3>{card.title}</h3>
-                <p>{card.text}</p>
-                <span>{card.scenario}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+                <span>{item.scenario}</span>
+                <a href="#calculator">Рассчитать <ArrowRight size={16} /></a>
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="before-after-section">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">До / после</span>
-          <h2>Вместо хаоса на полу — адресное хранение и быстрый доступ</h2>
-        </div>
-        <div className="before-after-grid">
-          <article className="before-card reveal">
-            <img src={visualAssets.beforeWarehouse} alt="Склад до внедрения системы хранения" />
-            <div>
-              <span>до</span>
-              <h3>{beforeAfter.before.title}</h3>
-              <p>{beforeAfter.before.subtitle}</p>
-              <ul>{beforeAfter.before.points.map((point) => <li key={point}>{point}</li>)}</ul>
-            </div>
-          </article>
-          <article className="after-card reveal">
-            <img src={visualAssets.afterWarehouse} alt="Склад после внедрения системы хранения" />
-            <div>
-              <span>после</span>
-              <h3>{beforeAfter.after.title}</h3>
-              <p>{beforeAfter.after.subtitle}</p>
-              <ul>{beforeAfter.after.points.map((point) => <li key={point}>{point}</li>)}</ul>
-            </div>
-          </article>
-        </div>
-      </section>
-
       <Calculator />
 
-      <section className="section deliverables-section reveal">
-        <div className="section-heading">
-          <span className="eyebrow">После расчёта</span>
-          <h2>Клиент получает понятную основу для инженерного разговора</h2>
-        </div>
-        <div className="deliverables-grid">
-          {clientDeliverables.map((item) => (
-            <article key={item}>
-              <CheckCircle2 size={20} />
-              {item}
-            </article>
-          ))}
-        </div>
-      </section>
+      <Banner
+        title="Получите бесплатный расчёт стоимости оборудования"
+        text="Инженер проверит нагрузку, габариты, способ загрузки и подготовит стартовую конфигурацию под ваш склад."
+        href="#contacts"
+        action="Оставить заявку"
+      />
 
-      <section className="process-section" id="process">
-        <div className="process-media reveal">
-          <img src={visualAssets.engineering} alt="Инженерное проектирование промышленного оборудования" />
+      <section className="line-section" id="cases">
+        <div className="line-section-head">
+          <span className="line-kicker">Кейсы</span>
+          <h2>Типовые сценарии внедрения</h2>
         </div>
-        <div className="process-copy reveal">
-          <span className="eyebrow">Как проходит проект</span>
-          <h2>От номенклатуры металла до смонтированной системы</h2>
-          <ol>
-            {processSteps.map((step, index) => (
-              <li key={step.title}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <strong>{step.title}</strong>
-                  <p>{step.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="section dark-premium">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">Почему КБ Парус</span>
-          <h2>Инженерность, производство и ответственность за результат</h2>
-        </div>
-        <div className="advantage-grid">
-          {advantages.map((advantage, index) => {
-            const Icon = icons[index % icons.length];
-            return (
-              <article className="reveal" key={advantage.title}>
-                <Icon size={28} />
-                <h3>{advantage.title}</h3>
-                <p>{advantage.text}</p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="section cases-section">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">Где применяется</span>
-          <h2>Для цехов, складов металлопроката и производственных потоков</h2>
-        </div>
-        <div className="case-grid">
-          {cases.slice(0, 5).map((item) => (
-            <article className="reveal" key={item.title}>
+        <div className="line-cases">
+          {cases.slice(0, 6).map((item, index) => (
+            <article key={item.title}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
             </article>
@@ -231,14 +131,112 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section faq-section" id="faq">
-        <div className="section-heading wide reveal">
-          <span className="eyebrow">FAQ</span>
-          <h2>Коротко о том, что важно перед расчётом</h2>
+      <Banner
+        title="Поможем подобрать подходящее оборудование"
+        text="Если вы не уверены, что выбрать: консоли, кассеты, вертикальное хранение или гибридную систему, начните с заявки. Мы подскажем маршрут."
+        href="#contacts"
+        action="Подобрать решение"
+      />
+
+      <section className="line-section line-map-section" id="geography">
+        <div className="line-section-head">
+          <span className="line-kicker">География поставок</span>
+          <h2>Поставляем оборудование по России</h2>
         </div>
-        <div className="faq-list">
-          {faq.slice(0, 9).map((item) => (
-            <details className="reveal" key={item.question}>
+        <div className="line-geo">
+          <div className="line-geo-card">
+            {metrics.slice(0, 3).map((item) => (
+              <div key={item.value}><strong>{item.value}</strong><span>{item.label}</span></div>
+            ))}
+          </div>
+          <div className="line-russia-map" aria-label="Карта географии поставок">
+            {["Москва", "Санкт-Петербург", "Казань", "Екатеринбург", "Новосибирск", "Краснодар"].map((city) => <span key={city}>{city}</span>)}
+          </div>
+        </div>
+      </section>
+
+      <section className="line-section" id="reviews">
+        <div className="line-section-head">
+          <span className="line-kicker">Отзывы</span>
+          <h2>Покупатели хвалят качество нашего оборудования</h2>
+        </div>
+        <div className="line-slider">
+          {reviews.map((review) => (
+            <article key={review.name}>
+              <p>“{review.text}”</p>
+              <strong>{review.name}</strong>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="line-about">
+        <div>
+          <span className="line-kicker">О нас</span>
+          <h2>КБ Парус проектирует и производит промышленное оборудование с 2009 года</h2>
+          <p>Работаем с металлообработкой, автоматизацией, оборудованием с ЧПУ и инженерными решениями под задачи заказчиков. Системы хранения металла развиваем как отдельное промышленное направление.</p>
+        </div>
+        <div className="line-metrics">
+          {metrics.map((item) => <article key={item.value}><strong>{item.value}</strong><span>{item.label}</span></article>)}
+        </div>
+      </section>
+
+      <section className="line-main-site-banner">
+        <div>
+          <span className="line-kicker">Основной сайт</span>
+          <h2>Станки ЧПУ и промышленная автоматизация КБ Парус</h2>
+          <p>Перейдите на основной сайт компании, чтобы посмотреть другие направления производства.</p>
+        </div>
+        <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Перейти на kbparus.ru</a>
+      </section>
+
+      <section className="line-section">
+        <div className="line-section-head">
+          <span className="line-kicker">Преимущества</span>
+          <h2>Почему с нами удобно работать</h2>
+        </div>
+        <div className="line-advantages">
+          {advantages.map((item, index) => {
+            const Icon = [Factory, Warehouse, ShieldCheck, Wrench, Truck, CheckCircle2][index % 6];
+            return <article key={item.title}><Icon size={28} /><h3>{item.title}</h3><p>{item.text}</p></article>;
+          })}
+        </div>
+      </section>
+
+      <section className="line-section">
+        <div className="line-section-head">
+          <span className="line-kicker">3 шага</span>
+          <h2>От заявки до отгрузки оборудования на объект</h2>
+        </div>
+        <div className="line-steps">
+          {processSteps.slice(0, 3).map((step, index) => (
+            <article key={step.title}>
+              <span>{index + 1}</span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="line-section">
+        <div className="line-section-head">
+          <span className="line-kicker">Партнёры</span>
+          <h2>Нам доверяют производственные компании</h2>
+        </div>
+        <div className="line-partners">
+          {partners.map((partner) => <article key={partner}>{partner}</article>)}
+        </div>
+      </section>
+
+      <section className="line-section" id="faq">
+        <div className="line-section-head">
+          <span className="line-kicker">FAQ</span>
+          <h2>Ответы на частые вопросы</h2>
+        </div>
+        <div className="line-faq">
+          {faq.slice(0, 10).map((item) => (
+            <details key={item.question}>
               <summary>{item.question}</summary>
               <p>{item.answer}</p>
             </details>
@@ -246,39 +244,62 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="final-cta" id="contacts">
-        <div className="final-card reveal">
-          <BrandMark compact />
-          <span className="eyebrow">Связаться с инженером</span>
-          <h2>Начните с расчёта склада металла под вашу задачу</h2>
-          <p>
-            Заявку и параметры расчёта можно передать в CRM, 1С или складскую систему, чтобы менеджер сразу видел
-            исходные данные и быстрее готовил предложение.
-          </p>
-          <div className="contact-list">
-            {contacts.phones.map((phone) => <a href={phone.href} key={phone.href}><Phone size={18} />{phone.label}</a>)}
-            <a href={contacts.email.href}><Mail size={18} />{contacts.email.label}</a>
-            <span><MapPin size={18} />{contacts.address}</span>
-          </div>
-          <a className="primary-button" href="#calculator">Перейти к калькулятору <ArrowRight size={18} /></a>
+      <section className="line-contact-form">
+        <div>
+          <span className="line-kicker">Не нашли, что искали?</span>
+          <h2>Опишите задачу, и мы подскажем подходящий вариант хранения</h2>
+          <p>Можно написать своими словами: что храните, какие размеры, какой вес и чем загружаете металл.</p>
         </div>
+        <LeadForm title="Форма связи" />
       </section>
 
-      <footer className="site-footer">
+      <section className="line-contacts" id="contacts">
+        <div>
+          <span className="line-kicker">Свяжитесь с нами</span>
+          <h2>Любым удобным способом</h2>
+          <div className="line-contact-list">
+            <a href={contacts.phones[0].href}><Phone size={20} />{contacts.phones[0].label}</a>
+            <a href={contacts.phones[1].href}><Phone size={20} />{contacts.phones[1].label}</a>
+            <a href={contacts.email.href}><Mail size={20} />{contacts.email.label}</a>
+            <span><MapPin size={20} />МО, г. Ногинск, 1-й Кардолентный проезд, д. 5</span>
+            <span>Пн–Пт 9:00–18:00</span>
+          </div>
+        </div>
+        <iframe
+          title="Карта: КБ Парус, Ногинск"
+          src="https://yandex.ru/map-widget/v1/?text=%D0%9C%D0%9E%2C%20%D0%B3.%20%D0%9D%D0%BE%D0%B3%D0%B8%D0%BD%D1%81%D0%BA%2C%201-%D0%B9%20%D0%9A%D0%B0%D1%80%D0%B4%D0%BE%D0%BB%D0%B5%D0%BD%D1%82%D0%BD%D1%8B%D0%B9%20%D0%BF%D1%80%D0%BE%D0%B5%D0%B7%D0%B4%2C%205&z=15"
+          loading="lazy"
+        />
+      </section>
+
+      <footer className="line-footer">
         <BrandMark />
-        <span>КБ Парус / системы хранения металла</span>
-        <a href="#calculator">Рассчитать систему</a>
+        <nav>{nav.map(([label, href]) => <a href={href} key={href}>{label}</a>)}</nav>
+        <div>
+          <a href={contacts.phones[0].href}>{contacts.phones[0].label}</a>
+          <a href={contacts.email.href}>{contacts.email.label}</a>
+          <span>МО, г. Ногинск, 1-й Кардолентный проезд, д. 5</span>
+        </div>
       </footer>
     </main>
   );
 }
 
-function pickEquipmentImage(productType: string) {
-  if (productType === "cantilever") return visualAssets.steelProfile;
-  if (productType === "automated") return visualAssets.engineering;
-  if (productType === "rollout" || productType === "hybrid") return visualAssets.forklift;
-  if (productType === "honeycomb") return visualAssets.metalCoils;
-  if (productType === "custom") return visualAssets.productionLine;
-  if (productType === "vertical") return visualAssets.sheetMetal;
+function Banner({ title, text, href, action }: { title: string; text: string; href: string; action: string }) {
+  return (
+    <section className="line-banner">
+      <div><h2>{title}</h2><p>{text}</p></div>
+      <a className="line-primary" href={href}>{action}</a>
+    </section>
+  );
+}
+
+function pickImage(type: string) {
+  if (type === "cantilever") return visualAssets.steelProfile;
+  if (type === "vertical") return visualAssets.sheetMetal;
+  if (type === "rollout" || type === "hybrid") return visualAssets.forklift;
+  if (type === "automated") return visualAssets.engineering;
+  if (type === "honeycomb") return visualAssets.tubesProfile;
+  if (type === "custom") return visualAssets.productionLine;
   return visualAssets.warehouse;
 }
