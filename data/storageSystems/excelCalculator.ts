@@ -189,7 +189,7 @@ export const calculatorProfiles: CalculatorProfile[] = [
     shortTitle: "Автоматический склад сортового металла",
     sourceSheet: "Авт. скл. сорт. металл",
     productType: "automated",
-    description: "Автоматизированная система для длинномера, труб, профиля и сортового проката.",
+    description: "Автоматизированная система для труб, профиля, балок и сортового проката.",
     heightOptions: [
       { value: 300, factor: 1 },
       { value: 400, factor: 1.1 },

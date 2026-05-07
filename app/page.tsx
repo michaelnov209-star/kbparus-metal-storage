@@ -43,14 +43,14 @@ const contacts = {
 };
 
 const metrics = [
-  { value: "1.5 млн. м²", label: "выполненных работ" },
+  { value: "1,5 млн м²", label: "выполненных работ" },
   { value: "3000+", label: "довольных покупателей" },
   { value: "700+", label: "обслужили городов" },
   { value: "15+ лет", label: "производим оборудование" }
 ];
 
 const heroSignals = [
-  "Под лист и длинномер",
+  "Под лист, трубы и профиль",
   "Под кран-балку и погрузчик",
   "Под реальные ограничения цеха"
 ];
@@ -67,38 +67,10 @@ const nav = [
 function getCatalogBadge(id: string) {
   if (id.includes("auto") || id.includes("automated")) return "Автоматизация";
   if (id.includes("manual")) return "Ручная система";
-  if (id.includes("pipe") || id.includes("cantilever")) return "Длинномер";
+  if (id.includes("pipe") || id.includes("cantilever")) return "Трубы и профиль";
   if (id.includes("warehouse") || id.includes("erp")) return "Склад и учет";
   if (id.includes("lifting")) return "Подача и подъем";
   return "Категория";
-}
-
-function getHeroShortcut(id: string) {
-  if (id === "auto-sheet-metal") {
-    return {
-      title: "Автосистемы для листа",
-      note: "Башни, кассеты, автоматизированная выдача"
-    };
-  }
-
-  if (id === "manual-sheet-metal") {
-    return {
-      title: "Ручные системы для листа",
-      note: "Простой доступ без сложной автоматики"
-    };
-  }
-
-  if (id === "sort-and-pipe-storage") {
-    return {
-      title: "Длинномер и труба",
-      note: "Профиль, балка, швеллер, сортовой прокат"
-    };
-  }
-
-  return {
-    title: "Ручное хранение длинномера",
-    note: "Для складов с умеренным оборотом"
-  };
 }
 
 function getCatalogPlaceholder(id: string) {
@@ -114,7 +86,7 @@ function getCatalogPlaceholder(id: string) {
 const storedMaterials = [
   { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", image: visualAssets.sheetMetal, icon: Layers3 },
   { title: "Трубы и профиль", text: "Круглые и профильные трубы, уголок, швеллер, балка.", image: visualAssets.tubesProfile, icon: Boxes },
-  { title: "Сортовой прокат", text: "Длинномер, пачки заготовок и смешанная номенклатура.", image: visualAssets.steelProfile, icon: Warehouse },
+  { title: "Сортовой прокат", text: "Пруток, уголок, швеллер, балка, пачки заготовок и смешанная номенклатура.", image: visualAssets.steelProfile, icon: Warehouse },
   { title: "Оснастка и комплектующие", text: "Инструмент, расходники, кабель, паллеты и складские позиции.", image: visualAssets.warehouse, icon: PackageCheck }
 ];
 
@@ -133,7 +105,7 @@ const cases = [
   },
   {
     customer: "Производство металлоконструкций",
-    title: "Подобрали консольное хранение под длинномер",
+    title: "Подобрали консольное хранение под трубы и профиль",
     result: "Склад стал понятнее для мастеров, а выдача металла стала безопаснее.",
     image: visualAssets.steelProfile
   },
@@ -208,7 +180,7 @@ const faq = [
   },
   {
     question: "Можно ли хранить трубы, профиль, балки и швеллер?",
-    answer: "Да. Для длинномера обычно подходят консольные, ячеистые или специальные системы под погрузчик и кран-балку."
+    answer: "Да. Для труб, профиля, балок и швеллера обычно подходят консольные, ячеистые или специальные системы под погрузчик и кран-балку."
   },
   {
     question: "Можно ли хранить листовой металл вертикально или в кассетах?",
@@ -298,18 +270,15 @@ export default function Home() {
               <a className="line-primary" href="#calculator">Рассчитать стоимость</a>
               <a className="line-secondary" href="#contacts">Связаться с инженером</a>
             </div>
-            <div className="hero-quick-links" aria-label="Ключевые категории">
-              {excelHomeCatalog.slice(0, 4).map((item, index) => {
-                const shortcut = getHeroShortcut(item.id);
-
-                return (
-                  <a href={`/catalog/${item.id}`} key={item.id}>
-                    <span className="hero-quick-index">{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{shortcut.title}</strong>
-                    <small>{shortcut.note}</small>
-                  </a>
-                );
-              })}
+            <div className="hero-calculator-spotlight">
+              <div>
+                <span>Калькулятор стоимости</span>
+                <strong>Предварительный расчет системы хранения за несколько шагов</strong>
+                <p>Клиент выбирает тип оборудования, размеры, нагрузку и опции, а инженер получает готовые вводные для предложения.</p>
+              </div>
+              <a href="#calculator">
+                Открыть калькулятор <ArrowRight size={18} />
+              </a>
             </div>
             <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
               {metrics.map((item) => (
@@ -329,6 +298,20 @@ export default function Home() {
             <span className="line-kicker">Каталог оборудования</span>
             <h2>Разделы для хранения металла и складской логистики</h2>
           </div>
+        </div>
+        <div className="catalog-summary reveal">
+          <article>
+            <strong>17 разделов</strong>
+            <span>от листового металла до складской логистики и ERP</span>
+          </article>
+          <article>
+            <strong>4 раздела с фото</strong>
+            <span>ключевые направления уже показывают реальные визуалы оборудования</span>
+          </article>
+          <article>
+            <strong>Клик по карточке</strong>
+            <span>перейти внутрь категории можно по изображению, тексту или любой зоне карточки</span>
+          </article>
         </div>
         <div className="catalog-grid">
           {excelHomeCatalog.map((item, index) => {
@@ -369,7 +352,7 @@ export default function Home() {
         <div className="section-title-row reveal">
           <div>
             <span className="line-kicker">Что можно хранить</span>
-            <h2>От листа до длинномера: один склад без хаоса</h2>
+            <h2>От листа до труб и профиля: один склад без хаоса</h2>
           </div>
           <p>Показываем не абстрактные карточки, а реальные сценарии: материал, способ доступа и техника загрузки.</p>
         </div>

@@ -62,7 +62,7 @@ export function recommendStorageSystem(input: CalculatorInput): RecommendedConfi
   if (input.material === "pipe" || input.material === "profile" || input.material === "longProduct") {
     return {
       productType: "cantilever",
-      title: "Консольный стеллаж для длинномерного металла",
+      title: "Консольный стеллаж для труб и профиля",
       rationale: [
         "Трубы, профиль и сортовой прокат удобнее хранить на консолях или в ячеистой структуре.",
         "Конструкция подбирается по длине, нагрузке на ярус и способу загрузки."

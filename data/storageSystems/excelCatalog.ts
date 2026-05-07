@@ -29,7 +29,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
   {
     id: "sort-and-pipe-storage",
     title: "Системы для хранения сортового и трубного металлопроката",
-    summary: "Хранение труб, профиля, балок, швеллера и длинномерного проката.",
+    summary: "Хранение труб, профиля, балок, швеллера и сортового проката.",
     scenario: "Когда важно быстро находить типоразмер и безопасно подавать металл.",
     image: "/assets/images/catalog/03-sort-and-pipe-storage.jpg",
     featured: true
@@ -37,7 +37,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
   {
     id: "manual-sort-and-pipe-storage",
     title: "Ручные системы для хранения сортового и трубного металлопроката",
-    summary: "Конструкции для ручного или полумеханизированного обслуживания длинномера.",
+    summary: "Конструкции для ручного или полумеханизированного обслуживания труб, профиля и сортового проката.",
     scenario: "Для складов с понятной номенклатурой и умеренным оборотом.",
     image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.webp",
     featured: true
@@ -80,7 +80,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
   {
     id: "cantilever-racks",
     title: "Консольные стеллажи",
-    summary: "Классика для длинномера: труб, профиля, балок и швеллера.",
+    summary: "Классика для труб, профиля, балок и швеллера.",
     scenario: "Для загрузки погрузчиком или кран-балкой.",
     image: visualAssets.steelProfile
   },
