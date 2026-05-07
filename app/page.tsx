@@ -49,6 +49,18 @@ const metrics = [
   { value: "15+ лет", label: "производим оборудование" }
 ];
 
+const heroSignals = [
+  "Под лист и длинномер",
+  "Под кран-балку и погрузчик",
+  "Под реальные ограничения цеха"
+];
+
+const heroChecklist = [
+  "Разбираем номенклатуру и потоки материала",
+  "Подбираем систему под размеры и нагрузку",
+  "Передаем менеджеру и инженеру готовые вводные"
+];
+
 const nav = [
   ["Калькулятор", "#calculator"],
   ["Кейсы", "#cases"],
@@ -57,6 +69,18 @@ const nav = [
   ["FAQ", "#faq"],
   ["Контакты", "#contacts"]
 ] as const;
+
+const featuredCatalog = excelHomeCatalog.filter((item) => item.featured);
+const secondaryCatalog = excelHomeCatalog.filter((item) => !item.featured);
+
+function getCatalogBadge(id: string) {
+  if (id.includes("auto") || id.includes("automated")) return "Автоматизация";
+  if (id.includes("manual")) return "Ручная система";
+  if (id.includes("pipe") || id.includes("cantilever")) return "Длинномер";
+  if (id.includes("warehouse") || id.includes("erp")) return "Склад и учет";
+  if (id.includes("lifting")) return "Подача и подъем";
+  return "Категория";
+}
 
 const storedMaterials = [
   { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", image: visualAssets.sheetMetal, icon: Layers3 },
@@ -232,10 +256,19 @@ export default function Home() {
         </div>
         <div className="line-hero-overlay" />
         <div className="line-hero-inner">
-          <div className="hero-quick-links" aria-label="Быстрые разделы">
-            {excelHomeCatalog.slice(0, 4).map((item) => (
-              <a href={`/catalog/${item.id}`} key={item.id}><span />{item.title}</a>
-            ))}
+          <div className="hero-topline">
+            <div className="hero-quick-links" aria-label="Быстрые разделы">
+              {excelHomeCatalog.slice(0, 4).map((item) => (
+                <a href={`/catalog/${item.id}`} key={item.id}><span />{item.title}</a>
+              ))}
+            </div>
+            <aside className="hero-brief reveal">
+              <span className="hero-brief-label">Быстрый вход в проект</span>
+              <strong>Не витрина, а рабочий инструмент для склада и производства</strong>
+              <ul>
+                {heroChecklist.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </aside>
           </div>
           <div className="line-hero-content reveal">
             <span className="line-kicker">КБ Парус / складские системы для металла</span>
@@ -243,21 +276,31 @@ export default function Home() {
             <p>
               Подбор, производство и внедрение систем для листа, труб, профиля, сортового проката и складской логистики.
             </p>
+            <div className="hero-signal-row" aria-label="Ключевые преимущества">
+              {heroSignals.map((item) => <span key={item}>{item}</span>)}
+            </div>
             <div className="line-actions">
               <a className="line-primary" href="#calculator">Рассчитать стоимость</a>
               <a className="line-secondary" href="#contacts">Связаться с инженером</a>
             </div>
-            <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
-              {metrics.map((item) => (
-                <article key={item.value}>
-                  <strong>{item.value}</strong>
-                  <span>{item.label}</span>
-                </article>
-              ))}
+            <div className="hero-bottomline">
+              <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
+                {metrics.map((item) => (
+                  <article key={item.value}>
+                    <strong>{item.value}</strong>
+                    <span>{item.label}</span>
+                  </article>
+                ))}
+              </div>
+              <div className="hero-command-card">
+                <span>Что получает клиент</span>
+                <strong>Категорию, конфигурацию и стартовую цену в одном маршруте</strong>
+                <a href="#catalog">Смотреть каталог <ArrowRight size={16} /></a>
+              </div>
             </div>
           </div>
-          </div>
-        </section>
+        </div>
+      </section>
 
       <section className="line-section" id="catalog">
         <div className="section-title-row reveal">
@@ -265,14 +308,43 @@ export default function Home() {
             <span className="line-kicker">Каталог оборудования</span>
             <h2>Разделы для хранения металла и складской логистики</h2>
           </div>
-          <p>Каталог собран по утвержденной структуре ассортимента: без лишних разделов и внутренних пометок.</p>
+          <p>Каталог собран по утвержденной структуре ассортимента: сначала самые важные промышленные решения, затем складские и сервисные разделы.</p>
         </div>
-        <div className="line-catalog">
-          {excelHomeCatalog.map((item, index) => (
-            <article className={item.featured ? "catalog-card catalog-card-featured reveal" : "catalog-card reveal"} key={item.id}>
+        <div className="catalog-summary reveal">
+          <article>
+            <strong>17 разделов</strong>
+            <span>от листового металла до складской логистики и ERP</span>
+          </article>
+          <article>
+            <strong>4 приоритетных направления</strong>
+            <span>самые частые сценарии, с которых обычно начинается подбор</span>
+          </article>
+          <article>
+            <strong>Переход внутрь категории</strong>
+            <span>каждый раздел открывается как отдельная рабочая страница</span>
+          </article>
+        </div>
+        <div className="catalog-feature-grid">
+          {featuredCatalog.map((item, index) => (
+            <article className="catalog-card catalog-card-featured reveal" key={item.id}>
               <img src={item.image} alt={item.title} />
               <div>
+                <small>{getCatalogBadge(item.id)}</small>
                 <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{item.title}</h3>
+                <p>{item.scenario}</p>
+                <a href={`/catalog/${item.id}`}>Открыть категорию <ArrowRight size={16} /></a>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="catalog-secondary-grid">
+          {secondaryCatalog.map((item, index) => (
+            <article className="catalog-card catalog-card-compact reveal" key={item.id}>
+              <img src={item.image} alt={item.title} />
+              <div>
+                <small>{getCatalogBadge(item.id)}</small>
+                <span>{String(featuredCatalog.length + index + 1).padStart(2, "0")}</span>
                 <h3>{item.title}</h3>
                 <p>{item.summary}</p>
                 <a href={`/catalog/${item.id}`}>Перейти в раздел <ArrowRight size={16} /></a>
