@@ -154,10 +154,10 @@ const reviews = [
 ];
 
 const aboutMetrics = [
-  { value: "2009", label: "работаем с промышленным оборудованием" },
-  { value: "15+ лет", label: "проектируем и производим решения" },
-  { value: "3000+", label: "покупателей оборудования" },
-  { value: "18 мес.", label: "гарантийный подход к продукции" }
+  { value: "2009", label: "работаем с промышленным оборудованием", icon: Factory },
+  { value: "15+ лет", label: "проектируем и производим решения", icon: Wrench },
+  { value: "3000+", label: "покупателей оборудования", icon: BadgeCheck },
+  { value: "18 мес.", label: "гарантийный подход к продукции", icon: ShieldCheck }
 ];
 
 const advantages = [
@@ -175,14 +175,10 @@ const shipmentSteps = [
   { title: "Отгружаем на объект", text: "Готовим оборудование, документы и передаем систему в монтаж.", icon: Route }
 ];
 
-const partners = [
-  { name: "Delem", mark: "DE" },
-  { name: "Uniteller", mark: "UN" },
-  { name: "Purelogic", mark: "PL" },
-  { name: "HIWIN", mark: "HW" },
-  { name: "Металлообработка", mark: "М" },
-  { name: "Машиностроение", mark: "МП" }
-];
+const partners = Array.from({ length: 8 }, (_, index) => ({
+  name: `Логотип партнера ${index + 1}`,
+  mark: String(index + 1).padStart(2, "0")
+}));
 
 const faq = [
   {
@@ -440,9 +436,9 @@ export default function Home() {
         <div className="section-title-row reveal">
           <div>
             <span className="line-kicker">География поставок</span>
-            <h2>Поставляем оборудование по России</h2>
+            <h2>Поставляем оборудование по России и за ее пределы</h2>
           </div>
-          <p>Ниже оставлена рабочая Яндекс.Карта. На следующем этапе точки поставок можно хранить в админке и выводить по городам.</p>
+          <p>Если проект находится за рубежом, мы все равно можем рассчитать оборудование, логистику и условия поставки.</p>
         </div>
         <div className="geo-yandex-stage reveal">
           <iframe
@@ -499,17 +495,22 @@ export default function Home() {
           <a className="line-secondary" href="#contacts">Связаться с инженером</a>
         </div>
         <div className="line-metrics">
-          {aboutMetrics.map((item) => <article key={item.value}><strong>{item.value}</strong><span>{item.label}</span></article>)}
+          {aboutMetrics.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article key={item.value}>
+                <Icon size={30} />
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            );
+          })}
         </div>
       </section>
 
       <section className="line-main-site-banner reveal">
-        <div>
-          <BrandMark compact />
-          <span>Компания «КБ Парус» производит и поставляет станки по металлообработке</span>
-          <h2>Станки с ЧПУ PARUS</h2>
-        </div>
-        <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Каталог kbparus.ru</a>
+        <img src="/assets/images/kbparus-cnc-banner.png" alt="КБ Парус — производитель оборудования для металлообработки" />
+        <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Перейти на kbparus.ru</a>
       </section>
 
       <section className="line-section">
@@ -565,7 +566,7 @@ export default function Home() {
           {partners.map((partner) => (
             <article className="partner-logo reveal" key={partner.name}>
               <span>{partner.mark}</span>
-              <strong>{partner.name}</strong>
+              <strong>Логотип будет добавлен</strong>
             </article>
           ))}
         </div>
@@ -629,6 +630,15 @@ export default function Home() {
           title="Карта: КБ Парус, Ногинск"
           loading="lazy"
         />
+        <a
+          className="route-button reveal"
+          href="https://yandex.ru/maps/?rtext=~55.868726%2C38.428623&rtt=auto"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Route size={18} />
+          Проложить маршрут
+        </a>
       </section>
 
       <footer className="line-footer">
