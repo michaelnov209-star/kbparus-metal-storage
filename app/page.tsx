@@ -50,12 +50,6 @@ const metrics = [
   { value: "15+ лет", label: "производим оборудование" }
 ];
 
-const heroSignals = [
-  "Под лист, трубы и профиль",
-  "Под кран-балку и погрузчик",
-  "Под реальные ограничения цеха"
-];
-
 const nav = [
   ["Калькулятор", "#calculator"],
   ["Кейсы", "#cases"],
@@ -268,26 +262,6 @@ export default function Home() {
           <div className="line-hero-content reveal">
             <span className="line-kicker">КБ Парус / складские системы для металла</span>
             <h1><strong>Системы хранения</strong> металла</h1>
-            <p>
-              Подбор, производство и внедрение систем для листа, труб, профиля, сортового проката и складской логистики.
-            </p>
-            <div className="hero-signal-row" aria-label="Ключевые преимущества">
-              {heroSignals.map((item) => <span key={item}>{item}</span>)}
-            </div>
-            <div className="line-actions">
-              <a className="line-primary" href="#calculator">Рассчитать стоимость</a>
-              <a className="line-secondary" href="#contacts">Связаться с инженером</a>
-            </div>
-            <div className="hero-calculator-spotlight">
-              <div>
-                <span>Калькулятор стоимости</span>
-                <strong>Предварительный расчет системы хранения за несколько шагов</strong>
-                <p>Клиент выбирает тип оборудования, размеры, нагрузку и опции, а инженер получает готовые вводные для предложения.</p>
-              </div>
-              <a href="#calculator">
-                Открыть калькулятор <ArrowRight size={18} />
-              </a>
-            </div>
             <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
               {metrics.map((item) => (
                 <article key={item.value}>

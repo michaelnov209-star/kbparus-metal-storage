@@ -82,6 +82,32 @@ const dimensionHints = {
   towerCount: "Количество башен или секций системы. Чем больше башен, тем выше вместимость."
 };
 
+const guidedChoices: Array<{
+  title: string;
+  text: string;
+  profileId: CalculatorProfileId;
+  comment: string;
+}> = [
+  {
+    title: "Храним листовой металл",
+    text: "Листы, пачки листа, форматные заготовки.",
+    profileId: "auto-sheet-metal",
+    comment: "Клиент выбрал быстрый подбор: хранение листового металла."
+  },
+  {
+    title: "Храним трубы и профиль",
+    text: "Трубы, профиль, балки, швеллер, сортовой прокат.",
+    profileId: "auto-sort-metal",
+    comment: "Клиент выбрал быстрый подбор: хранение труб, профиля и сортового проката."
+  },
+  {
+    title: "Нужен прямой доступ к кассетам",
+    text: "Важно выдвигать нужный уровень без разбора соседних.",
+    profileId: "rollout-cassette-rack",
+    comment: "Клиент выбрал быстрый подбор: нужен прямой доступ к выкатным кассетам."
+  }
+];
+
 function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
   const profile = getCalculatorProfile(profileId);
   const defaults = profile.defaultValues;
@@ -145,6 +171,15 @@ export function Calculator() {
 
   function selectProfile(profileId: CalculatorProfileId) {
     setInput(buildInputForProfile(profileId));
+    setLeadStatus("");
+  }
+
+  function selectGuidedChoice(profileId: CalculatorProfileId, comment: string) {
+    setInput({
+      ...buildInputForProfile(profileId),
+      comment
+    });
+    setStep(1);
     setLeadStatus("");
   }
 
@@ -242,7 +277,23 @@ export function Calculator() {
                   <p>Начните с типа системы. На следующем шаге останутся только параметры, которые действительно нужны для расчета.</p>
                 </div>
               </div>
-                <div className="profile-grid">
+
+              <div className="guided-picker">
+                <div>
+                  <span className="guided-kicker">Не знаете, что выбрать?</span>
+                  <strong>Начните с материала — мы подставим подходящий тип системы</strong>
+                </div>
+                <div className="guided-actions">
+                  {guidedChoices.map((choice) => (
+                    <button key={choice.title} type="button" onClick={() => selectGuidedChoice(choice.profileId, choice.comment)}>
+                      <span>{choice.title}</span>
+                      <small>{choice.text}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="profile-grid">
                 {calculatorProfiles.map((item) => {
                   const card = profileCopy[item.id];
                   return (
@@ -281,8 +332,19 @@ export function Calculator() {
                   <strong>Габариты рабочей зоны</strong>
                   <span>Это полезное пространство, куда будет помещаться лист, труба, профиль или кассета.</span>
                 </div>
+                <div className="dimension-coach" aria-label="Как читать габариты">
+                  <div className="dimension-box">
+                    <span className="dimension-length">Длина {input.lengthMm.toLocaleString("ru-RU")} мм</span>
+                    <span className="dimension-width">Ширина {input.widthMm.toLocaleString("ru-RU")} мм</span>
+                    <span className="dimension-height">Высота {input.heightMm.toLocaleString("ru-RU")} мм</span>
+                  </div>
+                  <div>
+                    <strong>Как выбрать размеры?</strong>
+                    <p>Берите размер под самый крупный лист, трубу или пачку металла. Если сомневаетесь, выбирайте ближайшее значение с запасом.</p>
+                  </div>
+                </div>
                 <OptionGroup
-                  title="Высота ячейки / полки"
+                  title="Какая высота нужна под материал?"
                   hint={dimensionHints.heightMm}
                   unit="мм"
                   values={profile.heightOptions.map((option) => option.value)}
@@ -290,7 +352,7 @@ export function Calculator() {
                   onSelect={(value) => setNumberField("heightMm", value)}
                 />
                 <OptionGroup
-                  title="Ширина рабочей зоны"
+                  title="Какая ширина нужна под лист или пачку?"
                   hint={dimensionHints.widthMm}
                   unit="мм"
                   values={profile.widthOptions.map((option) => option.value)}
@@ -298,7 +360,7 @@ export function Calculator() {
                   onSelect={(value) => setNumberField("widthMm", value)}
                 />
                 <OptionGroup
-                  title="Длина рабочей зоны"
+                  title="Какая максимальная длина материала?"
                   hint={dimensionHints.lengthMm}
                   unit="мм"
                   values={profile.lengthOptions.map((option) => option.value)}
@@ -314,7 +376,7 @@ export function Calculator() {
                   <span>Здесь задается вес металла на уровень и количество мест хранения в системе.</span>
                 </div>
                 <OptionGroup
-                  title="Нагрузка на полку / кассету"
+                  title="Сколько весит материал на одном уровне?"
                   hint={dimensionHints.loadKg}
                   unit="кг"
                   values={profile.loadOptions.map((option) => option.value)}
@@ -322,7 +384,7 @@ export function Calculator() {
                   onSelect={(value) => setNumberField("loadKg", value)}
                 />
                 <OptionGroup
-                  title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"}
+                  title={profile.pricing.kind === "hybrid" ? "Сколько полок обслуживает погрузчик?" : "Сколько уровней хранения нужно?"}
                   hint={dimensionHints.shelfCount}
                   unit="шт."
                   values={profile.shelfCountOptions}
@@ -331,7 +393,7 @@ export function Calculator() {
                 />
                 {profile.rolloutShelfCountOptions && (
                   <OptionGroup
-                    title="Выкатные кассеты"
+                    title="Сколько выкатных кассет нужно?"
                     hint={dimensionHints.rolloutShelfCount}
                     unit="шт."
                     values={profile.rolloutShelfCountOptions}
@@ -340,7 +402,7 @@ export function Calculator() {
                   />
                 )}
                 <OptionGroup
-                  title="Количество башен / секций"
+                  title="Сколько башен или секций ставим?"
                   hint={dimensionHints.towerCount}
                   unit="шт."
                   values={profile.towerCountOptions}
@@ -462,6 +524,15 @@ export function Calculator() {
                     <span><small>Безопасность</small><strong>запас прочности и монтаж</strong></span>
                   </div>
                 </section>
+                <section>
+                  <h4>Что вы получите после заявки</h4>
+                  <div className="deliverable-grid">
+                    <span><small>Схема под склад</small><strong>размещение и проходы</strong></span>
+                    <span><small>Проверка нагрузки</small><strong>полки, опоры, запас</strong></span>
+                    <span><small>Подбор исполнения</small><strong>опции, покраска, монтаж</strong></span>
+                    <span><small>Следующий шаг</small><strong>предложение от инженера</strong></span>
+                  </div>
+                </section>
               </div>
 
               <div className="calc-contact-grid">
@@ -485,7 +556,7 @@ export function Calculator() {
 
               <button className="primary-button" type="button" onClick={submitLead}>
                 <Send size={18} />
-                Получить инженерный расчет
+                Получить расчет и схему под склад
               </button>
               {leadStatus && <p className="lead-status">{leadStatus}</p>}
             </div>
