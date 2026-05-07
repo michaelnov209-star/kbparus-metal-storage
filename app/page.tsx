@@ -2,10 +2,10 @@ import { BrandMark } from "@/components/BrandMark";
 import { Calculator } from "@/components/Calculator";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
+import { SliderControls } from "@/components/SliderControls";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import {
-  ArrowLeft,
   ArrowRight,
   BadgeCheck,
   Boxes,
@@ -84,35 +84,39 @@ function getCatalogPlaceholder(id: string) {
 }
 
 const storedMaterials = [
-  { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", image: visualAssets.sheetMetal, icon: Layers3 },
-  { title: "Трубы и профиль", text: "Круглые и профильные трубы, уголок, швеллер, балка.", image: visualAssets.tubesProfile, icon: Boxes },
-  { title: "Сортовой прокат", text: "Пруток, уголок, швеллер, балка, пачки заготовок и смешанная номенклатура.", image: visualAssets.steelProfile, icon: Warehouse },
-  { title: "Оснастка и комплектующие", text: "Инструмент, расходники, кабель, паллеты и складские позиции.", image: visualAssets.warehouse, icon: PackageCheck }
+  { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", label: "Лист / кассеты", icon: Layers3 },
+  { title: "Трубы и профиль", text: "Круглые и профильные трубы, уголок, швеллер, балка.", label: "Трубы / профиль", icon: Boxes },
+  { title: "Сортовой прокат", text: "Пруток, уголок, швеллер, балка, пачки заготовок и смешанная номенклатура.", label: "Пруток / балка", icon: Warehouse },
+  { title: "Оснастка и комплектующие", text: "Инструмент, расходники, кабель, паллеты и складские позиции.", label: "Оснастка / ЗИП", icon: PackageCheck }
 ];
 
 const cases = [
   {
-    customer: "Металлообрабатывающий цех",
-    title: "Организовали листовой металл рядом с зоной резки",
-    result: "Материал перестал занимать проходы, оператор быстрее подает нужный лист к станку.",
+    customer: "Компания-заказчик",
+    title: "Хранение листового металла рядом с зоной резки",
+    task: "Убрать листы из проходов и ускорить подачу материала к станку.",
+    result: "Система хранения освободила рабочую зону и упростила поиск нужного формата.",
     image: visualAssets.productionLine
   },
   {
-    customer: "Склад металлопроката",
-    title: "Разделили трубы и профиль по типоразмерам",
-    result: "Погрузчик подъезжает к нужной зоне без перекладки соседних пачек.",
+    customer: "Компания-заказчик",
+    title: "Адресное хранение труб и профиля",
+    task: "Разделить типоразмеры и убрать постоянную перекладку пачек.",
+    result: "Погрузчик подъезжает к нужной зоне без лишних маневров и потери времени.",
     image: visualAssets.tubesProfile
   },
   {
-    customer: "Производство металлоконструкций",
-    title: "Подобрали консольное хранение под трубы и профиль",
+    customer: "Компания-заказчик",
+    title: "Консольные стеллажи для металлоконструкций",
+    task: "Организовать балки, швеллер и профиль с доступом кран-балкой.",
     result: "Склад стал понятнее для мастеров, а выдача металла стала безопаснее.",
     image: visualAssets.steelProfile
   },
   {
-    customer: "Сервисный участок",
-    title: "Собрали компактную систему с выкатными кассетами",
-    result: "Лист и заготовки доступны без лишних перемещений и повреждений.",
+    customer: "Компания-заказчик",
+    title: "Выкатные кассеты для частого отбора",
+    task: "Дать прямой доступ к листу и заготовкам без повреждений.",
+    result: "Оператор получает нужную кассету без разбора соседних уровней.",
     image: visualAssets.forklift
   }
 ];
@@ -171,7 +175,14 @@ const shipmentSteps = [
   { title: "Отгружаем на объект", text: "Готовим оборудование, документы и передаем систему в монтаж.", icon: Route }
 ];
 
-const partners = ["Delem", "Uniteller", "Purelogic", "HIWIN", "Металлообработка", "Машиностроение"];
+const partners = [
+  { name: "Delem", mark: "DE" },
+  { name: "Uniteller", mark: "UN" },
+  { name: "Purelogic", mark: "PL" },
+  { name: "HIWIN", mark: "HW" },
+  { name: "Металлообработка", mark: "М" },
+  { name: "Машиностроение", mark: "МП" }
+];
 
 const faq = [
   {
@@ -305,19 +316,19 @@ export default function Home() {
             <span>от листового металла до складской логистики и ERP</span>
           </article>
           <article>
-            <strong>4 раздела с фото</strong>
-            <span>ключевые направления уже показывают реальные визуалы оборудования</span>
+            <strong>Подбор по задаче</strong>
+            <span>лист, трубы, профиль, паллеты, кабель, складская техника и учет</span>
           </article>
           <article>
-            <strong>Клик по карточке</strong>
-            <span>перейти внутрь категории можно по изображению, тексту или любой зоне карточки</span>
+            <strong>Фото добавляются</strong>
+            <span>категории без утвержденного изображения показываются с аккуратной заглушкой</span>
           </article>
         </div>
         <div className="catalog-grid">
           {excelHomeCatalog.map((item, index) => {
             const placeholder = getCatalogPlaceholder(item.id);
             const PlaceholderIcon = placeholder.icon;
-            const hasImage = Boolean(item.featured);
+            const hasImage = Boolean(item.featured) && item.id !== "manual-sheet-metal";
 
             return (
               <a className="catalog-card reveal" href={`/catalog/${item.id}`} key={item.id}>
@@ -354,16 +365,18 @@ export default function Home() {
             <span className="line-kicker">Что можно хранить</span>
             <h2>От листа до труб и профиля: один склад без хаоса</h2>
           </div>
-          <p>Показываем не абстрактные карточки, а реальные сценарии: материал, способ доступа и техника загрузки.</p>
+          <p>Показываем материал понятными группами: что лежит на складе, как к нему подходят и чем его забирают.</p>
         </div>
         <div className="material-grid">
           {storedMaterials.map((item) => {
             const Icon = item.icon;
             return (
               <article className="material-card reveal" key={item.title}>
-                <img src={item.image} alt={item.title} />
+                <div className="material-placeholder" aria-hidden="true">
+                  <Icon size={46} />
+                  <strong>{item.label}</strong>
+                </div>
                 <div>
-                  <Icon size={26} />
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
                 </div>
@@ -405,32 +418,23 @@ export default function Home() {
         <div className="section-title-row reveal">
           <div>
             <span className="line-kicker">Кейсы</span>
-            <h2>Сценарии внедрения для производственных складов</h2>
+            <h2>Кейсы внедрения систем хранения</h2>
           </div>
-          <div className="slider-arrows" aria-label="Навигация по кейсам">
-            <button type="button"><ArrowLeft size={24} /></button>
-            <button type="button"><ArrowRight size={24} /></button>
-          </div>
+          <SliderControls targetId="cases-slider" label="Навигация по кейсам" />
         </div>
-        <div className="case-slider">
+        <div className="case-slider" id="cases-slider">
           {cases.map((item) => (
             <article className="case-card reveal" key={item.title}>
               <img src={item.image} alt={item.title} />
               <a href="#contacts" aria-label={`Обсудить кейс: ${item.title}`}><ArrowRight size={24} /></a>
               <h3>{item.customer}</h3>
               <strong>{item.title}</strong>
-              <p>{item.result}</p>
+              <p><b>Задача:</b> {item.task}</p>
+              <p><b>Результат:</b> {item.result}</p>
             </article>
           ))}
         </div>
       </section>
-
-      <Banner
-        title="Поможем подобрать подходящее оборудование"
-        text="Если вы не уверены, какую систему выбрать, начните с заявки. Мы уточним материал, помещение, способ загрузки и предложим рабочую схему."
-        href="#contacts"
-        action="Подобрать решение"
-      />
 
       <section className="line-section line-map-section" id="geography">
         <div className="section-title-row reveal">
@@ -438,24 +442,20 @@ export default function Home() {
             <span className="line-kicker">География поставок</span>
             <h2>Поставляем оборудование по России</h2>
           </div>
-          <p>Наводите на точки, чтобы увидеть пример направления проекта и город поставки.</p>
+          <p>Ниже оставлена рабочая Яндекс.Карта. На следующем этапе точки поставок можно хранить в админке и выводить по городам.</p>
         </div>
-        <div className="geo-map-stage reveal" aria-label="Интерактивная карта поставок">
-          <svg className="russia-silhouette" viewBox="0 0 1000 420" aria-hidden="true">
-            <path d="M43 205 88 176l73 9 58-44 88 7 42-45 87 28 59-23 88 36 82-31 88 33 114 14 86 47-41 54-104-13-68 50-119-18-83 43-92-30-76 43-118-37-74 33-91-42-89 16-51-51Z" />
-            <path d="M132 261 195 250l46 31-30 43-77 13-48-33 46-43Z" />
-            <path d="M760 252 845 242l90 33-47 38-105-9-23-52Z" />
-          </svg>
-          {geoProjects.map((item) => (
-            <button className="geo-point" style={{ left: `${item.x}%`, top: `${item.y}%` }} type="button" key={item.city}>
-              <MapPin size={18} />
-              <span className="geo-popover"><strong>{item.city}</strong>{item.company}</span>
-            </button>
-          ))}
-          <div className="geo-stat-card">
-            <Globe2 size={34} />
-            <strong>700+ городов</strong>
-            <span>опыт поставок и обслуживания оборудования</span>
+        <div className="geo-yandex-stage reveal">
+          <iframe
+            src="https://yandex.ru/map-widget/v1/?ll=82.923450%2C55.028190&z=3&l=map"
+            title="География поставок КБ Парус по России"
+            loading="lazy"
+          />
+          <div className="geo-project-list" aria-label="Примеры городов поставок">
+            <strong>Примеры направлений</strong>
+            {geoProjects.map((item) => (
+              <span key={item.city}><MapPin size={16} />{item.city}: {item.company}</span>
+            ))}
+            <b><Globe2 size={18} />700+ городов обслуживания</b>
           </div>
         </div>
       </section>
@@ -466,12 +466,9 @@ export default function Home() {
             <span className="line-kicker">Отзывы</span>
             <h2>Покупатели хвалят качество нашего оборудования</h2>
           </div>
-          <div className="slider-arrows" aria-label="Навигация по отзывам">
-            <button type="button"><ArrowLeft size={24} /></button>
-            <button type="button"><ArrowRight size={24} /></button>
-          </div>
+          <SliderControls targetId="reviews-slider" label="Навигация по отзывам" />
         </div>
-        <div className="review-slider">
+        <div className="review-slider" id="reviews-slider">
           {reviews.map((review) => (
             <article className="review-card reveal" key={review.name}>
               <div className="review-avatar"><Quote size={24} /></div>
@@ -562,13 +559,15 @@ export default function Home() {
             <span className="line-kicker">Партнеры</span>
             <h2>Партнеры, которые нам доверяют</h2>
           </div>
-          <div className="slider-arrows" aria-label="Навигация по партнерам">
-            <button type="button"><ArrowLeft size={24} /></button>
-            <button type="button"><ArrowRight size={24} /></button>
-          </div>
+          <SliderControls targetId="partners-slider" label="Навигация по партнерам" />
         </div>
-        <div className="line-partners">
-          {partners.map((partner) => <article className="reveal" key={partner}>{partner}</article>)}
+        <div className="line-partners" id="partners-slider">
+          {partners.map((partner) => (
+            <article className="partner-logo reveal" key={partner.name}>
+              <span>{partner.mark}</span>
+              <strong>{partner.name}</strong>
+            </article>
+          ))}
         </div>
       </section>
 

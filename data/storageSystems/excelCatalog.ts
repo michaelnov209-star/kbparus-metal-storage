@@ -23,8 +23,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
     title: "Ручные системы для хранения листового металла",
     summary: "Простые системы хранения листа без сложной автоматики.",
     scenario: "Для небольших складов, сервисных зон и участков ручного отбора.",
-    image: visualAssets.sheetMetal,
-    featured: true
+    image: visualAssets.sheetMetal
   },
   {
     id: "sort-and-pipe-storage",
