@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
+import { ProductGallery } from "@/components/ProductGallery";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { catalogProducts, getCatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
@@ -52,10 +53,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       </div>
 
       <section className="product-hero">
-        <div className="product-hero-visual">
-          <span>{product.badge}</span>
-          <img src={product.image} alt={product.title} />
-        </div>
+        <ProductGallery images={product.gallery.length > 0 ? product.gallery : [product.image]} title={product.title} badge={product.badge} />
         <div className="product-hero-copy">
           <span className="line-kicker">Карточка оборудования</span>
           <h1>{product.title}</h1>

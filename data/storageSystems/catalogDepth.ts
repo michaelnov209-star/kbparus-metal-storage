@@ -62,8 +62,12 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Автоматизированная система для хранения листового металла Compact 3000x1500",
     shortTitle: "Compact 3000x1500",
     sku: "KBP-SHM-COMPACT-3000-1500",
-    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
-    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    image: "/assets/images/products/auto-sheet-metal/1.1.jpg",
+    gallery: [
+      "/assets/images/products/auto-sheet-metal/1.1.jpg",
+      "/assets/images/products/auto-sheet-metal/1.2.jpg",
+      "/assets/images/products/auto-sheet-metal/1.3.jpg"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Товар",
@@ -95,8 +99,13 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Автоматизированная система для хранения листового металла Logic",
     shortTitle: "Logic",
     sku: "KBP-SHM-LOGIC",
-    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
-    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    image: "/assets/images/products/auto-sheet-metal/2.1.jpg",
+    gallery: [
+      "/assets/images/products/auto-sheet-metal/2.1.jpg",
+      "/assets/images/products/auto-sheet-metal/2.2.jpg",
+      "/assets/images/products/auto-sheet-metal/2.3.jpg",
+      "/assets/images/products/auto-sheet-metal/2.4.jpg"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Товар",
@@ -128,8 +137,13 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Автоматизированная система для хранения листового металла Spider",
     shortTitle: "Spider",
     sku: "KBP-SHM-SPIDER",
-    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
-    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    image: "/assets/images/products/auto-sheet-metal/3.1.jpg",
+    gallery: [
+      "/assets/images/products/auto-sheet-metal/3.1.jpg",
+      "/assets/images/products/auto-sheet-metal/3.2.jpg",
+      "/assets/images/products/auto-sheet-metal/3.3.jpg",
+      "/assets/images/products/auto-sheet-metal/3.4.jpg"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Товар",
@@ -161,8 +175,12 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Автоматизированная система для хранения листового металла Cross",
     shortTitle: "Cross",
     sku: "KBP-SHM-CROSS",
-    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
-    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    image: "/assets/images/products/auto-sheet-metal/4.1.jpg",
+    gallery: [
+      "/assets/images/products/auto-sheet-metal/4.1.jpg",
+      "/assets/images/products/auto-sheet-metal/4.2.jpg",
+      "/assets/images/products/auto-sheet-metal/4.3.jpg"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Товар",
