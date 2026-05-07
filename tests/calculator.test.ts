@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
+import { calculateStorageSystem, formatRoundedRub, normalizeCalculatorInput } from "@/lib/calculator";
 
 describe("Excel-based storage calculator", () => {
   it("matches the selected automated sheet metal Excel scenario", () => {
@@ -108,5 +108,9 @@ describe("Excel-based storage calculator", () => {
     );
 
     expect(result.fromPrice).toBe(1516679);
+  });
+
+  it("rounds public price display to thousands", () => {
+    expect(formatRoundedRub(34_428_563)).toBe("34 429 000 ₽");
   });
 });

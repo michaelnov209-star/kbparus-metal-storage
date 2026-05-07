@@ -9,52 +9,55 @@ import {
   Gauge,
   Info,
   Layers3,
+  MapPin,
+  MessageSquareText,
   PackageSearch,
   Ruler,
   Send,
-  ShieldCheck
+  ShieldCheck,
+  Warehouse
 } from "lucide-react";
 import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
-import { calculateStorageSystem, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
+import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
 
 const steps = ["Выберите оборудование", "Параметры оборудования", "Результат расчета"];
 
 const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: string; description: string; image: string }> = {
   "auto-sheet-metal": {
-    title: "Автоматизированная система хранения листового металла",
-    shortTitle: "Автоматический склад листа",
+    title: "Автоматический стеллаж листового металла",
+    shortTitle: "Автоматический стеллаж листового металла",
     description: "Для листового металла с подъемным модулем, выдачей паллет и опциями безопасности.",
-    image: visualAssets.engineering
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg"
   },
   "auto-sort-metal": {
-    title: "Автоматизированная система для сортового и трубного проката",
-    shortTitle: "Автоматический склад труб и профиля",
+    title: "Автоматический стеллаж сортового и трубного металлопроката",
+    shortTitle: "Автоматический стеллаж сортового и трубного металлопроката",
     description: "Для труб, профиля, балок и сортового проката с механизированной выдачей.",
-    image: visualAssets.tubesProfile
+    image: "/assets/images/catalog/03-sort-and-pipe-storage.jpg"
   },
   "rollout-cassette-rack": {
-    title: "Стеллаж с выкатными кассетами",
-    shortTitle: "Выкатные кассеты",
+    title: "Система хранения с выкатными полками",
+    shortTitle: "Система с выкатными полками",
     description: "Для листа и пачек, когда нужен прямой доступ к каждой кассете.",
     image: visualAssets.forklift
   },
   "forklift-cassette-rack": {
-    title: "Кассетный стеллаж под погрузчик",
-    shortTitle: "Кассеты под погрузчик",
-    description: "Для кассетного хранения листа с обслуживанием погрузчиком.",
+    title: "Кассетная система хранения листового металла",
+    shortTitle: "Кассетная система хранения листового металла",
+    description: "Для плотного хранения листа с доступом погрузчиком или складской техникой.",
     image: visualAssets.sheetMetal
   },
   "two-side-rollout-rack": {
-    title: "Двухсторонний стеллаж с выкатными кассетами",
-    shortTitle: "Двухсторонние кассеты",
+    title: "Двухсторонняя система хранения с выкатными полками",
+    shortTitle: "Двухсторонняя выкатная система",
     description: "Для складов, где нужен доступ к кассетам с одной или двух сторон.",
     image: visualAssets.steelProfile
   },
   "hybrid-rollout-rack": {
-    title: "Гибридный стеллаж с выкатными кассетами",
+    title: "Комбинированная система хранения с выкатными полками",
     shortTitle: "Гибридная система",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
     image: visualAssets.warehouse
@@ -117,6 +120,9 @@ export function Calculator() {
   const display = profileCopy[profile.id];
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
   const dimensionLabel = `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")}×${input.heightMm.toLocaleString("ru-RU")} мм`;
+  const roundedPrice = formatRoundedRub(animatedPrice);
+  const storedWeightLabel = result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
+  const supportLoadLabel = result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
 
   useEffect(() => {
     const fromValue = animatedPrice;
@@ -201,10 +207,10 @@ export function Calculator() {
     <section className="calculator-shell reveal" id="calculator">
       <div className="calculator-heading">
         <span className="line-kicker">Калькулятор стоимости</span>
-        <h2>Подберите систему хранения за несколько шагов</h2>
+        <h2>Подберите систему хранения без сложных таблиц и лишних вопросов</h2>
         <p>
-          Выберите тип оборудования, ходовые размеры, нагрузку, количество полок и опции. Сайт покажет стартовую
-          сумму от рассчитанного значения, а финальную стоимость уточнит инженер после проверки условий объекта.
+          Выберите тип оборудования, размеры, нагрузку и нужные опции. Конфигуратор покажет понятный ориентир
+          по стоимости, а инженер проверит запас прочности, помещение и способ загрузки.
         </p>
       </div>
       <div className="calculator-info-strip">
@@ -233,10 +239,10 @@ export function Calculator() {
                 <PackageSearch size={24} />
                 <div>
                   <h3>Выберите оборудование</h3>
-                  <p>Начните с наиболее близкого типа системы. На следующем шаге появятся только нужные параметры.</p>
+                  <p>Начните с типа системы. На следующем шаге останутся только параметры, которые действительно нужны для расчета.</p>
                 </div>
               </div>
-              <div className="profile-grid">
+                <div className="profile-grid">
                 {calculatorProfiles.map((item) => {
                   const card = profileCopy[item.id];
                   return (
@@ -246,9 +252,11 @@ export function Calculator() {
                       type="button"
                       onClick={() => selectProfile(item.id)}
                     >
-                      <img src={card.image} alt={card.title} />
-                      <span><Layers3 size={16} /> система</span>
-                      <strong>{card.shortTitle}</strong>
+                      <div className="profile-visual">
+                        <img src={card.image} alt={card.title} />
+                      </div>
+                      <span><Layers3 size={16} /> направление подбора</span>
+                      <strong>{card.title}</strong>
                       <small>{card.description}</small>
                     </button>
                   );
@@ -263,74 +271,89 @@ export function Calculator() {
                 <Ruler size={24} />
                 <div>
                   <h3>Параметры оборудования</h3>
-                  <p>Цифры ниже — готовые варианты размеров и нагрузок. Выберите ближайший вариант, чтобы быстро получить ориентир.</p>
+                  <p>Выберите готовые варианты размеров и нагрузок. Если точного значения нет, берите ближайший вариант с запасом.</p>
                 </div>
               </div>
 
-              <OptionGroup
-                title="Высота ячейки / полки"
-                hint={dimensionHints.heightMm}
-                unit="мм"
-                values={profile.heightOptions.map((option) => option.value)}
-                active={input.heightMm}
-                onSelect={(value) => setNumberField("heightMm", value)}
-              />
-              <OptionGroup
-                title="Ширина рабочей зоны"
-                hint={dimensionHints.widthMm}
-                unit="мм"
-                values={profile.widthOptions.map((option) => option.value)}
-                active={input.widthMm}
-                onSelect={(value) => setNumberField("widthMm", value)}
-              />
-              <OptionGroup
-                title="Длина рабочей зоны"
-                hint={dimensionHints.lengthMm}
-                unit="мм"
-                values={profile.lengthOptions.map((option) => option.value)}
-                active={input.lengthMm}
-                onSelect={(value) => setNumberField("lengthMm", value)}
-              />
-              <OptionGroup
-                title="Нагрузка на полку / кассету"
-                hint={dimensionHints.loadKg}
-                unit="кг"
-                values={profile.loadOptions.map((option) => option.value)}
-                active={input.loadKg}
-                onSelect={(value) => setNumberField("loadKg", value)}
-              />
-              <OptionGroup
-                title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"}
-                hint={dimensionHints.shelfCount}
-                unit="шт."
-                values={profile.shelfCountOptions}
-                active={input.shelfCount}
-                onSelect={(value) => setNumberField("shelfCount", value)}
-              />
-              {profile.rolloutShelfCountOptions && (
+              <div className="calc-parameter-section">
+                <div className="calc-section-label">
+                  <Ruler size={18} />
+                  <strong>Габариты рабочей зоны</strong>
+                  <span>Это полезное пространство, куда будет помещаться лист, труба, профиль или кассета.</span>
+                </div>
                 <OptionGroup
-                  title="Выкатные кассеты"
-                  hint={dimensionHints.rolloutShelfCount}
-                  unit="шт."
-                  values={profile.rolloutShelfCountOptions}
-                  active={input.rolloutShelfCount}
-                  onSelect={(value) => setNumberField("rolloutShelfCount", value)}
+                  title="Высота ячейки / полки"
+                  hint={dimensionHints.heightMm}
+                  unit="мм"
+                  values={profile.heightOptions.map((option) => option.value)}
+                  active={input.heightMm}
+                  onSelect={(value) => setNumberField("heightMm", value)}
                 />
-              )}
-              <OptionGroup
-                title="Количество башен / секций"
-                hint={dimensionHints.towerCount}
-                unit="шт."
-                values={profile.towerCountOptions}
-                active={input.towerCount}
-                onSelect={(value) => setNumberField("towerCount", value)}
-              />
+                <OptionGroup
+                  title="Ширина рабочей зоны"
+                  hint={dimensionHints.widthMm}
+                  unit="мм"
+                  values={profile.widthOptions.map((option) => option.value)}
+                  active={input.widthMm}
+                  onSelect={(value) => setNumberField("widthMm", value)}
+                />
+                <OptionGroup
+                  title="Длина рабочей зоны"
+                  hint={dimensionHints.lengthMm}
+                  unit="мм"
+                  values={profile.lengthOptions.map((option) => option.value)}
+                  active={input.lengthMm}
+                  onSelect={(value) => setNumberField("lengthMm", value)}
+                />
+              </div>
+
+              <div className="calc-parameter-section">
+                <div className="calc-section-label">
+                  <Gauge size={18} />
+                  <strong>Нагрузка и вместимость</strong>
+                  <span>Здесь задается вес металла на уровень и количество мест хранения в системе.</span>
+                </div>
+                <OptionGroup
+                  title="Нагрузка на полку / кассету"
+                  hint={dimensionHints.loadKg}
+                  unit="кг"
+                  values={profile.loadOptions.map((option) => option.value)}
+                  active={input.loadKg}
+                  onSelect={(value) => setNumberField("loadKg", value)}
+                />
+                <OptionGroup
+                  title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"}
+                  hint={dimensionHints.shelfCount}
+                  unit="шт."
+                  values={profile.shelfCountOptions}
+                  active={input.shelfCount}
+                  onSelect={(value) => setNumberField("shelfCount", value)}
+                />
+                {profile.rolloutShelfCountOptions && (
+                  <OptionGroup
+                    title="Выкатные кассеты"
+                    hint={dimensionHints.rolloutShelfCount}
+                    unit="шт."
+                    values={profile.rolloutShelfCountOptions}
+                    active={input.rolloutShelfCount}
+                    onSelect={(value) => setNumberField("rolloutShelfCount", value)}
+                  />
+                )}
+                <OptionGroup
+                  title="Количество башен / секций"
+                  hint={dimensionHints.towerCount}
+                  unit="шт."
+                  values={profile.towerCountOptions}
+                  active={input.towerCount}
+                  onSelect={(value) => setNumberField("towerCount", value)}
+                />
+              </div>
 
               {profile.pricing.kind === "rollout" && profile.pricing.sides && (
                 <div className="calc-option-group">
                   <div>
                     <span>Вариант выдвижения</span>
-                    <small>Выберите, с какой стороны оператор получает доступ к кассетам.</small>
+                    <small><Info size={14} />Выберите, с какой стороны оператор получает доступ к кассетам.</small>
                   </div>
                   <div className="calc-chip-row">
                     {profile.pricing.sides.map((side) => (
@@ -347,12 +370,12 @@ export function Calculator() {
                 </div>
               )}
 
-              <div className="calc-options-block">
+              <div className="calc-options-block calc-parameter-section">
                 <div className="calc-panel-title compact">
                   <ShieldCheck size={22} />
                   <div>
                     <h3>Дополнительные опции</h3>
-                    <p>Отметьте то, что нужно для безопасной загрузки, учета и работы с листом.</p>
+                    <p>Отметьте оборудование, которое влияет на удобство загрузки, безопасность и учет материала.</p>
                   </div>
                 </div>
                 <div className="option-list">
@@ -371,14 +394,27 @@ export function Calculator() {
                 </div>
               </div>
 
-              <div className="calc-fields-grid">
+              <div className="calc-client-block">
+                <div className="calc-section-label">
+                  <MapPin size={18} />
+                  <strong>Объект и условия работы</strong>
+                  <span>Необязательно заполнять подробно. Достаточно города и пары важных особенностей склада.</span>
+                </div>
                 <label className="text-field">
-                  Город клиента
-                  <input value={input.city} onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))} />
+                  <span><MapPin size={16} />Город или регион поставки</span>
+                  <input
+                    value={input.city}
+                    onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
+                    placeholder="Например: Москва, Казань, Минск"
+                  />
                 </label>
                 <label className="text-field">
-                  Комментарий
-                  <textarea value={input.comment ?? ""} onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))} />
+                  <span><MessageSquareText size={16} />Что важно учесть инженеру</span>
+                  <textarea
+                    value={input.comment ?? ""}
+                    onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
+                    placeholder="Например: загрузка кран-балкой, узкий проезд, нужен запас по нагрузке"
+                  />
                 </label>
               </div>
             </div>
@@ -400,16 +436,32 @@ export function Calculator() {
                   <h3>{display.title}</h3>
                   <p>{display.description}</p>
                 </div>
-                <strong>от {formatRub(animatedPrice)}</strong>
+                <div className="result-price-box">
+                  <small>предварительная стоимость</small>
+                  <strong>от {roundedPrice}</strong>
+                  <em>финальная цена после инженерной проверки</em>
+                </div>
               </div>
 
-              <div className="deliverable-grid">
-                <span>Габариты рабочей зоны: {dimensionLabel}</span>
-                <span>Нагрузка на полку: {input.loadKg.toLocaleString("ru-RU")} кг</span>
-                <span>Полки: {input.shelfCount.toLocaleString("ru-RU")} шт.</span>
-                <span>Башни / секции: {input.towerCount.toLocaleString("ru-RU")} шт.</span>
-                <span>Материал под нагрузкой: {result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU")} кг</span>
-                <span>Нагрузка на одну опору: {result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU")} кг</span>
+              <div className="calc-result-sections">
+                <section>
+                  <h4>Выбранная конфигурация</h4>
+                  <div className="deliverable-grid">
+                    <span><small>Рабочая зона</small><strong>{dimensionLabel}</strong></span>
+                    <span><small>Нагрузка на уровень</small><strong>{input.loadKg.toLocaleString("ru-RU")} кг</strong></span>
+                    <span><small>Количество полок</small><strong>{input.shelfCount.toLocaleString("ru-RU")} шт.</strong></span>
+                    <span><small>Башни / секции</small><strong>{input.towerCount.toLocaleString("ru-RU")} шт.</strong></span>
+                  </div>
+                </section>
+                <section>
+                  <h4>Что проверит инженер</h4>
+                  <div className="deliverable-grid">
+                    <span><small>Материал под нагрузкой</small><strong>{storedWeightLabel} кг</strong></span>
+                    <span><small>Ориентир на одну опору</small><strong>{supportLoadLabel} кг</strong></span>
+                    <span><small>Проверка склада</small><strong>загрузка и проходы</strong></span>
+                    <span><small>Безопасность</small><strong>запас прочности и монтаж</strong></span>
+                  </div>
+                </section>
               </div>
 
               <div className="calc-contact-grid">
@@ -453,22 +505,27 @@ export function Calculator() {
 
         <aside className="calc-summary">
           <span className="line-kicker">Живой расчет</span>
-          <h3>{display.shortTitle}</h3>
+          <h3>{display.title}</h3>
           <img src={display.image} alt={display.title} />
-          <div className="config-preview" aria-label="Визуальное превью конфигурации">
-            {Array.from({ length: Math.min(Math.max(input.shelfCount, input.rolloutShelfCount, 4), 10) }).map((_, index) => <i key={index} />)}
+          <div className="summary-helper">
+            <strong>Вы меняете параметры слева — расчет обновляется сразу.</strong>
+            <span>Это стартовая оценка для разговора с инженером, не финальное коммерческое предложение.</span>
+          </div>
+          <div className="summary-spec-grid" aria-label="Ключевые параметры">
+            <span><Ruler size={16} />{dimensionLabel}</span>
+            <span><Gauge size={16} />{input.loadKg.toLocaleString("ru-RU")} кг на уровень</span>
+            <span><Warehouse size={16} />{input.shelfCount.toLocaleString("ru-RU")} полок</span>
+            <span><Layers3 size={16} />{input.towerCount.toLocaleString("ru-RU")} секций</span>
           </div>
           <div className="summary-price">
-            от {formatRub(animatedPrice)}
+            от {roundedPrice}
             <small>ориентир для первичного подбора</small>
           </div>
-          <ul>
-            <li>Рабочая зона: {dimensionLabel}</li>
-            <li>Нагрузка: {input.loadKg.toLocaleString("ru-RU")} кг на уровень</li>
-            <li>Полки: {input.shelfCount.toLocaleString("ru-RU")}</li>
-            <li>Башни / секции: {input.towerCount.toLocaleString("ru-RU")}</li>
-            <li>Опции: {selectedOptions.length || "не выбраны"}</li>
-          </ul>
+          <div className="summary-checks">
+            <span><Check size={16} />Выбрано опций: {selectedOptions.length || "пока нет"}</span>
+            <span><Check size={16} />Суммарный вес: {storedWeightLabel} кг</span>
+            <span><Check size={16} />Опоры проверит инженер</span>
+          </div>
           <div className="calc-note">
             <Info size={18} />
             <span>Заявку и параметры расчета можно передать в CRM, 1С или складскую систему.</span>

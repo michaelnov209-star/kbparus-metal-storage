@@ -246,8 +246,8 @@ export default function Home() {
           {nav.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
         </nav>
         <div className="line-header-contact">
-          <a className="social-btn telegram" href="mailto:info@kbparus.ru" aria-label="Написать в Telegram"><Send size={18} /></a>
-          <a className="social-btn whatsapp" href={contacts.phones[0].href} aria-label="Связаться в WhatsApp"><MessageCircle size={18} /></a>
+          <a className="social-btn telegram" href="mailto:info@kbparus.ru" aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
+          <a className="social-btn max" href={contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
           <div className="phone-stack">
             {contacts.phones.map((phone) => (
               <a className="phone-pill" href={phone.href} key={phone.href}>
@@ -533,6 +533,11 @@ export default function Home() {
       <section className="line-main-site-banner reveal">
         <img src="/assets/images/kbparus-cnc-banner.png" alt="КБ Парус — производитель оборудования для металлообработки" />
         <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Перейти на kbparus.ru</a>
+      </section>
+
+      <section className="line-main-site-banner line-coating-site-banner reveal" aria-label="КБ Парус — линии порошковой окраски">
+        <img src="/assets/images/kbparus-coating-lines-banner.png" alt="КБ Парус — линии порошковой окраски" />
+        <a className="line-primary" href="https://линииокраски.рф/" target="_blank" rel="noreferrer">Перейти на линииокраски.рф</a>
       </section>
 
       <section className="line-section">

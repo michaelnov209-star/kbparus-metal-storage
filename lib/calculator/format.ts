@@ -5,3 +5,9 @@ export function formatRub(value: number) {
     maximumFractionDigits: 0
   }).format(value);
 }
+
+export function formatRoundedRub(value: number) {
+  const rounded = Math.round(value / 1_000) * 1_000;
+
+  return formatRub(rounded);
+}
