@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/BrandMark";
 import { Calculator } from "@/components/Calculator";
+import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { SliderControls } from "@/components/SliderControls";
@@ -330,7 +331,10 @@ export default function Home() {
               <a className="catalog-card reveal" href={`/catalog/${item.id}`} key={item.id}>
                 <div className={`catalog-card-visual${hasImage ? " has-image" : " is-placeholder"}`}>
                   {hasImage ? (
-                    <img src={item.image} alt={item.title} />
+                    <>
+                      <img className="catalog-image-backdrop" src={item.image} alt="" aria-hidden="true" />
+                      <img className="catalog-image-main" src={item.image} alt={item.title} />
+                    </>
                   ) : (
                     <div className="catalog-placeholder" aria-hidden="true">
                       <PlaceholderIcon size={34} />
@@ -580,14 +584,7 @@ export default function Home() {
           </div>
           <a className="line-secondary" href="#request">Задать свой вопрос</a>
         </div>
-        <div className="line-faq">
-          {faq.map((item) => (
-            <details className="reveal" key={item.question}>
-              <summary><span />{item.question}</summary>
-              <p>{item.answer}</p>
-            </details>
-          ))}
-        </div>
+        <FaqAccordion items={faq} />
       </section>
 
       <section className="line-contact-form" id="request">
