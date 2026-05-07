@@ -2,6 +2,7 @@ import { visualAssets } from "./visualAssets";
 import type { CalculatorProfileId } from "./excelCalculator";
 
 export type ProductPageMode = "configurator" | "standard";
+export type ProductPriceMode = "request" | "fixed";
 
 export interface CatalogSubcategory {
   id: string;
@@ -14,14 +15,20 @@ export interface CatalogSubcategory {
 export interface CatalogProduct {
   id: string;
   categoryId: string;
-  subcategoryId: string;
+  subcategoryId?: string;
   title: string;
   shortTitle: string;
   sku: string;
   image: string;
   gallery: string[];
   pageMode: ProductPageMode;
+  /**
+   * Future CMS behavior:
+   * - pageMode "standard": regular product card, calculatorProfileId must stay empty.
+   * - pageMode "configurator": product page renders a calculator bound to this profile.
+   */
   calculatorProfileId?: CalculatorProfileId;
+  priceMode: ProductPriceMode;
   priceFrom?: number;
   badge: string;
   summary: string;
@@ -50,18 +57,17 @@ export const catalogSubcategories: CatalogSubcategory[] = [
 
 export const catalogProducts: CatalogProduct[] = [
   {
-    id: "automatic-sheet-metal-rack",
+    id: "compact-3000x1500",
     categoryId: "auto-sheet-metal",
-    subcategoryId: "automatic-sheet-towers",
-    title: "Автоматический стеллаж листового металла",
-    shortTitle: "Автоматический стеллаж листа",
-    sku: "KBP-SHM-AUTO-LIST",
+    title: "Автоматизированная система для хранения листового металла Compact 3000x1500",
+    shortTitle: "Compact 3000x1500",
+    sku: "KBP-SHM-COMPACT-3000-1500",
     image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
     gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
-    pageMode: "configurator",
-    calculatorProfileId: "auto-sheet-metal",
-    badge: "Калькулятор",
-    summary: "Система для хранения листового металла с выбором ходовых размеров, нагрузки, количества полок, башен и опций.",
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Товар",
+    summary: "Компактная автоматизированная система для хранения листового металла формата 3000x1500.",
     description:
       "Подходит для производств, где листовой металл нужно хранить компактно, быстро выдавать в работу и безопасно обслуживать кран-балкой или погрузчиком. На странице товара клиент сразу подбирает основные параметры и получает стоимость в формате от.",
     applications: [
@@ -74,7 +80,7 @@ export const catalogProducts: CatalogProduct[] = [
       { label: "Материал", value: "листовой металл" },
       { label: "Нагрузка", value: "до 5 000 кг на уровень" },
       { label: "Длина листа", value: "2 600 / 3 100 / 6 100 мм" },
-      { label: "Исполнение", value: "автоматизированное" }
+      { label: "Формат листа", value: "3000x1500 мм" }
     ],
     includes: [
       "подбор ДхШхВ по ходовым значениям",
@@ -84,37 +90,102 @@ export const catalogProducts: CatalogProduct[] = [
     ]
   },
   {
-    id: "automatic-sheet-buffer-module",
+    id: "logic-sheet-metal-storage",
     categoryId: "auto-sheet-metal",
-    subcategoryId: "sheet-metal-modules",
-    title: "Буферный модуль хранения листового металла",
-    shortTitle: "Буферный модуль листа",
-    sku: "KBP-SHM-BUFFER-LIST",
-    image: visualAssets.sheetMetal,
-    gallery: [visualAssets.sheetMetal],
+    title: "Автоматизированная система для хранения листового металла Logic",
+    shortTitle: "Logic",
+    sku: "KBP-SHM-LOGIC",
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
+    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
     pageMode: "standard",
-    priceFrom: 1250000,
-    badge: "Под заказ",
-    summary: "Модуль для аккуратного хранения пачек листа рядом с производственным участком без сложной автоматизации.",
+    priceMode: "request",
+    badge: "Товар",
+    summary: "Стандартное решение для автоматизированного хранения листового металла и подачи в производство.",
     description:
-      "Используется как промежуточная зона хранения листового металла перед резкой, гибкой или комплектацией. Конструкция подбирается под размеры помещения, способ загрузки и требуемую грузоподъемность.",
+      "Logic подходит для производств, где нужно организовать понятное хранение листового металла и быстро выдавать материал в работу. Конфигурация подбирается по размерам листа, нагрузке, количеству полок, башен и опций безопасности.",
     applications: [
-      "буфер перед линией резки",
-      "хранение сменного запаса листа",
-      "участки ручной комплектации",
-      "производства с ограниченной площадью"
+      "склад листового металла при станках резки",
+      "производство металлоконструкций",
+      "заготовительные участки с большим оборотом",
+      "цеха, где важно сократить хаос на полу"
     ],
     specs: [
-      { label: "Материал", value: "лист, пачки листа" },
-      { label: "Загрузка", value: "кран-балка или погрузчик" },
-      { label: "Исполнение", value: "под размеры помещения" },
-      { label: "Поставка", value: "производство, доставка, монтаж" }
+      { label: "Материал", value: "листовой металл" },
+      { label: "Нагрузка", value: "до 5 000 кг на уровень" },
+      { label: "Длина листа", value: "до 6 100 мм" },
+      { label: "Линейка", value: "Logic" }
     ],
     includes: [
-      "проектирование под помещение",
-      "расчет грузоподъемности",
-      "покраска в корпоративный цвет",
-      "подготовка к будущему расширению"
+      "подбор вместимости под номенклатуру",
+      "расчет нагрузки на кассеты и опоры",
+      "выбор количества полок и башен",
+      "подготовка данных для инженерного предложения"
+    ]
+  },
+  {
+    id: "spider-sheet-metal-storage",
+    categoryId: "auto-sheet-metal",
+    title: "Автоматизированная система для хранения листового металла Spider",
+    shortTitle: "Spider",
+    sku: "KBP-SHM-SPIDER",
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
+    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Товар",
+    summary: "Гибкая автоматизированная система хранения листового металла для сложных производственных сценариев.",
+    description:
+      "Spider используется там, где важно гибко организовать хранение, выдачу и подачу листового металла под разные производственные маршруты. Вместимость, количество кассет и опции уточняются после инженерной проверки.",
+    applications: [
+      "крупные металлообрабатывающие производства",
+      "склады с большим оборотом листа",
+      "производство металлоконструкций",
+      "централизованная подача листа на несколько участков"
+    ],
+    specs: [
+      { label: "Материал", value: "листовой металл" },
+      { label: "Линейка", value: "Spider" },
+      { label: "Нагрузка", value: "подбирается расчетом" },
+      { label: "Исполнение", value: "двухбашенное" }
+    ],
+    includes: [
+      "расчет вместимости склада",
+      "проверка нагрузки на пол",
+      "подбор кассет и башен",
+      "инженерная проверка безопасности"
+    ]
+  },
+  {
+    id: "cross-sheet-metal-storage",
+    categoryId: "auto-sheet-metal",
+    title: "Автоматизированная система для хранения листового металла Cross",
+    shortTitle: "Cross",
+    sku: "KBP-SHM-CROSS",
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
+    gallery: ["/assets/images/catalog/01-auto-sheet-metal.jpg"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Товар",
+    summary: "Автоматизированная система для хранения листового металла с удобной подачей и организацией складского потока.",
+    description:
+      "Cross помогает организовать хранение листового металла, когда нужно связать склад, выдачу и производственный участок в понятный поток без хаоса на полу.",
+    applications: [
+      "цеха с ограниченной площадью",
+      "буфер листового металла возле производства",
+      "участки резки и гибки",
+      "склады с регулярной выдачей листа"
+    ],
+    specs: [
+      { label: "Материал", value: "листовой металл" },
+      { label: "Линейка", value: "Cross" },
+      { label: "Нагрузка", value: "подбирается расчетом" },
+      { label: "Исполнение", value: "двухбашенное" }
+    ],
+    includes: [
+      "подбор под размеры листа",
+      "расчет количества кассет",
+      "проверка способа загрузки",
+      "подготовка предложения инженером"
     ]
   }
 ];

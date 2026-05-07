@@ -63,8 +63,10 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
           <div className="product-price-row">
             {product.pageMode === "configurator" ? (
               <strong>Стоимость рассчитывается ниже</strong>
+            ) : product.priceMode === "fixed" && product.priceFrom ? (
+              <strong>от {formatRoundedRub(product.priceFrom)}</strong>
             ) : (
-              <strong>от {formatRoundedRub(product.priceFrom ?? 0)}</strong>
+              <strong>Цена по запросу</strong>
             )}
             <a className="line-primary" href={product.pageMode === "configurator" ? "#product-configurator" : "#product-request"}>
               {product.pageMode === "configurator" ? "Настроить параметры" : "Оставить заявку"}
