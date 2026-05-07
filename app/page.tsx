@@ -359,6 +359,15 @@ export default function Home() {
         </div>
       </section>
 
+      <Calculator />
+
+      <Banner
+        title="Получите бесплатный расчет стоимости оборудования"
+        text="Инженер проверит выбранные размеры, нагрузку, количество полок, башен и опции, а затем подготовит предложение под объект."
+        href="#contacts"
+        action="Оставить заявку"
+      />
+
       <section className="line-section storage-materials">
         <div className="section-title-row reveal">
           <div>
@@ -405,14 +414,23 @@ export default function Home() {
         </div>
       </section>
 
-      <Calculator />
-
-      <Banner
-        title="Получите бесплатный расчет стоимости оборудования"
-        text="Инженер проверит выбранные размеры, нагрузку, количество полок, башен и опции, а затем подготовит предложение под объект."
-        href="#contacts"
-        action="Оставить заявку"
-      />
+      <section className="line-section">
+        <div className="section-title-center reveal">
+          <h2>Выбирая нас, вы получаете <span>множество преимуществ</span></h2>
+        </div>
+        <div className="line-advantages">
+          {advantages.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <article className={index % 2 === 1 ? "advantage-card is-blue reveal" : "advantage-card reveal"} key={item.title}>
+                <div className="icon-medallion"><Icon size={30} /></div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="line-section" id="cases">
         <div className="section-title-row reveal">
@@ -515,24 +533,6 @@ export default function Home() {
       <section className="line-main-site-banner reveal">
         <img src="/assets/images/kbparus-cnc-banner.png" alt="КБ Парус — производитель оборудования для металлообработки" />
         <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Перейти на kbparus.ru</a>
-      </section>
-
-      <section className="line-section">
-        <div className="section-title-center reveal">
-          <h2>Выбирая нас, вы получаете <span>множество преимуществ</span></h2>
-        </div>
-        <div className="line-advantages">
-          {advantages.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <article className={index % 2 === 1 ? "advantage-card is-blue reveal" : "advantage-card reveal"} key={item.title}>
-                <div className="icon-medallion"><Icon size={30} /></div>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
-            );
-          })}
-        </div>
       </section>
 
       <section className="line-section">
