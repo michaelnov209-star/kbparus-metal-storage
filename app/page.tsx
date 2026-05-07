@@ -55,12 +55,6 @@ const heroSignals = [
   "Под реальные ограничения цеха"
 ];
 
-const heroChecklist = [
-  "Разбираем номенклатуру и потоки материала",
-  "Подбираем систему под размеры и нагрузку",
-  "Передаем менеджеру и инженеру готовые вводные"
-];
-
 const nav = [
   ["Калькулятор", "#calculator"],
   ["Кейсы", "#cases"],
@@ -70,9 +64,6 @@ const nav = [
   ["Контакты", "#contacts"]
 ] as const;
 
-const featuredCatalog = excelHomeCatalog.filter((item) => item.featured);
-const secondaryCatalog = excelHomeCatalog.filter((item) => !item.featured);
-
 function getCatalogBadge(id: string) {
   if (id.includes("auto") || id.includes("automated")) return "Автоматизация";
   if (id.includes("manual")) return "Ручная система";
@@ -80,6 +71,44 @@ function getCatalogBadge(id: string) {
   if (id.includes("warehouse") || id.includes("erp")) return "Склад и учет";
   if (id.includes("lifting")) return "Подача и подъем";
   return "Категория";
+}
+
+function getHeroShortcut(id: string) {
+  if (id === "auto-sheet-metal") {
+    return {
+      title: "Автосистемы для листа",
+      note: "Башни, кассеты, автоматизированная выдача"
+    };
+  }
+
+  if (id === "manual-sheet-metal") {
+    return {
+      title: "Ручные системы для листа",
+      note: "Простой доступ без сложной автоматики"
+    };
+  }
+
+  if (id === "sort-and-pipe-storage") {
+    return {
+      title: "Длинномер и труба",
+      note: "Профиль, балка, швеллер, сортовой прокат"
+    };
+  }
+
+  return {
+    title: "Ручное хранение длинномера",
+    note: "Для складов с умеренным оборотом"
+  };
+}
+
+function getCatalogPlaceholder(id: string) {
+  if (id.includes("erp")) return { icon: Globe2, label: "Система учёта" };
+  if (id.includes("lifting")) return { icon: Truck, label: "Подача и подъём" };
+  if (id.includes("warehouse")) return { icon: Warehouse, label: "Складская логистика" };
+  if (id.includes("cable")) return { icon: Layers3, label: "Кабель и оснастка" };
+  if (id.includes("packing")) return { icon: PackageCheck, label: "Подготовка к отгрузке" };
+  if (id.includes("carousel")) return { icon: Boxes, label: "Вертикальное хранение" };
+  return { icon: Factory, label: "Изображение добавим" };
 }
 
 const storedMaterials = [
@@ -256,20 +285,6 @@ export default function Home() {
         </div>
         <div className="line-hero-overlay" />
         <div className="line-hero-inner">
-          <div className="hero-topline">
-            <div className="hero-quick-links" aria-label="Быстрые разделы">
-              {excelHomeCatalog.slice(0, 4).map((item) => (
-                <a href={`/catalog/${item.id}`} key={item.id}><span />{item.title}</a>
-              ))}
-            </div>
-            <aside className="hero-brief reveal">
-              <span className="hero-brief-label">Быстрый вход в проект</span>
-              <strong>Не витрина, а рабочий инструмент для склада и производства</strong>
-              <ul>
-                {heroChecklist.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </aside>
-          </div>
           <div className="line-hero-content reveal">
             <span className="line-kicker">КБ Парус / складские системы для металла</span>
             <h1><strong>Системы хранения</strong> металла</h1>
@@ -283,74 +298,70 @@ export default function Home() {
               <a className="line-primary" href="#calculator">Рассчитать стоимость</a>
               <a className="line-secondary" href="#contacts">Связаться с инженером</a>
             </div>
-            <div className="hero-bottomline">
-              <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
-                {metrics.map((item) => (
-                  <article key={item.value}>
-                    <strong>{item.value}</strong>
-                    <span>{item.label}</span>
-                  </article>
-                ))}
-              </div>
-              <div className="hero-command-card">
-                <span>Что получает клиент</span>
-                <strong>Категорию, конфигурацию и стартовую цену в одном маршруте</strong>
-                <a href="#catalog">Смотреть каталог <ArrowRight size={16} /></a>
-              </div>
+            <div className="hero-quick-links" aria-label="Ключевые категории">
+              {excelHomeCatalog.slice(0, 4).map((item, index) => {
+                const shortcut = getHeroShortcut(item.id);
+
+                return (
+                  <a href={`/catalog/${item.id}`} key={item.id}>
+                    <span className="hero-quick-index">{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{shortcut.title}</strong>
+                    <small>{shortcut.note}</small>
+                  </a>
+                );
+              })}
+            </div>
+            <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
+              {metrics.map((item) => (
+                <article key={item.value}>
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </article>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="line-section" id="catalog">
-        <div className="section-title-row reveal">
+      <section className="line-section catalog-section" id="catalog">
+        <div className="section-title-row is-single reveal">
           <div>
             <span className="line-kicker">Каталог оборудования</span>
             <h2>Разделы для хранения металла и складской логистики</h2>
           </div>
-          <p>Каталог собран по утвержденной структуре ассортимента: сначала самые важные промышленные решения, затем складские и сервисные разделы.</p>
         </div>
-        <div className="catalog-summary reveal">
-          <article>
-            <strong>17 разделов</strong>
-            <span>от листового металла до складской логистики и ERP</span>
-          </article>
-          <article>
-            <strong>4 приоритетных направления</strong>
-            <span>самые частые сценарии, с которых обычно начинается подбор</span>
-          </article>
-          <article>
-            <strong>Переход внутрь категории</strong>
-            <span>каждый раздел открывается как отдельная рабочая страница</span>
-          </article>
-        </div>
-        <div className="catalog-feature-grid">
-          {featuredCatalog.map((item, index) => (
-            <article className="catalog-card catalog-card-featured reveal" key={item.id}>
-              <img src={item.image} alt={item.title} />
-              <div>
-                <small>{getCatalogBadge(item.id)}</small>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <h3>{item.title}</h3>
-                <p>{item.scenario}</p>
-                <a href={`/catalog/${item.id}`}>Открыть категорию <ArrowRight size={16} /></a>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="catalog-secondary-grid">
-          {secondaryCatalog.map((item, index) => (
-            <article className="catalog-card catalog-card-compact reveal" key={item.id}>
-              <img src={item.image} alt={item.title} />
-              <div>
-                <small>{getCatalogBadge(item.id)}</small>
-                <span>{String(featuredCatalog.length + index + 1).padStart(2, "0")}</span>
-                <h3>{item.title}</h3>
-                <p>{item.summary}</p>
-                <a href={`/catalog/${item.id}`}>Перейти в раздел <ArrowRight size={16} /></a>
-              </div>
-            </article>
-          ))}
+        <div className="catalog-grid">
+          {excelHomeCatalog.map((item, index) => {
+            const placeholder = getCatalogPlaceholder(item.id);
+            const PlaceholderIcon = placeholder.icon;
+            const hasImage = Boolean(item.featured);
+
+            return (
+              <a className="catalog-card reveal" href={`/catalog/${item.id}`} key={item.id}>
+                <div className={`catalog-card-visual${hasImage ? " has-image" : " is-placeholder"}`}>
+                  {hasImage ? (
+                    <img src={item.image} alt={item.title} />
+                  ) : (
+                    <div className="catalog-placeholder" aria-hidden="true">
+                      <PlaceholderIcon size={34} />
+                      <span>{placeholder.label}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="catalog-card-body">
+                  <div className="catalog-card-meta">
+                    <small>{getCatalogBadge(item.id)}</small>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{hasImage ? item.scenario : item.summary}</p>
+                  <b>
+                    Перейти в категорию <ArrowRight size={16} />
+                  </b>
+                </div>
+              </a>
+            );
+          })}
         </div>
       </section>
 
@@ -670,3 +681,4 @@ function Banner({ title, text, href, action }: { title: string; text: string; hr
     </section>
   );
 }
+
