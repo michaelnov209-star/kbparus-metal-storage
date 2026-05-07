@@ -632,12 +632,12 @@ export default function Home() {
         />
         <a
           className="route-button reveal"
-          href="https://yandex.ru/maps/?rtext=~55.868726%2C38.428623&rtt=auto"
+          href="https://yandex.ru/maps/?rtext=~55.866994%2C38.428768&rtt=auto&text=%D0%9C%D0%9E%2C%20%D0%B3.%20%D0%9D%D0%BE%D0%B3%D0%B8%D0%BD%D1%81%D0%BA%2C%201-%D0%B9%20%D0%9A%D0%B0%D1%80%D0%B4%D0%BE%D0%BB%D0%B5%D0%BD%D1%82%D0%BD%D1%8B%D0%B9%20%D0%BF%D1%80%D0%BE%D0%B5%D0%B7%D0%B4%2C%20%D0%B4.%205"
           target="_blank"
           rel="noreferrer"
         >
           <Route size={18} />
-          Проложить маршрут
+          <span>Проложить маршрут</span>
         </a>
       </section>
 
