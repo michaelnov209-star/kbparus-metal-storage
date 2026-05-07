@@ -31,7 +31,8 @@ Production URL: https://kbparus-metal-storage.vercel.app
 ## Где лежат ключевые вещи
 
 - Логотип: `public/brand/logo-g.png`
-- Favicon: `app/icon.svg`
+- Favicon: задается через `app/layout.tsx` и использует `public/brand/logo-g.png`
+- Open Graph / Telegram preview: `app/opengraph-image.tsx`
 - Фото и визуальные ассеты: `data/storageSystems/visualAssets.ts` и `public/assets/images/catalog/`
 - Баннер на основной сайт: `public/assets/images/kbparus-cnc-banner.png`
 - Каталог главной: `data/storageSystems/excelCatalog.ts`
@@ -112,6 +113,8 @@ npx vercel@latest deploy --prod --yes --scope michaelnov209-3230s-projects
 - Баннер на основной сайт заменен на предоставленный визуал с одной кнопкой поверх изображения.
 - В контактах добавлена кнопка «Проложить маршрут» на Яндекс.Карты.
 - Партнеры временно показываются как заглушки под будущие логотипы из админки.
+- Добавлены favicon и Open Graph preview для Telegram/мессенджеров.
+- Адаптивность доработана под desktop, планшеты и мобильные устройства.
 - Трехшаговый калькулятор-конфигуратор с фиксированными ходовыми значениями из Excel.
 - Отображение цены только в формате `от ... ₽`.
 - Карточки материалов, до/после склада, кейсы, география поставок, отзывы, преимущества, FAQ, контакты и карта.
