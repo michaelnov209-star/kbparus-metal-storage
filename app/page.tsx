@@ -1,4 +1,5 @@
 import { BrandMark } from "@/components/BrandMark";
+import { CatalogGrid } from "@/components/CatalogGrid";
 import { Calculator } from "@/components/Calculator";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
@@ -58,25 +59,6 @@ const nav = [
   ["FAQ", "#faq"],
   ["Контакты", "#contacts"]
 ] as const;
-
-function getCatalogBadge(id: string) {
-  if (id.includes("auto") || id.includes("automated")) return "Автоматизация";
-  if (id.includes("manual")) return "Ручная система";
-  if (id.includes("pipe") || id.includes("cantilever")) return "Трубы и профиль";
-  if (id.includes("warehouse") || id.includes("erp")) return "Склад и учет";
-  if (id.includes("lifting")) return "Подача и подъем";
-  return "Категория";
-}
-
-function getCatalogPlaceholder(id: string) {
-  if (id.includes("erp")) return { icon: Globe2, label: "Система учёта" };
-  if (id.includes("lifting")) return { icon: Truck, label: "Подача и подъём" };
-  if (id.includes("warehouse")) return { icon: Warehouse, label: "Складская логистика" };
-  if (id.includes("cable")) return { icon: Layers3, label: "Кабель и оснастка" };
-  if (id.includes("packing")) return { icon: PackageCheck, label: "Подготовка к отгрузке" };
-  if (id.includes("carousel")) return { icon: Boxes, label: "Вертикальное хранение" };
-  return { icon: Factory, label: "Изображение добавим" };
-}
 
 const storedMaterials = [
   { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", label: "Лист / кассеты", icon: Layers3 },
@@ -255,7 +237,15 @@ export default function Home() {
 
       <section className="line-hero">
         <div className="line-hero-bg" aria-hidden="true">
-          <img src={visualAssets.hero} alt="" />
+          <video
+            src="/assets/videos/metal-storage-hero-trimmed.mp4"
+            poster={visualAssets.hero}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
         </div>
         <div className="line-hero-overlay" />
         <div className="line-hero-inner">
@@ -295,42 +285,7 @@ export default function Home() {
             <span>категории без утвержденного изображения показываются с аккуратной заглушкой</span>
           </article>
         </div>
-        <div className="catalog-grid">
-          {excelHomeCatalog.map((item, index) => {
-            const placeholder = getCatalogPlaceholder(item.id);
-            const PlaceholderIcon = placeholder.icon;
-            const hasImage = Boolean(item.image);
-
-            return (
-              <a className="catalog-card reveal" href={`/catalog/${item.id}`} key={item.id}>
-                <div className={`catalog-card-visual${hasImage ? " has-image" : " is-placeholder"}`}>
-                  {hasImage ? (
-                    <>
-                      <img className="catalog-image-backdrop" src={item.image} alt="" aria-hidden="true" />
-                      <img className="catalog-image-main" src={item.image} alt={item.title} />
-                    </>
-                  ) : (
-                    <div className="catalog-placeholder" aria-hidden="true">
-                      <PlaceholderIcon size={34} />
-                      <span>{placeholder.label}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="catalog-card-body">
-                  <div className="catalog-card-meta">
-                    <small>{getCatalogBadge(item.id)}</small>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                  </div>
-                  <h3>{item.title}</h3>
-                  <p>{hasImage ? item.scenario : item.summary}</p>
-                  <b>
-                    Перейти в категорию <ArrowRight size={16} />
-                  </b>
-                </div>
-              </a>
-            );
-          })}
-        </div>
+        <CatalogGrid items={excelHomeCatalog} />
       </section>
 
       <Calculator />

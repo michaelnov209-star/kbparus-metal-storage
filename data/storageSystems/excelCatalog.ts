@@ -44,7 +44,7 @@ export const excelHomeCatalog: ExcelHomeCatalogItem[] = [
     title: "Карусельный вертикальный модуль",
     summary: "Вертикальное хранение с выдачей нужной ячейки оператору.",
     scenario: "Для плотного хранения листа, оснастки, заготовок и комплектующих.",
-    image: "/assets/images/catalog/05-carousel-vertical-module.jpg"
+    image: "/assets/images/catalog/05-carousel-vertical-module.png"
   },
   {
     id: "automated-warehouse-systems",

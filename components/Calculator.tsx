@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
-import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
 
@@ -42,25 +41,25 @@ const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: stri
     title: "Система хранения с выкатными полками",
     shortTitle: "Система с выкатными полками",
     description: "Для листа и пачек, когда нужен прямой доступ к каждой кассете.",
-    image: visualAssets.forklift
+    image: "/assets/images/catalog/09-rollout-shelf-storage.png"
   },
   "forklift-cassette-rack": {
     title: "Кассетная система хранения листового металла",
     shortTitle: "Кассетная система хранения листового металла",
     description: "Для плотного хранения листа с доступом погрузчиком или складской техникой.",
-    image: visualAssets.sheetMetal
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg"
   },
   "two-side-rollout-rack": {
     title: "Двухсторонняя система хранения с выкатными полками",
     shortTitle: "Двухсторонняя выкатная система",
     description: "Для складов, где нужен доступ к кассетам с одной или двух сторон.",
-    image: visualAssets.steelProfile
+    image: "/assets/images/catalog/09-rollout-shelf-storage.png"
   },
   "hybrid-rollout-rack": {
     title: "Комбинированная система хранения с выкатными полками",
     shortTitle: "Гибридная система",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
-    image: visualAssets.warehouse
+    image: "/assets/images/catalog/06-automated-warehouse-systems.png"
   }
 };
 
