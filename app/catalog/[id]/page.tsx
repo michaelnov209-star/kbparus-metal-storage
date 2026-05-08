@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ClipboardCheck, PackageCheck, Ruler, ShieldCheck } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
@@ -64,7 +65,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
             <a className="line-secondary" href="#category-request">Связаться с инженером</a>
           </div>
         </div>
-        <img src={item.image} alt={item.title} />
+        <ImageLightbox src={item.image} alt={item.title} className="catalog-detail-image" />
       </section>
 
       {isPilotCategory ? (

@@ -37,19 +37,20 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
       <div className="catalog-grid">
         {items.map((item, index) => (
           <article className="catalog-card reveal" key={item.id}>
-            <button
-              className="catalog-card-visual has-image catalog-zoom-trigger"
-              type="button"
-              onClick={() => setActiveItem(item)}
-              aria-label={`Рассмотреть изображение: ${item.title}`}
-            >
-              <img className="catalog-image-backdrop" src={item.image} alt="" aria-hidden="true" />
-              <img className="catalog-image-main" src={item.image} alt={item.title} />
-              <span className="catalog-zoom-pill">
+            <div className="catalog-card-visual has-image">
+              <a className="catalog-image-link" href={`/catalog/${item.id}`} aria-label={`Перейти в категорию: ${item.title}`}>
+                <img className="catalog-image-main" src={item.image} alt={item.title} />
+              </a>
+              <button
+                className="catalog-zoom-pill catalog-zoom-trigger"
+                type="button"
+                onClick={() => setActiveItem(item)}
+                aria-label={`Увеличить изображение: ${item.title}`}
+              >
                 <Maximize2 size={16} />
-                Рассмотреть
-              </span>
-            </button>
+                Увеличить
+              </button>
+            </div>
             <a className="catalog-card-body" href={`/catalog/${item.id}`}>
               <div className="catalog-card-meta">
                 <small>{getCatalogBadge(item.id)}</small>
@@ -70,7 +71,9 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
             <button className="catalog-lightbox-close" type="button" onClick={() => setActiveItem(null)} aria-label="Закрыть просмотр">
               <X size={22} />
             </button>
-            <img src={activeItem.image} alt={activeItem.title} />
+            <div className="catalog-lightbox-visual">
+              <img src={activeItem.image} alt={activeItem.title} />
+            </div>
             <div className="catalog-lightbox-copy">
               <span>{getCatalogBadge(activeItem.id)}</span>
               <h3>{activeItem.title}</h3>

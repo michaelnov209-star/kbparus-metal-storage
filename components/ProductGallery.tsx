@@ -43,7 +43,7 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
             <img className="product-gallery-image" src={activeImage} alt={`${title} - фото ${activeIndex + 1}`} />
             <span className="product-gallery-zoom">
               <Maximize2 size={16} />
-              Рассмотреть
+              Увеличить
             </span>
           </button>
         ) : null}
