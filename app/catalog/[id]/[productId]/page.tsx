@@ -52,12 +52,18 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         <span>{product.title}</span>
       </div>
 
+      <section className="product-title-strip">
+        <span className="line-kicker">Карточка оборудования</span>
+        <h1>{product.title}</h1>
+        <p>{product.summary}</p>
+      </section>
+
       <section className="product-hero">
-        <ProductGallery images={product.gallery.length > 0 ? product.gallery : [product.image]} title={product.title} badge={product.badge} />
+        <ProductGallery images={product.gallery.length > 0 ? product.gallery : [product.image]} title={product.title} />
         <div className="product-hero-copy">
-          <span className="line-kicker">Карточка оборудования</span>
-          <h1>{product.title}</h1>
-          <p>{product.summary}</p>
+          <span className="line-kicker">Подбор исполнения</span>
+          <h2>Подберём систему под ваш склад</h2>
+          <p>Уточним формат листа, нагрузку, количество уровней, способ загрузки и ограничения помещения, чтобы инженер сразу подготовил предметное предложение.</p>
           <div className="product-price-row">
             {product.pageMode === "configurator" ? (
               <strong>Стоимость рассчитывается ниже</strong>

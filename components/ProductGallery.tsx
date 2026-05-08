@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-export function ProductGallery({ images, title, badge }: { images: string[]; title: string; badge: string }) {
+export function ProductGallery({ images, title, badge }: { images: string[]; title: string; badge?: string }) {
   const gallery = images.length > 0 ? images : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const activeImage = gallery[activeIndex] ?? "";
@@ -14,7 +14,7 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
   return (
     <div className="product-gallery">
       <div className="product-gallery-main">
-        <span className="product-gallery-badge">{badge}</span>
+        {badge ? <span className="product-gallery-badge">{badge}</span> : null}
         {gallery.length > 1 && (
           <span className="product-gallery-count">
             {activeIndex + 1} / {gallery.length}

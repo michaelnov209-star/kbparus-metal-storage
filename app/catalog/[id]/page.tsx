@@ -61,7 +61,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
             <a className="line-primary" href={isPilotCategory ? "#assortment" : "/#calculator"}>
               {isPilotCategory ? "Смотреть ассортимент" : "Рассчитать стоимость"} <ArrowRight size={18} />
             </a>
-            <a className="line-secondary" href="/#contacts">Связаться с инженером</a>
+            <a className="line-secondary" href="#category-request">Связаться с инженером</a>
           </div>
         </div>
         <img src={item.image} alt={item.title} />
@@ -79,7 +79,6 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               {products.map((product) => (
                 <a className="assortment-card" href={`/catalog/${item.id}/${product.id}`} key={product.id}>
                   <div className="assortment-visual">
-                    <span>{product.badge}</span>
                     <img src={product.image} alt={product.title} />
                   </div>
                   <div className="assortment-copy">
@@ -100,7 +99,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
           </section>
         </>
       ) : (
-        <section className="catalog-detail-content">
+        <section className="catalog-detail-content" id="category-request">
           <div className="catalog-detail-card">
             <h2>Что уточним для подбора</h2>
             <ul>
@@ -137,7 +136,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
       )}
 
       {isPilotCategory && (
-        <section className="catalog-detail-content">
+        <section className="catalog-detail-content" id="category-request">
           <aside className="catalog-detail-card">
             <h2>Что получает инженер</h2>
             <ul>
