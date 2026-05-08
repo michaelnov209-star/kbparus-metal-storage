@@ -299,7 +299,7 @@ export default function Home() {
           {excelHomeCatalog.map((item, index) => {
             const placeholder = getCatalogPlaceholder(item.id);
             const PlaceholderIcon = placeholder.icon;
-            const hasImage = Boolean(item.featured) && item.id !== "manual-sheet-metal";
+            const hasImage = Boolean(item.image);
 
             return (
               <a className="catalog-card reveal" href={`/catalog/${item.id}`} key={item.id}>
