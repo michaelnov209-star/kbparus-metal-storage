@@ -186,3 +186,5 @@ npx vercel@latest deploy --prod --yes --scope michaelnov209-3230s-projects
 - Клиентские тексты отделены от технической логики и внутренних полей.
 - В интерфейсе не показываются `SKU`, `product_id`, `external_1c_id` и другие внутренние поля.
 - MVP готовится под будущие CMS, Bitrix24 и 1С.
+
+test deploy
