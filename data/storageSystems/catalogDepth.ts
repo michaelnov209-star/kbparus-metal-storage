@@ -70,20 +70,6 @@ export const catalogSubcategories: CatalogSubcategory[] = [
     image: "/assets/images/catalog/02-manual-sheet-metal.png"
   },
   {
-    id: "manual-sort-cassette-systems",
-    categoryId: "manual-sort-and-pipe-storage",
-    title: "Кассетные и консольные стеллажи",
-    summary: "Базовые решения для хранения сортового проката, труб, профиля с быстрой выборкой.",
-    image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.png"
-  },
-  {
-    id: "manual-sort-honeycomb-systems",
-    categoryId: "manual-sort-and-pipe-storage",
-    title: "Сотовые и Ш-образные стеллажи",
-    summary: "Специализированные конструкции для длинномера и заготовок механической обработки.",
-    image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.png"
-  },
-  {
     id: "manual-sort-fishbone",
     categoryId: "manual-sort-and-pipe-storage",
     title: "Стеллажи типа «Ёлочка»",
@@ -446,73 +432,8 @@ export const catalogProducts: CatalogProduct[] = [
     ],
     includes: ["проверка совместимости с оборудованием", "подбор по толщине листа", "интеграция в технологический поток"]
   },
-  // === Категория 4: Ручные системы хранения сортового металла (5 продуктов) ===
-  {
-    id: "cassette-racks-sort",
-    categoryId: "manual-sort-and-pipe-storage",
-    subcategoryId: "manual-sort-cassette-systems",
-    title: "Кассетные стеллажи для сортового металла",
-    shortTitle: "Кассетные сортовые",
-    sku: "KBP-MSP-CASSETTE",
-    image: "/assets/images/products/manual-sort-and-pipe-storage/4.1.png",
-    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.1.png"],
-    pageMode: "standard",
-    priceMode: "request",
-    badge: "Кассетный",
-    summary: "Кассетные стеллажи для хранения сортового металлопроката, труб и профиля.",
-    description: "Кассетная конструкция позволяет сортировать сортовой прокат по типоразмерам. Каждая кассета выдвигается для удобного доступа к материалу.",
-    applications: ["склады сортового проката", "цеха металлоконструкций", "распределительные склады"],
-    specs: [
-      { label: "Хранимый материал", value: "трубы, профиль, пруток" },
-      { label: "Тип доступа", value: "выкатные кассеты" },
-      { label: "Сортировка", value: "по типоразмеру" }
-    ],
-    includes: ["подбор количества кассет", "расчёт нагрузки", "проверка длины проката"]
-  },
-  {
-    id: "cantilever-rollout",
-    categoryId: "manual-sort-and-pipe-storage",
-    subcategoryId: "manual-sort-cassette-systems",
-    title: "Консольные стеллажи с выдвижными полками",
-    shortTitle: "Консольные выдвижные",
-    sku: "KBP-MSP-CANTILEVER-ROLL",
-    image: "/assets/images/products/manual-sort-and-pipe-storage/4.2.png",
-    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.2.png"],
-    pageMode: "standard",
-    priceMode: "request",
-    badge: "Консольный",
-    summary: "Консольные стеллажи с выдвижными полками для длинномерного сортового проката.",
-    description: "Консоли свободно открываются с одной стороны, а выдвижные полки обеспечивают доступ к материалу без необходимости проходить вдоль всего стеллажа.",
-    applications: ["хранение длинномера", "склад труб и балок", "участки металлоконструкций"],
-    specs: [
-      { label: "Тип конструкции", value: "консольная" },
-      { label: "Полки", value: "выдвижные" },
-      { label: "Сценарий", value: "длинномерный прокат" }
-    ],
-    includes: ["подбор длины консолей", "расчёт нагрузки", "проверка прохода"]
-  },
-  {
-    id: "honeycomb-racks",
-    categoryId: "manual-sort-and-pipe-storage",
-    subcategoryId: "manual-sort-honeycomb-systems",
-    title: "Стеллажи сотовые для сортового металла",
-    shortTitle: "Сотовые стеллажи",
-    sku: "KBP-MSP-HONEYCOMB",
-    image: "/assets/images/products/manual-sort-and-pipe-storage/4.3.png",
-    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.3.png"],
-    pageMode: "standard",
-    priceMode: "request",
-    badge: "Сотовый",
-    summary: "Сотовые стеллажи с ячеистой структурой для сортированного хранения труб и профиля.",
-    description: "Стеллажи с сотовой структурой позволяют разместить большое количество разнотипного длинномера в одной зоне с быстрой выборкой по ячейкам.",
-    applications: ["склад труб", "архив профиля", "распределительные склады"],
-    specs: [
-      { label: "Тип конструкции", value: "сотовая (ячеистая)" },
-      { label: "Сортировка", value: "по типу и сечению" },
-      { label: "Доступ", value: "торцевой" }
-    ],
-    includes: ["подбор количества ячеек", "оптимизация под номенклатуру", "проверка длины ячеек"]
-  },
+  // === Категория 4: Ручные системы хранения сортового металла ===
+  // Подкатегория «Стеллажи типа Ёлочка» (4 товара из листа Excel "Елочка")
   {
     id: "fishbone-double-sided",
     categoryId: "manual-sort-and-pipe-storage",
@@ -600,28 +521,6 @@ export const catalogProducts: CatalogProduct[] = [
       { label: "Сценарий", value: "пристенное хранение" }
     ],
     includes: ["подбор габаритов", "проверка проходов", "расчёт нагрузки"]
-  },
-  {
-    id: "compact-reinforced",
-    categoryId: "manual-sort-and-pipe-storage",
-    subcategoryId: "manual-sort-honeycomb-systems",
-    title: "Стеллаж «Компакт усиленный» для заготовок мех. обработки",
-    shortTitle: "Компакт усиленный",
-    sku: "KBP-MSP-COMPACT-REIN",
-    image: "/assets/images/products/manual-sort-and-pipe-storage/4.5.png",
-    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.5.png"],
-    pageMode: "standard",
-    priceMode: "request",
-    badge: "Усиленный",
-    summary: "Усиленные стеллажи «Компакт» для тяжёлых заготовок механической обработки.",
-    description: "Конструкция рассчитана на повышенные нагрузки заготовок механообработки. Применяется на участках перед фрезерными, токарными и другими станками.",
-    applications: ["участки механообработки", "склад заготовок", "буфер перед станками"],
-    specs: [
-      { label: "Серия", value: "Компакт усиленный" },
-      { label: "Назначение", value: "тяжёлые заготовки" },
-      { label: "Усиление", value: "по нагрузке и каркасу" }
-    ],
-    includes: ["расчёт нагрузки на полку", "подбор габаритов под заготовки", "проверка пола под нагрузку"]
   }
 ];
 
