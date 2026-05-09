@@ -54,6 +54,34 @@ export const catalogSubcategories: CatalogSubcategory[] = [
     title: "Модульные системы хранения листа",
     summary: "Готовые решения для участков резки, гибки и комплектации, где не требуется большой конфигуратор.",
     image: visualAssets.sheetMetal
+  },
+  {
+    id: "manual-sheet-cassette-systems",
+    categoryId: "manual-sheet-metal",
+    title: "Кассетные системы хранения листа",
+    summary: "Кассеты под погрузчик, выкатные и гибридные стеллажи для оперативного доступа к листовому металлу.",
+    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+  },
+  {
+    id: "manual-sheet-vertical-systems",
+    categoryId: "manual-sheet-metal",
+    title: "Вертикальные системы и пирамиды",
+    summary: "Стационарные и передвижные решения для вертикального хранения листового металла на ограниченной площади.",
+    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+  },
+  {
+    id: "manual-sort-cassette-systems",
+    categoryId: "manual-sort-and-pipe-storage",
+    title: "Кассетные и консольные стеллажи",
+    summary: "Базовые решения для хранения сортового проката, труб, профиля с быстрой выборкой.",
+    image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.png"
+  },
+  {
+    id: "manual-sort-honeycomb-systems",
+    categoryId: "manual-sort-and-pipe-storage",
+    title: "Сотовые и Ш-образные стеллажи",
+    summary: "Специализированные конструкции для длинномера и заготовок механической обработки.",
+    image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.png"
   }
 ];
 
@@ -207,6 +235,320 @@ export const catalogProducts: CatalogProduct[] = [
       "проверка способа загрузки",
       "подготовка предложения инженером"
     ]
+  },
+  // === Категория 2: Ручные системы хранения листового металла (9 продуктов) ===
+  {
+    id: "forklift-cassette-rack",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Кассетный стеллаж под погрузчик",
+    shortTitle: "Кассеты под погрузчик",
+    sku: "KBP-MSM-FORKLIFT-CASS",
+    image: "/assets/images/products/manual-sheet-metal/2.1.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.1.png"],
+    pageMode: "configurator",
+    calculatorProfileId: "forklift-cassette-rack",
+    priceMode: "request",
+    badge: "Под погрузчик",
+    summary: "Кассетная система хранения листового металла, рассчитанная на загрузку и выгрузку вилочным погрузчиком.",
+    description: "Решение для производств с активным оборотом листа, где обслуживание ведётся стандартным вилочным погрузчиком. Кассеты выдвигаются в зону работы и обеспечивают безопасный доступ к материалу.",
+    applications: ["цеха с погрузчиком", "склады листа на средних объёмах", "участки лазерной резки"],
+    specs: [
+      { label: "Тип загрузки", value: "вилочный погрузчик" },
+      { label: "Нагрузка на кассету", value: "до 5 000 кг" },
+      { label: "Длина листа", value: "2 600 / 3 100 мм" }
+    ],
+    includes: ["подбор количества кассет", "расчёт нагрузки", "проверка зоны обслуживания"]
+  },
+  {
+    id: "rollout-cassette-rack",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Стеллаж с выкатными кассетами",
+    shortTitle: "Выкатные кассеты",
+    sku: "KBP-MSM-ROLLOUT-CASS",
+    image: "/assets/images/products/manual-sheet-metal/2.2.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.2.png"],
+    pageMode: "configurator",
+    calculatorProfileId: "rollout-cassette-rack",
+    priceMode: "request",
+    badge: "Выкатной",
+    summary: "Кассетный стеллаж с выкатными уровнями для удобного доступа к листовому металлу без погрузчика.",
+    description: "Каждая кассета выкатывается в зону работы оператора. Подходит для участков, где нужен быстрый и безопасный доступ к листу без работы погрузчика внутри стеллажа.",
+    applications: ["заготовительные участки", "цеха с краном-балкой", "склады с ограниченной площадью"],
+    specs: [
+      { label: "Тип доступа", value: "выкатной" },
+      { label: "Нагрузка на кассету", value: "до 5 000 кг" },
+      { label: "Исполнение", value: "одностороннее" }
+    ],
+    includes: ["подбор количества и нагрузки", "расчёт пространства для выкатывания", "опции безопасности"]
+  },
+  {
+    id: "hybrid-rollout-rack",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Совмещённый (гибридный) стеллаж",
+    shortTitle: "Гибридный стеллаж",
+    sku: "KBP-MSM-HYBRID",
+    image: "/assets/images/products/manual-sheet-metal/2.3.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.3.png"],
+    pageMode: "configurator",
+    calculatorProfileId: "hybrid-rollout-rack",
+    priceMode: "request",
+    badge: "Гибрид",
+    summary: "Гибридный стеллаж с выдвижными кассетами и кассетами под погрузчик в одной конструкции.",
+    description: "Сочетает оба способа работы: верхние ряды обслуживаются погрузчиком, нижние выкатываются для оператора. Универсальное решение для смешанных потоков.",
+    applications: ["производства со смешанной номенклатурой", "цеха с разным потоком листа", "распределительные склады"],
+    specs: [
+      { label: "Тип доступа", value: "гибридный" },
+      { label: "Верхние уровни", value: "погрузчик" },
+      { label: "Нижние уровни", value: "выкатные кассеты" }
+    ],
+    includes: ["подбор соотношения уровней", "расчёт нагрузки", "интеграция в производственный поток"]
+  },
+  {
+    id: "two-side-rollout-rack",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Стеллаж с выкатными кассетами двустороннего исполнения",
+    shortTitle: "Двусторонние выкатные",
+    sku: "KBP-MSM-2SIDE-ROLLOUT",
+    image: "/assets/images/products/manual-sheet-metal/2.4.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.4.png"],
+    pageMode: "configurator",
+    calculatorProfileId: "two-side-rollout-rack",
+    priceMode: "request",
+    badge: "Двусторонний",
+    summary: "Выкатной стеллаж с возможностью выкатывания кассет с двух сторон для удвоенного доступа.",
+    description: "Двустороннее исполнение увеличивает скорость работы: кассеты выкатываются в обе стороны, два оператора могут работать одновременно с разной номенклатурой.",
+    applications: ["цеха с двумя рабочими постами", "распределительные склады", "производства с высоким оборотом"],
+    specs: [
+      { label: "Доступ", value: "с двух сторон" },
+      { label: "Производительность", value: "до 2× против односторонних" },
+      { label: "Нагрузка на кассету", value: "до 5 000 кг" }
+    ],
+    includes: ["проверка свободного пространства с двух сторон", "расчёт количества операторов", "оптимизация потока"]
+  },
+  {
+    id: "vertical-rollout-cassette",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-vertical-systems",
+    title: "Стеллаж для вертикального хранения с выкатными кассетами",
+    shortTitle: "Вертикальные выкатные",
+    sku: "KBP-MSM-VERTICAL-ROLLOUT",
+    image: "/assets/images/products/manual-sheet-metal/2.5.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.5.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Вертикальный",
+    summary: "Вертикальное хранение листового металла с выкатными кассетами для экономии площади.",
+    description: "Лист размещается вертикально, что значительно уменьшает занимаемую площадь. Выкатные кассеты обеспечивают доступ к каждому листу без перебора пачки.",
+    applications: ["цеха с ограниченной площадью", "архив листовых материалов", "склад редко используемого металла"],
+    specs: [
+      { label: "Ориентация листа", value: "вертикальная" },
+      { label: "Доступ к листу", value: "выкатной" },
+      { label: "Экономия площади", value: "до 60% против горизонтального" }
+    ],
+    includes: ["подбор высоты помещения", "расчёт количества кассет", "проверка способа загрузки"]
+  },
+  {
+    id: "vertical-stationary",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-vertical-systems",
+    title: "Стеллаж вертикального хранения стационарный/передвижной",
+    shortTitle: "Вертикальный стационарный",
+    sku: "KBP-MSM-VERTICAL-STAT",
+    image: "/assets/images/products/manual-sheet-metal/2.6.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.6.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Вертикальный",
+    summary: "Стационарное или передвижное вертикальное хранение листового металла без выкатных уровней.",
+    description: "Базовое вертикальное хранение для случаев, когда лист не нужно часто перебирать. Существуют стационарные и передвижные исполнения для гибкости планировки склада.",
+    applications: ["долгосрочное хранение листа", "архив редко используемого металла", "буферный склад"],
+    specs: [
+      { label: "Исполнение", value: "стационарное / передвижное" },
+      { label: "Ориентация листа", value: "вертикальная" },
+      { label: "Тип доступа", value: "ручной" }
+    ],
+    includes: ["проверка площадки", "выбор стационар/передвижной", "расчёт количества секций"]
+  },
+  {
+    id: "pyramid-vertical",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-vertical-systems",
+    title: "Пирамиды вертикального хранения стационарные/передвижные",
+    shortTitle: "Пирамиды вертикальные",
+    sku: "KBP-MSM-PYRAMID",
+    image: "/assets/images/products/manual-sheet-metal/2.7.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.7.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Пирамида",
+    summary: "Пирамидальные стеллажи для вертикального хранения листового металла различных форматов.",
+    description: "Пирамиды используются для хранения листа разных размеров. Конструкция позволяет сортировать материал по габаритам и обеспечивает удобную выборку.",
+    applications: ["склады с разноформатным листом", "цеха обработки", "распределительные центры"],
+    specs: [
+      { label: "Тип конструкции", value: "пирамидальная" },
+      { label: "Исполнение", value: "стационарное / передвижное" },
+      { label: "Сортировка", value: "по форматам листа" }
+    ],
+    includes: ["подбор габаритов под номенклатуру", "выбор количества секций", "проверка способа загрузки"]
+  },
+  {
+    id: "shelves-manual-sheet",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-vertical-systems",
+    title: "Полки для хранения листового металла",
+    shortTitle: "Полки",
+    sku: "KBP-MSM-SHELVES",
+    image: "/assets/images/products/manual-sheet-metal/2.8.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.8.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Базовое решение",
+    summary: "Базовые полочные стеллажи для хранения листового металла малого формата.",
+    description: "Простое и надёжное решение для небольших цехов или участков, где нет необходимости в сложных автоматизированных системах. Открытые полки обеспечивают визуальный контроль материала.",
+    applications: ["небольшие цеха", "ремонтные участки", "склады инструмента и металла"],
+    specs: [
+      { label: "Тип конструкции", value: "полочная" },
+      { label: "Доступ", value: "открытый" },
+      { label: "Применение", value: "малый формат листа" }
+    ],
+    includes: ["подбор количества уровней", "расчёт нагрузки", "проверка габаритов"]
+  },
+  {
+    id: "depalletizer",
+    categoryId: "manual-sheet-metal",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Депаллетайзер для листового металла",
+    shortTitle: "Депаллетайзер",
+    sku: "KBP-MSM-DEPAL",
+    image: "/assets/images/products/manual-sheet-metal/2.9.png",
+    gallery: ["/assets/images/products/manual-sheet-metal/2.9.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Автоматизация",
+    summary: "Депаллетайзер для автоматического разделения и подачи листового металла из пачки.",
+    description: "Устройство, которое автоматически отделяет лист от пачки и подаёт его на следующий технологический этап. Применяется в линиях лазерной резки и комплектации.",
+    applications: ["линии лазерной резки", "автоматизированная подача листа", "комплектовочные участки"],
+    specs: [
+      { label: "Назначение", value: "разделение и подача листа" },
+      { label: "Тип работы", value: "автоматический" },
+      { label: "Интеграция", value: "с линиями резки" }
+    ],
+    includes: ["проверка совместимости с оборудованием", "подбор по толщине листа", "интеграция в технологический поток"]
+  },
+  // === Категория 4: Ручные системы хранения сортового металла (5 продуктов) ===
+  {
+    id: "cassette-racks-sort",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-cassette-systems",
+    title: "Кассетные стеллажи для сортового металла",
+    shortTitle: "Кассетные сортовые",
+    sku: "KBP-MSP-CASSETTE",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.1.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.1.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Кассетный",
+    summary: "Кассетные стеллажи для хранения сортового металлопроката, труб и профиля.",
+    description: "Кассетная конструкция позволяет сортировать сортовой прокат по типоразмерам. Каждая кассета выдвигается для удобного доступа к материалу.",
+    applications: ["склады сортового проката", "цеха металлоконструкций", "распределительные склады"],
+    specs: [
+      { label: "Хранимый материал", value: "трубы, профиль, пруток" },
+      { label: "Тип доступа", value: "выкатные кассеты" },
+      { label: "Сортировка", value: "по типоразмеру" }
+    ],
+    includes: ["подбор количества кассет", "расчёт нагрузки", "проверка длины проката"]
+  },
+  {
+    id: "cantilever-rollout",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-cassette-systems",
+    title: "Консольные стеллажи с выдвижными полками",
+    shortTitle: "Консольные выдвижные",
+    sku: "KBP-MSP-CANTILEVER-ROLL",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.2.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.2.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Консольный",
+    summary: "Консольные стеллажи с выдвижными полками для длинномерного сортового проката.",
+    description: "Консоли свободно открываются с одной стороны, а выдвижные полки обеспечивают доступ к материалу без необходимости проходить вдоль всего стеллажа.",
+    applications: ["хранение длинномера", "склад труб и балок", "участки металлоконструкций"],
+    specs: [
+      { label: "Тип конструкции", value: "консольная" },
+      { label: "Полки", value: "выдвижные" },
+      { label: "Сценарий", value: "длинномерный прокат" }
+    ],
+    includes: ["подбор длины консолей", "расчёт нагрузки", "проверка прохода"]
+  },
+  {
+    id: "honeycomb-racks",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-honeycomb-systems",
+    title: "Стеллажи сотовые для сортового металла",
+    shortTitle: "Сотовые стеллажи",
+    sku: "KBP-MSP-HONEYCOMB",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.3.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.3.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Сотовый",
+    summary: "Сотовые стеллажи с ячеистой структурой для сортированного хранения труб и профиля.",
+    description: "Стеллажи с сотовой структурой позволяют разместить большое количество разнотипного длинномера в одной зоне с быстрой выборкой по ячейкам.",
+    applications: ["склад труб", "архив профиля", "распределительные склады"],
+    specs: [
+      { label: "Тип конструкции", value: "сотовая (ячеистая)" },
+      { label: "Сортировка", value: "по типу и сечению" },
+      { label: "Доступ", value: "торцевой" }
+    ],
+    includes: ["подбор количества ячеек", "оптимизация под номенклатуру", "проверка длины ячеек"]
+  },
+  {
+    id: "fishbone-racks",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-honeycomb-systems",
+    title: "Стеллажи типа «Ёлочка»",
+    shortTitle: "Ёлочка",
+    sku: "KBP-MSP-FISHBONE",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Ёлочка",
+    summary: "Стеллажи типа «Ёлочка» для хранения длинномерного проката с боковой загрузкой.",
+    description: "Конструкция с наклонными плечами в форме ёлочки обеспечивает безопасное хранение длинномера и удобную боковую загрузку без зажима материала.",
+    applications: ["склад длинномера", "хранение балок и швеллеров", "цеха металлоконструкций"],
+    specs: [
+      { label: "Тип конструкции", value: "наклонная (ёлочка)" },
+      { label: "Загрузка", value: "боковая" },
+      { label: "Сценарий", value: "длинномер" }
+    ],
+    includes: ["подбор высоты и длины", "расчёт нагрузки", "выбор количества плеч"]
+  },
+  {
+    id: "compact-reinforced",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-honeycomb-systems",
+    title: "Стеллаж «Компакт усиленный» для заготовок мех. обработки",
+    shortTitle: "Компакт усиленный",
+    sku: "KBP-MSP-COMPACT-REIN",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.5.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.5.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Усиленный",
+    summary: "Усиленные стеллажи «Компакт» для тяжёлых заготовок механической обработки.",
+    description: "Конструкция рассчитана на повышенные нагрузки заготовок механообработки. Применяется на участках перед фрезерными, токарными и другими станками.",
+    applications: ["участки механообработки", "склад заготовок", "буфер перед станками"],
+    specs: [
+      { label: "Серия", value: "Компакт усиленный" },
+      { label: "Назначение", value: "тяжёлые заготовки" },
+      { label: "Усиление", value: "по нагрузке и каркасу" }
+    ],
+    includes: ["расчёт нагрузки на полку", "подбор габаритов под заготовки", "проверка пола под нагрузку"]
   }
 ];
 

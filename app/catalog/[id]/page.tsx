@@ -28,7 +28,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   if (!item) notFound();
 
   const products = getProductsByCategory(item.id);
-  const isPilotCategory = item.id === "auto-sheet-metal" && products.length > 0;
+  const isPilotCategory = products.length > 0;
   const related = excelHomeCatalog.filter((catalogItem) => catalogItem.id !== item.id).slice(0, 4);
 
   return (
