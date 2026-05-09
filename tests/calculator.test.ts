@@ -17,7 +17,7 @@ describe("Excel-based storage calculator", () => {
     );
 
     expect(result.sourceSheet).toBe("Авт. скл. лист. металл");
-    expect(result.fromPrice).toBe(7318003);
+    expect(result.fromPrice).toBe(7408000);
     expect(result.factors.dimensionFactor).toBeCloseTo(1.21);
     expect(result.engineeringSummary.supportLoadKg).toBe(12375);
   });

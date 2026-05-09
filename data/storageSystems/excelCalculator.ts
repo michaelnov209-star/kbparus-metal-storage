@@ -139,7 +139,7 @@ const automaticTowerPrices = {
 } as const;
 
 const automaticOptions = [
-  { id: "scale", title: "Весы на распалетчик", price: 3 },
+  { id: "scale", title: "Весы на распалетчик", price: 90000 },
   { id: "infrared-safety", title: "Инфракрасные ограждения", price: 80000 },
   { id: "vacuum-grip", title: "Вакуумный захват", price: 450000 },
   { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 },
@@ -147,7 +147,7 @@ const automaticOptions = [
 ] satisfies CalculatorOption[];
 
 const rolloutOptions = [
-  { id: "scale", title: "Весы на распалетчик", price: 3 },
+  { id: "scale", title: "Весы на распалетчик", price: 90000 },
   { id: "vacuum-grip", title: "Вакуумный захват", price: 450000 },
   { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 }
 ] satisfies CalculatorOption[];
