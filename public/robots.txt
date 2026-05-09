@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://kbparus-metal-storage.vercel.app/sitemap.xml
