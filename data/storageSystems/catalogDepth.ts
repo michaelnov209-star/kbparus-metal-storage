@@ -82,6 +82,13 @@ export const catalogSubcategories: CatalogSubcategory[] = [
     title: "Сотовые и Ш-образные стеллажи",
     summary: "Специализированные конструкции для длинномера и заготовок механической обработки.",
     image: "/assets/images/catalog/04-manual-sort-and-pipe-storage.png"
+  },
+  {
+    id: "manual-sort-fishbone",
+    categoryId: "manual-sort-and-pipe-storage",
+    title: "Стеллажи типа «Ёлочка»",
+    summary: "Двусторонние и односторонние ёлочки и пирамиды для длинномерного проката с боковой загрузкой.",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.png"
   }
 ];
 
@@ -507,26 +514,92 @@ export const catalogProducts: CatalogProduct[] = [
     includes: ["подбор количества ячеек", "оптимизация под номенклатуру", "проверка длины ячеек"]
   },
   {
-    id: "fishbone-racks",
+    id: "fishbone-double-sided",
     categoryId: "manual-sort-and-pipe-storage",
-    subcategoryId: "manual-sort-honeycomb-systems",
-    title: "Стеллажи типа «Ёлочка»",
-    shortTitle: "Ёлочка",
-    sku: "KBP-MSP-FISHBONE",
-    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.png",
-    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.png"],
+    subcategoryId: "manual-sort-fishbone",
+    title: "Стеллаж ёлочка двухсторонний",
+    shortTitle: "Ёлочка двухсторонняя",
+    sku: "KBP-MSP-FISHBONE-2S",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.1.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.1.png"],
     pageMode: "standard",
     priceMode: "request",
-    badge: "Ёлочка",
-    summary: "Стеллажи типа «Ёлочка» для хранения длинномерного проката с боковой загрузкой.",
-    description: "Конструкция с наклонными плечами в форме ёлочки обеспечивает безопасное хранение длинномера и удобную боковую загрузку без зажима материала.",
-    applications: ["склад длинномера", "хранение балок и швеллеров", "цеха металлоконструкций"],
+    badge: "Двусторонний",
+    summary: "Двусторонний ёлочка-стеллаж с боковой загрузкой для длинномерного проката.",
+    description: "Конструкция с наклонными плечами в форме ёлочки. Двустороннее исполнение позволяет загружать металл с обеих сторон, повышая производительность работы склада.",
+    applications: ["хранение длинномера", "балки и швеллеры", "цеха металлоконструкций"],
     specs: [
-      { label: "Тип конструкции", value: "наклонная (ёлочка)" },
-      { label: "Загрузка", value: "боковая" },
-      { label: "Сценарий", value: "длинномер" }
+      { label: "Тип конструкции", value: "ёлочка наклонная" },
+      { label: "Доступ", value: "с двух сторон" },
+      { label: "Загрузка", value: "боковая" }
     ],
     includes: ["подбор высоты и длины", "расчёт нагрузки", "выбор количества плеч"]
+  },
+  {
+    id: "fishbone-pyramid-reinforced",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-fishbone",
+    title: "Стеллаж пирамида ёлочка усиленный двухсторонний",
+    shortTitle: "Пирамида усиленная",
+    sku: "KBP-MSP-FISHBONE-PYR-REIN",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.2.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.2.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Усиленный",
+    summary: "Усиленная пирамидальная ёлочка двустороннего исполнения для тяжёлого длинномера.",
+    description: "Усиленная конструкция выдерживает повышенные нагрузки тяжёлого длинномерного проката. Пирамидальная форма обеспечивает устойчивость, двустороннее исполнение — высокую производительность.",
+    applications: ["тяжёлый прокат", "балки большого сечения", "склад с высокой нагрузкой"],
+    specs: [
+      { label: "Тип конструкции", value: "пирамида ёлочка" },
+      { label: "Усиление", value: "повышенная нагрузка" },
+      { label: "Доступ", value: "с двух сторон" }
+    ],
+    includes: ["расчёт нагрузки на плечи", "проверка пола под массу", "подбор размеров"]
+  },
+  {
+    id: "fishbone-pyramid-double",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-fishbone",
+    title: "Стеллаж пирамида ёлочка двухсторонний",
+    shortTitle: "Пирамида ёлочка",
+    sku: "KBP-MSP-FISHBONE-PYR-2S",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.3.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.3.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Пирамида",
+    summary: "Пирамидальная ёлочка двустороннего исполнения для длинномерного проката.",
+    description: "Базовая пирамидальная ёлочка с возможностью загрузки с двух сторон. Универсальное решение для большинства складов длинномера среднего сечения.",
+    applications: ["длинномер среднего сечения", "трубы и профиль", "склады металлоконструкций"],
+    specs: [
+      { label: "Тип конструкции", value: "пирамида ёлочка" },
+      { label: "Доступ", value: "с двух сторон" },
+      { label: "Применение", value: "среднее сечение" }
+    ],
+    includes: ["подбор габаритов", "расчёт нагрузки", "выбор количества плеч"]
+  },
+  {
+    id: "fishbone-pyramid-single",
+    categoryId: "manual-sort-and-pipe-storage",
+    subcategoryId: "manual-sort-fishbone",
+    title: "Стеллаж ёлочка пирамида односторонний",
+    shortTitle: "Пирамида односторонняя",
+    sku: "KBP-MSP-FISHBONE-PYR-1S",
+    image: "/assets/images/products/manual-sort-and-pipe-storage/4.4.4.png",
+    gallery: ["/assets/images/products/manual-sort-and-pipe-storage/4.4.4.png"],
+    pageMode: "standard",
+    priceMode: "request",
+    badge: "Односторонний",
+    summary: "Односторонняя пирамидальная ёлочка для пристенного хранения длинномера.",
+    description: "Односторонний доступ позволяет устанавливать стеллаж вдоль стены или в углу склада. Экономит площадь, но снижает производительность по сравнению с двусторонним исполнением.",
+    applications: ["пристенное хранение", "склады с ограниченной площадью", "цеха с одной рабочей зоной"],
+    specs: [
+      { label: "Тип конструкции", value: "пирамида ёлочка" },
+      { label: "Доступ", value: "с одной стороны" },
+      { label: "Сценарий", value: "пристенное хранение" }
+    ],
+    includes: ["подбор габаритов", "проверка проходов", "расчёт нагрузки"]
   },
   {
     id: "compact-reinforced",
