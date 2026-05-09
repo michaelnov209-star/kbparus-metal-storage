@@ -465,7 +465,7 @@ export default function Home() {
       </section>
 
       <section className="line-main-site-banner line-coating-site-banner reveal" aria-label="КБ Парус — линии порошковой окраски">
-        <img src="/assets/images/kbparus-coating-lines-banner.png" alt="КБ Парус — линии порошковой окраски" />
+        <img src="/assets/images/baner_liniiokraski.png" alt="ЛинииОкраски.рф — линии порошковой окраски от КБ Парус" />
         <a className="line-primary" href="https://линииокраски.рф/" target="_blank" rel="noreferrer">Перейти на линииокраски.рф</a>
       </section>
 
