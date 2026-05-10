@@ -31,6 +31,9 @@ const securityHeaders = [
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Только server-only пакеты без CSS-импортов. @payloadcms/next/richtext-lexical
+  // нельзя externalize — у них есть CSS, которые Node ESM не загружает.
+  serverExternalPackages: ["sharp", "drizzle-kit", "drizzle-orm", "pg", "@payloadcms/db-postgres"],
   images: {
     remotePatterns: [
       // Vercel Blob — куда Payload загружает медиа-файлы

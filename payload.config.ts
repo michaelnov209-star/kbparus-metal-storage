@@ -33,16 +33,21 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || ""
-    }
+      connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || ""
+    },
+    // Принудительно создаём/обновляем схему БД даже в production, потому что
+    // на Vercel preview мы единственные пользователи и миграции пока не нужны.
+    // На полноценном production-deploy переключим на migrations.
+    push: true,
+    // Neon serverless через pgbouncer не поддерживает многооператорные транзакции.
+    transactionOptions: false
   }),
   plugins: [
     vercelBlobStorage({
       collections: { media: true },
       token: process.env.BLOB_READ_WRITE_TOKEN || ""
     })
-  ],
-  i18n: {
-    fallbackLanguage: "ru"
-  }
+  ]
+  // Убрали кастомный i18n — без импорта translation-пакетов он вызывает hydration
+  // mismatch (server: ru, client: en). Подписи полей уже на русском через label: { ru }.
 });
