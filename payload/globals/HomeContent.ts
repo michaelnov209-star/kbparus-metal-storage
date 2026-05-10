@@ -16,78 +16,92 @@ export const HomeContent: GlobalConfig = {
         {
           label: { ru: "Hero (главный блок)", en: "Hero" },
           fields: [
-            { name: "heroEyebrow", label: { ru: "Надзаголовок (мелкий текст сверху)", en: "Eyebrow" }, type: "text" },
-            { name: "heroTitle", label: { ru: "Главный заголовок", en: "Main title" }, type: "text", required: true },
-            { name: "heroDescription", label: { ru: "Подзаголовок", en: "Description" }, type: "textarea" },
             {
-              name: "heroBackgroundMode",
-              label: { ru: "Что показывать на фоне", en: "Background mode" },
-              type: "select",
-              required: true,
-              defaultValue: "video",
-              options: [
-                { label: { ru: "Видео (с автозапуском)", en: "Video (autoplay)" }, value: "video" },
-                { label: { ru: "Картинка (статичная)", en: "Static image" }, value: "image" }
-              ],
-              admin: {
-                description: {
-                  ru: "Если выбрано «Видео» — на фоне будет проигрываться видео из поля ниже. Если «Картинка» — статичное изображение.",
-                  en: ""
-                }
-              }
-            },
-            {
-              name: "heroVideo",
-              label: { ru: "Видео-фон (mp4 / webm)", en: "Hero video" },
-              type: "upload",
-              relationTo: "media",
-              filterOptions: { mimeType: { contains: "video" } },
-              admin: {
-                description: {
-                  ru: "Загрузите видео формата MP4 (или WebM). Будет проигрываться автоматически без звука. Рекомендуем длину 10-30 сек, размер до 10 МБ для быстрой загрузки.",
-                  en: ""
-                },
-                condition: (_, sibling) => sibling?.heroBackgroundMode === "video"
-              }
-            },
-            {
-              name: "heroPosterImage",
-              label: { ru: "Постер видео (что показывается ДО загрузки видео)", en: "Video poster" },
-              type: "upload",
-              relationTo: "media",
-              filterOptions: { mimeType: { contains: "image" } },
-              admin: {
-                description: {
-                  ru: "Изображение, которое отображается на тех устройствах, где видео ещё не загрузилось или не поддерживается.",
-                  en: ""
-                },
-                condition: (_, sibling) => sibling?.heroBackgroundMode === "video"
-              }
-            },
-            {
-              name: "heroImage",
-              label: { ru: "Картинка-фон", en: "Hero image" },
-              type: "upload",
-              relationTo: "media",
-              filterOptions: { mimeType: { contains: "image" } },
-              admin: {
-                description: {
-                  ru: "Высококачественное фото производства или объекта (рекомендуем 1920×1080 px и больше). Используется когда выбран режим «Картинка».",
-                  en: ""
-                },
-                condition: (_, sibling) => sibling?.heroBackgroundMode === "image"
-              }
-            },
-            {
-              name: "heroMetrics",
-              label: { ru: "Метрики (3 цифры в hero)", en: "Hero metrics" },
-              type: "array",
-              maxRows: 4,
+              name: "hero",
+              type: "group",
+              label: { ru: "Hero", en: "Hero" },
               fields: [
-                { type: "row", fields: [
-                  { name: "value", label: { ru: "Значение (напр. «500+»)", en: "Value" }, type: "text", required: true, admin: { width: "40%" } },
-                  { name: "label", label: { ru: "Подпись (напр. «проектов»)", en: "Label" }, type: "text", required: true, admin: { width: "60%" } }
-                ]}
+                { name: "eyebrow", label: { ru: "Надзаголовок (мелкий текст сверху)", en: "Eyebrow" }, type: "text" },
+                { name: "title", label: { ru: "Главный заголовок", en: "Main title" }, type: "text", required: true },
+                { name: "description", label: { ru: "Подзаголовок", en: "Description" }, type: "textarea" },
+                {
+                  name: "background",
+                  type: "group",
+                  label: { ru: "Фон Hero", en: "Background" },
+                  admin: {
+                    description: {
+                      ru: "Выберите видео или статичную картинку. Если ничего не задано — будет показано дефолтное видео производства.",
+                      en: ""
+                    }
+                  },
+                  fields: [
+                    {
+                      name: "type",
+                      label: { ru: "Что показывать на фоне", en: "Background type" },
+                      type: "select",
+                      required: true,
+                      defaultValue: "video",
+                      options: [
+                        { label: { ru: "Видео (с автозапуском)", en: "Video (autoplay)" }, value: "video" },
+                        { label: { ru: "Картинка (статичная)", en: "Static image" }, value: "image" }
+                      ]
+                    },
+                    {
+                      name: "video",
+                      label: { ru: "Видео-фон (mp4 / webm)", en: "Background video" },
+                      type: "upload",
+                      relationTo: "media",
+                      filterOptions: { mimeType: { contains: "video" } },
+                      admin: {
+                        description: {
+                          ru: "MP4 или WebM. Проигрывается автоматически без звука. Рекомендуем 10-30 сек, до 10 МБ. На мобильных подгружается с задержкой (preload=metadata) — не нагружает производительность.",
+                          en: ""
+                        },
+                        condition: (_, sibling) => sibling?.type === "video"
+                      }
+                    },
+                    {
+                      name: "poster",
+                      label: { ru: "Постер (картинка-заглушка пока видео грузится)", en: "Video poster" },
+                      type: "upload",
+                      relationTo: "media",
+                      filterOptions: { mimeType: { contains: "image" } },
+                      admin: {
+                        description: {
+                          ru: "Что показать на медленных устройствах, пока видео не подгрузилось. Также используется как fallback если браузер не воспроизводит видео.",
+                          en: ""
+                        },
+                        condition: (_, sibling) => sibling?.type === "video"
+                      }
+                    },
+                    {
+                      name: "image",
+                      label: { ru: "Картинка-фон", en: "Background image" },
+                      type: "upload",
+                      relationTo: "media",
+                      filterOptions: { mimeType: { contains: "image" } },
+                      admin: {
+                        description: {
+                          ru: "Высококачественное фото (рекомендуем 1920×1080 px и больше). Будет автоматически оптимизирована и подана в формате WebP в трёх размерах для разных устройств.",
+                          en: ""
+                        },
+                        condition: (_, sibling) => sibling?.type === "image"
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: "metrics",
+                  label: { ru: "Метрики (3 цифры в hero)", en: "Hero metrics" },
+                  type: "array",
+                  maxRows: 4,
+                  fields: [
+                    { type: "row", fields: [
+                      { name: "value", label: { ru: "Значение (напр. «500+»)", en: "Value" }, type: "text", required: true, admin: { width: "40%" } },
+                      { name: "label", label: { ru: "Подпись (напр. «проектов»)", en: "Label" }, type: "text", required: true, admin: { width: "60%" } }
+                    ]}
+                  ]
+                }
               ]
             }
           ]

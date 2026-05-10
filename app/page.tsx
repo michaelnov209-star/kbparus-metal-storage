@@ -8,6 +8,14 @@ import { SliderControls } from "@/components/SliderControls";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { JsonLd, faqSchema } from "@/lib/seo/schema";
+import { getHeroContent } from "@/lib/cms/home-content";
+
+/**
+ * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
+ * меняет hero/контент в админке, обновление появляется на сайте
+ * в течение минуты без ручного деплоя.
+ */
+export const revalidate = 60;
 import {
   ArrowRight,
   BadgeCheck,
@@ -201,7 +209,9 @@ const faq = [
   }
 ];
 
-export default function Home() {
+export default async function Home() {
+  const hero = await getHeroContent();
+
   return (
     <main className="line-page" id="top">
       <LinePageStyles />
@@ -238,25 +248,39 @@ export default function Home() {
       </header>
 
       <section className="line-hero">
-        <div className="line-hero-bg" aria-hidden="true">
-          <video
-            src="/assets/videos/metal-storage-hero-trimmed.mp4"
-            poster={visualAssets.hero}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
+        <div className="line-hero-bg" aria-hidden={hero.background.type === "video" ? "true" : undefined}>
+          {hero.background.type === "video" ? (
+            <video
+              src={hero.background.videoUrl}
+              poster={hero.background.posterUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-hidden="true"
+            />
+          ) : (
+            <img
+              src={hero.background.imageUrl}
+              srcSet={hero.background.imageSrcSet}
+              sizes="100vw"
+              alt={hero.background.alt}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+          )}
         </div>
         <div className="line-hero-overlay" />
         <div className="line-hero-inner">
           <div className="line-hero-content reveal">
-            <span className="line-kicker">КБ Парус / складские системы для металла</span>
-            <h1><strong>Системы хранения</strong> металла</h1>
+            <span className="line-kicker">{hero.eyebrow}</span>
+            <h1>{hero.title}</h1>
+            {hero.description && <p className="line-hero-lede">{hero.description}</p>}
             <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
-              {metrics.map((item) => (
-                <article key={item.value}>
+              {hero.metrics.map((item) => (
+                <article key={`${item.value}-${item.label}`}>
                   <strong>{item.value}</strong>
                   <span>{item.label}</span>
                 </article>

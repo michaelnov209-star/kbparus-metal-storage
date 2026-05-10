@@ -31,6 +31,12 @@ const securityHeaders = [
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      // Vercel Blob — куда Payload загружает медиа-файлы
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" }
+    ]
+  },
   async headers() {
     return [
       {
