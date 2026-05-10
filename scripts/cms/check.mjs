@@ -37,8 +37,22 @@ function check(name, fn, { soft = false } = {}) {
 
 console.log("\n🔍 CMS preflight checks\n");
 
+// === 0. Runtime ===
+console.log("Runtime:");
+check("Node major version is 22", () => {
+  const major = parseInt(process.versions.node.split(".")[0], 10);
+  if (major !== 22) {
+    throw new Error(
+      `Node ${process.versions.node} обнаружен. Требуется Node 22.x. ` +
+      `Vercel: проверить package.json engines = "22.x" и Project Settings → Node.js Version. ` +
+      `Локально: nvm use 22 / volta install node@22.`
+    );
+  }
+  return true;
+}, { soft: true });
+
 // === 1. Env vars ===
-console.log("Environment variables:");
+console.log("\nEnvironment variables:");
 check("PAYLOAD_SECRET set (>=32 chars)", () => {
   const s = process.env.PAYLOAD_SECRET;
   if (!s) throw new Error("not set");
