@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -138,6 +138,8 @@ export function Calculator() {
   const [input, setInput] = useState<CalculatorInput>(() => buildInputForProfile("auto-sheet-metal"));
   const [contact, setContact] = useState({ name: "", phone: "", email: "", address: "" });
   const [leadStatus, setLeadStatus] = useState("");
+  const [hpUrl, setHpUrl] = useState("");
+  const formStartedAt = useRef<number>(Date.now());
   const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
@@ -205,36 +207,44 @@ export function Calculator() {
 
   async function submitLead() {
     setLeadStatus("Готовим заявку для инженера...");
-    const response = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contact: {
-          name: contact.name || "Заявка с калькулятора",
-          phone: contact.phone,
-          email: contact.email
-        },
-        city: input.city,
-        comment: [contact.address && `Адрес/объект: ${contact.address}`, input.comment].filter(Boolean).join("\n"),
-        calculatorInput: input,
-        recommendedConfig: {
-          title: display.title,
-          dimensions: dimensionLabel,
-          loadKg: input.loadKg,
-          shelfCount: input.shelfCount,
-          towerCount: input.towerCount,
-          options: selectedOptions.map((option) => optionCopy[option.id] ?? option.title)
-        },
-        preliminaryPriceFrom: result.fromPrice,
-        utm: {}
-      })
-    });
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact: {
+            name: contact.name || "Заявка с калькулятора",
+            phone: contact.phone,
+            email: contact.email
+          },
+          city: input.city,
+          comment: [contact.address && `Адрес/объект: ${contact.address}`, input.comment].filter(Boolean).join("\n"),
+          calculatorInput: input,
+          recommendedConfig: {
+            title: display.title,
+            dimensions: dimensionLabel,
+            loadKg: input.loadKg,
+            shelfCount: input.shelfCount,
+            towerCount: input.towerCount,
+            options: selectedOptions.map((option) => optionCopy[option.id] ?? option.title)
+          },
+          preliminaryPriceFrom: result.fromPrice,
+          source: `Калькулятор на главной — ${display.title}`,
+          hp_url: hpUrl,
+          formStartedAt: formStartedAt.current,
+          utm: {}
+        })
+      });
 
-    setLeadStatus(
-      response.ok
-        ? "Заявка сформирована. Инженер увидит выбранные параметры и свяжется с вами."
-        : "Не удалось сформировать заявку. Попробуйте еще раз или позвоните нам."
-    );
+      const data = await response.json().catch(() => ({}));
+      setLeadStatus(
+        response.ok
+          ? "Заявка сформирована. Инженер увидит выбранные параметры и свяжется с вами."
+          : (data?.error ?? "Не удалось сформировать заявку. Попробуйте еще раз или позвоните нам.")
+      );
+    } catch {
+      setLeadStatus("Сеть недоступна. Попробуйте через минуту или позвоните нам.");
+    }
   }
 
   return (
@@ -550,6 +560,14 @@ export function Calculator() {
                 <label className="text-field">
                   Адрес объекта
                   <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
+                </label>
+              </div>
+
+              {/* Honeypot — невидимое поле для ботов. Не трогать. */}
+              <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
+                <label>
+                  Не заполняйте это поле
+                  <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
                 </label>
               </div>
 

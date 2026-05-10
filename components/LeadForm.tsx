@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-export function LeadForm({ title = "Получить консультацию" }: { title?: string }) {
+export function LeadForm({ title = "Получить консультацию", source }: { title?: string; source?: string }) {
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
@@ -13,6 +13,10 @@ export function LeadForm({ title = "Получить консультацию" }
     setSubmitting(true);
     const form = new FormData(event.currentTarget);
     setStatus("Отправляем заявку...");
+
+    const resolvedSource =
+      source ??
+      (typeof window !== "undefined" ? `${title} — ${window.location.pathname}` : title);
 
     try {
       const response = await fetch("/api/leads", {
@@ -28,6 +32,7 @@ export function LeadForm({ title = "Получить консультацию" }
           comment: String(form.get("comment") ?? ""),
           hp_url: String(form.get("hp_url") ?? ""),
           formStartedAt: formStartedAt.current,
+          source: resolvedSource,
           calculatorInput: {},
           utm: {}
         })

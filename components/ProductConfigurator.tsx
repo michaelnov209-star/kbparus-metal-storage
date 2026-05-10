@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, ClipboardCheck, Info, Ruler, Send, ShieldCheck } from "lucide-react";
 import { getCalculatorProfile, type CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem } from "@/lib/calculator/pricing";
@@ -47,6 +47,8 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
   const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId));
   const [contact, setContact] = useState({ name: "", phone: "" });
   const [status, setStatus] = useState("");
+  const [hpUrl, setHpUrl] = useState("");
+  const formStartedAt = useRef<number>(Date.now());
   const result = useMemo(() => calculateStorageSystem(input), [input]);
 
   function setNumberField(field: keyof CalculatorInput, value: number) {
@@ -66,23 +68,35 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
 
   async function submitLead() {
     setStatus("Отправляем параметры инженеру...");
-    const response = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contact,
-        city: input.city,
-        comment: input.comment,
-        calculatorInput: input,
-        recommendedConfig: result.recommendation,
-        preliminaryPriceRange: {
-          from: result.fromPrice,
-          label: `от ${formatRoundedRub(result.fromPrice)}`
-        }
-      })
-    });
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact,
+          city: input.city,
+          comment: input.comment,
+          calculatorInput: input,
+          recommendedConfig: result.recommendation,
+          preliminaryPriceRange: {
+            from: result.fromPrice,
+            label: `от ${formatRoundedRub(result.fromPrice)}`
+          },
+          source: `Конфигуратор товара — ${profile.title}`,
+          hp_url: hpUrl,
+          formStartedAt: formStartedAt.current
+        })
+      });
 
-    setStatus(response.ok ? "Заявка принята. Инженер получит параметры и свяжется с вами." : "Не получилось отправить заявку. Попробуйте еще раз.");
+      const data = await response.json().catch(() => ({}));
+      setStatus(
+        response.ok
+          ? "Заявка принята. Инженер получит параметры и свяжется с вами."
+          : (data?.error ?? "Не получилось отправить заявку. Попробуйте еще раз.")
+      );
+    } catch {
+      setStatus("Сеть недоступна. Попробуйте через минуту или позвоните нам.");
+    }
   }
 
   return (
@@ -145,6 +159,10 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
           <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
           <input value={input.city} onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))} placeholder="Город поставки" />
           <textarea value={input.comment} onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))} placeholder="Комментарий для инженера" />
+          {/* Honeypot — невидимое поле для ботов. Не трогать. */}
+          <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
+            <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
+          </div>
           <button className="primary-button" type="button" onClick={submitLead}>
             <Send size={18} />
             Получить расчет
