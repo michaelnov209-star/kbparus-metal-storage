@@ -19,8 +19,65 @@ export const HomeContent: GlobalConfig = {
             { name: "heroEyebrow", label: { ru: "Надзаголовок (мелкий текст сверху)", en: "Eyebrow" }, type: "text" },
             { name: "heroTitle", label: { ru: "Главный заголовок", en: "Main title" }, type: "text", required: true },
             { name: "heroDescription", label: { ru: "Подзаголовок", en: "Description" }, type: "textarea" },
-            { name: "heroVideo", label: { ru: "Видео-фон (mp4)", en: "Hero video" }, type: "upload", relationTo: "media" },
-            { name: "heroPosterImage", label: { ru: "Изображение-постер для видео", en: "Poster" }, type: "upload", relationTo: "media" },
+            {
+              name: "heroBackgroundMode",
+              label: { ru: "Что показывать на фоне", en: "Background mode" },
+              type: "select",
+              required: true,
+              defaultValue: "video",
+              options: [
+                { label: { ru: "Видео (с автозапуском)", en: "Video (autoplay)" }, value: "video" },
+                { label: { ru: "Картинка (статичная)", en: "Static image" }, value: "image" }
+              ],
+              admin: {
+                description: {
+                  ru: "Если выбрано «Видео» — на фоне будет проигрываться видео из поля ниже. Если «Картинка» — статичное изображение.",
+                  en: ""
+                }
+              }
+            },
+            {
+              name: "heroVideo",
+              label: { ru: "Видео-фон (mp4 / webm)", en: "Hero video" },
+              type: "upload",
+              relationTo: "media",
+              filterOptions: { mimeType: { contains: "video" } },
+              admin: {
+                description: {
+                  ru: "Загрузите видео формата MP4 (или WebM). Будет проигрываться автоматически без звука. Рекомендуем длину 10-30 сек, размер до 10 МБ для быстрой загрузки.",
+                  en: ""
+                },
+                condition: (_, sibling) => sibling?.heroBackgroundMode === "video"
+              }
+            },
+            {
+              name: "heroPosterImage",
+              label: { ru: "Постер видео (что показывается ДО загрузки видео)", en: "Video poster" },
+              type: "upload",
+              relationTo: "media",
+              filterOptions: { mimeType: { contains: "image" } },
+              admin: {
+                description: {
+                  ru: "Изображение, которое отображается на тех устройствах, где видео ещё не загрузилось или не поддерживается.",
+                  en: ""
+                },
+                condition: (_, sibling) => sibling?.heroBackgroundMode === "video"
+              }
+            },
+            {
+              name: "heroImage",
+              label: { ru: "Картинка-фон", en: "Hero image" },
+              type: "upload",
+              relationTo: "media",
+              filterOptions: { mimeType: { contains: "image" } },
+              admin: {
+                description: {
+                  ru: "Высококачественное фото производства или объекта (рекомендуем 1920×1080 px и больше). Используется когда выбран режим «Картинка».",
+                  en: ""
+                },
+                condition: (_, sibling) => sibling?.heroBackgroundMode === "image"
+              }
+            },
             {
               name: "heroMetrics",
               label: { ru: "Метрики (3 цифры в hero)", en: "Hero metrics" },

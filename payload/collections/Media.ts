@@ -14,7 +14,8 @@ export const Media: CollectionConfig = {
     useAsTitle: "filename"
   },
   upload: {
-    mimeTypes: ["image/*"],
+    // Принимаем картинки (любые) И видео mp4/webm для hero-фона
+    mimeTypes: ["image/*", "video/mp4", "video/webm", "video/quicktime"],
     imageSizes: [
       { name: "thumb", width: 320, height: undefined, position: "centre" },
       { name: "medium", width: 800, height: undefined, position: "centre" },
