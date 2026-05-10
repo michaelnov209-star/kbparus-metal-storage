@@ -33,11 +33,20 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || ""
+      // Используем DIRECT (unpooled) connection. Drizzle push DDL не работает
+      // через pgbouncer (Neon pooled). Vercel + Neon integration предоставляет
+      // оба env var; Payload использует direct, runtime-запросы Next.js Lambda
+      // и без того короткие — connection pool не критичен.
+      connectionString:
+        process.env.DATABASE_URL_UNPOOLED ||
+        process.env.POSTGRES_URL_NON_POOLING ||
+        process.env.DATABASE_URL ||
+        process.env.POSTGRES_URL ||
+        ""
     },
-    // Принудительно создаём/обновляем схему БД даже в production, потому что
-    // на Vercel preview мы единственные пользователи и миграции пока не нужны.
-    // На полноценном production-deploy переключим на migrations.
+    // Принудительно создаём/обновляем схему БД даже в production. Безопасно для
+    // нашего масштаба (один dev). На зрелом production-deploy переключим на
+    // controlled migrations через `payload migrate`.
     push: true,
     // Neon serverless через pgbouncer не поддерживает многооператорные транзакции.
     transactionOptions: false
