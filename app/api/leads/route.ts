@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
+import { formatRoundedRub } from "@/lib/calculator/format";
 
 interface LeadPayload {
   contact?: {
@@ -15,6 +16,8 @@ interface LeadPayload {
   hp_url?: string;
   /** Время загрузки формы (мс). Слишком быстрая отправка = бот. */
   formStartedAt?: number;
+  /** Откуда отправлена заявка (для Telegram-уведомления). */
+  source?: string;
 }
 
 const RATE_LIMIT_MAX = 5;
@@ -58,6 +61,91 @@ function sanitize(value: string | undefined): string {
   return String(value).slice(0, MAX_FIELD_LENGTH).trim();
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+interface TelegramLead {
+  name: string;
+  phone: string;
+  email: string;
+  city: string;
+  comment: string;
+  source?: string;
+  recommendationTitle: string;
+  fromPriceLabel: string;
+  utm?: Record<string, string>;
+}
+
+function buildTelegramMessage(lead: TelegramLead): string {
+  const phoneClean = lead.phone.replace(/[\s\-()]/g, "");
+  const lines: string[] = [];
+
+  lines.push("🔔 <b>Новая заявка с сайта КБ Парус</b>");
+  lines.push("");
+
+  if (lead.name) lines.push(`👤 <b>Имя:</b> ${escapeHtml(lead.name)}`);
+  lines.push(`📞 <b>Телефон:</b> <a href="tel:${escapeHtml(phoneClean)}">${escapeHtml(lead.phone)}</a>`);
+  if (lead.email) lines.push(`✉️ <b>Email:</b> ${escapeHtml(lead.email)}`);
+  if (lead.city) lines.push(`📍 <b>Город:</b> ${escapeHtml(lead.city)}`);
+  lines.push("");
+
+  lines.push(`🏗 <b>Оборудование:</b> ${escapeHtml(lead.recommendationTitle)}`);
+  lines.push(`💰 <b>Ориентировочно:</b> ${escapeHtml(lead.fromPriceLabel)}`);
+
+  if (lead.comment) {
+    lines.push("");
+    lines.push("💬 <b>Комментарий:</b>");
+    lines.push(escapeHtml(lead.comment));
+  }
+
+  if (lead.source) {
+    lines.push("");
+    lines.push(`📄 Откуда: ${escapeHtml(lead.source)}`);
+  }
+
+  if (lead.utm && Object.keys(lead.utm).length > 0) {
+    const utmStr = Object.entries(lead.utm)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(", ");
+    if (utmStr) lines.push(`🌐 UTM: ${escapeHtml(utmStr)}`);
+  }
+
+  const time = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+  lines.push("");
+  lines.push(`🕒 ${time} МСК`);
+
+  return lines.join("\n");
+}
+
+async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?: string }> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return { ok: false, error: "not-configured" };
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: buildTelegramMessage(lead),
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      }),
+      signal: AbortSignal.timeout(8_000)
+    });
+    if (!response.ok) return { ok: false, error: `telegram-${response.status}` };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "telegram-network" };
+  }
+}
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
 
@@ -75,12 +163,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Некорректный JSON" }, { status: 400 });
   }
 
-  // Honeypot: если заполнено — бот
   if (payload.hp_url && payload.hp_url.length > 0) {
     return NextResponse.json({ ok: true, mode: "honeypot-blocked" });
   }
 
-  // Минимальное время заполнения формы (защита от ботов)
   if (typeof payload.formStartedAt === "number") {
     const elapsed = Date.now() - payload.formStartedAt;
     if (elapsed < MIN_FORM_FILL_MS) {
@@ -93,6 +179,7 @@ export async function POST(request: Request) {
   const email = sanitize(payload.contact?.email);
   const city = sanitize(payload.city);
   const comment = sanitize(payload.comment);
+  const source = sanitize(payload.source);
 
   if (!phone) {
     return NextResponse.json(
@@ -120,6 +207,21 @@ export async function POST(request: Request) {
   });
   const result = calculateStorageSystem(calculatorInput);
 
+  const telegramLead: TelegramLead = {
+    name,
+    phone,
+    email,
+    city: city || calculatorInput.city,
+    comment,
+    source: source || undefined,
+    recommendationTitle: result.recommendation.title,
+    fromPriceLabel: `от ${formatRoundedRub(result.fromPrice)}`,
+    utm: payload.utm
+  };
+
+  // Telegram-уведомление: отправляется параллельно, не блокирует ответ
+  const telegramPromise = notifyTelegram(telegramLead);
+
   const crmPayload = {
     TITLE: `Заявка: ${result.recommendation.title}`,
     NAME: name,
@@ -131,35 +233,46 @@ export async function POST(request: Request) {
     UF_RECOMMENDED_CONFIG: result.recommendation,
     UF_PRELIMINARY_PRICE_FROM: result.fromPrice,
     UF_PRELIMINARY_PRICE: result.preliminaryPrice,
-    UF_UTM: payload.utm ?? {}
+    UF_UTM: payload.utm ?? {},
+    UF_SOURCE: source
   };
 
-  if (!process.env.BITRIX24_WEBHOOK_URL) {
+  const channels: string[] = [];
+
+  if (process.env.BITRIX24_WEBHOOK_URL) {
+    try {
+      const response = await fetch(process.env.BITRIX24_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: crmPayload }),
+        signal: AbortSignal.timeout(10_000)
+      });
+      if (response.ok) channels.push("bitrix24");
+    } catch {
+      // не валим заявку из-за CRM
+    }
+  }
+
+  const telegramResult = await telegramPromise;
+  if (telegramResult.ok) channels.push("telegram");
+
+  // Если ни один канал не сконфигурирован — mock-режим
+  if (channels.length === 0 && !process.env.BITRIX24_WEBHOOK_URL && !process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({
       ok: true,
       mode: "mock",
-      message: "Заявка подготовлена. Для отправки в Bitrix24 задайте BITRIX24_WEBHOOK_URL.",
+      message: "Заявка подготовлена. Настройте TELEGRAM_BOT_TOKEN или BITRIX24_WEBHOOK_URL для реальной доставки.",
       crmPayload
     });
   }
 
-  try {
-    const response = await fetch(process.env.BITRIX24_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: crmPayload }),
-      signal: AbortSignal.timeout(10_000)
-    });
-
-    if (!response.ok) {
-      return NextResponse.json({ ok: false, error: "Bitrix24 request failed" }, { status: 502 });
-    }
-
-    return NextResponse.json({ ok: true, mode: "bitrix24" });
-  } catch {
+  // Хотя бы один канал должен сработать — иначе 502
+  if (channels.length === 0) {
     return NextResponse.json(
-      { ok: false, error: "Не удалось отправить заявку. Попробуйте через минуту." },
+      { ok: false, error: "Не удалось отправить заявку. Попробуйте через минуту или позвоните нам." },
       { status: 502 }
     );
   }
+
+  return NextResponse.json({ ok: true, channels });
 }
