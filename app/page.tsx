@@ -7,6 +7,7 @@ import { LinePageStyles } from "@/components/LinePageStyles";
 import { SliderControls } from "@/components/SliderControls";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
+import { JsonLd, faqSchema } from "@/lib/seo/schema";
 import {
   ArrowRight,
   BadgeCheck,
@@ -204,6 +205,7 @@ export default function Home() {
   return (
     <main className="line-page" id="top">
       <LinePageStyles />
+      <JsonLd data={faqSchema(faq)} />
 
       <header className="line-header">
         <BrandMark />

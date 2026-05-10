@@ -7,6 +7,7 @@ import { LinePageStyles } from "@/components/LinePageStyles";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { getProductsByCategory } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
 export function generateStaticParams() {
   return excelHomeCatalog.map((item) => ({ id: item.id }));
@@ -15,10 +16,28 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const item = excelHomeCatalog.find((catalogItem) => catalogItem.id === id);
+  if (!item) return { title: "Каталог" };
+
+  const url = `${SITE_URL}/catalog/${item.id}`;
+  const ogImage = `${SITE_URL}${item.image}`;
 
   return {
-    title: item ? `${item.title} | КБ Парус` : "Каталог | КБ Парус",
-    description: item?.summary
+    title: item.title,
+    description: item.summary,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${item.title} | КБ Парус`,
+      description: item.summary,
+      url,
+      type: "website",
+      images: [{ url: ogImage, alt: item.title }]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${item.title} | КБ Парус`,
+      description: item.summary,
+      images: [ogImage]
+    }
   };
 }
 
@@ -31,9 +50,28 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   const isPilotCategory = products.length > 0;
   const related = excelHomeCatalog.filter((catalogItem) => catalogItem.id !== item.id).slice(0, 4);
 
+  const categoryUrl = `${SITE_URL}/catalog/${item.id}`;
+  const breadcrumb = breadcrumbSchema([
+    { name: "Главная", url: SITE_URL },
+    { name: "Каталог", url: `${SITE_URL}/#catalog` },
+    { name: item.title, url: categoryUrl }
+  ]);
+  const productList =
+    products.length > 0
+      ? itemListSchema(
+          products.map((product) => ({
+            name: product.title,
+            url: `${SITE_URL}/catalog/${item.id}/${product.id}`,
+            image: `${SITE_URL}${product.image}`
+          }))
+        )
+      : null;
+
   return (
     <main className="line-page catalog-detail-page" id="top">
       <LinePageStyles />
+      <JsonLd data={breadcrumb} />
+      {productList && <JsonLd data={productList} />}
       <header className="catalog-detail-header">
         <BrandMark />
         <nav aria-label="Навигация по разделу">

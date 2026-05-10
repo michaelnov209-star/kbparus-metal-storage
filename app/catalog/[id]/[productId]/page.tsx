@@ -6,8 +6,9 @@ import { LinePageStyles } from "@/components/LinePageStyles";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery } from "@/components/ProductGallery";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
-import { catalogProducts, getCatalogProduct } from "@/data/storageSystems/catalogDepth";
+import { catalogProducts, getCatalogProduct, getSeoForItem } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { JsonLd, breadcrumbSchema, productSchema, SITE_URL } from "@/lib/seo/schema";
 
 export function generateStaticParams() {
   return catalogProducts.map((item) => ({ id: item.categoryId, productId: item.id }));
@@ -16,10 +17,31 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const { id, productId } = await params;
   const product = getCatalogProduct(id, productId);
+  if (!product) return { title: "Товар" };
+
+  const seo = getSeoForItem(product);
+  const url = seo.canonicalUrl ?? `${SITE_URL}/catalog/${id}/${productId}`;
+  const ogImage = `${SITE_URL}${seo.ogImage}`;
 
   return {
-    title: product ? `${product.title} | КБ Парус` : "Товар | КБ Парус",
-    description: product?.summary
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords.length > 0 ? seo.keywords : undefined,
+    alternates: { canonical: url },
+    robots: seo.noIndex ? { index: false, follow: false } : undefined,
+    openGraph: {
+      title: `${seo.title} | КБ Парус`,
+      description: seo.description,
+      url,
+      type: "website",
+      images: [{ url: ogImage, alt: product.title }]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${seo.title} | КБ Парус`,
+      description: seo.description,
+      images: [ogImage]
+    }
   };
 }
 
@@ -29,9 +51,27 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   const product = getCatalogProduct(id, productId);
   if (!category || !product) notFound();
 
+  const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
+  const breadcrumb = breadcrumbSchema([
+    { name: "Главная", url: SITE_URL },
+    { name: "Каталог", url: `${SITE_URL}/#catalog` },
+    { name: category.title, url: `${SITE_URL}/catalog/${id}` },
+    { name: product.title, url: productUrl }
+  ]);
+  const productLd = productSchema({
+    name: product.title,
+    description: product.description,
+    image: `${SITE_URL}${product.image}`,
+    sku: product.sku,
+    url: productUrl,
+    priceFrom: product.priceMode === "fixed" ? product.priceFrom : undefined
+  });
+
   return (
     <main className="line-page catalog-detail-page product-detail-page" id="top">
       <LinePageStyles />
+      <JsonLd data={breadcrumb} />
+      <JsonLd data={productLd} />
       <header className="catalog-detail-header">
         <BrandMark />
         <nav aria-label="Навигация по товару">

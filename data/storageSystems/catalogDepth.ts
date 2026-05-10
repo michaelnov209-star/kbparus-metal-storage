@@ -4,15 +4,39 @@ import type { CalculatorProfileId } from "./excelCalculator";
 export type ProductPageMode = "configurator" | "standard";
 export type ProductPriceMode = "request" | "fixed";
 
-export interface CatalogSubcategory {
+/**
+ * SEO-поля для категорий и товаров.
+ * Все опциональные с разумными дефолтами (title → seoTitle, summary → seoDescription, image → ogImage).
+ * Эти поля будут редактируемыми из CMS-админки (Этап 2 интеграции Sanity).
+ */
+export interface SeoOverrides {
+  /** Кастомный <title> страницы. По умолчанию = title. */
+  seoTitle?: string;
+  /** Кастомное meta description. По умолчанию = summary. До 160 символов. */
+  seoDescription?: string;
+  /** Кастомная Open Graph картинка. По умолчанию = image. */
+  ogImage?: string;
+  /** Ключевые слова через запятую — для meta keywords и для контент-стратегии. */
+  keywords?: string[];
+  /** Если true — страница исключается из индексации (`<meta name="robots" content="noindex">`). */
+  noIndex?: boolean;
+  /** Канонический URL, если страница доступна по нескольким URL. */
+  canonicalUrl?: string;
+}
+
+export interface CatalogSubcategory extends SeoOverrides {
   id: string;
   categoryId: string;
   title: string;
   summary: string;
   image: string;
+  /** Если true — подкатегория показывается в featured-блоке на главной странице категории. */
+  featured?: boolean;
+  /** Sort order — меньшее число = выше в списке. По умолчанию = порядок в массиве. */
+  sortOrder?: number;
 }
 
-export interface CatalogProduct {
+export interface CatalogProduct extends SeoOverrides {
   id: string;
   categoryId: string;
   subcategoryId?: string;
@@ -29,7 +53,12 @@ export interface CatalogProduct {
    */
   calculatorProfileId?: CalculatorProfileId;
   priceMode: ProductPriceMode;
+  /** Минимальная цена «от X». Используется в Schema.org Product Offer. */
   priceFrom?: number;
+  /** Максимальная цена для отображения диапазона «от X до Y» (опционально). */
+  priceTo?: number;
+  /** Кастомный лейбл цены (например, «Договорная»), если нужно переопределить отображение. */
+  priceLabel?: string;
   badge: string;
   summary: string;
   description: string;
@@ -38,6 +67,12 @@ export interface CatalogProduct {
   includes: string[];
   documents?: Array<{ title: string; href: string }>;
   referenceUrl?: string;
+  /** Featured-товар показывается в верхней части категории. */
+  featured?: boolean;
+  /** Sort order — меньшее число = выше в списке. */
+  sortOrder?: number;
+  /** Скрыть товар без удаления (для подготовки к публикации). */
+  draft?: boolean;
 }
 
 export const catalogSubcategories: CatalogSubcategory[] = [
@@ -619,19 +654,46 @@ function enrichProduct(product: CatalogProduct): CatalogProduct {
   return { ...product, ...productContentEnhancements[product.id] };
 }
 
+function bySortOrder<T extends { sortOrder?: number }>(a: T, b: T) {
+  return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+}
+
 export function getSubcategoriesByCategory(categoryId: string) {
-  return catalogSubcategories.filter((item) => item.categoryId === categoryId);
+  return catalogSubcategories.filter((item) => item.categoryId === categoryId).slice().sort(bySortOrder);
 }
 
 export function getProductsByCategory(categoryId: string) {
-  return catalogProducts.filter((item) => item.categoryId === categoryId).map(enrichProduct);
+  return catalogProducts
+    .filter((item) => item.categoryId === categoryId && !item.draft)
+    .slice()
+    .sort(bySortOrder)
+    .map(enrichProduct);
 }
 
 export function getProductsBySubcategory(categoryId: string, subcategoryId: string) {
-  return catalogProducts.filter((item) => item.categoryId === categoryId && item.subcategoryId === subcategoryId).map(enrichProduct);
+  return catalogProducts
+    .filter((item) => item.categoryId === categoryId && item.subcategoryId === subcategoryId && !item.draft)
+    .slice()
+    .sort(bySortOrder)
+    .map(enrichProduct);
 }
 
 export function getCatalogProduct(categoryId: string, productId: string) {
-  const product = catalogProducts.find((item) => item.categoryId === categoryId && item.id === productId);
+  const product = catalogProducts.find((item) => item.categoryId === categoryId && item.id === productId && !item.draft);
   return product ? enrichProduct(product) : undefined;
+}
+
+/**
+ * Получить SEO-метаданные товара или категории с применёнными дефолтами.
+ * Используется в generateMetadata() и в JsonLd Product schema.
+ */
+export function getSeoForItem(item: { title: string; summary: string; image: string } & SeoOverrides) {
+  return {
+    title: item.seoTitle ?? item.title,
+    description: item.seoDescription ?? item.summary,
+    ogImage: item.ogImage ?? item.image,
+    keywords: item.keywords ?? [],
+    noIndex: item.noIndex ?? false,
+    canonicalUrl: item.canonicalUrl
+  };
 }
