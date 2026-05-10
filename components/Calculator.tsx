@@ -47,7 +47,7 @@ const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: stri
     title: "Кассетная система хранения листового металла",
     shortTitle: "Кассетная система хранения листового металла",
     description: "Для плотного хранения листа с доступом погрузчиком или складской техникой.",
-    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+    image: "/assets/images/products/manual-sheet-metal/2.1.png"
   },
   "two-side-rollout-rack": {
     title: "Двухсторонняя система хранения с выкатными полками",
