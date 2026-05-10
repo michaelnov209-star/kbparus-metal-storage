@@ -73,8 +73,8 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
           <section className="assortment-section" id="assortment">
             <div className="assortment-headline">
               <span className="line-kicker">Ассортимент</span>
-              <h2>Автоматизированные системы хранения листового металла</h2>
-              <p>Для пилота выводим товары напрямую, без подкатегорий и фильтров. Так клиент сразу видит варианты и переходит в нужную карточку.</p>
+              <h2>{item.title}</h2>
+              <p>Выберите готовое решение или оставьте заявку — инженер подберёт конфигурацию под ваши размеры, нагрузку и способ загрузки.</p>
             </div>
             <div className="assortment-grid">
               {products.map((product) => (
