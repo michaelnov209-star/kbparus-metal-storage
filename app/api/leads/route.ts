@@ -16,9 +16,17 @@ interface LeadPayload {
   hp_url?: string;
   /** Время загрузки формы (мс). Слишком быстрая отправка = бот. */
   formStartedAt?: number;
-  /** Откуда отправлена заявка (для Telegram-уведомления). */
+  /** Откуда отправлена заявка (текст). */
   source?: string;
+  /** Полный URL страницы-источника (для гиперссылки в Telegram). */
+  sourceUrl?: string;
+  /** Название товара/страницы (отображается как ссылка). */
+  sourceTitle?: string;
+  /** Относительный путь к картинке товара (отправляется как preview). */
+  sourceImage?: string;
 }
+
+const SITE_URL = "https://kbparus-metal-storage.vercel.app";
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -75,6 +83,9 @@ interface TelegramLead {
   city: string;
   comment: string;
   source?: string;
+  sourceUrl?: string;
+  sourceTitle?: string;
+  sourceImageUrl?: string;
   recommendationTitle: string;
   fromPriceLabel: string;
   utm?: Record<string, string>;
@@ -89,7 +100,7 @@ function buildTelegramMessage(lead: TelegramLead): string {
 
   if (lead.name) lines.push(`👤 <b>Имя:</b> ${escapeHtml(lead.name)}`);
   lines.push(`📞 <b>Телефон:</b> <a href="tel:${escapeHtml(phoneClean)}">${escapeHtml(lead.phone)}</a>`);
-  if (lead.email) lines.push(`✉️ <b>Email:</b> ${escapeHtml(lead.email)}`);
+  if (lead.email) lines.push(`✉️ <b>E-mail:</b> ${escapeHtml(lead.email)}`);
   if (lead.city) lines.push(`📍 <b>Город:</b> ${escapeHtml(lead.city)}`);
   lines.push("");
 
@@ -102,7 +113,14 @@ function buildTelegramMessage(lead: TelegramLead): string {
     lines.push(escapeHtml(lead.comment));
   }
 
-  if (lead.source) {
+  // "Откуда" — приоритет: ссылка с названием → ссылка → текст
+  if (lead.sourceUrl && lead.sourceTitle) {
+    lines.push("");
+    lines.push(`📄 Откуда: <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceTitle)}</a>`);
+  } else if (lead.sourceUrl) {
+    lines.push("");
+    lines.push(`📄 Откуда: <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceUrl)}</a>`);
+  } else if (lead.source) {
     lines.push("");
     lines.push(`📄 Откуда: ${escapeHtml(lead.source)}`);
   }
@@ -127,15 +145,39 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: "not-configured" };
 
+  const text = buildTelegramMessage(lead);
+
+  // Если есть картинка товара — отправляем sendPhoto с подписью.
+  // Telegram caption ограничен 1024 символами; если перебор — fallback на sendMessage.
+  if (lead.sourceImageUrl && text.length <= 1024) {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: lead.sourceImageUrl,
+          caption: text,
+          parse_mode: "HTML"
+        }),
+        signal: AbortSignal.timeout(10_000)
+      });
+      if (response.ok) return { ok: true };
+      // Если sendPhoto упал (битая картинка / слишком большой файл) — fallback на текст
+    } catch {
+      // fallback ниже
+    }
+  }
+
   try {
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: buildTelegramMessage(lead),
+        text,
         parse_mode: "HTML",
-        disable_web_page_preview: true
+        disable_web_page_preview: !lead.sourceImageUrl
       }),
       signal: AbortSignal.timeout(8_000)
     });
@@ -144,6 +186,13 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
   } catch {
     return { ok: false, error: "telegram-network" };
   }
+}
+
+function resolveAbsoluteUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/")) return `${SITE_URL}${value}`;
+  return `${SITE_URL}/${value}`;
 }
 
 export async function POST(request: Request) {
@@ -180,6 +229,9 @@ export async function POST(request: Request) {
   const city = sanitize(payload.city);
   const comment = sanitize(payload.comment);
   const source = sanitize(payload.source);
+  const sourceTitle = sanitize(payload.sourceTitle);
+  const sourceUrl = resolveAbsoluteUrl(sanitize(payload.sourceUrl) || undefined);
+  const sourceImageUrl = resolveAbsoluteUrl(sanitize(payload.sourceImage) || undefined);
 
   if (!phone) {
     return NextResponse.json(
@@ -214,6 +266,9 @@ export async function POST(request: Request) {
     city: city || calculatorInput.city,
     comment,
     source: source || undefined,
+    sourceUrl,
+    sourceTitle: sourceTitle || undefined,
+    sourceImageUrl,
     recommendationTitle: result.recommendation.title,
     fromPriceLabel: `от ${formatRoundedRub(result.fromPrice)}`,
     utm: payload.utm

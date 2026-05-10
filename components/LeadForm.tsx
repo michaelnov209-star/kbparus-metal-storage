@@ -2,7 +2,19 @@
 
 import { useRef, useState } from "react";
 
-export function LeadForm({ title = "Получить консультацию", source }: { title?: string; source?: string }) {
+interface LeadFormProps {
+  title?: string;
+  /** Текстовое описание источника (fallback когда нет sourceUrl). */
+  source?: string;
+  /** Название товара/категории (отображается как ссылка в Telegram). */
+  sourceTitle?: string;
+  /** Полный или относительный URL источника (для гиперссылки в Telegram). */
+  sourceUrl?: string;
+  /** Путь к картинке (превью в Telegram). */
+  sourceImage?: string;
+}
+
+export function LeadForm({ title = "Получить консультацию", source, sourceTitle, sourceUrl, sourceImage }: LeadFormProps) {
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
@@ -16,7 +28,10 @@ export function LeadForm({ title = "Получить консультацию", 
 
     const resolvedSource =
       source ??
+      sourceTitle ??
       (typeof window !== "undefined" ? `${title} — ${window.location.pathname}` : title);
+    const resolvedSourceUrl =
+      sourceUrl ?? (typeof window !== "undefined" ? window.location.href : undefined);
 
     try {
       const response = await fetch("/api/leads", {
@@ -33,6 +48,9 @@ export function LeadForm({ title = "Получить консультацию", 
           hp_url: String(form.get("hp_url") ?? ""),
           formStartedAt: formStartedAt.current,
           source: resolvedSource,
+          sourceTitle,
+          sourceUrl: resolvedSourceUrl,
+          sourceImage,
           calculatorInput: {},
           utm: {}
         })

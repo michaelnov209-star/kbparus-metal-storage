@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\micha\\\\Documents\\\\New project 2\\\\.claude\\\\worktrees\\\\bold-goldstine-77fca5\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(ls \"C:\\\\Users\\\\micha\\\\Desktop\" 2>&1)",
+      "Bash(python -c \"from openpyxl import load_workbook; wb = load_workbook\\(r'C:\\\\Users\\\\micha\\\\Downloads\\\\Калькулятор New 08.05.26 \\(1\\).xlsx', data_only=True\\); print\\('SHEETS:', wb.sheetnames\\)\")",
+      "Bash(where python *)",
+      "Bash(npm outdated *)",
+      "Bash(npm audit *)",
+      "Bash(npm install *)",
+      "Bash(mkdir -p public/assets/images/products/manual-sheet-metal public/assets/images/products/manual-sort-and-pipe-storage)",
+      "Bash(cp \"C:\\\\Users\\\\micha\\\\Desktop\\\\baner_liniiokraski.png\" public/assets/images/baner_liniiokraski.png)",
+      "Bash(cp 'C:\\\\Users\\\\micha\\\\Desktop\\\\2.__TRACKED_VAR__.png' public/assets/images/products/manual-sheet-metal/2.__TRACKED_VAR__.png)",
+      "Bash(cp 'C:\\\\Users\\\\micha\\\\Desktop\\\\4.__TRACKED_VAR__.png' public/assets/images/products/manual-sort-and-pipe-storage/4.__TRACKED_VAR__.png)"
+    ]
+  }
+}

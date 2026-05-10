@@ -151,7 +151,12 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
 
       {product.pageMode === "configurator" && product.calculatorProfileId ? (
         <div id="product-configurator">
-          <ProductConfigurator profileId={product.calculatorProfileId} />
+          <ProductConfigurator
+            profileId={product.calculatorProfileId}
+            productTitle={product.title}
+            productUrl={productUrl}
+            productImage={product.image}
+          />
         </div>
       ) : (
         <section className="standard-product-cta" id="product-request">
@@ -168,7 +173,12 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         </section>
       )}
 
-      <LeadForm title="Получить предложение по товару" />
+      <LeadForm
+        title="Получить предложение по товару"
+        sourceTitle={product.title}
+        sourceUrl={productUrl}
+        sourceImage={product.image}
+      />
     </main>
   );
 }

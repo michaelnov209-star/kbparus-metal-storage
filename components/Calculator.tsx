@@ -41,25 +41,25 @@ const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: stri
     title: "Система хранения с выкатными полками",
     shortTitle: "Система с выкатными полками",
     description: "Для листа и пачек, когда нужен прямой доступ к каждой кассете.",
-    image: "/assets/images/catalog/09-rollout-shelf-storage.png"
+    image: "/assets/images/catalog/02-manual-sheet-metal.png"
   },
   "forklift-cassette-rack": {
     title: "Кассетная система хранения листового металла",
     shortTitle: "Кассетная система хранения листового металла",
     description: "Для плотного хранения листа с доступом погрузчиком или складской техникой.",
-    image: "/assets/images/catalog/01-auto-sheet-metal.jpg"
+    image: "/assets/images/catalog/02-manual-sheet-metal.png"
   },
   "two-side-rollout-rack": {
     title: "Двухсторонняя система хранения с выкатными полками",
     shortTitle: "Двухсторонняя выкатная система",
     description: "Для складов, где нужен доступ к кассетам с одной или двух сторон.",
-    image: "/assets/images/catalog/09-rollout-shelf-storage.png"
+    image: "/assets/images/calculator-configurator.svg"
   },
   "hybrid-rollout-rack": {
     title: "Комбинированная система хранения с выкатными полками",
     shortTitle: "Гибридная система",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
-    image: "/assets/images/catalog/06-automated-warehouse-systems.png"
+    image: "/assets/images/calculator-configurator.svg"
   }
 };
 
@@ -230,6 +230,9 @@ export function Calculator() {
           },
           preliminaryPriceFrom: result.fromPrice,
           source: `Калькулятор на главной — ${display.title}`,
+          sourceTitle: display.title,
+          sourceUrl: typeof window !== "undefined" ? `${window.location.origin}/#calculator` : undefined,
+          sourceImage: display.image,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current,
           utm: {}

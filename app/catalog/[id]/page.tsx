@@ -170,7 +170,12 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
             </div>
           </div>
 
-          <LeadForm title="Получить расчет по разделу" />
+          <LeadForm
+            title="Получить расчет по разделу"
+            sourceTitle={item.title}
+            sourceUrl={categoryUrl}
+            sourceImage={item.image}
+          />
         </section>
       )}
 
@@ -184,7 +189,12 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               <li><ShieldCheck size={18} /> опции, город поставки и комментарий клиента.</li>
             </ul>
           </aside>
-          <LeadForm title="Не нашли нужную систему в разделе?" />
+          <LeadForm
+            title="Не нашли нужную систему в разделе?"
+            sourceTitle={item.title}
+            sourceUrl={categoryUrl}
+            sourceImage={item.image}
+          />
         </section>
       )}
     </main>

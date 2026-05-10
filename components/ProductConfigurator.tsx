@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, ClipboardCheck, Info, Ruler, Send, ShieldCheck } from "lucide-react";
 import { getCalculatorProfile, type CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem } from "@/lib/calculator/pricing";
@@ -42,7 +42,14 @@ function buildInput(profileId: CalculatorProfileId): CalculatorInput {
   };
 }
 
-export function ProductConfigurator({ profileId }: { profileId: CalculatorProfileId }) {
+interface ProductConfiguratorProps {
+  profileId: CalculatorProfileId;
+  productTitle?: string;
+  productUrl?: string;
+  productImage?: string;
+}
+
+export function ProductConfigurator({ profileId, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
   const profile = getCalculatorProfile(profileId);
   const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId));
   const [contact, setContact] = useState({ name: "", phone: "" });
@@ -50,6 +57,27 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
   const [hpUrl, setHpUrl] = useState("");
   const formStartedAt = useRef<number>(Date.now());
   const result = useMemo(() => calculateStorageSystem(input), [input]);
+  const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
+
+  useEffect(() => {
+    const fromValue = animatedPrice;
+    const toValue = result.fromPrice;
+    if (fromValue === toValue) return;
+    const start = performance.now();
+    const duration = 420;
+    let frame = 0;
+
+    function tick(now: number) {
+      const ratio = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - ratio, 3);
+      setAnimatedPrice(Math.round(fromValue + (toValue - fromValue) * eased));
+      if (ratio < 1) frame = requestAnimationFrame(tick);
+    }
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result.fromPrice]);
 
   function setNumberField(field: keyof CalculatorInput, value: number) {
     setInput((current) => ({ ...current, [field]: value }));
@@ -82,7 +110,10 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
             from: result.fromPrice,
             label: `от ${formatRoundedRub(result.fromPrice)}`
           },
-          source: `Конфигуратор товара — ${profile.title}`,
+          source: `Конфигуратор товара — ${productTitle ?? profile.title}`,
+          sourceTitle: productTitle ?? profile.title,
+          sourceUrl: productUrl,
+          sourceImage: productImage,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current
         })
@@ -146,7 +177,7 @@ export function ProductConfigurator({ profileId }: { profileId: CalculatorProfil
 
       <aside className="product-configurator-summary">
         <span className="summary-label">Предварительно</span>
-        <strong>от {formatRoundedRub(result.fromPrice)}</strong>
+        <strong>от {formatRoundedRub(animatedPrice)}</strong>
         <p>Ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки.</p>
         <div className="product-spec-list">
           <span>ДхШхВ: <b>{result.engineeringSummary.dimensionsLabel}</b></span>
