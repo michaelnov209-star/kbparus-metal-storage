@@ -17,7 +17,9 @@
       "Bash(mkdir -p public/assets/images/products/manual-sheet-metal public/assets/images/products/manual-sort-and-pipe-storage)",
       "Bash(cp \"C:\\\\Users\\\\micha\\\\Desktop\\\\baner_liniiokraski.png\" public/assets/images/baner_liniiokraski.png)",
       "Bash(cp 'C:\\\\Users\\\\micha\\\\Desktop\\\\2.__TRACKED_VAR__.png' public/assets/images/products/manual-sheet-metal/2.__TRACKED_VAR__.png)",
-      "Bash(cp 'C:\\\\Users\\\\micha\\\\Desktop\\\\4.__TRACKED_VAR__.png' public/assets/images/products/manual-sort-and-pipe-storage/4.__TRACKED_VAR__.png)"
+      "Bash(cp 'C:\\\\Users\\\\micha\\\\Desktop\\\\4.__TRACKED_VAR__.png' public/assets/images/products/manual-sort-and-pipe-storage/4.__TRACKED_VAR__.png)",
+      "Bash(git push *)",
+      "Bash(git checkout *)"
     ]
   }
 }

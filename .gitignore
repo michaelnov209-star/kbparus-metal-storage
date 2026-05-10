@@ -9,3 +9,6 @@ npm-debug.log*
 *.tsbuildinfo
 
 .vercel
+
+# Payload CMS auto-generated
+payload-types.ts
