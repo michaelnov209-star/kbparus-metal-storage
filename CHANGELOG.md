@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 2026-05-11 — Payload schema globals verification
+
+### Что изменилось
+
+- `scripts/cms/push-schema.ts` теперь принудительно запускает Drizzle schema push через `PAYLOAD_FORCE_DRIZZLE_PUSH=true` и после инициализации Payload проверяет, что globals `contacts` и `home-content` реально читаются.
+- `/api/health` теперь проверяет не только коллекции CMS, но и доступность globals. Если таблицы globals не созданы или не читаются, health возвращает `status: "degraded"`, а не ложный `ok`.
+- README уточняет, что build должен падать до публикации, если глобальные таблицы Payload не готовы.
+
+### Затронутые файлы
+
+- `scripts/cms/push-schema.ts`
+- `app/api/health/route.ts`
+- `README.md`
+- `CHANGELOG.md`
+
+### Что проверить
+
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- Vercel build: `cms:push-schema` должен вывести чтение globals `contacts` и `home-content`.
+- После deploy `/api/health` должен вернуть `status: "ok"` и `components.cms.globalNames`.
+- `/admin` должен открывать экран `Create First User`.
+
 ## 2026-05-11 — Payload importMap generation стабилизирован
 
 ### Что изменилось

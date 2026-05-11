@@ -1,19 +1,40 @@
 /**
- * Явный schema push для Payload + Postgres.
+ * Explicit Payload + Postgres schema push for production builds.
  *
- * Вызывается на Vercel build ПЕРЕД `next build`, чтобы:
- *  1. Таблицы users / media / categories / ... были созданы заранее
- *  2. Первый запрос к /admin не падал с "relation does not exist"
- *
- * Технически: getPayload({ config }) триггерит init адаптера, который
- * с push:true вызывает Drizzle db.push(). Это создаёт/обновляет схему
- * на основе TypeScript-определений коллекций.
- *
- * НЕ запускать локально на Windows — tsx + Node 24 падает (см. import-map).
+ * This script runs on Vercel before `next build`. It intentionally fails the
+ * build if CMS schema creation is incomplete, so a broken admin is not
+ * published by accident.
  */
 
 import { getPayload } from "payload";
+import type { GlobalSlug, Payload } from "payload";
 import config from "../../payload.config";
+
+const REQUIRED_GLOBALS = ["contacts", "home-content"] as const satisfies readonly GlobalSlug[];
+
+async function verifyGlobalSchema(payload: Payload) {
+  const failures: string[] = [];
+
+  for (const slug of REQUIRED_GLOBALS) {
+    try {
+      await payload.findGlobal({ slug, depth: 0 });
+      console.log(`✓ Global "${slug}" is readable`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(`${slug}: ${message}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(
+      [
+        "Global schema verification failed after Payload init.",
+        "This usually means Drizzle did not create one or more global tables.",
+        ...failures.map((failure) => `- ${failure}`)
+      ].join("\n")
+    );
+  }
+}
 
 async function main() {
   const dbUrl =
@@ -23,36 +44,38 @@ async function main() {
     process.env.POSTGRES_URL;
 
   if (!dbUrl) {
-    console.log("⚠ Нет DATABASE_URL — пропускаю schema push (build без БД).");
-    console.log("  При первом запросе на /admin схема будет push'нута лениво.");
+    console.log("⚠ No DATABASE_URL found. Skipping schema push for DB-less build.");
+    console.log("  Production builds must provide DATABASE_URL_UNPOOLED or another Postgres URL.");
     process.exit(0);
   }
 
   const isPooled = dbUrl.includes("pooler.") || dbUrl.includes("pgbouncer");
   if (isPooled) {
-    console.warn(
-      "⚠ Внимание: используется pooled connection. DDL может не работать через pgbouncer."
-    );
-    console.warn("  Рекомендуется добавить DATABASE_URL_UNPOOLED env-переменную.");
+    console.warn("⚠ Pooled Postgres connection detected. DDL may fail through pgbouncer.");
+    console.warn("  Prefer DATABASE_URL_UNPOOLED for Payload schema operations.");
   }
 
-  console.log("→ Инициализация Payload (это триггерит push схемы)...");
+  console.log("→ Initializing Payload and pushing schema...");
   const start = Date.now();
 
   try {
-    await getPayload({ config });
+    process.env.PAYLOAD_FORCE_DRIZZLE_PUSH ||= "true";
+
+    const payload = await getPayload({ config });
+    await verifyGlobalSchema(payload);
+
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-    console.log(`✓ Schema push complete за ${elapsed}s`);
-    console.log("  Таблицы созданы или обновлены — /admin готов к первому запросу.");
+    console.log(`✓ Schema push complete in ${elapsed}s`);
+    console.log("  Collections and globals are readable. /admin is ready for first request.");
     process.exit(0);
   } catch (err) {
     console.error("✗ Schema push failed:");
     console.error(err);
-    console.error("\nДиагностика:");
-    console.error("  - DATABASE_URL правильно настроен?");
-    console.error("  - Используется direct connection (DATABASE_URL_UNPOOLED)?");
-    console.error("  - PAYLOAD_SECRET задан?");
-    console.error("  - Postgres доступен из build environment?");
+    console.error("\nDiagnostics:");
+    console.error("  - Is DATABASE_URL configured correctly?");
+    console.error("  - Is DATABASE_URL_UNPOOLED available for direct DDL operations?");
+    console.error("  - Is PAYLOAD_SECRET configured?");
+    console.error("  - Is Postgres reachable from the build environment?");
     process.exit(1);
   }
 }

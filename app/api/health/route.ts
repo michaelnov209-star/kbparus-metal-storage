@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
+import type { GlobalSlug } from "payload";
 import { getCmsClient } from "@/lib/cms/client";
 
 /**
  * GET /api/health
  *
- * Безопасный health endpoint — НЕ раскрывает секреты, connection strings,
- * env-переменные. Возвращает только агрегированный статус компонентов:
- *  - app:  всегда ok если хэндлер вызвался
- *  - cms:  payload init работает / нет
- *  - db:   список существующих коллекций (только имена, не содержимое)
- *  - storage: настроен ли Blob token
- *
- * Полезно для:
- *  - быстрой диагностики после деплоя ("/api/health возвращает all ok?")
- *  - uptime-мониторинга
- *  - проверки что schema push прошёл (collections > 0)
+ * Safe runtime health endpoint. It does not expose secrets or connection
+ * strings. The CMS check validates both collection metadata and readable
+ * global tables, because Payload globals are required by the public site.
  */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const REQUIRED_GLOBALS = ["contacts", "home-content"] as const satisfies readonly GlobalSlug[];
 
 interface HealthStatus {
   status: "ok" | "degraded" | "down";
@@ -25,8 +20,14 @@ interface HealthStatus {
   components: {
     app: { ok: true };
     cms:
-      | { ok: true; collections: number; collectionNames: string[] }
-      | { ok: false; error: string };
+      | {
+          ok: true;
+          collections: number;
+          collectionNames: string[];
+          globals: number;
+          globalNames: string[];
+        }
+      | { ok: false; error: string; collectionNames?: string[]; globalNames?: string[] };
     storage: { ok: boolean; configured: boolean };
     leadIntegrations: {
       telegram: { configured: boolean };
@@ -57,20 +58,45 @@ export async function GET() {
     }
   };
 
-  // CMS check — пытаемся получить список коллекций
   try {
     const cms = await getCmsClient();
     if (!cms) {
-      result.components.cms = { ok: false, error: "CMS not configured (no DATABASE_URL or PAYLOAD_SECRET)" };
+      result.components.cms = {
+        ok: false,
+        error: "CMS not configured (no DATABASE_URL or PAYLOAD_SECRET)"
+      };
       result.status = "degraded";
     } else {
-      // Безопасно: только метаданные, не контент
-      const collectionNames = Object.keys(cms.collections);
-      result.components.cms = {
-        ok: true,
-        collections: collectionNames.length,
-        collectionNames: collectionNames.sort()
-      };
+      const collectionNames = Object.keys(cms.collections).sort();
+      const globalNames = cms.globals.config.map((global) => global.slug).sort();
+      const globalReadErrors: string[] = [];
+
+      for (const slug of REQUIRED_GLOBALS) {
+        try {
+          await cms.findGlobal({ slug, depth: 0 });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          globalReadErrors.push(`${slug}: ${message}`);
+        }
+      }
+
+      if (globalReadErrors.length > 0) {
+        result.components.cms = {
+          ok: false,
+          error: `CMS globals are not readable: ${globalReadErrors.join("; ")}`,
+          collectionNames,
+          globalNames
+        };
+        result.status = "degraded";
+      } else {
+        result.components.cms = {
+          ok: true,
+          collections: collectionNames.length,
+          collectionNames,
+          globals: globalNames.length,
+          globalNames
+        };
+      }
     }
   } catch (err) {
     result.components.cms = {
@@ -80,7 +106,9 @@ export async function GET() {
     result.status = "degraded";
   }
 
-  if (!result.components.storage.ok) result.status = result.status === "ok" ? "degraded" : result.status;
+  if (!result.components.storage.ok) {
+    result.status = result.status === "ok" ? "degraded" : result.status;
+  }
 
   const httpStatus = result.status === "ok" ? 200 : result.status === "degraded" ? 200 : 503;
   return NextResponse.json(result, { status: httpStatus });
