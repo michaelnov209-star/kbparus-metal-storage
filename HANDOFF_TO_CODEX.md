@@ -1,5 +1,27 @@
 # HANDOFF TO CODEX — KB Parus / Payload CMS Stabilization
 
+## 2026-05-12 — Codex update: explicit production schema push
+
+**Confirmed root cause:** Payload/Drizzle does not run automatic `push: true` schema creation when `NODE_ENV=production`. On Vercel this meant `getPayload({ config })` initialized CMS but did not create new global tables such as `contacts` and `home_content`.
+
+**Changed files:**
+- `scripts/cms/push-schema.ts` — now explicitly calls `pushDevSchema(payload.db)` from `@payloadcms/drizzle`, then verifies required globals.
+- `package.json` / `package-lock.json` — `@payloadcms/drizzle` is an explicit dependency for the build script.
+- `app/api/health/route.ts` — health check verifies readable globals, not only collections.
+- `README.md`, `CHANGELOG.md` — documented the production schema/global verification.
+
+**Checks run before this handoff update:**
+- `npm run lint`
+- `npm run test`
+- `npm run cms:check` with dummy CMS env
+- `npm run cms:generate-importmap`
+- `npm run build`
+- `npm run vercel-build` locally; Windows skips schema push by wrapper, then Next build passes.
+
+**Current result:** importMap generation is fixed. The previous Vercel deploy correctly failed before publication because globals were missing; the next deploy must confirm that explicit `pushDevSchema` creates `contacts` and `home_content` and that `/api/health` returns `status: "ok"`.
+
+**Next step if still failing:** inspect Vercel build logs at `cms:push-schema`. Do not revisit Node/importMap unless logs point there. Focus only on Drizzle schema push, direct Postgres URL, and non-destructive verification of global tables.
+
 **Document type:** Engineering handoff / architecture transfer  
 **Generated:** 2026-05-10  
 **Branch state:** `feat/payload-cms` (latest commit `cbe69bb`)  

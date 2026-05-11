@@ -7,6 +7,8 @@
  */
 
 import { getPayload } from "payload";
+import { pushDevSchema } from "@payloadcms/drizzle";
+import type { DrizzleAdapter } from "@payloadcms/drizzle";
 import type { GlobalSlug, Payload } from "payload";
 import config from "../../payload.config";
 
@@ -62,6 +64,7 @@ async function main() {
     process.env.PAYLOAD_FORCE_DRIZZLE_PUSH ||= "true";
 
     const payload = await getPayload({ config });
+    await pushDevSchema(payload.db as DrizzleAdapter);
     await verifyGlobalSchema(payload);
 
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);

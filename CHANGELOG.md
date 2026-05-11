@@ -4,7 +4,8 @@
 
 ### Что изменилось
 
-- `scripts/cms/push-schema.ts` теперь принудительно запускает Drizzle schema push через `PAYLOAD_FORCE_DRIZZLE_PUSH=true` и после инициализации Payload проверяет, что globals `contacts` и `home-content` реально читаются.
+- `scripts/cms/push-schema.ts` теперь явно вызывает Drizzle schema push через `@payloadcms/drizzle`, а не полагается на ленивый `push: true`, который Payload не выполняет при `NODE_ENV=production`.
+- После schema push скрипт проверяет, что globals `contacts` и `home-content` реально читаются.
 - `/api/health` теперь проверяет не только коллекции CMS, но и доступность globals. Если таблицы globals не созданы или не читаются, health возвращает `status: "degraded"`, а не ложный `ok`.
 - README уточняет, что build должен падать до публикации, если глобальные таблицы Payload не готовы.
 
@@ -12,6 +13,8 @@
 
 - `scripts/cms/push-schema.ts`
 - `app/api/health/route.ts`
+- `package.json`
+- `package-lock.json`
 - `README.md`
 - `CHANGELOG.md`
 
