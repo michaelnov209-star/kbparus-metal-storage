@@ -8,6 +8,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { resolve } from "node:path";
 
 if (process.platform === "win32") {
   console.log("⚠ Windows native — пропускаю schema push.");
@@ -25,9 +26,10 @@ if (
   process.exit(0);
 }
 
-const child = spawn("npx", ["tsx", "scripts/cms/push-schema.ts"], {
+const tsxBin = resolve("node_modules/tsx/dist/cli.mjs");
+
+const child = spawn(process.execPath, [tsxBin, "scripts/cms/push-schema.ts"], {
   stdio: "inherit",
-  shell: true,
   env: { ...process.env, NODE_OPTIONS: "--no-deprecation" }
 });
 

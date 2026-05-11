@@ -19,6 +19,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default buildConfig({
   admin: {
     user: Users.slug,
+    importMap: {
+      baseDir: dirname,
+      importMapFile: path.resolve(dirname, "app/(payload)/admin/importMap.ts")
+    },
     meta: {
       titleSuffix: " — Админка КБ Парус",
       icons: [{ rel: "icon", type: "image/png", url: "/brand/logo-g.png" }]

@@ -4,6 +4,17 @@ Next.js/React MVP для направления систем хранения м
 
 Production URL: https://kbparus-metal-storage.vercel.app
 
+## Payload CMS / текущий статус админки
+
+- Ветка активной CMS-разработки: `feat/payload-cms`.
+- Payload 3 встроен в Next.js App Router и доступен по `/admin`.
+- Проект работает как ESM-пакет: в `package.json` задано `"type": "module"`. Это важно для `payload.config.ts`, Payload CLI и генерации importMap на Vercel.
+- Node на Vercel закреплён через `engines.node: "22.x"`.
+- `payload generate:importmap` запускается на каждом `vercel-build` через `scripts/cms/safe-generate-importmap.mjs`. Если importMap не генерируется, deploy должен падать до публикации.
+- Сгенерированный importMap хранится в `app/(payload)/admin/importMap.ts`; путь явно задан в `payload.config.ts` через `admin.importMap.importMapFile`.
+- Schema push выполняется в build pipeline через `scripts/cms/push-schema.mjs`. Для Vercel нужен direct/unpooled Postgres URL: `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING`.
+- Health check CMS: `/api/health`. После успешного deploy ожидаем `status: "ok"` и `components.cms.ok: true`.
+
 ## Текущее состояние после последней итерации
 
 - Hero использует локальное видео `public/assets/videos/metal-storage-hero-trimmed.mp4`: исходный ролик обрезан с пропуском первых 8 секунд, крутится без звука, затемнен и оставляет фото hero как poster/fallback.

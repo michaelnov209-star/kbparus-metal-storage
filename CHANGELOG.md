@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 2026-05-11 — Payload importMap generation стабилизирован
+
+### Что изменилось
+
+- Исправлена текущая причина падения Vercel build на `payload generate:importmap`: проект приведён к ESM-режиму через `"type": "module"` в `package.json`, как в официальных Payload templates.
+- Extensionless imports в `payload.config.ts` сохранены: это штатный паттерн Payload, проблема была не в отсутствии `.ts` у импортов коллекций.
+- `payload.config.ts` теперь явно указывает Payload, куда писать importMap: `app/(payload)/admin/importMap.ts`. Это исключает расхождение между сгенерированным `importMap.js` и импортируемым админкой `importMap.ts`.
+- `scripts/cms/safe-generate-importmap.mjs` теперь запускает официальный Payload CLI на всех платформах и валит build при ошибке генерации. Ручной importMap не используется как финальное решение.
+- `scripts/cms/check.mjs` проверяет реальные активные admin-компоненты importMap: Vercel Blob upload handler и Payload RSC components. Lexical RSC entries требуются только если в схемах реально есть `richText` поля.
+- `scripts/cms/push-schema.mjs` переведён на прямой запуск `tsx` через Node без `npx` и shell-зависимостей для production-сборки на Linux/Vercel.
+
+### Затронутые файлы
+
+- `package.json`
+- `payload.config.ts`
+- `app/(payload)/admin/importMap.ts`
+- `scripts/cms/check.mjs`
+- `scripts/cms/safe-generate-importmap.mjs`
+- `scripts/cms/push-schema.mjs`
+- `README.md`
+- `CMS_SETUP.md`
+- `CHANGELOG.md`
+
+### Что проверить
+
+- `npm run cms:generate-importmap` проходит и не создаёт отдельный `importMap.js`.
+- `npm run cms:check` проходит при заданных `PAYLOAD_SECRET`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `BLOB_READ_WRITE_TOKEN`.
+- `npm run vercel-build` доходит до `next build`.
+- В Vercel Build Logs есть успешные шаги `payload generate:importmap` и schema push.
+- После deploy `/api/health` возвращает `status: "ok"`, а `/admin` открывает экран `Create First User`.
+
 ## 2026-05-08 — Catalog image interaction cleanup and video loop trim
 
 ### Что изменилось

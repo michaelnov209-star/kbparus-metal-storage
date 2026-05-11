@@ -1,5 +1,15 @@
 # Payload CMS — устройство и настройка
 
+## Актуально после стабилизации importMap от 2026-05-11
+
+- Проект должен оставаться ESM-пакетом: в `package.json` обязательно `"type": "module"`.
+- Импорты коллекций в `payload.config.ts` остаются без `.ts` расширений, например `./payload/collections/Users`. Это соответствует официальным Payload templates.
+- `payload.config.ts` явно задаёт файл генерации: `admin.importMap.importMapFile = app/(payload)/admin/importMap.ts`.
+- `npm run cms:generate-importmap` всегда запускает официальный Payload CLI. Команда больше не пропускается на Windows и не заменяется ручным importMap.
+- Если importMap не генерируется, build должен падать до deploy. Это защита от сломанной админки.
+- Lexical importMap-компоненты проверяются только при наличии реальных `richText` полей в схемах. Сейчас активных `richText` полей нет, поэтому importMap содержит только реально используемые admin-компоненты.
+- На Vercel обязателен Node 22.x и env-переменные `PAYLOAD_SECRET`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING`, `BLOB_READ_WRITE_TOKEN`.
+
 ## Что такое Payload в этом проекте
 
 Payload CMS 3 — это headless CMS, встроенный в наш Next.js-приложение. Живёт в одном репозитории и одном Vercel-проекте с публичным сайтом. Доступен по адресу **`/admin`**.

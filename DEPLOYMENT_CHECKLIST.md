@@ -1,5 +1,13 @@
 # Deployment Checklist — KB Parus + Payload CMS
 
+## Важное по текущему CMS pipeline
+
+- Vercel должен использовать Node 22.x.
+- `vercel-build` намеренно запускает CMS-проверки до `next build`: `cms:check`, `cms:generate-importmap`, `cms:push-schema`, повторный `cms:check`.
+- `payload generate:importmap` должен реально проходить на Vercel. Если он падает, deploy не должен публиковаться.
+- importMap не поддерживается вручную как финальное решение: файл `app/(payload)/admin/importMap.ts` генерируется Payload CLI.
+- После deploy обязательно проверить `/api/health` и `/admin`.
+
 ## Перед первым деплоем feat/payload-cms на production
 
 ### 1. Vercel env-переменные (Production environment)

@@ -10,7 +10,7 @@
  * на полную сборку и деплой.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const checks = [];
@@ -33,6 +33,24 @@ function check(name, fn, { soft = false } = {}) {
       failed++;
     }
   }
+}
+
+function readFilesRecursive(dir, extension = ".ts") {
+  if (!existsSync(dir)) return [];
+
+  const result = [];
+  for (const entry of readdirSync(dir)) {
+    const fullPath = resolve(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      result.push(...readFilesRecursive(fullPath, extension));
+    } else if (entry.endsWith(extension)) {
+      result.push(readFileSync(fullPath, "utf-8"));
+    }
+  }
+
+  return result;
 }
 
 console.log("\n🔍 CMS preflight checks\n");
@@ -94,16 +112,26 @@ console.log("\nImportMap content (must contain components from active plugins):"
 const importMapPath = resolve("app/(payload)/admin/importMap.ts");
 if (existsSync(importMapPath)) {
   const content = readFileSync(importMapPath, "utf-8");
+  const payloadSource = readFilesRecursive(resolve("payload")).join("\n");
+  const usesRichTextFields =
+    payloadSource.includes('type: "richText"') || payloadSource.includes("type: 'richText'");
 
   // Required because we use vercelBlobStorage plugin
   check("importMap registers VercelBlobClientUploadHandler", () =>
     content.includes("VercelBlobClientUploadHandler")
   );
 
-  // Required because we use lexicalEditor() default editor
-  check("importMap registers Lexical RscEntry components", () =>
-    content.includes("RscEntryLexical")
+  check("importMap registers Payload admin RSC components", () =>
+    content.includes("CollectionCards")
   );
+
+  if (usesRichTextFields) {
+    check("importMap registers Lexical RscEntry components", () =>
+      content.includes("RscEntryLexical")
+    );
+  } else {
+    check("Lexical importMap entries not required without richText fields", () => true, { soft: true });
+  }
 }
 
 // === 4. Drizzle/Next compatibility ===
