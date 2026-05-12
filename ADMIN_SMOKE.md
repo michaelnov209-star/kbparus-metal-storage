@@ -2,6 +2,26 @@
 
 Цель: безопасно проверить залогиненную Payload-админку без создания пользователей, загрузок, удаления или изменения контента.
 
+## Где безопасно задать credentials
+
+Вариант 1, предпочтительно для разового запуска: temporary shell env. Значения живут только в текущем PowerShell-окне и не попадают в git.
+
+```powershell
+$env:CMS_ADMIN_EMAIL="..."
+$env:CMS_ADMIN_PASSWORD="..."
+$env:VERCEL_AUTOMATION_BYPASS_SECRET="..."
+npm run cms:admin-smoke -- https://<preview-url>
+Remove-Item Env:CMS_ADMIN_EMAIL,Env:CMS_ADMIN_PASSWORD,Env:VERCEL_AUTOMATION_BYPASS_SECRET -ErrorAction SilentlyContinue
+```
+
+Вариант 2: локальный `.env.local`. Файл уже находится в `.gitignore`; скрипт читает только нужные ключи и не печатает значения.
+
+```env
+CMS_ADMIN_EMAIL=...
+CMS_ADMIN_PASSWORD=...
+VERCEL_AUTOMATION_BYPASS_SECRET=...
+```
+
 ## Запуск
 
 ```bash

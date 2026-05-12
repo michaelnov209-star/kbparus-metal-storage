@@ -14,9 +14,26 @@
  * Optional Vercel Deployment Protection bypass:
  *   VERCEL_AUTOMATION_BYPASS_SECRET=...
  *
+ * The script also reads these keys from local .env.local when present. Values
+ * from the shell environment have priority.
+ *
  * The script intentionally does not create users, upload media, mutate globals,
  * reset data, or print credentials.
  */
+
+import { existsSync, readFileSync } from "node:fs";
+
+const ENV_KEYS = [
+  "CMS_ADMIN_EMAIL",
+  "CMS_ADMIN_PASSWORD",
+  "E2E_ADMIN_EMAIL",
+  "E2E_ADMIN_PASSWORD",
+  "TEST_ADMIN_EMAIL",
+  "TEST_ADMIN_PASSWORD",
+  "PAYLOAD_ADMIN_EMAIL",
+  "PAYLOAD_ADMIN_PASSWORD",
+  "VERCEL_AUTOMATION_BYPASS_SECRET"
+];
 
 const ADMIN_COLLECTIONS = [
   { name: "users", label: "Администраторы и редакторы", path: "/api/users?limit=1" },
@@ -40,6 +57,8 @@ if (!baseUrlArg) {
   process.exit(1);
 }
 
+loadLocalEnv(".env.local");
+
 const baseUrl = normalizeBaseUrl(baseUrlArg);
 const email = readFirstEnv(["CMS_ADMIN_EMAIL", "E2E_ADMIN_EMAIL", "TEST_ADMIN_EMAIL", "PAYLOAD_ADMIN_EMAIL"]);
 const password = readFirstEnv([
@@ -62,6 +81,25 @@ function readFirstEnv(names) {
     if (process.env[name]) return process.env[name];
   }
   return "";
+}
+
+function loadLocalEnv(path) {
+  if (!existsSync(path)) return;
+
+  const lines = readFileSync(path, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const index = trimmed.indexOf("=");
+    if (index === -1) continue;
+
+    const key = trimmed.slice(0, index).trim();
+    if (!ENV_KEYS.includes(key) || process.env[key]) continue;
+
+    const raw = trimmed.slice(index + 1).trim();
+    process.env[key] = raw.replace(/^["']|["']$/g, "");
+  }
 }
 
 function record(name, ok, detail = "", required = true) {
