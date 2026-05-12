@@ -80,7 +80,24 @@ export const Categories: CollectionConfig = {
       label: { ru: "Главное изображение", en: "Main image" },
       type: "upload",
       relationTo: "media",
-      required: true
+      admin: {
+        description: {
+          ru: "Основное изображение из медиа-библиотеки. Если пока не загружено, сайт использует временный путь из поля ниже.",
+          en: "Primary image from media library."
+        }
+      }
+    },
+    {
+      name: "legacyImagePath",
+      label: { ru: "Текущий путь к изображению на сайте", en: "Legacy image path" },
+      type: "text",
+      admin: {
+        description: {
+          ru: "Временное поле миграции. Используется для текущих изображений из /assets, пока менеджер не заменит их файлом из медиа-библиотеки.",
+          en: "Temporary migration field for existing static images."
+        },
+        placeholder: "/assets/images/catalog/01-auto-sheet-metal.jpg"
+      }
     },
     {
       type: "collapsible",

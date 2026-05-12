@@ -5,18 +5,20 @@ import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery } from "@/components/ProductGallery";
-import { catalogProducts, getCatalogProduct, getSeoForItem } from "@/data/storageSystems/catalogDepth";
+import { getSeoForItem } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategory } from "@/lib/cms/catalog";
+import { getCatalogProducts, getCatalogProductView } from "@/lib/cms/products";
 import { JsonLd, breadcrumbSchema, productSchema, SITE_URL } from "@/lib/seo/schema";
 
-export function generateStaticParams() {
-  return catalogProducts.map((item) => ({ id: item.categoryId, productId: item.id }));
+export async function generateStaticParams() {
+  const products = await getCatalogProducts();
+  return products.map((item) => ({ id: item.categoryId, productId: item.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const { id, productId } = await params;
-  const product = getCatalogProduct(id, productId);
+  const product = await getCatalogProductView(id, productId);
   if (!product) return { title: "Товар" };
 
   const seo = getSeoForItem(product);
@@ -48,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function CatalogProductPage({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const { id, productId } = await params;
   const category = await getCatalogCategory(id);
-  const product = getCatalogProduct(id, productId);
+  const product = await getCatalogProductView(id, productId);
   if (!category || !product) notFound();
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;

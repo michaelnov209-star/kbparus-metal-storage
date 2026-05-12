@@ -69,12 +69,47 @@ export const Products: CollectionConfig = {
         {
           label: { ru: "Изображения", en: "Images" },
           fields: [
-            { name: "image", label: { ru: "Главное изображение", en: "Main image" }, type: "upload", relationTo: "media", required: true },
+            {
+              name: "image",
+              label: { ru: "Главное изображение", en: "Main image" },
+              type: "upload",
+              relationTo: "media",
+              admin: {
+                description: {
+                  ru: "Основное изображение товара из медиа-библиотеки. Если пока не загружено, сайт использует временный путь из поля ниже.",
+                  en: "Primary product image from media library."
+                }
+              }
+            },
+            {
+              name: "legacyImagePath",
+              label: { ru: "Текущий путь к главному изображению", en: "Legacy main image path" },
+              type: "text",
+              admin: {
+                description: {
+                  ru: "Временное поле миграции. Используется для текущих изображений из /assets, пока менеджер не заменит их файлом из медиа-библиотеки.",
+                  en: "Temporary migration field for existing static images."
+                },
+                placeholder: "/assets/images/products/auto-sheet-metal/1.1.jpg"
+              }
+            },
             {
               name: "gallery",
               label: { ru: "Галерея (доп. фото)", en: "Gallery" },
               type: "array",
               fields: [{ name: "image", type: "upload", relationTo: "media" }]
+            },
+            {
+              name: "legacyGalleryPaths",
+              label: { ru: "Текущие пути к изображениям галереи", en: "Legacy gallery paths" },
+              type: "array",
+              admin: {
+                description: {
+                  ru: "Временное поле миграции для текущей галереи из /assets. Новые фото лучше добавлять через поле «Галерея».",
+                  en: "Temporary migration field for existing static gallery images."
+                }
+              },
+              fields: [{ name: "path", label: { ru: "Путь", en: "Path" }, type: "text", required: true }]
             }
           ]
         },

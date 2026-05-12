@@ -50,7 +50,24 @@ export const Subcategories: CollectionConfig = {
       name: "image",
       label: { ru: "Изображение подкатегории", en: "Image" },
       type: "upload",
-      relationTo: "media"
+      relationTo: "media",
+      admin: {
+        description: {
+          ru: "Изображение из медиа-библиотеки. Если пока не загружено, можно сохранить текущий путь в поле ниже.",
+          en: "Image from media library."
+        }
+      }
+    },
+    {
+      name: "legacyImagePath",
+      label: { ru: "Текущий путь к изображению", en: "Legacy image path" },
+      type: "text",
+      admin: {
+        description: {
+          ru: "Временное поле миграции для текущих изображений из /assets.",
+          en: "Temporary migration field for existing static images."
+        }
+      }
     },
     { name: "sortOrder", label: { ru: "Порядок показа", en: "Sort order" }, type: "number", defaultValue: 0 }
   ],

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-05-12 — CMS-managed catalog products preparation
+
+- Added CMS-first product adapter `lib/cms/products.ts` with fallback to `catalogDepth.ts`.
+- Category pages, product pages and sitemap can now read published Payload `products`.
+- Added non-destructive remote seed command `npm run cms:seed-catalog -- <url> --apply` for categories, subcategories and products.
+- Added temporary legacy image path fields for catalog records so current `/assets` images remain usable until managers replace them with media uploads.
+- Local checks passed: `cms:generate-importmap`, `lint`, `test`, `build`.
+
 ## 2026-05-12 — CMS-driven catalog category reads
 
 - Added CMS-first catalog category adapter `lib/cms/catalog.ts`.

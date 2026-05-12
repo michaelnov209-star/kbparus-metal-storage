@@ -27,6 +27,7 @@ export type CmsCategoryLike = {
   summary?: unknown;
   scenario?: unknown;
   image?: unknown;
+  legacyImagePath?: unknown;
   featured?: unknown;
   sortOrder?: unknown;
   seoTitle?: unknown;
@@ -80,7 +81,7 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
   if (!id || !title || !summary) return null;
 
   const fallback = fallbackById.get(id);
-  const image = getMediaUrl(doc.image) ?? fallback?.image;
+  const image = getMediaUrl(doc.image) ?? asString(doc.legacyImagePath) ?? fallback?.image;
   if (!image) return null;
 
   return {

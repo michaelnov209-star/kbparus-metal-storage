@@ -4,9 +4,9 @@ import { BrandMark } from "@/components/BrandMark";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
-import { getProductsByCategory } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
+import { getCatalogProductsByCategory } from "@/lib/cms/products";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
 export async function generateStaticParams() {
@@ -50,7 +50,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   const item = await getCatalogCategory(id);
   if (!item) notFound();
 
-  const products = getProductsByCategory(item.id);
+  const products = await getCatalogProductsByCategory(item.id);
   const isPilotCategory = products.length > 0;
   const related = await getRelatedCatalogCategories(item.id, 4);
 

@@ -20,8 +20,8 @@
 | Баннеры | hardcoded images/URLs | `home-content.kbparusBanner/coatingBanner` | модель есть, frontend hardcoded |
 | Каталог главной | `excelHomeCatalog` + `lib/cms/catalog.ts` fallback | Collection `categories` | чтение подключено к CMS-first adapter |
 | Категории каталога | `data/storageSystems/*` + `lib/cms/catalog.ts` fallback | Collection `categories` + Media + SEO | чтение подключено к CMS-first adapter |
-| Подкатегории | `catalogDepth.ts` | Collection `subcategories` | CMS collection есть, frontend hardcoded |
-| Товары | `catalogDepth.ts` | Collection `products` + gallery/specs/SEO | CMS collection есть, frontend hardcoded |
+| Подкатегории | `catalogDepth.ts` + seed tooling | Collection `subcategories` | CMS model готов к наполнению, frontend пока не выводит отдельные страницы |
+| Товары | `catalogDepth.ts` + `lib/cms/products.ts` fallback | Collection `products` + gallery/specs/SEO | чтение подключено к CMS-first adapter |
 | Калькулятор | `lib/calculator`, `excelCalculator.ts` | `calculator-profiles` + controlled logic in code | CMS model есть, runtime logic hardcoded |
 | Заявки | `/api/leads`, Telegram | Collection/global for lead ops + future Bitrix24 | Telegram работает, Bitrix24 не подключён |
 
@@ -100,3 +100,13 @@ Generic reorderable blocks стоит вводить позже, когда ме
 - Если CMS недоступна, запись неполная или категория ещё не заведена, используется `excelHomeCatalog`.
 - URL `/catalog/[id]` сохранены: CMS `slug` должен совпадать с текущим `id`.
 - Товары, спецификации, галереи и калькулятор пока остаются в `data/storageSystems` и `lib/calculator`.
+
+## Третий внедрённый шаг
+
+Товары каталога подключены к frontend через `lib/cms/products.ts`.
+
+- `/catalog/[id]`, `/catalog/[id]/[productId]` и sitemap читают Payload collection `products`, если опубликованные записи есть.
+- Если продукт ещё не заведён в CMS или CMS недоступна, используется `catalogDepth.ts`.
+- Для безопасного первичного наполнения добавлен `npm run cms:seed-catalog -- <url> --apply`.
+- Seed создаёт отсутствующие категории, подкатегории и товары через Payload REST API, не удаляет записи и не перезаписывает существующие правки без `--update-existing`.
+- Для текущих статических изображений добавлены временные поля `legacyImagePath` / `legacyGalleryPaths`; менеджеры могут позже заменить их медиа-файлами.
