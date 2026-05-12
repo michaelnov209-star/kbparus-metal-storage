@@ -32,11 +32,13 @@ Telegram и Bitrix24 считаются warning, потому что они мо
 
 ## Ручная проверка перед production
 
-- [ ] Admin auth: открыть `/admin`, создать или использовать тестового администратора, войти, выйти, повторно войти.
-- [ ] Доступы: `/api/users?limit=1` без cookies не отдаёт список пользователей.
-- [ ] Globals persistence: изменить безопасное поле в `contacts` или `home-content`, сохранить, обновить страницу, убедиться, что значение осталось.
-- [ ] Rebuild consistency: сделать redeploy без изменений, повторить `npm run cms:validate-deployment -- <url>`, проверить, что globals остались читаемыми.
-- [ ] Uploads/blob storage: загрузить тестовое изображение в `media`, открыть публичный URL файла, убедиться, что файл отдаётся из Blob.
+- [ ] First admin: открыть `<preview-url>/admin/create-first-user`, создать первого администратора вручную. Не создавать администратора скриптом.
+- [ ] Login/logout: войти в `/admin`, открыть меню пользователя, нажать logout, затем снова войти тем же администратором.
+- [ ] Доступы: открыть `/api/users?limit=1` в приватном окне без cookies. Ожидаемо: нет публичного списка пользователей.
+- [ ] Globals edit: в админке открыть `Globals` -> `contacts` или `home-content`, изменить безопасное тестовое текстовое поле, сохранить, обновить страницу, убедиться, что значение осталось.
+- [ ] Globals revert: вернуть прежнее значение того же поля, сохранить, обновить страницу, убедиться, что откат сохранился.
+- [ ] Uploads/blob storage: открыть `Media`, загрузить маленькое тестовое изображение, открыть публичный URL файла из записи media, убедиться, что файл отдаётся из Blob.
+- [ ] Rebuild consistency: после успешных write-проверок сделать redeploy Preview без изменений, повторить `npm run cms:validate-deployment -- <preview-url>`, проверить, что globals и media остаются читаемыми.
 - [ ] Env vars: в Vercel для Preview и Production есть `PAYLOAD_SECRET`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING`, `BLOB_READ_WRITE_TOKEN`.
 
 ## Что не проверять этим этапом
