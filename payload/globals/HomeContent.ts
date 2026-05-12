@@ -1,11 +1,13 @@
 import type { GlobalConfig } from "payload";
+import { adminGroups, adminHints } from "../admin/structure";
 
 export const HomeContent: GlobalConfig = {
   slug: "home-content",
   label: { ru: "Главная страница", en: "Home content" },
   admin: {
+    group: adminGroups.home,
     description: {
-      ru: "Все блоки главной страницы: hero, метрики, преимущества, баннеры, отзывы, партнёры, FAQ.",
+      ru: `${adminHints.homepage} Раздел устроен как редактор лендинга: двигайтесь по вкладкам сверху вниз в порядке появления блоков на сайте.`,
       en: "Homepage blocks."
     }
   },
@@ -14,12 +16,17 @@ export const HomeContent: GlobalConfig = {
       type: "tabs",
       tabs: [
         {
-          label: { ru: "Hero (главный блок)", en: "Hero" },
+          label: { ru: "Hero: первый экран сайта", en: "Hero" },
           fields: [
             {
               name: "hero",
               type: "group",
-              label: { ru: "Hero", en: "Hero" },
+              label: { ru: "Главный экран сайта", en: "Hero" },
+              admin: {
+                description: {
+                  ru: "Первое, что видит клиент. Здесь задаются смысл, фон и ключевые цифры главной страницы."
+                }
+              },
               fields: [
                 { name: "eyebrow", label: { ru: "Надзаголовок (мелкий текст сверху)", en: "Eyebrow" }, type: "text" },
                 { name: "title", label: { ru: "Главный заголовок", en: "Main title" }, type: "text", required: true },
@@ -107,7 +114,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "Преимущества", en: "Advantages" },
+          label: { ru: "Преимущества: почему выбирают КБ Парус", en: "Advantages" },
           fields: [
             {
               name: "advantages",
@@ -121,7 +128,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "Что хранить", en: "What to store" },
+          label: { ru: "Что храним: материалы и сценарии", en: "What to store" },
           fields: [
             {
               name: "storedMaterials",
@@ -136,7 +143,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "До / после", en: "Before / after" },
+          label: { ru: "До / после: визуальное сравнение", en: "Before / after" },
           fields: [
             {
               name: "beforeBlock",
@@ -161,7 +168,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "Кейсы", en: "Cases" },
+          label: { ru: "Кейсы: подтверждение опыта", en: "Cases" },
           fields: [
             {
               name: "cases",
@@ -187,7 +194,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "География", en: "Geography" },
+          label: { ru: "География поставок", en: "Geography" },
           fields: [
             {
               name: "geoProjects",
@@ -203,7 +210,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "Отзывы", en: "Reviews" },
+          label: { ru: "Отзывы клиентов", en: "Reviews" },
           fields: [
             {
               name: "reviews",
@@ -252,7 +259,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "О компании", en: "About" },
+          label: { ru: "О компании: доверие и факты", en: "About" },
           fields: [
             { name: "aboutTitle", label: { ru: "Заголовок", en: "Title" }, type: "text" },
             { name: "aboutText", label: { ru: "Текст о компании", en: "Text" }, type: "textarea" },
@@ -270,7 +277,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "Баннеры (партнёрские сайты)", en: "Banners" },
+          label: { ru: "Баннеры и переходы на связанные сайты", en: "Banners" },
           fields: [
             {
               name: "kbparusBanner",
@@ -295,7 +302,7 @@ export const HomeContent: GlobalConfig = {
           ]
         },
         {
-          label: { ru: "FAQ", en: "FAQ" },
+          label: { ru: "FAQ: вопросы клиентов", en: "FAQ" },
           fields: [
             {
               name: "faq",

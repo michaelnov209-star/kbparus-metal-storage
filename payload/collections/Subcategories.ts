@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { adminGroups, adminHints } from "../admin/structure";
 
 export const Subcategories: CollectionConfig = {
   slug: "subcategories",
@@ -7,48 +8,51 @@ export const Subcategories: CollectionConfig = {
     plural: { ru: "Каталог: подкатегории", en: "Subcategories" }
   },
   admin: {
+    group: adminGroups.catalog,
     description: {
-      ru: "Подкатегории внутри основных 17 категорий (например, «Стеллажи типа Ёлочка»).",
+      ru: `${adminHints.catalog} Подкатегории помогают разложить оборудование внутри основных направлений и сделать каталог понятнее.`,
       en: "Subcategories within main 17 categories."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "category", "sortOrder"]
+    defaultColumns: ["title", "sortOrder"],
+    listSearchableFields: ["title", "slug", "summary"],
+    pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
   versions: { drafts: true },
   fields: [
     {
       name: "slug",
-      label: { ru: "ID (URL-сегмент)", en: "Slug" },
+      label: { ru: "Адрес страницы в URL", en: "URL slug" },
       type: "text",
       required: true,
       unique: true
     },
     {
       name: "category",
-      label: { ru: "Родительская категория", en: "Parent category" },
+      label: { ru: "Основная категория", en: "Parent category" },
       type: "relationship",
       relationTo: "categories",
       required: true
     },
     {
       name: "title",
-      label: { ru: "Название", en: "Title" },
+      label: { ru: "Название подкатегории", en: "Title" },
       type: "text",
       required: true
     },
     {
       name: "summary",
-      label: { ru: "Описание", en: "Summary" },
+      label: { ru: "Краткое описание для страницы", en: "Summary" },
       type: "textarea",
       required: true
     },
     {
       name: "image",
-      label: { ru: "Изображение", en: "Image" },
+      label: { ru: "Изображение подкатегории", en: "Image" },
       type: "upload",
       relationTo: "media"
     },
-    { name: "sortOrder", label: { ru: "Порядок", en: "Sort order" }, type: "number", defaultValue: 0 }
+    { name: "sortOrder", label: { ru: "Порядок показа", en: "Sort order" }, type: "number", defaultValue: 0 }
   ],
   access: { read: () => true }
 };

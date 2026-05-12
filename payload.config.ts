@@ -14,6 +14,7 @@ import { Products } from "./payload/collections/Products";
 import { CalculatorProfiles } from "./payload/collections/CalculatorProfiles";
 import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
+import { LeadManagement } from "./payload/globals/LeadManagement";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,6 +24,14 @@ export default buildConfig({
     importMap: {
       baseDir: dirname,
       importMapFile: path.resolve(dirname, "app/(payload)/admin/importMap.ts")
+    },
+    components: {
+      beforeDashboard: [
+        {
+          path: "@/app/(payload)/components/AdminDashboard",
+          exportName: "AdminDashboard"
+        }
+      ]
     },
     meta: {
       titleSuffix: " — Админка КБ Парус",
@@ -35,7 +44,7 @@ export default buildConfig({
     supportedLanguages: { ru }
   },
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles],
-  globals: [Contacts, HomeContent],
+  globals: [HomeContent, Contacts, LeadManagement],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "change-me-locally",
   typescript: {

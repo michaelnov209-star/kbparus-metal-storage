@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { adminGroups, adminHints } from "../admin/structure";
 
 export const Categories: CollectionConfig = {
   slug: "categories",
@@ -7,12 +8,15 @@ export const Categories: CollectionConfig = {
     plural: { ru: "Каталог: категории (17 шт.)", en: "Categories" }
   },
   admin: {
+    group: adminGroups.catalog,
     description: {
-      ru: "17 верхнеуровневых категорий каталога (карточки на главной и в навигации).",
+      ru: `${adminHints.catalog} Верхний уровень каталога: карточки на главной странице, меню и страницы /catalog/<slug>.`,
       en: "17 top-level catalog categories shown on home and nav."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "slug", "featured", "sortOrder"]
+    defaultColumns: ["title", "slug", "featured", "sortOrder"],
+    listSearchableFields: ["title", "slug", "summary"],
+    pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
   versions: { drafts: true },
   fields: [
@@ -21,13 +25,13 @@ export const Categories: CollectionConfig = {
       fields: [
         {
           name: "slug",
-          label: { ru: "ID (URL-сегмент, латиница)", en: "Slug" },
+          label: { ru: "Адрес страницы в URL", en: "URL slug" },
           type: "text",
           required: true,
           unique: true,
           admin: {
             description: {
-              ru: "Используется в URL: /catalog/<slug>. Менять только если уверены — может сломать ссылки.",
+              ru: "Используется в URL: /catalog/<адрес>. Менять только если уверены — может сломать внешние ссылки и SEO.",
               en: "Used in URL: /catalog/<slug>"
             },
             width: "40%"

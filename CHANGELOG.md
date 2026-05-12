@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-05-12 — CMS admin UX architecture
+
+- Admin перестроен в бизнес-структуру: главная страница, каталог, калькулятор, компания, медиа, заявки, пользователи.
+- Добавлен dashboard "Центр управления сайтом и каталогом" с быстрыми переходами для менеджеров.
+- Улучшены русские labels, descriptions, placeholders и list views для collections/globals.
+- Поле пользователя "Имя" больше не используется как ФИО: добавлены имя, фамилия, отображаемое имя и должность.
+- Медиа-библиотека получила тип материала, область использования и редакторские заметки.
+- Добавлен безопасный global "Заявки: формы и интеграции" без хранения секретов.
+- Hero background video заменён на новый оптимизированный MP4 из предоставленного `IMG_4120.MOV`.
+- Зафиксированы performance findings: основная задержка admin похожа на Vercel/Neon cold start; списки облегчены через default columns и pagination.
+
 ## 2026-05-12 — Production deploy Payload CMS
 
 - `feat/payload-cms` fast-forward merged в `main` и выведен в production: `https://kbparus-metal-storage.vercel.app`.

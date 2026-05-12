@@ -19,6 +19,7 @@ Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api
 - Schema push дополнительно проверяет Payload globals `contacts` и `home-content`: если глобальные таблицы не читаются, build падает до публикации.
 - Health check CMS: `/api/health`. После успешного deploy ожидаем `status: "ok"` и `components.cms.ok: true`.
 - Runtime validation: `npm run cms:validate-deployment -- <deployment-url>`. Подробный production-чеклист: `PRODUCTION_VALIDATION.md`.
+- Admin UX architecture: `CMS_ADMIN_UX.md`. Админка сгруппирована как операционный центр управления сайтом: главная, каталог, калькулятор, компания, медиа, заявки, пользователи.
 
 ## Текущее состояние после последней итерации
 

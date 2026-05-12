@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { adminGroups, adminHints } from "../admin/structure";
 
 /**
  * Профиль калькулятора. Структура 1-в-1 повторяет лист «Админка»
@@ -11,15 +12,18 @@ export const CalculatorProfiles: CollectionConfig = {
   slug: "calculator-profiles",
   labels: {
     singular: { ru: "Профиль калькулятора", en: "Calculator profile" },
-    plural: { ru: "Калькулятор: профили (соответствует листу «Админка»)", en: "Calculator profiles" }
+    plural: { ru: "Калькулятор: профили расчётов", en: "Calculator profiles" }
   },
   admin: {
+    group: adminGroups.calculator,
     description: {
-      ru: "Здесь редактируются все цены и коэффициенты, которые в Excel были на листе «Админка». Изменения попадают в калькулятор сайта в течение минуты.",
+      ru: `${adminHints.calculator} Здесь редактируются цены, коэффициенты и опции, которые влияют на расчёт и Telegram-заявку.`,
       en: "All prices and coefficients from the Excel «Админка» sheet."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "kind", "shortTitle"]
+    defaultColumns: ["title", "kind", "shortTitle"],
+    listSearchableFields: ["title", "shortTitle", "slug"],
+    pagination: { defaultLimit: 12, limits: [6, 12, 24] }
   },
   versions: { drafts: true },
   fields: [
@@ -28,7 +32,7 @@ export const CalculatorProfiles: CollectionConfig = {
       fields: [
         {
           name: "slug",
-          label: { ru: "ID профиля (не менять без программиста!)", en: "Profile ID" },
+          label: { ru: "Системный ключ профиля", en: "Profile key" },
           type: "select",
           required: true,
           unique: true,
@@ -41,13 +45,13 @@ export const CalculatorProfiles: CollectionConfig = {
             { label: "Гибридный стеллаж", value: "hybrid-rollout-rack" }
           ],
           admin: {
-            description: { ru: "Этот ID связан с формулой в коде. Менять — только разработчик после тестов.", en: "" },
+            description: { ru: "Связан с расчётной логикой сайта. Менять только после согласования с разработчиком и проверки расчёта.", en: "" },
             width: "60%"
           }
         },
         {
           name: "kind",
-          label: { ru: "Тип формулы (read-only)", en: "Pricing kind" },
+          label: { ru: "Тип расчётной модели", en: "Pricing kind" },
           type: "select",
           required: true,
           options: [
@@ -57,7 +61,7 @@ export const CalculatorProfiles: CollectionConfig = {
             { label: "Гибрид", value: "hybrid" }
           ],
           admin: {
-            description: { ru: "Определяет, какая формула применяется. Менять только разработчик.", en: "" },
+            description: { ru: "Определяет, какая модель расчёта применяется к профилю.", en: "" },
             width: "40%"
           }
         }
@@ -181,7 +185,7 @@ export const CalculatorProfiles: CollectionConfig = {
               admin: { description: { ru: "Например: весы 90 000 ₽, ИК-ограждения 80 000 ₽, вакуумный захват 450 000 ₽…", en: "" } },
               fields: [
                 { type: "row", fields: [
-                  { name: "id", label: { ru: "ID опции (латиница)", en: "Option ID" }, type: "text", required: true, admin: { width: "30%" } },
+                  { name: "id", label: { ru: "Системный ключ опции", en: "Option key" }, type: "text", required: true, admin: { width: "30%" } },
                   { name: "title", label: { ru: "Название", en: "Title" }, type: "text", required: true, admin: { width: "40%" } },
                   { name: "price", label: { ru: "Цена, ₽", en: "Price" }, type: "number", required: true, admin: { width: "30%" } }
                 ]},

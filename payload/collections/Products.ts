@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { adminGroups, adminHints } from "../admin/structure";
 
 export const Products: CollectionConfig = {
   slug: "products",
@@ -7,12 +8,15 @@ export const Products: CollectionConfig = {
     plural: { ru: "Каталог: товары", en: "Products" }
   },
   admin: {
+    group: adminGroups.catalog,
     description: {
-      ru: "Конкретные модели оборудования внутри подкатегорий. Каждый имеет страницу /catalog/<категория>/<товар>.",
+      ru: `${adminHints.catalog} Товары — это конкретные модели оборудования и посадочные страницы для продаж.`,
       en: "Concrete equipment models within subcategories."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "category", "subcategory", "priceFrom", "draft"]
+    defaultColumns: ["title", "pageMode", "priceMode", "draft"],
+    listSearchableFields: ["title", "shortTitle", "slug", "summary"],
+    pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
   versions: { drafts: true },
   fields: [
@@ -25,9 +29,9 @@ export const Products: CollectionConfig = {
             {
               type: "row",
               fields: [
-                { name: "slug", label: { ru: "ID (URL)", en: "Slug" }, type: "text", required: true, unique: true, admin: { width: "40%" } },
-                { name: "sku", label: { ru: "Артикул", en: "SKU" }, type: "text", admin: { width: "30%" } },
-                { name: "sortOrder", label: { ru: "Порядок", en: "Sort" }, type: "number", defaultValue: 0, admin: { width: "15%" } }
+                { name: "slug", label: { ru: "Адрес товара в URL", en: "URL slug" }, type: "text", required: true, unique: true, admin: { width: "40%" } },
+                { name: "sku", label: { ru: "Внутренний артикул", en: "SKU" }, type: "text", admin: { width: "30%" } },
+                { name: "sortOrder", label: { ru: "Порядок показа", en: "Sort" }, type: "number", defaultValue: 0, admin: { width: "15%" } }
               ]
             },
             { name: "title", label: { ru: "Название (полное)", en: "Title" }, type: "text", required: true },
