@@ -13,6 +13,8 @@
  *
  * Optional Vercel Deployment Protection bypass:
  *   VERCEL_AUTOMATION_BYPASS_SECRET=...
+ * If no bypass secret is provided and Preview is protected, the script retries
+ * via Vercel CLI (`vercel curl`) so credentials are sent only to the deployment.
  *
  * The script also reads these keys from local .env.local when present. Values
  * from the shell environment have priority.
@@ -21,7 +23,10 @@
  * reset data, or print credentials.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const ENV_KEYS = [
   "CMS_ADMIN_EMAIL",
@@ -32,7 +37,8 @@ const ENV_KEYS = [
   "TEST_ADMIN_PASSWORD",
   "PAYLOAD_ADMIN_EMAIL",
   "PAYLOAD_ADMIN_PASSWORD",
-  "VERCEL_AUTOMATION_BYPASS_SECRET"
+  "VERCEL_AUTOMATION_BYPASS_SECRET",
+  "CMS_ADMIN_SMOKE_TRANSPORT"
 ];
 
 const ADMIN_COLLECTIONS = [
@@ -68,6 +74,7 @@ const password = readFirstEnv([
   "PAYLOAD_ADMIN_PASSWORD"
 ]);
 const vercelBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "";
+let transport = process.env.CMS_ADMIN_SMOKE_TRANSPORT === "vercel-curl" ? "vercel-curl" : "fetch";
 const checks = [];
 let authHeaders = {};
 
@@ -110,10 +117,11 @@ function record(name, ok, detail = "", required = true) {
 }
 
 function redact(text) {
-  return text
-    .replaceAll(email, "[redacted-email]")
-    .replaceAll(password, "[redacted-password]")
-    .replaceAll(vercelBypass, "[redacted-vercel-bypass]");
+  let redacted = text;
+  if (email) redacted = redacted.replaceAll(email, "[redacted-email]");
+  if (password) redacted = redacted.replaceAll(password, "[redacted-password]");
+  if (vercelBypass) redacted = redacted.replaceAll(vercelBypass, "[redacted-vercel-bypass]");
+  return redacted;
 }
 
 function getSetCookies(headers) {
@@ -133,6 +141,10 @@ function cookieHeaderFromSetCookie(setCookies) {
 }
 
 async function fetchWithTiming(path, init = {}) {
+  if (transport === "vercel-curl") {
+    return vercelCurlWithTiming(path, init);
+  }
+
   const started = performance.now();
   const response = await fetch(`${baseUrl}${path}`, {
     redirect: "follow",
@@ -149,6 +161,123 @@ async function fetchWithTiming(path, init = {}) {
   return { response, text, ms };
 }
 
+function isVercelProtection(text) {
+  const lower = text.toLowerCase();
+  return lower.includes("authentication required") || lower.includes("vercel.com/login") || lower.includes("vercel");
+}
+
+function parseHttpStatus(stdout) {
+  const match = stdout.match(/__HTTP_STATUS__:(\d{3})/);
+  return match ? Number(match[1]) : 0;
+}
+
+function stripHttpStatus(stdout) {
+  return stdout.replace(/__HTTP_STATUS__:\d{3}\s*$/m, "");
+}
+
+function parseSetCookies(headerText) {
+  return headerText
+    .split(/\r?\n/)
+    .filter((line) => /^set-cookie:/i.test(line))
+    .map((line) => line.replace(/^set-cookie:\s*/i, "").trim())
+    .filter(Boolean);
+}
+
+async function vercelCurlWithTiming(path, init = {}) {
+  const started = performance.now();
+  const tempDir = mkdtempSync(join(tmpdir(), "kbparus-admin-smoke-"));
+  const bodyFile = join(tempDir, "body.json");
+  const headersFile = join(tempDir, "headers.txt");
+  const configFile = join(tempDir, "curl.conf");
+
+  try {
+    const args = [
+      "vercel@latest",
+      "curl",
+      path,
+      "--deployment",
+      baseUrl,
+      "--",
+      "--silent",
+      "--show-error",
+      "--location",
+      "--dump-header",
+      headersFile,
+      "--write-out",
+      "__HTTP_STATUS__:%{http_code}"
+    ];
+
+    const method = init.method || "GET";
+    if (method !== "GET") {
+      args.push("--request", method);
+    }
+
+    const headers = {
+      ...(vercelBypass ? { "x-vercel-protection-bypass": vercelBypass } : {}),
+      ...(authHeaders || {}),
+      ...(init.headers || {})
+    };
+
+    const configLines = [];
+    for (const [key, value] of Object.entries(headers)) {
+      if (value) configLines.push(`header = "${escapeCurlConfig(`${key}: ${value}`)}"`);
+    }
+
+    if (configLines.length > 0) {
+      writeFileSync(configFile, configLines.join("\n"), "utf8");
+      args.push("--config", configFile);
+    }
+
+    if (init.body) {
+      writeFileSync(bodyFile, init.body, "utf8");
+      args.push("--data-binary", `@${bodyFile}`);
+    }
+
+    const command = process.platform === "win32" ? "npx.cmd" : "npx";
+    const result = spawnSync(command, args, {
+      encoding: "utf8",
+      maxBuffer: 20 * 1024 * 1024,
+      shell: process.platform === "win32",
+      windowsHide: true
+    });
+
+    const ms = Math.round(performance.now() - started);
+    if (result.error) {
+      throw new Error(`vercel curl failed: ${result.error.code || result.error.message}`);
+    }
+
+    if (result.status !== 0) {
+      const stderr = redact(result.stderr || "").slice(0, 500);
+      throw new Error(
+        `vercel curl failed with exit code ${result.status ?? "null"}, signal ${result.signal || "none"}${stderr ? `, stderr=${stderr}` : ""}`
+      );
+    }
+
+    const status = parseHttpStatus(result.stdout);
+    const text = stripHttpStatus(result.stdout);
+    const headerText = existsSync(headersFile) ? readFileSync(headersFile, "utf8") : "";
+    const setCookies = parseSetCookies(headerText);
+
+    return {
+      response: {
+        status,
+        headers: {
+          getSetCookie: () => setCookies,
+          get: () => null
+        }
+      },
+      text,
+      ms
+    };
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function escapeCurlConfig(value) {
+  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
 async function login() {
   if (!email || !password) {
     record(
@@ -161,11 +290,21 @@ async function login() {
 
   record("admin credentials are provided", true);
 
-  const { response, text, ms } = await fetchWithTiming("/api/users/login", {
+  let { response, text, ms } = await fetchWithTiming("/api/users/login", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password })
   });
+
+  if (response.status === 401 && isVercelProtection(text) && !vercelBypass && transport === "fetch") {
+    transport = "vercel-curl";
+    record("Vercel protected preview transport", true, "using vercel curl");
+    ({ response, text, ms } = await fetchWithTiming("/api/users/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, password })
+    }));
+  }
 
   let payload = {};
   try {

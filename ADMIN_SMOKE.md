@@ -41,6 +41,8 @@ CMS_ADMIN_EMAIL=... CMS_ADMIN_PASSWORD=... npm run cms:admin-smoke -- https://<p
 VERCEL_AUTOMATION_BYPASS_SECRET=...
 ```
 
+Если bypass secret не задан, скрипт автоматически переключается на `vercel curl` для protected Preview. Это read-only транспорт через уже авторизованный Vercel CLI; credentials не печатаются.
+
 Секреты нельзя коммитить или выводить в логи.
 
 ## Что проверяет скрипт

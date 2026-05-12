@@ -5,6 +5,7 @@
 - Added read-only `cms:admin-smoke` validation for logged-in Payload admin checks with env-based credentials.
 - The smoke script validates login, `/api/users/me`, admin shell, light theme, key collection/global routes and basic response timings.
 - The smoke script now supports local `.env.local` for the allowed admin smoke keys; shell env still has priority.
+- The smoke script can validate protected Preview deployments through Vercel CLI transport without printing credentials.
 - Confirmed Preview and Production currently share DB/storage/auth env, so automatic admin creation, media upload and write persistence checks are intentionally blocked.
 - Runtime deployment validator now treats `lead-management` as a required global.
 
