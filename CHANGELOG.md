@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-12 — Production deploy CMS-driven contacts
+
+- Deployed `20ec532` to production: `https://kbparus-metal-storage.vercel.app`.
+- Production validation passed: `/api/health` ok, `cms.ok=true`, required globals readable, homepage and catalog return 200, `/api/users` is protected.
+- Homepage contacts are now served through Payload global `contacts` with production-safe fallbacks.
+- Warning remains: Bitrix24 env is not configured yet.
+
 ## 2026-05-12 — CMS-driven content migration begins
 
 - Added `CMS_CONTENT_ARCHITECTURE.md` with the current hardcoded/CMS content map and incremental migration strategy.
