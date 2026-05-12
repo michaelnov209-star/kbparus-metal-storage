@@ -4,9 +4,11 @@ Next.js/React MVP для направления систем хранения м
 
 Production URL: https://kbparus-metal-storage.vercel.app
 
+Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
+
 ## Payload CMS / текущий статус админки
 
-- Ветка активной CMS-разработки: `feat/payload-cms`.
+- CMS branch `feat/payload-cms` fast-forward merged в `main` для production deployment.
 - Payload 3 встроен в Next.js App Router и доступен по `/admin`.
 - Админка Payload настроена для русскоязычных менеджеров: `fallbackLanguage: "ru"`, фиксированная светлая тема и отдельный CSS-reset для контраста.
 - Проект работает как ESM-пакет: в `package.json` задано `"type": "module"`. Это важно для `payload.config.ts`, Payload CLI и генерации importMap на Vercel.

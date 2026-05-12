@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-12 — Production deploy Payload CMS
+
+- `feat/payload-cms` fast-forward merged в `main` и выведен в production: `https://kbparus-metal-storage.vercel.app`.
+- Production validation прошла: `/api/health` ok, `cms.ok=true`, globals `contacts` и `home-content` читаются, `/admin` на русском и в светлой теме, публичные страницы работают, `/api/users` закрыт без авторизации.
+- Preview Telegram tests доставлены через настроенный Telegram-канал: заявка конфигуратора включает выбранные параметры, обычная контактная заявка остаётся короткой.
+- Warning: Bitrix24 env не настроен; это не блокирует этап до подготовки интеграции Bitrix24.
+
 ## 2026-05-12 — Русская админка Payload и контраст
 
 ### Что изменилось
