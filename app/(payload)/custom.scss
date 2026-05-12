@@ -1,1 +1,152 @@
-/* Customize Payload admin styles here if needed. */
+html[data-theme="light"] {
+  --theme-bg: #f4f6f8;
+  --theme-text: #121820;
+  --theme-input-bg: #ffffff;
+  --theme-border-color: #ccd5df;
+  --theme-elevation-0: #ffffff;
+  --theme-elevation-50: #f8fafc;
+  --theme-elevation-100: #eef2f6;
+  --theme-elevation-150: #e2e8ef;
+  --theme-elevation-200: #d5dee8;
+  --theme-elevation-250: #c5d0dc;
+  --theme-elevation-300: #aebcca;
+  --theme-elevation-400: #778594;
+  --theme-elevation-500: #5e6b78;
+  --theme-elevation-600: #46525f;
+  --theme-elevation-700: #303a45;
+  --theme-elevation-800: #202832;
+  --theme-elevation-900: #141b24;
+  --theme-elevation-950: #0d131b;
+  --theme-elevation-1000: #080d13;
+  --theme-success-500: #178a4c;
+  --theme-warning-500: #b76a00;
+  --theme-error-500: #c53030;
+}
+
+html[data-theme] {
+  color: var(--theme-text);
+  background: var(--theme-bg);
+}
+
+html[data-theme] body {
+  color: var(--theme-text);
+  background: var(--theme-bg);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+html[data-theme] h1,
+html[data-theme] h2,
+html[data-theme] h3,
+html[data-theme] p {
+  max-width: none;
+  color: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+html[data-theme] h1 {
+  margin: 0 0 24px;
+  font-size: 42px;
+  line-height: 1.08;
+}
+
+html[data-theme] h2 {
+  margin: 0 0 18px;
+  font-size: 30px;
+  line-height: 1.18;
+}
+
+html[data-theme] h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  line-height: 1.22;
+}
+
+html[data-theme] p {
+  color: var(--theme-elevation-600);
+  line-height: 1.55;
+}
+
+html[data-theme] nav {
+  color: var(--theme-text);
+  font-size: inherit;
+}
+
+html[data-theme] a {
+  color: inherit;
+}
+
+html[data-theme] label,
+html[data-theme] legend,
+html[data-theme] .field-label,
+html[data-theme] .label,
+html[data-theme] .render-fields,
+html[data-theme] .template-minimal,
+html[data-theme] .collection-list,
+html[data-theme] .collection-edit,
+html[data-theme] .global-edit,
+html[data-theme] .upload,
+html[data-theme] .table,
+html[data-theme] .drawer,
+html[data-theme] .popup {
+  color: var(--theme-text);
+}
+
+html[data-theme] input,
+html[data-theme] textarea,
+html[data-theme] select {
+  color: var(--theme-text);
+  background: var(--theme-input-bg);
+}
+
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder {
+  color: var(--theme-elevation-500);
+}
+
+html[data-theme] .btn--style-primary,
+html[data-theme] .btn--style-pill {
+  color: #ffffff;
+  background: #202832;
+  border-color: #202832;
+}
+
+html[data-theme] .btn--style-secondary,
+html[data-theme] .btn--style-none {
+  color: var(--theme-text);
+}
+
+html[data-theme] .template-minimal__wrap,
+html[data-theme] .auth-fields,
+html[data-theme] .card,
+html[data-theme] .upload-card,
+html[data-theme] .collapsible,
+html[data-theme] .popup,
+html[data-theme] .drawer__content {
+  background: var(--theme-elevation-0);
+  border-color: var(--theme-border-color);
+}
+
+html[data-theme] .nav__link,
+html[data-theme] .nav__link:visited,
+html[data-theme] .step-nav a,
+html[data-theme] .step-nav a:visited {
+  color: var(--theme-text);
+}
+
+html[data-theme] .nav__link:hover,
+html[data-theme] .step-nav a:hover {
+  color: #000000;
+  background: var(--theme-elevation-100);
+}
+
+html[data-theme] .pill,
+html[data-theme] .status,
+html[data-theme] .badge {
+  color: var(--theme-text);
+}
+
+html[data-theme] .thumbnail,
+html[data-theme] .upload-card__thumbnail {
+  background: var(--theme-elevation-100);
+}

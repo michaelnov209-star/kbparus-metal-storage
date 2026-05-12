@@ -2,6 +2,7 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
+import { ru } from "@payloadcms/translations/languages/ru";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -26,7 +27,12 @@ export default buildConfig({
     meta: {
       titleSuffix: " — Админка КБ Парус",
       icons: [{ rel: "icon", type: "image/png", url: "/brand/logo-g.png" }]
-    }
+    },
+    theme: "light"
+  },
+  i18n: {
+    fallbackLanguage: "ru",
+    supportedLanguages: { ru }
   },
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles],
   globals: [Contacts, HomeContent],
@@ -61,6 +67,4 @@ export default buildConfig({
       token: process.env.BLOB_READ_WRITE_TOKEN || ""
     })
   ]
-  // Убрали кастомный i18n — без импорта translation-пакетов он вызывает hydration
-  // mismatch (server: ru, client: en). Подписи полей уже на русском через label: { ru }.
 });

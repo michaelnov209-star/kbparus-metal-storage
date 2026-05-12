@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## 2026-05-12 — Русская админка Payload и контраст
+
+### Что изменилось
+
+- Payload admin переведён на русский через штатный пакет `@payloadcms/translations`.
+- Зафиксирована светлая тема админки, чтобы менеджеры видели стабильный интерфейс.
+- Добавлен CSS-reset для `/admin`, который перекрывает глобальные стили публичного сайта и исправляет контраст текста, форм, кнопок, навигации и upload UI.
+
+### Проверки
+
+- `npm run lint`
+- `npm run test`
+- `npm run cms:generate-importmap`
+- `npm run build`
+- Preview deploy: `/api/health` вернул `status: "ok"`, `/admin/create-first-user` рендерит русские строки.
+
+## 2026-05-12 — Production validation tooling
+
+### Что изменилось
+
+- Добавлен недеструктивный runtime-валидатор `scripts/cms/validate-deployment.mjs`.
+- Добавлен npm-скрипт `cms:validate-deployment`.
+- Добавлен документ `PRODUCTION_VALIDATION.md` с матрицей проверок: admin auth, globals persistence, uploads/blob storage, rebuild consistency, env vars.
+
+### Что проверять
+
+- `npm run cms:validate-deployment -- <preview-url>`
+- После cutover: `npm run cms:validate-deployment -- https://kbparus-metal-storage.vercel.app --production`
+- Ручные проверки admin auth и upload остаются обязательными, потому что они требуют авторизованной сессии и записи файла.
+
 ## 2026-05-11 — Payload schema globals verification
 
 ### Что изменилось

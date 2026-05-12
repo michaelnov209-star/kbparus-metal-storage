@@ -8,6 +8,7 @@ Production URL: https://kbparus-metal-storage.vercel.app
 
 - Ветка активной CMS-разработки: `feat/payload-cms`.
 - Payload 3 встроен в Next.js App Router и доступен по `/admin`.
+- Админка Payload настроена для русскоязычных менеджеров: `fallbackLanguage: "ru"`, фиксированная светлая тема и отдельный CSS-reset для контраста.
 - Проект работает как ESM-пакет: в `package.json` задано `"type": "module"`. Это важно для `payload.config.ts`, Payload CLI и генерации importMap на Vercel.
 - Node на Vercel закреплён через `engines.node: "22.x"`.
 - `payload generate:importmap` запускается на каждом `vercel-build` через `scripts/cms/safe-generate-importmap.mjs`. Если importMap не генерируется, deploy должен падать до публикации.
@@ -15,6 +16,7 @@ Production URL: https://kbparus-metal-storage.vercel.app
 - Schema push выполняется в build pipeline через `scripts/cms/push-schema.mjs`. Для Vercel нужен direct/unpooled Postgres URL: `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING`.
 - Schema push дополнительно проверяет Payload globals `contacts` и `home-content`: если глобальные таблицы не читаются, build падает до публикации.
 - Health check CMS: `/api/health`. После успешного deploy ожидаем `status: "ok"` и `components.cms.ok: true`.
+- Runtime validation: `npm run cms:validate-deployment -- <deployment-url>`. Подробный production-чеклист: `PRODUCTION_VALIDATION.md`.
 
 ## Текущее состояние после последней итерации
 
