@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-12 — Authenticated admin smoke tooling
+
+- Added read-only `cms:admin-smoke` validation for logged-in Payload admin checks with env-based credentials.
+- The smoke script validates login, `/api/users/me`, admin shell, light theme, key collection/global routes and basic response timings.
+- Confirmed Preview and Production currently share DB/storage/auth env, so automatic admin creation, media upload and write persistence checks are intentionally blocked.
+- Runtime deployment validator now treats `lead-management` as a required global.
+
 ## 2026-05-12 — CMS admin UX architecture
 
 - Admin перестроен в бизнес-структуру: главная страница, каталог, калькулятор, компания, медиа, заявки, пользователи.

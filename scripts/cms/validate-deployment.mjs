@@ -20,7 +20,7 @@ const REQUIRED_COLLECTIONS = [
   "users"
 ];
 
-const REQUIRED_GLOBALS = ["contacts", "home-content"];
+const REQUIRED_GLOBALS = ["contacts", "home-content", "lead-management"];
 const PRODUCTION_URL = "https://kbparus-metal-storage.vercel.app";
 
 const args = process.argv.slice(2);
