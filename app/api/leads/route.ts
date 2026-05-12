@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
 
 interface LeadPayload {
+  leadType?: "contact" | "configurator";
   contact?: {
     name?: string;
     phone?: string;
@@ -12,17 +14,20 @@ interface LeadPayload {
   comment?: string;
   utm?: Record<string, string>;
   calculatorInput?: Record<string, unknown>;
-  /** Honeypot — бот заполнит, человек нет. Любое значение = бот. */
+  recommendedConfig?: {
+    title?: string;
+    dimensions?: string;
+    loadKg?: number;
+    shelfCount?: number;
+    towerCount?: number;
+    options?: string[];
+  };
+  preliminaryPriceFrom?: number;
   hp_url?: string;
-  /** Время загрузки формы (мс). Слишком быстрая отправка = бот. */
   formStartedAt?: number;
-  /** Откуда отправлена заявка (текст). */
   source?: string;
-  /** Полный URL страницы-источника (для гиперссылки в Telegram). */
   sourceUrl?: string;
-  /** Название товара/страницы (отображается как ссылка). */
   sourceTitle?: string;
-  /** Относительный путь к картинке товара (отправляется как preview). */
   sourceImage?: string;
 }
 
@@ -43,15 +48,17 @@ function getClientIp(request: Request): string {
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  const recent = (requestLog.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  const recent = (requestLog.get(ip) ?? []).filter((time) => now - time < RATE_LIMIT_WINDOW_MS);
   if (recent.length >= RATE_LIMIT_MAX) return true;
   recent.push(now);
   requestLog.set(ip, recent);
+
   if (requestLog.size > 1000) {
     for (const [key, times] of requestLog) {
-      if (times.every((t) => now - t > RATE_LIMIT_WINDOW_MS)) requestLog.delete(key);
+      if (times.every((time) => now - time > RATE_LIMIT_WINDOW_MS)) requestLog.delete(key);
     }
   }
+
   return false;
 }
 
@@ -64,80 +71,9 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function sanitize(value: string | undefined): string {
-  if (!value) return "";
-  return String(value).slice(0, MAX_FIELD_LENGTH).trim();
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-interface TelegramLead {
-  name: string;
-  phone: string;
-  email: string;
-  city: string;
-  comment: string;
-  source?: string;
-  sourceUrl?: string;
-  sourceTitle?: string;
-  sourceImageUrl?: string;
-  recommendationTitle: string;
-  fromPriceLabel: string;
-  utm?: Record<string, string>;
-}
-
-function buildTelegramMessage(lead: TelegramLead): string {
-  const phoneClean = lead.phone.replace(/[\s\-()]/g, "");
-  const lines: string[] = [];
-
-  lines.push("🔔 <b>Новая заявка с сайта КБ Парус</b>");
-  lines.push("");
-
-  if (lead.name) lines.push(`👤 <b>Имя:</b> ${escapeHtml(lead.name)}`);
-  lines.push(`📞 <b>Телефон:</b> <a href="tel:${escapeHtml(phoneClean)}">${escapeHtml(lead.phone)}</a>`);
-  if (lead.email) lines.push(`✉️ <b>E-mail:</b> ${escapeHtml(lead.email)}`);
-  if (lead.city) lines.push(`📍 <b>Город:</b> ${escapeHtml(lead.city)}`);
-  lines.push("");
-
-  lines.push(`🏗 <b>Оборудование:</b> ${escapeHtml(lead.recommendationTitle)}`);
-  lines.push(`💰 <b>Ориентировочно:</b> ${escapeHtml(lead.fromPriceLabel)}`);
-
-  if (lead.comment) {
-    lines.push("");
-    lines.push("💬 <b>Комментарий:</b>");
-    lines.push(escapeHtml(lead.comment));
-  }
-
-  // "Откуда" — приоритет: ссылка с названием → ссылка → текст
-  if (lead.sourceUrl && lead.sourceTitle) {
-    lines.push("");
-    lines.push(`📄 Откуда: <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceTitle)}</a>`);
-  } else if (lead.sourceUrl) {
-    lines.push("");
-    lines.push(`📄 Откуда: <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceUrl)}</a>`);
-  } else if (lead.source) {
-    lines.push("");
-    lines.push(`📄 Откуда: ${escapeHtml(lead.source)}`);
-  }
-
-  if (lead.utm && Object.keys(lead.utm).length > 0) {
-    const utmStr = Object.entries(lead.utm)
-      .filter(([, v]) => v)
-      .map(([k, v]) => `${k}=${v}`)
-      .join(", ");
-    if (utmStr) lines.push(`🌐 UTM: ${escapeHtml(utmStr)}`);
-  }
-
-  const time = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
-  lines.push("");
-  lines.push(`🕒 ${time} МСК`);
-
-  return lines.join("\n");
+function sanitize(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.slice(0, MAX_FIELD_LENGTH).trim();
 }
 
 async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?: string }> {
@@ -147,8 +83,6 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
 
   const text = buildTelegramMessage(lead);
 
-  // Если есть картинка товара — отправляем sendPhoto с подписью.
-  // Telegram caption ограничен 1024 символами; если перебор — fallback на sendMessage.
   if (lead.sourceImageUrl && text.length <= 1024) {
     try {
       const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
@@ -163,9 +97,8 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
         signal: AbortSignal.timeout(10_000)
       });
       if (response.ok) return { ok: true };
-      // Если sendPhoto упал (битая картинка / слишком большой файл) — fallback на текст
     } catch {
-      // fallback ниже
+      // Fallback to plain text below.
     }
   }
 
@@ -232,6 +165,9 @@ export async function POST(request: Request) {
   const sourceTitle = sanitize(payload.sourceTitle);
   const sourceUrl = resolveAbsoluteUrl(sanitize(payload.sourceUrl) || undefined);
   const sourceImageUrl = resolveAbsoluteUrl(sanitize(payload.sourceImage) || undefined);
+  const rawCalculatorInput = payload.calculatorInput ?? {};
+  const hasCalculatorInput = Object.keys(rawCalculatorInput).length > 0;
+  const isConfiguratorLead = payload.leadType === "configurator" || hasCalculatorInput;
 
   if (!phone) {
     return NextResponse.json(
@@ -239,12 +175,14 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+
   if (!isValidPhone(phone)) {
     return NextResponse.json(
       { ok: false, error: "Телефон указан в неверном формате." },
       { status: 400 }
     );
   }
+
   if (email && !isValidEmail(email)) {
     return NextResponse.json(
       { ok: false, error: "Email указан в неверном формате." },
@@ -252,42 +190,52 @@ export async function POST(request: Request) {
     );
   }
 
-  const calculatorInput = normalizeCalculatorInput({
-    ...payload.calculatorInput,
-    city: city || String(payload.calculatorInput?.city ?? ""),
-    comment
-  });
-  const result = calculateStorageSystem(calculatorInput);
+  const calculatorInput = isConfiguratorLead
+    ? normalizeCalculatorInput({
+        ...rawCalculatorInput,
+        city: city || String(rawCalculatorInput.city ?? ""),
+        comment
+      })
+    : undefined;
+  const result = calculatorInput ? calculateStorageSystem(calculatorInput) : undefined;
+  const fromPrice = typeof payload.preliminaryPriceFrom === "number" ? payload.preliminaryPriceFrom : result?.fromPrice;
 
   const telegramLead: TelegramLead = {
+    leadType: isConfiguratorLead ? "configurator" : "contact",
     name,
     phone,
     email,
-    city: city || calculatorInput.city,
+    city: city || calculatorInput?.city,
     comment,
     source: source || undefined,
     sourceUrl,
     sourceTitle: sourceTitle || undefined,
     sourceImageUrl,
-    recommendationTitle: result.recommendation.title,
-    fromPriceLabel: `от ${formatRoundedRub(result.fromPrice)}`,
-    utm: payload.utm
+    recommendationTitle: sanitize(payload.recommendedConfig?.title) || result?.recommendation.title,
+    fromPriceLabel: fromPrice ? `от ${formatRoundedRub(fromPrice)}` : undefined,
+    calculatorInput,
+    selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean)
   };
 
-  // Telegram-уведомление: отправляется параллельно, не блокирует ответ
   const telegramPromise = notifyTelegram(telegramLead);
 
   const crmPayload = {
-    TITLE: `Заявка: ${result.recommendation.title}`,
+    TITLE: result?.recommendation.title
+      ? `Заявка с конфигуратора: ${result.recommendation.title}`
+      : `Заявка с сайта${sourceTitle ? `: ${sourceTitle}` : ""}`,
     NAME: name,
     PHONE: phone ? [{ VALUE: phone, VALUE_TYPE: "WORK" }] : [],
     EMAIL: email ? [{ VALUE: email, VALUE_TYPE: "WORK" }] : [],
     COMMENTS: comment,
-    UF_CITY: city || calculatorInput.city,
-    UF_CALCULATOR_INPUT: calculatorInput,
-    UF_RECOMMENDED_CONFIG: result.recommendation,
-    UF_PRELIMINARY_PRICE_FROM: result.fromPrice,
-    UF_PRELIMINARY_PRICE: result.preliminaryPrice,
+    UF_CITY: city || calculatorInput?.city,
+    ...(calculatorInput && result
+      ? {
+          UF_CALCULATOR_INPUT: calculatorInput,
+          UF_RECOMMENDED_CONFIG: result.recommendation,
+          UF_PRELIMINARY_PRICE_FROM: result.fromPrice,
+          UF_PRELIMINARY_PRICE: result.preliminaryPrice
+        }
+      : {}),
     UF_UTM: payload.utm ?? {},
     UF_SOURCE: source
   };
@@ -304,14 +252,13 @@ export async function POST(request: Request) {
       });
       if (response.ok) channels.push("bitrix24");
     } catch {
-      // не валим заявку из-за CRM
+      // CRM outage must not block lead processing if Telegram works.
     }
   }
 
   const telegramResult = await telegramPromise;
   if (telegramResult.ok) channels.push("telegram");
 
-  // Если ни один канал не сконфигурирован — mock-режим
   if (channels.length === 0 && !process.env.BITRIX24_WEBHOOK_URL && !process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({
       ok: true,
@@ -321,7 +268,6 @@ export async function POST(request: Request) {
     });
   }
 
-  // Хотя бы один канал должен сработать — иначе 502
   if (channels.length === 0) {
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку. Попробуйте через минуту или позвоните нам." },

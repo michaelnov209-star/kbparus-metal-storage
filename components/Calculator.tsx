@@ -212,6 +212,7 @@ export function Calculator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          leadType: "configurator",
           contact: {
             name: contact.name || "Заявка с калькулятора",
             phone: contact.phone,

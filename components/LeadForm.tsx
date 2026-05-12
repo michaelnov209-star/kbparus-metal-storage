@@ -38,6 +38,7 @@ export function LeadForm({ title = "Получить консультацию", 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          leadType: "contact",
           contact: {
             name: String(form.get("name") ?? ""),
             phone: String(form.get("phone") ?? ""),
@@ -51,7 +52,6 @@ export function LeadForm({ title = "Получить консультацию", 
           sourceTitle,
           sourceUrl: resolvedSourceUrl,
           sourceImage,
-          calculatorInput: {},
           utm: {}
         })
       });
