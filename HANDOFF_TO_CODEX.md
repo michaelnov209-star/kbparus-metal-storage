@@ -17,10 +17,13 @@
 - `npm run cms:generate-importmap`
 - `npm run build`
 - `npm run vercel-build` locally; Windows skips schema push by wrapper, then Next build passes.
+- Vercel preview deploy: `https://kbparus-metal-storage-p0i0kxmi3-michaelnov209-3230s-projects.vercel.app`
+- Vercel runtime check: `vercel curl /api/health --deployment <preview-url>`
+- Vercel admin check: `vercel curl /admin/create-first-user --deployment <preview-url>`
 
-**Current result:** importMap generation is fixed. The previous Vercel deploy correctly failed before publication because globals were missing; the next deploy must confirm that explicit `pushDevSchema` creates `contacts` and `home_content` and that `/api/health` returns `status: "ok"`.
+**Current result:** importMap generation is fixed. Explicit `pushDevSchema` runs on Vercel/Linux, creates/verifies `contacts` and `home_content`, and fails the build if globals are not readable. Preview deploy completed successfully. `/api/health` returns `status: "ok"`, `cms.ok: true`, `globalNames: ["contacts", "home-content"]`. `/admin/create-first-user` renders the Payload "Create first user" screen.
 
-**Next step if still failing:** inspect Vercel build logs at `cms:push-schema`. Do not revisit Node/importMap unless logs point there. Focus only on Drizzle schema push, direct Postgres URL, and non-destructive verification of global tables.
+**Next step if still failing later:** inspect Vercel build logs at `cms:push-schema`. Do not revisit Node/importMap unless logs point there. Focus only on Drizzle schema push, direct Postgres URL, and non-destructive verification of global tables.
 
 **Document type:** Engineering handoff / architecture transfer  
 **Generated:** 2026-05-10  
