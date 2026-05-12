@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-12 — CMS-driven content migration begins
+
+- Added `CMS_CONTENT_ARCHITECTURE.md` with the current hardcoded/CMS content map and incremental migration strategy.
+- Connected frontend contacts to Payload global `contacts` through `lib/cms/contacts.ts`.
+- Kept production-safe fallbacks for phones, email, address, work hours and social links.
+- Homepage remains visually unchanged; managers can now update contact data from CMS when the global is populated.
+
 ## 2026-05-12 — Authenticated admin smoke tooling
 
 - Added read-only `cms:admin-smoke` validation for logged-in Payload admin checks with env-based credentials.

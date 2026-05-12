@@ -8,6 +8,7 @@ import { SliderControls } from "@/components/SliderControls";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { JsonLd, faqSchema } from "@/lib/seo/schema";
+import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHeroContent } from "@/lib/cms/home-content";
 
 /**
@@ -42,16 +43,6 @@ import {
   Wrench,
   Zap
 } from "lucide-react";
-
-const contacts = {
-  phones: [
-    { label: "+7 (499) 403-39-62", href: "tel:+74994033962" },
-    { label: "+7 (495) 741-87-10", href: "tel:+74957418710" }
-  ],
-  email: { label: "info@kbparus.ru", href: "mailto:info@kbparus.ru" },
-  address: "МО, г. Ногинск, 1-й Кардолентный проезд, д. 5",
-  worktime: "Пн–Пт 9:00–18:00"
-};
 
 const metrics = [
   { value: "1,5 млн м²", label: "выполненных работ" },
@@ -211,6 +202,7 @@ const faq = [
 
 export default async function Home() {
   const hero = await getHeroContent();
+  const contacts = await getSiteContacts();
 
   return (
     <main className="line-page" id="top">
@@ -234,8 +226,8 @@ export default async function Home() {
           {nav.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
         </nav>
         <div className="line-header-contact">
-          <a className="social-btn telegram" href="mailto:info@kbparus.ru" aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
-          <a className="social-btn max" href={contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
+          <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
+          <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
           <div className="phone-stack">
             {contacts.phones.map((phone) => (
               <a className="phone-pill" href={phone.href} key={phone.href}>
@@ -575,9 +567,9 @@ export default async function Home() {
           <article className="contact-card reveal">
             <span><Sparkles size={20} />Социальные сети</span>
             <div className="social-row">
-              <a className="telegram" href={contacts.email.href}><Send size={30} /></a>
-              <a className="whatsapp" href={contacts.phones[0].href}><MessageCircle size={30} /></a>
-              <a className="vk" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">VK</a>
+              <a className="telegram" href={contacts.socials.telegram || contacts.email.href}><Send size={30} /></a>
+              <a className="whatsapp" href={contacts.socials.whatsapp || contacts.phones[0].href}><MessageCircle size={30} /></a>
+              <a className="vk" href={contacts.socials.vk || "https://www.kbparus.ru/"} target="_blank" rel="noreferrer">VK</a>
             </div>
           </article>
         </div>

@@ -21,6 +21,7 @@ Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api
 - Runtime validation: `npm run cms:validate-deployment -- <deployment-url>`. Подробный production-чеклист: `PRODUCTION_VALIDATION.md`.
 - Authenticated admin smoke: `npm run cms:admin-smoke -- <deployment-url>` with admin credentials supplied via env. Details: `ADMIN_SMOKE.md`.
 - Admin UX architecture: `CMS_ADMIN_UX.md`. Админка сгруппирована как операционный центр управления сайтом: главная, каталог, калькулятор, компания, медиа, заявки, пользователи.
+- CMS content architecture: `CMS_CONTENT_ARCHITECTURE.md`. План постепенного перехода от hardcoded frontend к CMS-driven управлению контентом.
 
 ## Текущее состояние после последней итерации
 
