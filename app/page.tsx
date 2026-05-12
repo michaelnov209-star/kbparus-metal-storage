@@ -5,11 +5,11 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { SliderControls } from "@/components/SliderControls";
-import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
-import { JsonLd, faqSchema } from "@/lib/seo/schema";
+import { getCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHeroContent } from "@/lib/cms/home-content";
+import { JsonLd, faqSchema } from "@/lib/seo/schema";
 
 /**
  * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
@@ -203,6 +203,7 @@ const faq = [
 export default async function Home() {
   const hero = await getHeroContent();
   const contacts = await getSiteContacts();
+  const catalogCategories = await getCatalogCategories();
 
   return (
     <main className="line-page" id="top">
@@ -215,7 +216,7 @@ export default async function Home() {
           <div className="catalog-menu">
             <a href="#catalog" className="catalog-trigger"><Menu size={16} />Каталог</a>
             <div className="catalog-dropdown" aria-label="Разделы каталога">
-              {excelHomeCatalog.map((item) => (
+              {catalogCategories.map((item) => (
                 <a href={`/catalog/${item.id}`} key={item.id}>
                   <strong>{item.title}</strong>
                   <ChevronRight size={16} />
@@ -303,7 +304,7 @@ export default async function Home() {
             <span>категории без утвержденного изображения показываются с аккуратной заглушкой</span>
           </article>
         </div>
-        <CatalogGrid items={excelHomeCatalog} />
+        <CatalogGrid items={catalogCategories} />
       </section>
 
       <Calculator />

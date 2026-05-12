@@ -5,9 +5,9 @@ import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery } from "@/components/ProductGallery";
-import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { catalogProducts, getCatalogProduct, getSeoForItem } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { getCatalogCategory } from "@/lib/cms/catalog";
 import { JsonLd, breadcrumbSchema, productSchema, SITE_URL } from "@/lib/seo/schema";
 
 export function generateStaticParams() {
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function CatalogProductPage({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const { id, productId } = await params;
-  const category = excelHomeCatalog.find((item) => item.id === id);
+  const category = await getCatalogCategory(id);
   const product = getCatalogProduct(id, productId);
   if (!category || !product) notFound();
 

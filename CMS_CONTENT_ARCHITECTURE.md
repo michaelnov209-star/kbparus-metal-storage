@@ -18,8 +18,8 @@
 | Партнёры | placeholder array in code | Collection `partners` или `home-content.partners` | модель есть, frontend hardcoded |
 | FAQ | `app/page.tsx` | `home-content.faq` | модель есть, frontend hardcoded |
 | Баннеры | hardcoded images/URLs | `home-content.kbparusBanner/coatingBanner` | модель есть, frontend hardcoded |
-| Каталог главной | `excelHomeCatalog` | Collection `categories` | CMS collection есть, frontend hardcoded |
-| Категории каталога | `data/storageSystems/*` | Collection `categories` + Media + SEO | CMS collection есть, frontend hardcoded |
+| Каталог главной | `excelHomeCatalog` + `lib/cms/catalog.ts` fallback | Collection `categories` | чтение подключено к CMS-first adapter |
+| Категории каталога | `data/storageSystems/*` + `lib/cms/catalog.ts` fallback | Collection `categories` + Media + SEO | чтение подключено к CMS-first adapter |
 | Подкатегории | `catalogDepth.ts` | Collection `subcategories` | CMS collection есть, frontend hardcoded |
 | Товары | `catalogDepth.ts` | Collection `products` + gallery/specs/SEO | CMS collection есть, frontend hardcoded |
 | Калькулятор | `lib/calculator`, `excelCalculator.ts` | `calculator-profiles` + controlled logic in code | CMS model есть, runtime logic hardcoded |
@@ -91,3 +91,12 @@ Generic reorderable blocks стоит вводить позже, когда ме
 ## Первый внедрённый шаг
 
 `contacts` подключён к frontend через `lib/cms/contacts.ts`. Если CMS недоступна или global пустой, используются текущие production fallback-значения.
+
+## Второй внедрённый шаг
+
+Категории каталога подключены к frontend через `lib/cms/catalog.ts`.
+
+- Главная, dropdown каталога, `/catalog/[id]`, хлебные крошки товаров и sitemap читают Payload collection `categories`.
+- Если CMS недоступна, запись неполная или категория ещё не заведена, используется `excelHomeCatalog`.
+- URL `/catalog/[id]` сохранены: CMS `slug` должен совпадать с текущим `id`.
+- Товары, спецификации, галереи и калькулятор пока остаются в `data/storageSystems` и `lib/calculator`.

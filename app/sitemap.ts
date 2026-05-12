@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
-import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { catalogProducts } from "@/data/storageSystems/catalogDepth";
+import { getCatalogCategories } from "@/lib/cms/catalog";
 
 const BASE_URL = "https://kbparus-metal-storage.vercel.app";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const categoryUrls: MetadataRoute.Sitemap = excelHomeCatalog.map((category) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const categories = await getCatalogCategories();
+  const categoryUrls: MetadataRoute.Sitemap = categories.map((category) => ({
     url: `${BASE_URL}/catalog/${category.id}`,
     lastModified: new Date(),
     changeFrequency: "monthly",

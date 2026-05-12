@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-12 — CMS-driven catalog category reads
+
+- Added CMS-first catalog category adapter `lib/cms/catalog.ts`.
+- Homepage catalog grid, catalog dropdown, category pages, product breadcrumbs and sitemap now read Payload `categories` when published CMS data exists.
+- Existing hardcoded `excelHomeCatalog` remains the fallback, so current catalog URLs and rendering stay stable during migration.
+- Product data, specifications, galleries and calculator logic remain hardcoded for the next migration step.
+
 ## 2026-05-12 — Production deploy CMS-driven contacts
 
 - Deployed `20ec532` to production: `https://kbparus-metal-storage.vercel.app`.

@@ -4,51 +4,55 @@ import { BrandMark } from "@/components/BrandMark";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
-import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { getProductsByCategory } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
-export function generateStaticParams() {
-  return excelHomeCatalog.map((item) => ({ id: item.id }));
+export async function generateStaticParams() {
+  const categories = await getCatalogCategories();
+  return categories.map((item) => ({ id: item.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = excelHomeCatalog.find((catalogItem) => catalogItem.id === id);
+  const item = await getCatalogCategory(id);
   if (!item) return { title: "Каталог" };
 
   const url = `${SITE_URL}/catalog/${item.id}`;
-  const ogImage = `${SITE_URL}${item.image}`;
+  const ogImage = item.ogImage ?? item.image;
+  const absoluteOgImage = ogImage.startsWith("http") ? ogImage : `${SITE_URL}${ogImage}`;
 
   return {
-    title: item.title,
-    description: item.summary,
+    title: item.seoTitle ?? item.title,
+    description: item.seoDescription ?? item.summary,
+    keywords: item.keywords && item.keywords.length > 0 ? item.keywords : undefined,
     alternates: { canonical: url },
+    robots: item.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
-      title: `${item.title} | КБ Парус`,
-      description: item.summary,
+      title: `${item.seoTitle ?? item.title} | КБ Парус`,
+      description: item.seoDescription ?? item.summary,
       url,
       type: "website",
-      images: [{ url: ogImage, alt: item.title }]
+      images: [{ url: absoluteOgImage, alt: item.title }]
     },
     twitter: {
       card: "summary_large_image",
-      title: `${item.title} | КБ Парус`,
-      description: item.summary,
-      images: [ogImage]
+      title: `${item.seoTitle ?? item.title} | КБ Парус`,
+      description: item.seoDescription ?? item.summary,
+      images: [absoluteOgImage]
     }
   };
 }
 
 export default async function CatalogCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = excelHomeCatalog.find((catalogItem) => catalogItem.id === id);
+  const item = await getCatalogCategory(id);
   if (!item) notFound();
 
   const products = getProductsByCategory(item.id);
   const isPilotCategory = products.length > 0;
-  const related = excelHomeCatalog.filter((catalogItem) => catalogItem.id !== item.id).slice(0, 4);
+  const related = await getRelatedCatalogCategories(item.id, 4);
 
   const categoryUrl = `${SITE_URL}/catalog/${item.id}`;
   const breadcrumb = breadcrumbSchema([
