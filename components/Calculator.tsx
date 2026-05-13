@@ -15,7 +15,8 @@ import {
   Ruler,
   Send,
   ShieldCheck,
-  Warehouse
+  Warehouse,
+  X
 } from "lucide-react";
 import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
@@ -139,6 +140,7 @@ export function Calculator() {
   const [contact, setContact] = useState({ name: "", phone: "", email: "", address: "" });
   const [leadStatus, setLeadStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
   const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
@@ -518,6 +520,28 @@ export function Calculator() {
                 </div>
               </div>
 
+              <div className="solution-visual-card">
+                <div className="solution-visual-stage" aria-label="Схема подобранной системы хранения">
+                  <span className="warehouse-axis is-length">Длина {input.lengthMm.toLocaleString("ru-RU")} мм</span>
+                  <span className="warehouse-axis is-width">Ширина {input.widthMm.toLocaleString("ru-RU")} мм</span>
+                  <div className="rack-tower-stack">
+                    {Array.from({ length: Math.min(input.towerCount, 4) }).map((_, towerIndex) => (
+                      <div className="rack-tower" key={towerIndex}>
+                        {Array.from({ length: Math.min(input.shelfCount, 6) }).map((__, shelfIndex) => (
+                          <i key={shelfIndex} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="warehouse-path" />
+                </div>
+                <div className="solution-visual-copy">
+                  <span className="line-kicker">Система сгенерирована</span>
+                  <h4>Предварительная конфигурация собрана под выбранные параметры</h4>
+                  <p>Габариты, нагрузка, количество уровней и секций уже включены в расчет. Инженер проверит запас прочности, проходы и способ загрузки.</p>
+                </div>
+              </div>
+
               <div className="calc-result-sections">
                 <section>
                   <h4>Выбранная конфигурация</h4>
@@ -599,10 +623,6 @@ export function Calculator() {
           <span className="line-kicker">Живой расчет</span>
           <h3>{display.title}</h3>
           <img src={display.image} alt={display.title} />
-          <div className="summary-helper">
-            <strong>Вы меняете параметры слева — расчет обновляется сразу.</strong>
-            <span>Это стартовая оценка для разговора с инженером, не финальное коммерческое предложение.</span>
-          </div>
           <div className="summary-spec-grid" aria-label="Ключевые параметры">
             <span><Ruler size={16} />{dimensionLabel}</span>
             <span><Gauge size={16} />{input.loadKg.toLocaleString("ru-RU")} кг на уровень</span>
@@ -613,16 +633,62 @@ export function Calculator() {
             от {roundedPrice}
             <small>ориентир для первичного подбора</small>
           </div>
-          <div className="summary-checks">
-            <span><Check size={16} />Выбрано опций: {selectedOptions.length || "пока нет"}</span>
-            <span><Check size={16} />Суммарный вес: {storedWeightLabel} кг</span>
-            <span><Check size={16} />Опоры проверит инженер</span>
-          </div>
-          <div className="calc-note">
-            <Info size={18} />
-            <span>Заявку и параметры расчета можно передать в CRM, 1С или складскую систему.</span>
-          </div>
+          <button className="primary-button summary-cta" type="button" onClick={() => setStep(2)}>
+            <Send size={18} />
+            Получить расчет
+          </button>
         </aside>
+
+        <div className="mobile-summary-bar" aria-label="Краткий итог расчета">
+          <button className="mobile-summary-main" type="button" onClick={() => setMobileSummaryOpen(true)}>
+            <span>от {roundedPrice}</span>
+            <small>{display.shortTitle} · {input.loadKg.toLocaleString("ru-RU")} кг</small>
+          </button>
+          <button
+            className="mobile-summary-action"
+            type="button"
+            onClick={() => (step < steps.length - 1 ? setStep((current) => current + 1) : setMobileSummaryOpen(true))}
+          >
+            {step < steps.length - 1 ? "Далее" : "Итог"}
+            <ArrowRight size={16} />
+          </button>
+        </div>
+
+        {mobileSummaryOpen && (
+          <div className="mobile-summary-modal" role="dialog" aria-modal="true" aria-label="Итог конфигурации">
+            <div className="mobile-summary-panel">
+              <button className="mobile-summary-close" type="button" onClick={() => setMobileSummaryOpen(false)} aria-label="Закрыть итог">
+                <X size={20} />
+              </button>
+              <span className="line-kicker">Итог конфигурации</span>
+              <h3>{display.title}</h3>
+              <img src={display.image} alt={display.title} />
+              <div className="summary-price">
+                от {roundedPrice}
+                <small>предварительная стоимость</small>
+              </div>
+              <div className="summary-spec-grid">
+                <span><Ruler size={16} />{dimensionLabel}</span>
+                <span><Gauge size={16} />{input.loadKg.toLocaleString("ru-RU")} кг на уровень</span>
+                <span><Warehouse size={16} />{input.shelfCount.toLocaleString("ru-RU")} полок</span>
+                <span><Layers3 size={16} />{input.towerCount.toLocaleString("ru-RU")} секций</span>
+                <span><Check size={16} />Опции: {selectedOptions.length || "не выбраны"}</span>
+                <span><Check size={16} />Суммарный вес: {storedWeightLabel} кг</span>
+              </div>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  setStep(2);
+                  setMobileSummaryOpen(false);
+                }}
+              >
+                <Send size={18} />
+                Оставить заявку
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
