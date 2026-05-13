@@ -73,7 +73,7 @@ if (!apply) {
   process.exit(0);
 }
 
-await apiJson("/api/globals/home-content", "PATCH", patch);
+await apiJson("/api/globals/home-content", "POST", buildWriteData(existing, patch));
 
 console.log("Summary:");
 console.log(`  home-content: updated=${keys.length}, skipped_existing=${Object.keys(seed).length - keys.length}`);
@@ -167,9 +167,30 @@ function buildHomeSeed(): AnyRecord {
 function buildPatch(existing: AnyRecord, seed: AnyRecord) {
   const patch: AnyRecord = {};
   for (const [key, value] of Object.entries(seed)) {
+    if (key === "hero" && isIncompleteHero(existing?.hero)) {
+      patch.hero = { ...value, ...existing?.hero, title: existing?.hero?.title || value.title };
+      continue;
+    }
+
     if (isEmptySection(existing?.[key])) patch[key] = value;
   }
   return patch;
+}
+
+function isIncompleteHero(value: unknown): boolean {
+  if (!value || typeof value !== "object") return true;
+  const hero = value as AnyRecord;
+  return typeof hero.title !== "string" || hero.title.trim().length === 0;
+}
+
+function buildWriteData(existing: AnyRecord, patch: AnyRecord) {
+  const { id, globalType, createdAt, updatedAt, sizes, ...content } = existing;
+  void id;
+  void globalType;
+  void createdAt;
+  void updatedAt;
+  void sizes;
+  return { ...content, ...patch };
 }
 
 function isEmptySection(value: unknown): boolean {
@@ -187,7 +208,7 @@ async function apiGet(path: string) {
   return response.body;
 }
 
-async function apiJson(path: string, method: "PATCH", data: AnyRecord) {
+async function apiJson(path: string, method: "POST", data: AnyRecord) {
   const response = await requestJson(path, { method, data, auth: true });
   return response.body;
 }
