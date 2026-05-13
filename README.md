@@ -4,7 +4,7 @@ Next.js/React MVP для направления систем хранения м
 
 Production URL: https://kbparus-metal-storage.vercel.app
 
-Production status: Payload CMS/admin deployed and validated; catalog categories/products seeded into CMS on 2026-05-13; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
+Production status: Payload CMS/admin deployed and validated; catalog and homepage content seeded into CMS on 2026-05-13; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
 
 ## Payload CMS / текущий статус админки
 
@@ -23,6 +23,7 @@ Production status: Payload CMS/admin deployed and validated; catalog categories/
 - Admin UX architecture: `CMS_ADMIN_UX.md`. Админка сгруппирована как операционный центр управления сайтом: главная, каталог, калькулятор, компания, медиа, заявки, пользователи.
 - CMS content architecture: `CMS_CONTENT_ARCHITECTURE.md`. План постепенного перехода от hardcoded frontend к CMS-driven управлению контентом.
 - Catalog content: Payload now contains 17 categories, 5 subcategories and 17 products seeded via non-destructive `cms:seed-catalog`. Frontend reads categories/products from CMS with fallback to `data/storageSystems`.
+- Homepage content: Payload `home-content` now drives materials, before/after, advantages, cases, geography, reviews, about, banners, shipment steps, partners and FAQ with safe fallback.
 
 ## Текущее состояние после последней итерации
 

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-05-13 — Production homepage CMS seed
+
+- Deployed `bf83976` to production: `https://kbparus-metal-storage.vercel.app`.
+- Homepage sections now read Payload `home-content` with fallback: materials, before/after, advantages, cases, geography, reviews, about, banners, shipment steps, partners and FAQ.
+- Preview seed filled 15 empty/incomplete `home-content` sections and preserved existing populated fields.
+- Production seed was idempotent after Preview seed: updated=0, skipped=all.
+- Production validation passed; homepage, catalog, product pages, admin and `/api/users` protection verified.
+- Warning remains: Bitrix24 env is not configured yet.
+
 ## 2026-05-13 — Production catalog CMS population
 
 - Deployed `c28b655` to production: `https://kbparus-metal-storage.vercel.app`.
