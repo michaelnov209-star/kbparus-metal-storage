@@ -108,6 +108,15 @@ const guidedChoices: Array<{
   }
 ];
 
+const siteConditions = [
+  "Узкий проезд",
+  "Кран-балка",
+  "Ограничение по высоте",
+  "Работа погрузчиком",
+  "Ограничение по нагрузке пола",
+  "Уличное размещение"
+];
+
 function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
   const profile = getCalculatorProfile(profileId);
   const defaults = profile.defaultValues;
@@ -141,6 +150,7 @@ export function Calculator() {
   const [leadStatus, setLeadStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const formStartedAt = useRef<number>(Date.now());
   const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
@@ -148,6 +158,7 @@ export function Calculator() {
   const progress = ((step + 1) / steps.length) * 100;
   const display = profileCopy[profile.id];
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
+  const conditionsComment = selectedConditions.length ? `Условия объекта: ${selectedConditions.join(", ")}` : "";
   const dimensionLabel = `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")}×${input.heightMm.toLocaleString("ru-RU")} мм`;
   const roundedPrice = formatRoundedRub(animatedPrice);
   const storedWeightLabel = result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
@@ -213,6 +224,14 @@ export function Calculator() {
     }));
   }
 
+  function toggleCondition(condition: string) {
+    setSelectedConditions((current) =>
+      current.includes(condition)
+        ? current.filter((item) => item !== condition)
+        : [...current, condition]
+    );
+  }
+
   async function submitLead() {
     setLeadStatus("Готовим заявку для инженера...");
     try {
@@ -227,7 +246,7 @@ export function Calculator() {
             email: contact.email
           },
           city: input.city,
-          comment: [contact.address && `Адрес/объект: ${contact.address}`, input.comment].filter(Boolean).join("\n"),
+          comment: [contact.address && `Адрес/объект: ${contact.address}`, conditionsComment, input.comment].filter(Boolean).join("\n"),
           calculatorInput: input,
           recommendedConfig: {
             title: display.title,
@@ -354,11 +373,11 @@ export function Calculator() {
               <div className="parameter-hero">
                 <article>
                   <small>Рабочая зона</small>
-                  <strong>{dimensionLabel}</strong>
+                  <strong className="parameter-live-value" key={dimensionLabel}>{dimensionLabel}</strong>
                 </article>
                 <article>
                   <small>Нагрузка</small>
-                  <strong>{input.loadKg.toLocaleString("ru-RU")} кг</strong>
+                  <strong className="parameter-live-value" key={input.loadKg}>{input.loadKg.toLocaleString("ru-RU")} кг</strong>
                 </article>
               </div>
 
@@ -474,6 +493,26 @@ export function Calculator() {
                 ))}
               </div>
 
+              <div className="site-condition-panel">
+                <div className="site-condition-copy">
+                  <strong>Условия объекта</strong>
+                  <span>Отметьте факторы, которые инженер должен учесть при проверке решения.</span>
+                </div>
+                <div className="site-condition-grid">
+                  {siteConditions.map((condition) => (
+                    <button
+                      className={selectedConditions.includes(condition) ? "condition-chip is-active" : "condition-chip"}
+                      key={condition}
+                      type="button"
+                      onClick={() => toggleCondition(condition)}
+                    >
+                      <Check size={16} />
+                      {condition}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="calc-client-block">
                 <label className="text-field">
                   <span><MapPin size={16} />Город или регион</span>
@@ -484,11 +523,11 @@ export function Calculator() {
                   />
                 </label>
                 <label className="text-field">
-                  <span><MessageSquareText size={16} />Важные условия</span>
+                  <span><MessageSquareText size={16} />Комментарий для инженера</span>
                   <textarea
                     value={input.comment ?? ""}
                     onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
-                    placeholder="Кран-балка, узкий проезд, запас по нагрузке"
+                    placeholder="Дополнительные детали: режим загрузки, требования к монтажу, сроки"
                   />
                 </label>
               </div>
@@ -585,7 +624,7 @@ export function Calculator() {
           </div>
           <div className="summary-spec-grid" aria-label="Ключевые параметры">
             {resultFacts.slice(1).map((fact) => (
-              <span key={fact.label}><Check size={16} />{fact.value}</span>
+              <span key={`${fact.label}-${fact.value}`}><Check size={16} />{fact.value}</span>
             ))}
           </div>
           <button className="primary-button summary-cta" type="button" onClick={() => setStep(3)}>
@@ -623,7 +662,7 @@ export function Calculator() {
               </div>
               <div className="summary-spec-grid">
                 {resultFacts.slice(1).map((fact) => (
-                  <span key={fact.label}><Check size={16} />{fact.value}</span>
+                  <span key={`${fact.label}-${fact.value}`}><Check size={16} />{fact.value}</span>
                 ))}
                 <span><Check size={16} />Опции: {selectedOptions.length || "не выбраны"}</span>
               </div>
