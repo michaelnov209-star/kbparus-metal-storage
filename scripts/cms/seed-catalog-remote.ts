@@ -6,7 +6,10 @@
  * secrets, does not print credentials and never deletes records.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { excelHomeCatalog } from "../../data/storageSystems/excelCatalog";
 import { catalogProducts, catalogSubcategories } from "../../data/storageSystems/catalogDepth";
 
@@ -23,11 +26,13 @@ const ENV_KEYS = [
 
 type CollectionSlug = "categories" | "subcategories" | "products" | "calculator-profiles";
 type AnyRecord = Record<string, any>;
+type JsonResponse = { status: number; text: string; body: AnyRecord };
 
 const args = process.argv.slice(2);
 const baseUrlArg = args.find((arg) => !arg.startsWith("--"));
 const apply = args.includes("--apply");
 const updateExisting = args.includes("--update-existing");
+let transport = args.includes("--vercel-curl") ? "vercel-curl" : "fetch";
 
 if (!baseUrlArg) {
   fail("Usage: npm run cms:seed-catalog -- <url> [--apply] [--update-existing]");
@@ -43,7 +48,8 @@ if (!email || !password) {
   fail("Admin credentials are missing. Use CMS_ADMIN_EMAIL/CMS_ADMIN_PASSWORD or supported aliases in .env.local.");
 }
 
-const token = await login();
+let authToken = "";
+authToken = await login();
 const categoryIds = new Map<string, string>();
 const subcategoryIds = new Map<string, string>();
 const calculatorProfileIds = new Map<string, string>();
@@ -54,6 +60,7 @@ const stats = {
 };
 
 console.log(`Remote catalog seed: ${baseUrl}`);
+console.log(`Transport: ${transport}`);
 console.log(`Mode: ${apply ? "apply" : "dry-run"}`);
 console.log(`Existing records: ${updateExisting ? "update enabled" : "preserve existing"}`);
 
@@ -71,24 +78,18 @@ if (!apply) {
   console.log("Dry-run only. Re-run with --apply to write missing records.");
 }
 
-async function login() {
-  const response = await fetch(`${baseUrl}/api/users/login`, {
+async function login(): Promise<string> {
+  const response = await requestJson("/api/users/login", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email, password })
+    data: { email, password },
+    auth: false,
+    allowProtectedRetry: true
   });
-
-  const text = await response.text();
-  if (!response.ok) {
-    fail(`Admin login failed: HTTP ${response.status}`);
-  }
-
-  const payload = JSON.parse(text || "{}");
-  if (typeof payload.token !== "string" || !payload.token) {
+  if (typeof response.body.token !== "string" || !response.body.token) {
     fail("Admin login did not return a token.");
   }
 
-  return payload.token;
+  return response.body.token;
 }
 
 async function seedCategories() {
@@ -208,7 +209,7 @@ async function upsertBySlug(collection: CollectionSlug, slug: string, data: AnyR
   if (!apply) {
     if (existing) stat.skipped++;
     else stat.created++;
-    return existing ?? null;
+    return existing ?? { id: `dry-run:${collection}:${slug}`, slug };
   }
 
   if (existing) {
@@ -233,34 +234,13 @@ async function findBySlug(collection: CollectionSlug, slug: string): Promise<Any
 }
 
 async function apiGet(path: string) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    headers: authHeaders()
-  });
-  return readJsonResponse(response, path);
+  const response = await requestJson(path, { method: "GET", auth: true });
+  return response.body;
 }
 
 async function apiJson(path: string, method: "POST" | "PATCH", data: AnyRecord) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    method,
-    headers: {
-      ...authHeaders(),
-      "content-type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
-  return readJsonResponse(response, path);
-}
-
-async function readJsonResponse(response: Response, path: string) {
-  const text = await response.text();
-  if (!response.ok) {
-    fail(`${path} failed: HTTP ${response.status} ${text.slice(0, 240)}`);
-  }
-  return text ? JSON.parse(text) : {};
-}
-
-function authHeaders() {
-  return { authorization: `Bearer ${token}` };
+  const response = await requestJson(path, { method, data, auth: true });
+  return response.body;
 }
 
 function normalizeBaseUrl(value: string) {
@@ -301,4 +281,175 @@ function loadLocalEnv(path: string) {
 function fail(message: string): never {
   console.error(`[FAIL] ${message}`);
   process.exit(1);
+}
+
+async function requestJson(
+  path: string,
+  options: {
+    method: "GET" | "POST" | "PATCH";
+    data?: AnyRecord;
+    auth?: boolean;
+    allowProtectedRetry?: boolean;
+  }
+): Promise<JsonResponse> {
+  const response = transport === "vercel-curl" ? requestViaVercelCurl(path, options) : await requestViaFetch(path, options);
+
+  if (response.status === 401 && options.allowProtectedRetry && transport === "fetch" && baseUrl.includes(".vercel.app")) {
+    transport = "vercel-curl";
+    const retried = requestViaVercelCurl(path, options);
+    if (retried.status < 400) return retried;
+    fail(`${path} failed through vercel curl: HTTP ${retried.status} ${safeSnippet(retried.text)}`);
+  }
+
+  if (response.status >= 400) {
+    fail(`${path} failed: HTTP ${response.status} ${safeSnippet(response.text)}`);
+  }
+
+  return response;
+}
+
+async function requestViaFetch(
+  path: string,
+  options: {
+    method: "GET" | "POST" | "PATCH";
+    data?: AnyRecord;
+    auth?: boolean;
+  }
+): Promise<JsonResponse> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: options.method,
+    headers: {
+      ...(options.auth ? { authorization: `Bearer ${authToken}` } : {}),
+      ...(options.data ? { "content-type": "application/json" } : {})
+    },
+    body: options.data ? JSON.stringify(options.data) : undefined,
+    redirect: "follow"
+  });
+  const text = await response.text();
+  return { status: response.status, text, body: parseJson(text) };
+}
+
+function requestViaVercelCurl(
+  path: string,
+  options: {
+    method: "GET" | "POST" | "PATCH";
+    data?: AnyRecord;
+    auth?: boolean;
+  }
+): JsonResponse {
+  const tempDir = mkdtempSync(join(tmpdir(), "cms-seed-"));
+  const configPath = join(tempDir, "curl.conf");
+  const bodyPath = join(tempDir, "body.json");
+
+  try {
+    if (options.data) {
+      writeFileSync(bodyPath, JSON.stringify(options.data), "utf8");
+    }
+
+    const configLines = [
+      "silent",
+      "show-error",
+      "location",
+      `request = "${options.method}"`,
+      options.auth ? `header = "authorization: Bearer ${authToken}"` : "",
+      options.data ? `header = "content-type: application/json"` : "",
+      options.data ? `data-binary = "@${toCurlPath(bodyPath)}"` : "",
+      `write-out = "\\n__CMS_SEED_HTTP_STATUS__:%{http_code}\\n"`
+    ].filter(Boolean);
+
+    writeFileSync(configPath, configLines.join("\n"), "utf8");
+
+    const npxBin = process.platform === "win32" ? "npx.cmd" : "npx";
+    const child = spawnSync(
+      npxBin,
+      ["vercel@latest", "curl", path, "--deployment", baseUrl, "--", "--config", configPath],
+      { encoding: "utf8", shell: process.platform === "win32" }
+    );
+
+    const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;
+    if (child.error) {
+      fail(`vercel curl failed for ${path}: ${child.error.message}`);
+    }
+
+    const marker = "__CMS_SEED_HTTP_STATUS__:";
+    const markerIndex = output.lastIndexOf(marker);
+    const text = markerIndex === -1 ? output : output.slice(0, markerIndex);
+    const jsonText = extractJsonText(text);
+    const body = parseJson(jsonText || text);
+    const inferredOk = Boolean(body.token || Array.isArray(body.docs) || body.id || body.doc);
+    const status =
+      markerIndex === -1
+        ? inferredOk
+          ? 200
+          : 500
+        : Number(output.slice(markerIndex + marker.length).match(/\d+/)?.[0] ?? 0);
+
+    if (child.status !== 0 && !inferredOk) {
+      fail(`vercel curl failed for ${path}: ${safeSnippet(output)}`);
+    }
+
+    return { status, text: jsonText || text, body };
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function parseJson(text: string) {
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return {};
+  }
+}
+
+function extractJsonText(text: string) {
+  const objectIndex = text.indexOf("{");
+  const arrayIndex = text.indexOf("[");
+  const start =
+    objectIndex === -1 ? arrayIndex : arrayIndex === -1 ? objectIndex : Math.min(objectIndex, arrayIndex);
+  if (start === -1) return "";
+
+  const opener = text[start];
+  const closer = opener === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < text.length; index++) {
+    const char = text[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === opener) depth++;
+    if (char === closer) depth--;
+
+    if (depth === 0) {
+      return text.slice(start, index + 1).trim();
+    }
+  }
+
+  return text.slice(start).trim();
+}
+
+function toCurlPath(path: string) {
+  return path.replace(/\\/g, "/");
+}
+
+function safeSnippet(text: string) {
+  return text.replace(email, "[email]").slice(0, 240);
 }
