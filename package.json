@@ -20,6 +20,7 @@
     "cms:admin-smoke": "node scripts/cms/admin-smoke.mjs",
     "cms:seed-catalog": "tsx scripts/cms/seed-catalog-remote.ts",
     "cms:seed-home-content": "tsx scripts/cms/seed-home-content-remote.ts",
+    "cms:seed-media": "tsx scripts/cms/seed-media-remote.ts",
     "cms:seed-catalog:local": "tsx scripts/cms/seed-catalog.ts"
   },
   "dependencies": {
