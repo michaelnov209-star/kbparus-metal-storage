@@ -520,25 +520,32 @@ export function Calculator() {
                 </div>
               </div>
 
-              <div className="solution-visual-card">
-                <div className="solution-visual-stage" aria-label="Схема подобранной системы хранения">
-                  <span className="warehouse-axis is-length">Длина {input.lengthMm.toLocaleString("ru-RU")} мм</span>
-                  <span className="warehouse-axis is-width">Ширина {input.widthMm.toLocaleString("ru-RU")} мм</span>
-                  <div className="rack-tower-stack">
-                    {Array.from({ length: Math.min(input.towerCount, 4) }).map((_, towerIndex) => (
-                      <div className="rack-tower" key={towerIndex}>
-                        {Array.from({ length: Math.min(input.shelfCount, 6) }).map((__, shelfIndex) => (
-                          <i key={shelfIndex} />
-                        ))}
-                      </div>
-                    ))}
+              <div className="layout-preview-card">
+                <div className="layout-preview-stage" aria-label="Предварительная схема размещения">
+                  <div className="layout-zone is-storage">
+                    <span>Зона хранения</span>
+                    <div className="layout-rack-row">
+                      {Array.from({ length: Math.min(input.towerCount, 5) }).map((_, towerIndex) => (
+                        <i key={towerIndex}>
+                          <b>{Math.min(input.shelfCount, 9)}</b>
+                        </i>
+                      ))}
+                    </div>
                   </div>
-                  <div className="warehouse-path" />
+                  <div className="layout-zone is-loading">
+                    <span>Зона загрузки</span>
+                    <b>{input.loadKg.toLocaleString("ru-RU")} кг / уровень</b>
+                  </div>
+                  <div className="layout-aisle">
+                    <span>Рабочий проход</span>
+                  </div>
+                  <span className="layout-dimension is-length">{input.lengthMm.toLocaleString("ru-RU")} мм</span>
+                  <span className="layout-dimension is-width">{input.widthMm.toLocaleString("ru-RU")} мм</span>
                 </div>
-                <div className="solution-visual-copy">
-                  <span className="line-kicker">Система сгенерирована</span>
-                  <h4>Предварительная конфигурация собрана под выбранные параметры</h4>
-                  <p>Габариты, нагрузка, количество уровней и секций уже включены в расчет. Инженер проверит запас прочности, проходы и способ загрузки.</p>
+                <div className="layout-preview-copy">
+                  <span className="line-kicker">Предварительная схема размещения</span>
+                  <h4>Система разложена по зонам хранения, загрузки и прохода</h4>
+                  <p>Схема показывает логику размещения для первого инженерного разговора: габариты, нагрузка и число секций уже учтены в подборе.</p>
                 </div>
               </div>
 
