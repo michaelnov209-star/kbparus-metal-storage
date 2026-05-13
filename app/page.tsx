@@ -8,7 +8,7 @@ import { SliderControls } from "@/components/SliderControls";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteContacts } from "@/lib/cms/contacts";
-import { getHeroContent } from "@/lib/cms/home-content";
+import { getHomePageContent } from "@/lib/cms/home-content";
 import { JsonLd, faqSchema } from "@/lib/seo/schema";
 
 /**
@@ -43,6 +43,28 @@ import {
   Wrench,
   Zap
 } from "lucide-react";
+
+const contentIcons = {
+  "badge-check": BadgeCheck,
+  boxes: Boxes,
+  "clipboard-check": ClipboardCheck,
+  factory: Factory,
+  globe: Globe2,
+  layers: Layers3,
+  "message-circle": MessageCircle,
+  "package-check": PackageCheck,
+  route: Route,
+  "shield-check": ShieldCheck,
+  truck: Truck,
+  warehouse: Warehouse,
+  wrench: Wrench,
+  zap: Zap
+} as const;
+
+function ContentIcon({ name, size = 30 }: { name?: string; size?: number }) {
+  const Icon = contentIcons[name as keyof typeof contentIcons] ?? BadgeCheck;
+  return <Icon size={size} />;
+}
 
 const metrics = [
   { value: "1,5 млн м²", label: "выполненных работ" },
@@ -201,14 +223,15 @@ const faq = [
 ];
 
 export default async function Home() {
-  const hero = await getHeroContent();
+  const home = await getHomePageContent();
+  const hero = home.hero;
   const contacts = await getSiteContacts();
   const catalogCategories = await getCatalogCategories();
 
   return (
     <main className="line-page" id="top">
       <LinePageStyles />
-      <JsonLd data={faqSchema(faq)} />
+      <JsonLd data={faqSchema(home.faq)} />
 
       <header className="line-header">
         <BrandMark />
@@ -325,21 +348,18 @@ export default async function Home() {
           <p>Показываем материал понятными группами: что лежит на складе, как к нему подходят и чем его забирают.</p>
         </div>
         <div className="material-grid">
-          {storedMaterials.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article className="material-card reveal" key={item.title}>
-                <div className="material-placeholder" aria-hidden="true">
-                  <Icon size={46} />
-                  <strong>{item.label}</strong>
-                </div>
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </div>
-              </article>
-            );
-          })}
+          {home.storedMaterials.map((item) => (
+            <article className="material-card reveal" key={item.title}>
+              <div className="material-placeholder" aria-hidden="true">
+                <ContentIcon name={item.icon} size={46} />
+                <strong>{item.label}</strong>
+              </div>
+              <div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -352,12 +372,12 @@ export default async function Home() {
         </div>
         <div className="before-after-grid">
           <article className="before-after-card reveal">
-            <img src={visualAssets.beforeWarehouse} alt="До внедрения: металл на полу и хаос на складе" />
-            <div><span>До</span><h3>Хаос, металл на полу</h3><p>Проходы заняты, материал сложно найти, погрузчик тратит время на перекладку.</p></div>
+            <img src={home.beforeAfter.before.imageUrl} alt={home.beforeAfter.before.imageAlt} />
+            <div><span>До</span><h3>{home.beforeAfter.before.title}</h3><p>{home.beforeAfter.before.text}</p></div>
           </article>
           <article className="before-after-card is-after reveal">
-            <img src={visualAssets.afterWarehouse} alt="После внедрения: система хранения и порядок на складе" />
-            <div><span>После</span><h3>Система хранения, порядок</h3><p>Материал получает адрес, доступ становится быстрее, склад готов к росту.</p></div>
+            <img src={home.beforeAfter.after.imageUrl} alt={home.beforeAfter.after.imageAlt} />
+            <div><span>После</span><h3>{home.beforeAfter.after.title}</h3><p>{home.beforeAfter.after.text}</p></div>
           </article>
         </div>
       </section>
@@ -367,16 +387,13 @@ export default async function Home() {
           <h2>Выбирая нас, вы получаете <span>множество преимуществ</span></h2>
         </div>
         <div className="line-advantages">
-          {advantages.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <article className={index % 2 === 1 ? "advantage-card is-blue reveal" : "advantage-card reveal"} key={item.title}>
-                <div className="icon-medallion"><Icon size={30} /></div>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
-            );
-          })}
+          {home.advantages.map((item, index) => (
+            <article className={index % 2 === 1 ? "advantage-card is-blue reveal" : "advantage-card reveal"} key={item.title}>
+              <div className="icon-medallion"><ContentIcon name={item.icon} size={30} /></div>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -389,9 +406,9 @@ export default async function Home() {
           <SliderControls targetId="cases-slider" label="Навигация по кейсам" />
         </div>
         <div className="case-slider" id="cases-slider">
-          {cases.map((item) => (
+          {home.cases.map((item) => (
             <article className="case-card reveal" key={item.title}>
-              <img src={item.image} alt={item.title} />
+              <img src={item.imageUrl} alt={item.imageAlt} />
               <a href="#contacts" aria-label={`Обсудить кейс: ${item.title}`}><ArrowRight size={24} /></a>
               <h3>{item.customer}</h3>
               <strong>{item.title}</strong>
@@ -418,10 +435,10 @@ export default async function Home() {
           />
           <div className="geo-project-list" aria-label="Примеры городов поставок">
             <strong>Примеры направлений</strong>
-            {geoProjects.map((item) => (
+            {home.geography.projects.map((item) => (
               <span key={item.city}><MapPin size={16} />{item.city}: {item.company}</span>
             ))}
-            <b><Globe2 size={18} />700+ городов обслуживания</b>
+            <b><Globe2 size={18} />{home.geography.totalLabel}</b>
           </div>
         </div>
       </section>
@@ -435,7 +452,7 @@ export default async function Home() {
           <SliderControls targetId="reviews-slider" label="Навигация по отзывам" />
         </div>
         <div className="review-slider" id="reviews-slider">
-          {reviews.map((review) => (
+          {home.reviews.map((review) => (
             <article className="review-card reveal" key={review.name}>
               <div className="review-avatar"><Quote size={24} /></div>
               <div>
@@ -452,40 +469,34 @@ export default async function Home() {
       <section className="line-about reveal" id="about">
         <div className="about-copy">
           <span className="line-kicker">О компании</span>
-          <h2>Мы проектируем и производим промышленное оборудование под задачи заказчика</h2>
-          <p>
-            КБ Парус работает с 2009 года. Мы занимаемся промышленным оборудованием, автоматизацией, металлообработкой
-            и инженерными решениями, которые должны работать в реальном цехе, а не только хорошо выглядеть в каталоге.
-          </p>
+          <h2>{home.about.title}</h2>
+          <p>{home.about.text}</p>
           <div className="about-features">
-            <span><Factory size={20} />Собственное производство</span>
-            <span><Wrench size={20} />Проектирование под задачу</span>
-            <span><ShieldCheck size={20} />Расчет под нагрузку</span>
+            {home.about.features.map((feature) => (
+              <span key={feature.label}><ContentIcon name={feature.icon} size={20} />{feature.label}</span>
+            ))}
           </div>
           <a className="line-secondary" href="#contacts">Связаться с инженером</a>
         </div>
         <div className="line-metrics">
-          {aboutMetrics.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article key={item.value}>
-                <Icon size={30} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
+          {home.about.metrics.map((item) => (
+            <article key={`${item.value}-${item.label}`}>
+              <ContentIcon name={item.icon} size={30} />
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="line-main-site-banner reveal">
-        <img src="/assets/images/kbparus-cnc-banner.png" alt="КБ Парус — производитель оборудования для металлообработки" />
-        <a className="line-primary" href="https://www.kbparus.ru/" target="_blank" rel="noreferrer">Перейти на kbparus.ru</a>
+        <img src={home.banners.kbparus.imageUrl} alt={home.banners.kbparus.imageAlt} />
+        <a className="line-primary" href={home.banners.kbparus.url} target="_blank" rel="noreferrer">{home.banners.kbparus.ctaLabel}</a>
       </section>
 
       <section className="line-main-site-banner line-coating-site-banner reveal" aria-label="КБ Парус — линии порошковой окраски">
-        <img src="/assets/images/baner_liniiokraski.png" alt="ЛинииОкраски.рф — линии порошковой окраски от КБ Парус" />
-        <a className="line-primary" href="https://линииокраски.рф/" target="_blank" rel="noreferrer">Перейти на линииокраски.рф</a>
+        <img src={home.banners.coating.imageUrl} alt={home.banners.coating.imageAlt} />
+        <a className="line-primary" href={home.banners.coating.url} target="_blank" rel="noreferrer">{home.banners.coating.ctaLabel}</a>
       </section>
 
       <section className="line-section">
@@ -497,17 +508,14 @@ export default async function Home() {
           <p>Каждый этап производственного процесса строго контролируется, чтобы оборудование приехало готовым к монтажу.</p>
         </div>
         <div className="line-steps">
-          {shipmentSteps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <article className="step-card reveal" key={step.title}>
-                <span>Шаг {String(index + 1).padStart(2, "0")}</span>
-                <Icon size={28} />
-                <h3>{step.title}</h3>
-                <p>{step.text}</p>
-              </article>
-            );
-          })}
+          {home.shipmentSteps.map((step, index) => (
+            <article className="step-card reveal" key={step.title}>
+              <span>Шаг {String(index + 1).padStart(2, "0")}</span>
+              <ContentIcon name={step.icon} size={28} />
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -520,10 +528,10 @@ export default async function Home() {
           <SliderControls targetId="partners-slider" label="Навигация по партнерам" />
         </div>
         <div className="line-partners" id="partners-slider">
-          {partners.map((partner) => (
+          {home.partners.map((partner) => (
             <article className="partner-logo reveal" key={partner.name}>
-              <span>{partner.mark}</span>
-              <strong>Логотип будет добавлен</strong>
+              {partner.logoUrl ? <img src={partner.logoUrl} alt={partner.logoAlt ?? partner.name} /> : <span>{partner.mark}</span>}
+              <strong>{partner.logoUrl ? partner.name : "Логотип будет добавлен"}</strong>
             </article>
           ))}
         </div>
@@ -537,7 +545,7 @@ export default async function Home() {
           </div>
           <a className="line-secondary" href="#request">Задать свой вопрос</a>
         </div>
-        <FaqAccordion items={faq} />
+        <FaqAccordion items={home.faq} />
       </section>
 
       <section className="line-contact-form" id="request">

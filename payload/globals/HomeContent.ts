@@ -1,6 +1,23 @@
 import type { GlobalConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
 
+const iconOptions = [
+  { label: { ru: "Инженерная проверка", en: "Engineering check" }, value: "badge-check" },
+  { label: { ru: "Материалы / коробки", en: "Materials" }, value: "boxes" },
+  { label: { ru: "Контрольный список", en: "Checklist" }, value: "clipboard-check" },
+  { label: { ru: "Производство", en: "Factory" }, value: "factory" },
+  { label: { ru: "География", en: "Geography" }, value: "globe" },
+  { label: { ru: "Листы / уровни", en: "Layers" }, value: "layers" },
+  { label: { ru: "Заявка / связь", en: "Message" }, value: "message-circle" },
+  { label: { ru: "Комплектация", en: "Package" }, value: "package-check" },
+  { label: { ru: "Маршрут", en: "Route" }, value: "route" },
+  { label: { ru: "Безопасность", en: "Safety" }, value: "shield-check" },
+  { label: { ru: "Доставка", en: "Delivery" }, value: "truck" },
+  { label: { ru: "Склад", en: "Warehouse" }, value: "warehouse" },
+  { label: { ru: "Проектирование", en: "Engineering" }, value: "wrench" },
+  { label: { ru: "Скорость", en: "Speed" }, value: "zap" }
+];
+
 export const HomeContent: GlobalConfig = {
   slug: "home-content",
   label: { ru: "Главная страница", en: "Home content" },
@@ -122,6 +139,7 @@ export const HomeContent: GlobalConfig = {
               type: "array",
               fields: [
                 { name: "title", label: { ru: "Заголовок", en: "Title" }, type: "text", required: true },
+                { name: "icon", label: { ru: "Иконка карточки", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "badge-check" },
                 { name: "description", label: { ru: "Описание", en: "Description" }, type: "textarea" }
               ]
             }
@@ -136,6 +154,8 @@ export const HomeContent: GlobalConfig = {
               type: "array",
               fields: [
                 { name: "title", label: { ru: "Название", en: "" }, type: "text", required: true },
+                { name: "label", label: { ru: "Короткая подпись на визуале", en: "Visual label" }, type: "text" },
+                { name: "icon", label: { ru: "Иконка", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "package-check" },
                 { name: "description", label: { ru: "Описание", en: "" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" }
               ]
@@ -151,6 +171,7 @@ export const HomeContent: GlobalConfig = {
               type: "group",
               fields: [
                 { name: "title", label: { ru: "Заголовок", en: "" }, type: "text" },
+                { name: "text", label: { ru: "Короткое описание", en: "Text" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" },
                 { name: "points", label: { ru: "Тезисы", en: "" }, type: "array", fields: [{ name: "value", type: "text" }] }
               ]
@@ -161,6 +182,7 @@ export const HomeContent: GlobalConfig = {
               type: "group",
               fields: [
                 { name: "title", label: { ru: "Заголовок", en: "" }, type: "text" },
+                { name: "text", label: { ru: "Короткое описание", en: "Text" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" },
                 { name: "points", label: { ru: "Тезисы", en: "" }, type: "array", fields: [{ name: "value", type: "text" }] }
               ]
@@ -175,8 +197,11 @@ export const HomeContent: GlobalConfig = {
               label: { ru: "Кейсы клиентов", en: "Cases" },
               type: "array",
               fields: [
-                { name: "title", label: { ru: "Название клиента/проекта", en: "Title" }, type: "text", required: true },
-                { name: "description", label: { ru: "Описание", en: "" }, type: "textarea" },
+                { name: "customer", label: { ru: "Клиент / отрасль", en: "Customer" }, type: "text" },
+                { name: "title", label: { ru: "Название проекта", en: "Title" }, type: "text", required: true },
+                { name: "task", label: { ru: "Задача клиента", en: "Task" }, type: "textarea" },
+                { name: "result", label: { ru: "Результат", en: "Result" }, type: "textarea" },
+                { name: "description", label: { ru: "Короткое описание (fallback)", en: "" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" },
                 {
                   name: "metrics",
@@ -236,7 +261,7 @@ export const HomeContent: GlobalConfig = {
               fields: [
                 { type: "row", fields: [
                   { name: "name", label: { ru: "Название партнёра", en: "Name" }, type: "text", required: true, admin: { width: "40%" } },
-                  { name: "logo", label: { ru: "Логотип", en: "Logo" }, type: "upload", relationTo: "media", required: true, admin: { width: "30%" } },
+                  { name: "logo", label: { ru: "Логотип", en: "Logo" }, type: "upload", relationTo: "media", admin: { width: "30%" } },
                   { name: "url", label: { ru: "Ссылка на сайт партнёра (опц.)", en: "URL" }, type: "text", admin: { width: "30%" } }
                 ]}
               ]
@@ -253,6 +278,7 @@ export const HomeContent: GlobalConfig = {
               maxRows: 5,
               fields: [
                 { name: "title", label: { ru: "Заголовок шага", en: "Title" }, type: "text", required: true },
+                { name: "icon", label: { ru: "Иконка", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "route" },
                 { name: "description", label: { ru: "Описание", en: "Description" }, type: "textarea" }
               ]
             }
@@ -263,6 +289,18 @@ export const HomeContent: GlobalConfig = {
           fields: [
             { name: "aboutTitle", label: { ru: "Заголовок", en: "Title" }, type: "text" },
             { name: "aboutText", label: { ru: "Текст о компании", en: "Text" }, type: "textarea" },
+            {
+              name: "aboutFeatures",
+              label: { ru: "Короткие факты под текстом", en: "Feature chips" },
+              type: "array",
+              maxRows: 6,
+              fields: [
+                { type: "row", fields: [
+                  { name: "label", label: { ru: "Факт", en: "Label" }, type: "text", admin: { width: "70%" } },
+                  { name: "icon", label: { ru: "Иконка", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "factory", admin: { width: "30%" } }
+                ]}
+              ]
+            },
             {
               name: "aboutMetrics",
               label: { ru: "Метрики о компании", en: "Metrics" },
