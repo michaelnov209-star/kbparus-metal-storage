@@ -23,7 +23,7 @@ import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator"
 import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
 
-const steps = ["Выберите оборудование", "Параметры оборудования", "Результат расчета"];
+const steps = ["Материал", "Габариты", "Доступ", "Решение"];
 
 const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: string; description: string; image: string }> = {
   "auto-sheet-metal": {
@@ -152,6 +152,12 @@ export function Calculator() {
   const roundedPrice = formatRoundedRub(animatedPrice);
   const storedWeightLabel = result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel = result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
+  const resultFacts = [
+    { label: "Система", value: display.shortTitle },
+    { label: "Рабочая зона", value: dimensionLabel },
+    { label: "Нагрузка", value: `${input.loadKg.toLocaleString("ru-RU")} кг на уровень` },
+    { label: "Вместимость", value: `${input.shelfCount.toLocaleString("ru-RU")} уровней / ${input.towerCount.toLocaleString("ru-RU")} секций` }
+  ];
 
   useEffect(() => {
     const fromValue = animatedPrice;
@@ -256,22 +262,16 @@ export function Calculator() {
   return (
     <section className="calculator-shell reveal" id="calculator">
       <div className="calculator-heading">
-        <span className="line-kicker">Калькулятор стоимости</span>
-        <h2>Подберите систему хранения без сложных таблиц и лишних вопросов</h2>
+        <span className="line-kicker">Конфигуратор системы хранения</span>
+        <h2>Соберите решение для склада за четыре спокойных шага</h2>
         <p>
-          Выберите тип оборудования, размеры, нагрузку и нужные опции. Конфигуратор покажет понятный ориентир
-          по стоимости, а инженер проверит запас прочности, помещение и способ загрузки.
+          Минимум полей, только важные решения: материал, габариты, доступ к хранению и финальная инженерная рекомендация.
         </p>
-      </div>
-      <div className="calculator-info-strip">
-        <article><Ruler size={22} /><strong>Габариты</strong><span>выбор из ходовых размеров</span></article>
-        <article><Gauge size={22} /><strong>Нагрузка</strong><span>ориентир по весу на уровень</span></article>
-        <article><Info size={22} /><strong>Подсказки</strong><span>каждый параметр объяснен простым языком</span></article>
       </div>
 
       <div className="calculator-product">
         <div className="calc-workspace">
-          <div className="calc-progress" aria-label="Прогресс калькулятора">
+          <div className="calc-progress" aria-label="Прогресс конфигуратора">
             <div className="calc-steps">
               {steps.map((item, index) => (
                 <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => setStep(index)}>
@@ -284,90 +284,95 @@ export function Calculator() {
           </div>
 
           {step === 0 && (
-            <div className="calc-panel">
+            <div className="calc-panel calc-panel-intro">
               <div className="calc-panel-title">
                 <PackageSearch size={24} />
                 <div>
-                  <h3>Выберите оборудование</h3>
-                  <p>Начните с типа системы. На следующем шаге останутся только параметры, которые действительно нужны для расчета.</p>
+                  <h3>Выберите систему хранения</h3>
+                  <p>Сначала выберите реальное направление оборудования. Если сомневаетесь, ниже есть быстрый помощник.</p>
                 </div>
               </div>
 
-              <div className="guided-picker">
+              <div className="system-showcase" aria-label="Системы хранения">
+                {calculatorProfiles.map((item) => {
+                  const card = profileCopy[item.id];
+                  const typeLabel = item.productType === "automated"
+                    ? "Автоматизированная"
+                    : item.productType === "rollout"
+                      ? "Выкатная"
+                      : item.productType === "hybrid"
+                        ? "Комбинированная"
+                        : "Ручная";
+                  return (
+                    <button
+                      className={item.id === input.systemId ? "system-card is-active" : "system-card"}
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectProfile(item.id)}
+                    >
+                      <span>{typeLabel}</span>
+                      <img src={card.image} alt={card.title} />
+                      <strong>{card.shortTitle}</strong>
+                      <small>{card.description}</small>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="guided-assist">
                 <div>
-                  <span className="guided-kicker">Не знаете, что выбрать?</span>
-                  <strong>Начните с материала — мы подставим подходящий тип системы</strong>
+                  <span className="guided-kicker">Помочь с подбором</span>
+                  <strong>Если не уверены, выберите сценарий хранения</strong>
                 </div>
                 <div className="guided-actions">
                   {guidedChoices.map((choice) => (
-                    <button key={choice.title} type="button" onClick={() => selectGuidedChoice(choice.profileId, choice.comment)}>
+                    <button
+                      className={choice.profileId === input.systemId ? "guided-choice is-active" : "guided-choice"}
+                      key={choice.title}
+                      type="button"
+                      onClick={() => selectGuidedChoice(choice.profileId, choice.comment)}
+                    >
                       <span>{choice.title}</span>
                       <small>{choice.text}</small>
                     </button>
                   ))}
                 </div>
               </div>
-
-              <div className="profile-grid">
-                {calculatorProfiles.map((item) => {
-                  const card = profileCopy[item.id];
-                  return (
-                    <button
-                      className={item.id === input.systemId ? "profile-card is-active" : "profile-card"}
-                      key={item.id}
-                      type="button"
-                      onClick={() => selectProfile(item.id)}
-                    >
-                      <div className="profile-visual">
-                        <img src={card.image} alt={card.title} />
-                      </div>
-                      <span><Layers3 size={16} /> направление подбора</span>
-                      <strong>{card.title}</strong>
-                      <small>{card.description}</small>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           )}
 
           {step === 1 && (
-            <div className="calc-panel">
+            <div className="calc-panel calc-panel-focus">
               <div className="calc-panel-title">
                 <Ruler size={24} />
                 <div>
-                  <h3>Параметры оборудования</h3>
-                  <p>Выберите готовые варианты размеров и нагрузок. Если точного значения нет, берите ближайший вариант с запасом.</p>
+                  <h3>Габариты и нагрузка</h3>
+                  <p>Выберите ближайшие рабочие значения. Точный запас прочности проверит инженер.</p>
                 </div>
               </div>
 
-              <div className="calc-parameter-section">
-                <div className="calc-section-label">
-                  <Ruler size={18} />
-                  <strong>Габариты рабочей зоны</strong>
-                  <span>Это полезное пространство, куда будет помещаться лист, труба, профиль или кассета.</span>
-                </div>
-                <div className="dimension-coach" aria-label="Как читать габариты">
-                  <div className="dimension-box">
-                    <span className="dimension-length">Длина {input.lengthMm.toLocaleString("ru-RU")} мм</span>
-                    <span className="dimension-width">Ширина {input.widthMm.toLocaleString("ru-RU")} мм</span>
-                    <span className="dimension-height">Высота {input.heightMm.toLocaleString("ru-RU")} мм</span>
-                  </div>
-                  <div>
-                    <strong>Как выбрать размеры?</strong>
-                    <p>Берите размер под самый крупный лист, трубу или пачку металла. Если сомневаетесь, выбирайте ближайшее значение с запасом.</p>
-                  </div>
-                </div>
+              <div className="parameter-hero">
+                <article>
+                  <small>Рабочая зона</small>
+                  <strong>{dimensionLabel}</strong>
+                </article>
+                <article>
+                  <small>Нагрузка</small>
+                  <strong>{input.loadKg.toLocaleString("ru-RU")} кг</strong>
+                </article>
+              </div>
+
+              <div className="parameter-flow">
                 <OptionGroup
-                  title="Какая высота нужна под материал?"
-                  hint={dimensionHints.heightMm}
+                  title="Длина материала"
+                  hint={dimensionHints.lengthMm}
                   unit="мм"
-                  values={profile.heightOptions.map((option) => option.value)}
-                  active={input.heightMm}
-                  onSelect={(value) => setNumberField("heightMm", value)}
+                  values={profile.lengthOptions.map((option) => option.value)}
+                  active={input.lengthMm}
+                  onSelect={(value) => setNumberField("lengthMm", value)}
                 />
                 <OptionGroup
-                  title="Какая ширина нужна под лист или пачку?"
+                  title="Ширина материала"
                   hint={dimensionHints.widthMm}
                   unit="мм"
                   values={profile.widthOptions.map((option) => option.value)}
@@ -375,40 +380,55 @@ export function Calculator() {
                   onSelect={(value) => setNumberField("widthMm", value)}
                 />
                 <OptionGroup
-                  title="Какая максимальная длина материала?"
-                  hint={dimensionHints.lengthMm}
+                  title="Полезная высота"
+                  hint={dimensionHints.heightMm}
                   unit="мм"
-                  values={profile.lengthOptions.map((option) => option.value)}
-                  active={input.lengthMm}
-                  onSelect={(value) => setNumberField("lengthMm", value)}
+                  values={profile.heightOptions.map((option) => option.value)}
+                  active={input.heightMm}
+                  onSelect={(value) => setNumberField("heightMm", value)}
                 />
-              </div>
-
-              <div className="calc-parameter-section">
-                <div className="calc-section-label">
-                  <Gauge size={18} />
-                  <strong>Нагрузка и вместимость</strong>
-                  <span>Здесь задается вес металла на уровень и количество мест хранения в системе.</span>
-                </div>
                 <OptionGroup
-                  title="Сколько весит материал на одном уровне?"
+                  title="Вес на уровень"
                   hint={dimensionHints.loadKg}
                   unit="кг"
                   values={profile.loadOptions.map((option) => option.value)}
                   active={input.loadKg}
                   onSelect={(value) => setNumberField("loadKg", value)}
                 />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="calc-panel calc-panel-focus">
+              <div className="calc-panel-title">
+                <Warehouse size={24} />
+                <div>
+                  <h3>Формат хранения и доступ</h3>
+                  <p>Настройте вместимость, секции и опции без лишних инженерных деталей.</p>
+                </div>
+              </div>
+
+              <div className="parameter-flow">
                 <OptionGroup
-                  title={profile.pricing.kind === "hybrid" ? "Сколько полок обслуживает погрузчик?" : "Сколько уровней хранения нужно?"}
+                  title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Уровни хранения"}
                   hint={dimensionHints.shelfCount}
                   unit="шт."
                   values={profile.shelfCountOptions}
                   active={input.shelfCount}
                   onSelect={(value) => setNumberField("shelfCount", value)}
                 />
+                <OptionGroup
+                  title="Секции системы"
+                  hint={dimensionHints.towerCount}
+                  unit="шт."
+                  values={profile.towerCountOptions}
+                  active={input.towerCount}
+                  onSelect={(value) => setNumberField("towerCount", value)}
+                />
                 {profile.rolloutShelfCountOptions && (
                   <OptionGroup
-                    title="Сколько выкатных кассет нужно?"
+                    title="Выкатные кассеты"
                     hint={dimensionHints.rolloutShelfCount}
                     unit="шт."
                     values={profile.rolloutShelfCountOptions}
@@ -416,21 +436,13 @@ export function Calculator() {
                     onSelect={(value) => setNumberField("rolloutShelfCount", value)}
                   />
                 )}
-                <OptionGroup
-                  title="Сколько башен или секций ставим?"
-                  hint={dimensionHints.towerCount}
-                  unit="шт."
-                  values={profile.towerCountOptions}
-                  active={input.towerCount}
-                  onSelect={(value) => setNumberField("towerCount", value)}
-                />
               </div>
 
               {profile.pricing.kind === "rollout" && profile.pricing.sides && (
-                <div className="calc-option-group">
+                <div className="access-selector">
                   <div>
-                    <span>Вариант выдвижения</span>
-                    <small><Info size={14} />Выберите, с какой стороны оператор получает доступ к кассетам.</small>
+                    <strong>Доступ к кассетам</strong>
+                    <span>Как оператор подходит к системе</span>
                   </div>
                   <div className="calc-chip-row">
                     {profile.pricing.sides.map((side) => (
@@ -440,177 +452,114 @@ export function Calculator() {
                         type="button"
                         onClick={() => setInput((current) => ({ ...current, rolloutSide: side.value }))}
                       >
-                        {side.value === "two" ? "С двух сторон" : "С одной стороны"}
+                        {side.value === "two" ? "Две стороны" : "Одна сторона"}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="calc-options-block calc-parameter-section">
-                <div className="calc-panel-title compact">
-                  <ShieldCheck size={22} />
-                  <div>
-                    <h3>Дополнительные опции</h3>
-                    <p>Отметьте оборудование, которое влияет на удобство загрузки, безопасность и учет материала.</p>
-                  </div>
-                </div>
-                <div className="option-list">
-                  {profile.options.map((option) => (
-                    <button
-                      className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleOption(option.id)}
-                    >
-                      <Check size={18} />
-                      <span>{optionCopy[option.id] ?? option.title}</span>
-                      <strong>+ {formatRub(option.price)}</strong>
-                    </button>
-                  ))}
-                </div>
+              <div className="option-list">
+                {profile.options.map((option) => (
+                  <button
+                    className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
+                    key={option.id}
+                    type="button"
+                    onClick={() => toggleOption(option.id)}
+                  >
+                    <Check size={18} />
+                    <span>{optionCopy[option.id] ?? option.title}</span>
+                    <strong>+ {formatRub(option.price)}</strong>
+                  </button>
+                ))}
               </div>
 
               <div className="calc-client-block">
-                <div className="calc-section-label">
-                  <MapPin size={18} />
-                  <strong>Объект и условия работы</strong>
-                  <span>Необязательно заполнять подробно. Достаточно города и пары важных особенностей склада.</span>
-                </div>
                 <label className="text-field">
-                  <span><MapPin size={16} />Город или регион поставки</span>
+                  <span><MapPin size={16} />Город или регион</span>
                   <input
                     value={input.city}
                     onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
-                    placeholder="Например: Москва, Казань, Минск"
+                    placeholder="Москва, Казань, Минск"
                   />
                 </label>
                 <label className="text-field">
-                  <span><MessageSquareText size={16} />Что важно учесть инженеру</span>
+                  <span><MessageSquareText size={16} />Важные условия</span>
                   <textarea
                     value={input.comment ?? ""}
                     onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
-                    placeholder="Например: загрузка кран-балкой, узкий проезд, нужен запас по нагрузке"
+                    placeholder="Кран-балка, узкий проезд, запас по нагрузке"
                   />
                 </label>
               </div>
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div className="calc-panel final-panel">
-              <div className="calc-panel-title">
-                <ClipboardCheck size={24} />
-                <div>
-                  <h3>Результат расчета</h3>
-                  <p>Это ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки.</p>
+              <div className="recommendation-screen">
+                <div className="result-card">
+                  <div>
+                    <span>Решение выбрано</span>
+                    <h3>{display.title}</h3>
+                    <p>{display.description}</p>
+                  </div>
+                  <div className="result-price-box">
+                    <small>Предварительно</small>
+                    <strong>от {roundedPrice}</strong>
+                  </div>
                 </div>
-              </div>
 
-              <div className="result-card">
-                <div>
-                  <span>Рекомендация</span>
-                  <h3>{display.title}</h3>
-                  <p>{display.description}</p>
+                <div className="result-facts">
+                  {resultFacts.map((fact) => (
+                    <article key={fact.label}>
+                      <small>{fact.label}</small>
+                      <strong>{fact.value}</strong>
+                    </article>
+                  ))}
                 </div>
-                <div className="result-price-box">
-                  <small>предварительная стоимость</small>
-                  <strong>от {roundedPrice}</strong>
-                  <em>финальная цена после инженерной проверки</em>
+
+                <div className="confidence-card">
+                  <ShieldCheck size={22} />
+                  <div>
+                    <strong>Инженерная проверка после заявки</strong>
+                    <span>Проверим нагрузку {storedWeightLabel} кг, ориентир на опору {supportLoadLabel} кг, способ загрузки и безопасность монтажа.</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="layout-preview-card">
-                <div className="layout-preview-stage" aria-label="Предварительная схема размещения">
-                  <div className="layout-zone is-storage">
-                    <span>Зона хранения</span>
-                    <div className="layout-rack-row">
-                      {Array.from({ length: Math.min(input.towerCount, 5) }).map((_, towerIndex) => (
-                        <i key={towerIndex}>
-                          <b>{Math.min(input.shelfCount, 9)}</b>
-                        </i>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="layout-zone is-loading">
-                    <span>Зона загрузки</span>
-                    <b>{input.loadKg.toLocaleString("ru-RU")} кг / уровень</b>
-                  </div>
-                  <div className="layout-aisle">
-                    <span>Рабочий проход</span>
-                  </div>
-                  <span className="layout-dimension is-length">{input.lengthMm.toLocaleString("ru-RU")} мм</span>
-                  <span className="layout-dimension is-width">{input.widthMm.toLocaleString("ru-RU")} мм</span>
+                <div className="calc-contact-grid">
+                  <label className="text-field">
+                    Ваше имя
+                    <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Иван Смирнов" />
+                  </label>
+                  <label className="text-field">
+                    Телефон
+                    <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
+                  </label>
+                  <label className="text-field">
+                    Почта
+                    <input value={contact.email} onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.ru" />
+                  </label>
+                  <label className="text-field">
+                    Адрес объекта
+                    <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
+                  </label>
                 </div>
-                <div className="layout-preview-copy">
-                  <span className="line-kicker">Предварительная схема размещения</span>
-                  <h4>Система разложена по зонам хранения, загрузки и прохода</h4>
-                  <p>Схема показывает логику размещения для первого инженерного разговора: габариты, нагрузка и число секций уже учтены в подборе.</p>
+
+                {/* Honeypot — невидимое поле для ботов. Не трогать. */}
+                <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
+                  <label>
+                    Не заполняйте это поле
+                    <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
+                  </label>
                 </div>
-              </div>
 
-              <div className="calc-result-sections">
-                <section>
-                  <h4>Выбранная конфигурация</h4>
-                  <div className="deliverable-grid">
-                    <span><small>Рабочая зона</small><strong>{dimensionLabel}</strong></span>
-                    <span><small>Нагрузка на уровень</small><strong>{input.loadKg.toLocaleString("ru-RU")} кг</strong></span>
-                    <span><small>Количество полок</small><strong>{input.shelfCount.toLocaleString("ru-RU")} шт.</strong></span>
-                    <span><small>Башни / секции</small><strong>{input.towerCount.toLocaleString("ru-RU")} шт.</strong></span>
-                  </div>
-                </section>
-                <section>
-                  <h4>Что проверит инженер</h4>
-                  <div className="deliverable-grid">
-                    <span><small>Материал под нагрузкой</small><strong>{storedWeightLabel} кг</strong></span>
-                    <span><small>Ориентир на одну опору</small><strong>{supportLoadLabel} кг</strong></span>
-                    <span><small>Проверка склада</small><strong>загрузка и проходы</strong></span>
-                    <span><small>Безопасность</small><strong>запас прочности и монтаж</strong></span>
-                  </div>
-                </section>
-                <section>
-                  <h4>Что вы получите после заявки</h4>
-                  <div className="deliverable-grid">
-                    <span><small>Схема под склад</small><strong>размещение и проходы</strong></span>
-                    <span><small>Проверка нагрузки</small><strong>полки, опоры, запас</strong></span>
-                    <span><small>Подбор исполнения</small><strong>опции, покраска, монтаж</strong></span>
-                    <span><small>Следующий шаг</small><strong>предложение от инженера</strong></span>
-                  </div>
-                </section>
+                <button className="primary-button result-submit" type="button" onClick={submitLead}>
+                  <Send size={18} />
+                  Получить инженерный расчет
+                </button>
+                {leadStatus && <p className="lead-status">{leadStatus}</p>}
               </div>
-
-              <div className="calc-contact-grid">
-                <label className="text-field">
-                  Ваше имя
-                  <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Иван Смирнов" />
-                </label>
-                <label className="text-field">
-                  Телефон
-                  <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
-                </label>
-                <label className="text-field">
-                  Почта
-                  <input value={contact.email} onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.ru" />
-                </label>
-                <label className="text-field">
-                  Адрес объекта
-                  <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
-                </label>
-              </div>
-
-              {/* Honeypot — невидимое поле для ботов. Не трогать. */}
-              <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
-                <label>
-                  Не заполняйте это поле
-                  <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
-                </label>
-              </div>
-
-              <button className="primary-button" type="button" onClick={submitLead}>
-                <Send size={18} />
-                Получить расчет и схему под склад
-              </button>
-              {leadStatus && <p className="lead-status">{leadStatus}</p>}
             </div>
           )}
 
@@ -627,22 +576,21 @@ export function Calculator() {
         </div>
 
         <aside className="calc-summary">
-          <span className="line-kicker">Живой расчет</span>
-          <h3>{display.title}</h3>
+          <span className="line-kicker">Ваше решение</span>
+          <h3>{display.shortTitle}</h3>
           <img src={display.image} alt={display.title} />
-          <div className="summary-spec-grid" aria-label="Ключевые параметры">
-            <span><Ruler size={16} />{dimensionLabel}</span>
-            <span><Gauge size={16} />{input.loadKg.toLocaleString("ru-RU")} кг на уровень</span>
-            <span><Warehouse size={16} />{input.shelfCount.toLocaleString("ru-RU")} полок</span>
-            <span><Layers3 size={16} />{input.towerCount.toLocaleString("ru-RU")} секций</span>
-          </div>
           <div className="summary-price">
             от {roundedPrice}
-            <small>ориентир для первичного подбора</small>
+            <small>ориентир до инженерной проверки</small>
           </div>
-          <button className="primary-button summary-cta" type="button" onClick={() => setStep(2)}>
+          <div className="summary-spec-grid" aria-label="Ключевые параметры">
+            {resultFacts.slice(1).map((fact) => (
+              <span key={fact.label}><Check size={16} />{fact.value}</span>
+            ))}
+          </div>
+          <button className="primary-button summary-cta" type="button" onClick={() => setStep(3)}>
             <Send size={18} />
-            Получить расчет
+            Перейти к заявке
           </button>
         </aside>
 
@@ -668,25 +616,22 @@ export function Calculator() {
                 <X size={20} />
               </button>
               <span className="line-kicker">Итог конфигурации</span>
-              <h3>{display.title}</h3>
-              <img src={display.image} alt={display.title} />
+              <h3>{display.shortTitle}</h3>
               <div className="summary-price">
                 от {roundedPrice}
                 <small>предварительная стоимость</small>
               </div>
               <div className="summary-spec-grid">
-                <span><Ruler size={16} />{dimensionLabel}</span>
-                <span><Gauge size={16} />{input.loadKg.toLocaleString("ru-RU")} кг на уровень</span>
-                <span><Warehouse size={16} />{input.shelfCount.toLocaleString("ru-RU")} полок</span>
-                <span><Layers3 size={16} />{input.towerCount.toLocaleString("ru-RU")} секций</span>
+                {resultFacts.slice(1).map((fact) => (
+                  <span key={fact.label}><Check size={16} />{fact.value}</span>
+                ))}
                 <span><Check size={16} />Опции: {selectedOptions.length || "не выбраны"}</span>
-                <span><Check size={16} />Суммарный вес: {storedWeightLabel} кг</span>
               </div>
               <button
                 className="primary-button"
                 type="button"
                 onClick={() => {
-                  setStep(2);
+                  setStep(3);
                   setMobileSummaryOpen(false);
                 }}
               >
