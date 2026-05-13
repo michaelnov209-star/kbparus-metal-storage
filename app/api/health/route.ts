@@ -12,7 +12,7 @@ import { getCmsClient } from "@/lib/cms/client";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const REQUIRED_GLOBALS = ["contacts", "home-content"] as const satisfies readonly GlobalSlug[];
+const REQUIRED_GLOBALS = ["contacts", "home-content", "site-navigation"] as const satisfies readonly GlobalSlug[];
 
 interface HealthStatus {
   status: "ok" | "degraded" | "down";

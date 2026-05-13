@@ -15,6 +15,7 @@ import { CalculatorProfiles } from "./payload/collections/CalculatorProfiles";
 import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
 import { LeadManagement } from "./payload/globals/LeadManagement";
+import { SiteNavigation } from "./payload/globals/SiteNavigation";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -44,7 +45,7 @@ export default buildConfig({
     supportedLanguages: { ru }
   },
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles],
-  globals: [HomeContent, Contacts, LeadManagement],
+  globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "change-me-locally",
   typescript: {

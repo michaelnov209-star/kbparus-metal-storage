@@ -9,6 +9,7 @@ import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHomePageContent } from "@/lib/cms/home-content";
+import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import { JsonLd, faqSchema } from "@/lib/seo/schema";
 
 /**
@@ -66,21 +67,16 @@ function ContentIcon({ name, size = 30 }: { name?: string; size?: number }) {
   return <Icon size={size} />;
 }
 
+function linkTargetProps(link: SiteLink) {
+  return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
+}
+
 const metrics = [
   { value: "1,5 млн м²", label: "выполненных работ" },
   { value: "3000+", label: "довольных покупателей" },
   { value: "700+", label: "обслужили городов" },
   { value: "15+ лет", label: "производим оборудование" }
 ];
-
-const nav = [
-  ["Калькулятор", "#calculator"],
-  ["Кейсы", "#cases"],
-  ["География", "#geography"],
-  ["О компании", "#about"],
-  ["FAQ", "#faq"],
-  ["Контакты", "#contacts"]
-] as const;
 
 const storedMaterials = [
   { title: "Листовой металл", text: "Пачки листа, форматные заготовки, деловые обрезки.", label: "Лист / кассеты", icon: Layers3 },
@@ -226,6 +222,7 @@ export default async function Home() {
   const home = await getHomePageContent();
   const hero = home.hero;
   const contacts = await getSiteContacts();
+  const navigation = await getSiteNavigation();
   const catalogCategories = await getCatalogCategories();
 
   return (
@@ -237,29 +234,37 @@ export default async function Home() {
         <BrandMark />
         <nav aria-label="Навигация по сайту">
           <div className="catalog-menu">
-            <a href="#catalog" className="catalog-trigger"><Menu size={16} />Каталог</a>
-            <div className="catalog-dropdown" aria-label="Разделы каталога">
-              {catalogCategories.map((item) => (
-                <a href={`/catalog/${item.id}`} key={item.id}>
-                  <strong>{item.title}</strong>
-                  <ChevronRight size={16} />
+            <a href={navigation.header.catalog.href} className="catalog-trigger"><Menu size={16} />{navigation.header.catalog.label}</a>
+            {navigation.header.catalog.showDropdown && (
+              <div className="catalog-dropdown" aria-label="Разделы каталога">
+                {catalogCategories.map((item) => (
+                  <a href={`/catalog/${item.id}`} key={item.id}>
+                    <strong>{item.title}</strong>
+                    <ChevronRight size={16} />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          {navigation.header.links.map((link) => <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>)}
+        </nav>
+        <div className="line-header-contact">
+          {navigation.header.contacts.showTelegram && (
+            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
+          )}
+          {navigation.header.contacts.showMax && (
+            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
+          )}
+          {navigation.header.contacts.showPhones && (
+            <div className="phone-stack">
+              {contacts.phones.map((phone) => (
+                <a className="phone-pill" href={phone.href} key={phone.href}>
+                  <PhoneCall size={17} />
+                  {phone.label}
                 </a>
               ))}
             </div>
-          </div>
-          {nav.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
-        </nav>
-        <div className="line-header-contact">
-          <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
-          <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
-          <div className="phone-stack">
-            {contacts.phones.map((phone) => (
-              <a className="phone-pill" href={phone.href} key={phone.href}>
-                <PhoneCall size={17} />
-                {phone.label}
-              </a>
-            ))}
-          </div>
+          )}
         </div>
       </header>
 
@@ -602,17 +607,17 @@ export default async function Home() {
       <footer className="line-footer">
         <div>
           <BrandMark compact />
-          <p>Системы хранения металла</p>
+          <p>{navigation.footer.description}</p>
         </div>
         <nav>
-          <a href="#top">Главная</a>
-          <a href="#catalog">Каталог</a>
-          {nav.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
+          {navigation.footer.links.map((link) => <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>)}
+          {navigation.footer.legalLinks.map((link) => <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>)}
         </nav>
         <div className="footer-contacts">
           {contacts.phones.map((phone) => <a href={phone.href} key={phone.href}><PhoneCall size={16} />{phone.label}</a>)}
           <a href={contacts.email.href}><Mail size={16} />{contacts.email.label}</a>
           <span><MapPin size={16} />{contacts.address}</span>
+          {navigation.footer.cta && <a href={navigation.footer.cta.href} {...linkTargetProps(navigation.footer.cta)}><ArrowRight size={16} />{navigation.footer.cta.label}</a>}
         </div>
       </footer>
     </main>

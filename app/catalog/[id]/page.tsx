@@ -6,6 +6,7 @@ import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
+import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import { getCatalogProductsByCategory } from "@/lib/cms/products";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
@@ -13,6 +14,10 @@ export const revalidate = 60;
 
 function toAbsoluteUrl(value: string) {
   return value.startsWith("http") ? value : `${SITE_URL}${value}`;
+}
+
+function linkTargetProps(link: SiteLink) {
+  return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
 }
 
 export async function generateStaticParams() {
@@ -59,6 +64,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   const products = await getCatalogProductsByCategory(item.id);
   const isPilotCategory = products.length > 0;
   const related = await getRelatedCatalogCategories(item.id, 4);
+  const navigation = await getSiteNavigation();
 
   const categoryUrl = `${SITE_URL}/catalog/${item.id}`;
   const breadcrumb = breadcrumbSchema([
@@ -86,9 +92,9 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
         <BrandMark />
         <nav aria-label="Навигация по разделу">
           <a href="/"><ArrowLeft size={16} /> На главную</a>
-          <a href="/#catalog">Каталог</a>
-          <a href="/#calculator">Калькулятор</a>
-          <a href="/#contacts">Контакты</a>
+          {navigation.header.detailLinks.map((link) => (
+            <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>
+          ))}
         </nav>
       </header>
 

@@ -9,12 +9,17 @@ import { getSeoForItem } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategory } from "@/lib/cms/catalog";
 import { getCatalogProducts, getCatalogProductView } from "@/lib/cms/products";
+import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import { JsonLd, breadcrumbSchema, productSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const revalidate = 60;
 
 function toAbsoluteUrl(value: string) {
   return value.startsWith("http") ? value : `${SITE_URL}${value}`;
+}
+
+function linkTargetProps(link: SiteLink) {
+  return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
 }
 
 export async function generateStaticParams() {
@@ -58,6 +63,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   const category = await getCatalogCategory(id);
   const product = await getCatalogProductView(id, productId);
   if (!category || !product) notFound();
+  const navigation = await getSiteNavigation();
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
   const breadcrumb = breadcrumbSchema([
@@ -84,9 +90,9 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         <BrandMark />
         <nav aria-label="Навигация по товару">
           <a href={`/catalog/${category.id}`}><ArrowLeft size={16} /> Назад в раздел</a>
-          <a href="/#catalog">Каталог</a>
-          <a href="/#calculator">Калькулятор</a>
-          <a href="/#contacts">Контакты</a>
+          {navigation.header.detailLinks.map((link) => (
+            <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>
+          ))}
         </nav>
       </header>
 
