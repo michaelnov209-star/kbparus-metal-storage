@@ -501,35 +501,49 @@ function requestViaVercelCurlMultipart(path: string, asset: MediaAsset, data: An
 
 function runVercelCurl(path: string, configPath: string): JsonResponse {
   const npxBin = process.platform === "win32" ? "npx.cmd" : "npx";
-  const child = spawnSync(
-    npxBin,
-    ["vercel@latest", "curl", path, "--deployment", baseUrl, "--", "--config", configPath],
-    { encoding: "utf8", shell: process.platform === "win32" }
-  );
+  let lastOutput = "";
 
-  const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;
-  if (child.error) {
-    fail(`vercel curl failed for ${path}: ${child.error.message}`);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const child = spawnSync(
+      npxBin,
+      ["vercel@latest", "curl", path, "--deployment", baseUrl, "--", "--config", configPath],
+      { encoding: "utf8", shell: process.platform === "win32" }
+    );
+
+    const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;
+    lastOutput = output;
+
+    if (child.error) {
+      if (attempt === 3) fail(`vercel curl failed for ${path}: ${child.error.message}`);
+      sleepSync(1000 * attempt);
+      continue;
+    }
+
+    const marker = "__CMS_MEDIA_SEED_HTTP_STATUS__:";
+    const markerIndex = output.lastIndexOf(marker);
+    const text = markerIndex === -1 ? output : output.slice(0, markerIndex);
+    const jsonText = extractJsonText(text);
+    const body = parseJson(jsonText || text);
+    const inferredOk = Boolean(body.token || Array.isArray(body.docs) || body.id || body.doc || body.globalType);
+    const status =
+      markerIndex === -1
+        ? inferredOk
+          ? 200
+          : 500
+        : Number(output.slice(markerIndex + marker.length).match(/\d+/)?.[0] ?? 0);
+
+    if (child.status === 0 || inferredOk) {
+      return { status, text: jsonText || text, body };
+    }
+
+    sleepSync(1000 * attempt);
   }
 
-  const marker = "__CMS_MEDIA_SEED_HTTP_STATUS__:";
-  const markerIndex = output.lastIndexOf(marker);
-  const text = markerIndex === -1 ? output : output.slice(0, markerIndex);
-  const jsonText = extractJsonText(text);
-  const body = parseJson(jsonText || text);
-  const inferredOk = Boolean(body.token || Array.isArray(body.docs) || body.id || body.doc || body.globalType);
-  const status =
-    markerIndex === -1
-      ? inferredOk
-        ? 200
-        : 500
-      : Number(output.slice(markerIndex + marker.length).match(/\d+/)?.[0] ?? 0);
+  fail(`vercel curl failed for ${path}: ${safeSnippet(lastOutput)}`);
+}
 
-  if (child.status !== 0 && !inferredOk) {
-    fail(`vercel curl failed for ${path}: ${safeSnippet(output)}`);
-  }
-
-  return { status, text: jsonText || text, body };
+function sleepSync(ms: number) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 function parseJson(text: string) {
