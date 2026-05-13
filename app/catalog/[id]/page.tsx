@@ -9,6 +9,12 @@ import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories }
 import { getCatalogProductsByCategory } from "@/lib/cms/products";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
+export const revalidate = 60;
+
+function toAbsoluteUrl(value: string) {
+  return value.startsWith("http") ? value : `${SITE_URL}${value}`;
+}
+
 export async function generateStaticParams() {
   const categories = await getCatalogCategories();
   return categories.map((item) => ({ id: item.id }));
@@ -21,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const url = `${SITE_URL}/catalog/${item.id}`;
   const ogImage = item.ogImage ?? item.image;
-  const absoluteOgImage = ogImage.startsWith("http") ? ogImage : `${SITE_URL}${ogImage}`;
+  const absoluteOgImage = toAbsoluteUrl(ogImage);
 
   return {
     title: item.seoTitle ?? item.title,
@@ -66,7 +72,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
           products.map((product) => ({
             name: product.title,
             url: `${SITE_URL}/catalog/${item.id}/${product.id}`,
-            image: `${SITE_URL}${product.image}`
+            image: toAbsoluteUrl(product.image)
           }))
         )
       : null;
