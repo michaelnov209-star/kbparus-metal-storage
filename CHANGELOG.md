@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-05-14 — Production Payload Media migration
+
+- Deployed `cfb617c` to production: `https://kbparus-metal-storage.vercel.app`.
+- Imported/reused 47 Payload Media assets through safe `cms:seed-media`; production apply was idempotent: created=0, linked=0.
+- Frontend now serves CMS media for homepage banners, category images, product cover images and product galleries.
+- Category/product pages use ISR `revalidate=60`, so CMS media changes can appear without a full rebuild.
+- SEO/Open Graph/Product schema media URLs are absolute and point to `/api/media/file/...`.
+- Production validation passed; `/api/health` ok, `cms.ok=true`, `/api/users` protected, homepage and catalog return 200.
+- Warning remains: Bitrix24 env is not configured yet.
+
 ## 2026-05-13 — Production homepage CMS seed
 
 - Deployed `bf83976` to production: `https://kbparus-metal-storage.vercel.app`.
