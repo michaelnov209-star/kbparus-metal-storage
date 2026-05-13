@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-05-14 — Production navigation/footer CMS migration
+
+- Deployed `511d699` to production: `https://kbparus-metal-storage.vercel.app`.
+- Added Payload global `site-navigation` for header links, detail-page navigation, footer navigation, legal links and footer CTA.
+- Frontend now reads navigation/footer from CMS with fallback to the previous hardcoded structure.
+- Safe seed `cms:seed-site-navigation` filled only empty navigation arrays; production dry-run after deploy returned updated=0, skipped=all.
+- Production validation passed; `/api/health` ok, `cms.ok=true`, required global `site-navigation` readable, homepage/catalog/product pages render.
+- Warning remains: Bitrix24 env is not configured yet.
+
 ## 2026-05-14 — Production Payload Media migration
 
 - Deployed `cfb617c` to production: `https://kbparus-metal-storage.vercel.app`.
