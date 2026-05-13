@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-05-13 — Production catalog CMS population
+
+- Deployed `c28b655` to production: `https://kbparus-metal-storage.vercel.app`.
+- Seeded catalog content through Payload admin API: 17 categories, 5 subcategories and 17 products exist in CMS.
+- Production seed was idempotent after Preview seed: created=0, updated=0, skipped=17/5/17.
+- Production validation and admin smoke passed; category/product pages and sitemap work through CMS-aware adapters.
+- Warning remains: Bitrix24 env is not configured yet.
+
 ## 2026-05-12 — CMS-managed catalog products preparation
 
 - Added CMS-first product adapter `lib/cms/products.ts` with fallback to `catalogDepth.ts`.

@@ -4,7 +4,7 @@ Next.js/React MVP для направления систем хранения м
 
 Production URL: https://kbparus-metal-storage.vercel.app
 
-Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
+Production status: Payload CMS/admin deployed and validated; catalog categories/products seeded into CMS on 2026-05-13; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
 
 ## Payload CMS / текущий статус админки
 
@@ -22,6 +22,7 @@ Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api
 - Authenticated admin smoke: `npm run cms:admin-smoke -- <deployment-url>` with admin credentials supplied via env. Details: `ADMIN_SMOKE.md`.
 - Admin UX architecture: `CMS_ADMIN_UX.md`. Админка сгруппирована как операционный центр управления сайтом: главная, каталог, калькулятор, компания, медиа, заявки, пользователи.
 - CMS content architecture: `CMS_CONTENT_ARCHITECTURE.md`. План постепенного перехода от hardcoded frontend к CMS-driven управлению контентом.
+- Catalog content: Payload now contains 17 categories, 5 subcategories and 17 products seeded via non-destructive `cms:seed-catalog`. Frontend reads categories/products from CMS with fallback to `data/storageSystems`.
 
 ## Текущее состояние после последней итерации
 
@@ -81,8 +82,9 @@ Production status: Payload CMS/admin deployed and validated on 2026-05-12; `/api
 - Баннер на основной сайт: `public/assets/images/kbparus-cnc-banner.png`
 - Баннер на сайт линий порошковой окраски: `public/assets/images/kbparus-coating-lines-banner.png`
 - Иконки Telegram/MAX: `public/assets/icons/telegram.svg`, `public/assets/icons/max.svg`
-- Каталог главной: `data/storageSystems/excelCatalog.ts`
-- Пилот подкатегорий и товаров: `data/storageSystems/catalogDepth.ts`
+- CMS catalog adapters: `lib/cms/catalog.ts`, `lib/cms/products.ts`
+- Non-destructive catalog seed: `npm run cms:seed-catalog -- <deployment-url> --apply`
+- Static catalog fallback: `data/storageSystems/excelCatalog.ts`, `data/storageSystems/catalogDepth.ts`
 - Галерея товара: `components/ProductGallery.tsx`, изображения лежат в `public/assets/images/products/auto-sheet-metal/`
 - Каталог главной и lightbox изображений категорий: `components/CatalogGrid.tsx`
 - Режим товара и привязка калькулятора: поле `pageMode` и опциональный `calculatorProfileId` в `data/storageSystems/catalogDepth.ts`
