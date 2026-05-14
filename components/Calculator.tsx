@@ -177,12 +177,27 @@ export function Calculator() {
   const conditionsComment = selectedConditions.length ? `Условия объекта: ${selectedConditions.join(", ")}` : "";
   const dimensionLabel = `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")}×${input.heightMm.toLocaleString("ru-RU")} мм`;
   const roundedPrice = formatRoundedRub(animatedPrice);
+  const priceNumber = roundedPrice.replace(/\s?₽/u, "");
   const storedWeightLabel = result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel = result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
+  const conditionResponses: Record<string, string> = {
+    "Узкий проезд": "Потребуется проверить зону обслуживания и траекторию подачи материала.",
+    "Кран-балка": "Можно учесть верхнюю подачу и безопасные зоны работы крана.",
+    "Ограничение по высоте": "Высоту системы нужно сверить с полезным просветом помещения.",
+    "Работа погрузчиком": "Конфигурация должна учитывать радиус маневра и фронт загрузки.",
+    "Ограничение по нагрузке пола": "Инженер проверит нагрузку на основание и распределение опор.",
+    "Уличное размещение": "Понадобится проверить исполнение, защиту и условия эксплуатации."
+  };
+  const activeConditionResponses = selectedConditions.map((condition) => conditionResponses[condition]).filter(Boolean);
   const engineeringSignals = [
     input.loadKg >= 3000 ? "Высокая нагрузка учтена в предварительном подборе" : "Нагрузка находится в рабочем диапазоне системы",
     profile.productType === "automated" ? "Конфигурация подходит для интенсивной выдачи материала" : "Схема сохраняет понятный доступ к каждому уровню",
     selectedConditions.includes("Работа погрузчиком") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
+  ];
+  const summaryFacts = [
+    `Система хранения на ${input.shelfCount.toLocaleString("ru-RU")} уровней`,
+    `Нагрузка до ${input.loadKg.toLocaleString("ru-RU")} кг на уровень хранения`,
+    `${input.towerCount.toLocaleString("ru-RU")} секций, зона ${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")} мм`
   ];
   const resultFacts = [
     { label: "Система", value: display.shortTitle },
@@ -220,7 +235,6 @@ export function Calculator() {
       ...buildInputForProfile(profileId),
       comment
     });
-    setStep(1);
     setLeadStatus("");
   }
 
@@ -334,8 +348,10 @@ export function Calculator() {
               </div>
 
               <div className="system-showcase" aria-label="Системы хранения">
-                {calculatorProfiles.map((item) => {
+                {calculatorProfiles.map((item, index) => {
                   const card = profileCopy[item.id];
+                  const isActive = item.id === input.systemId;
+                  const isRecommended = index < 2;
                   const typeLabel = item.productType === "automated"
                     ? "Автоматизированная"
                     : item.productType === "rollout"
@@ -345,12 +361,16 @@ export function Calculator() {
                         : "Ручная";
                   return (
                     <button
-                      className={item.id === input.systemId ? "system-card is-active" : "system-card"}
+                      className={isActive ? "system-card is-active" : "system-card"}
                       key={item.id}
                       type="button"
                       onClick={() => selectProfile(item.id)}
                     >
-                      <span>{typeLabel}</span>
+                      <div className="system-card-tags">
+                        <span>{typeLabel}</span>
+                        {isRecommended && <em>Рекомендуем</em>}
+                        {isActive && <b>Выбрано</b>}
+                      </div>
                       <img src={card.image} alt={card.title} />
                       <strong>{card.shortTitle}</strong>
                       <small>{card.description}</small>
@@ -363,6 +383,7 @@ export function Calculator() {
                 <div>
                   <span className="guided-kicker">Помочь с подбором</span>
                   <strong>Если не уверены, выберите сценарий хранения</strong>
+                  <small>Сценарий только подставит подходящее направление. Переход дальше остается под вашим контролем.</small>
                 </div>
                 <div className="guided-actions">
                   {guidedChoices.map((choice) => (
@@ -394,11 +415,13 @@ export function Calculator() {
               <div className="parameter-hero">
                 <article>
                   <small>Рабочая зона</small>
-                  <strong className="parameter-live-value" key={dimensionLabel}>{dimensionLabel}</strong>
+                  <strong className="parameter-live-value">
+                    <AnimatedNumber value={input.lengthMm} />×<AnimatedNumber value={input.widthMm} />×<AnimatedNumber value={input.heightMm} /> мм
+                  </strong>
                 </article>
                 <article>
                   <small>Нагрузка</small>
-                  <strong className="parameter-live-value" key={input.loadKg}>{input.loadKg.toLocaleString("ru-RU")} кг</strong>
+                  <strong className="parameter-live-value"><AnimatedNumber value={input.loadKg} /> кг</strong>
                 </article>
               </div>
 
@@ -449,108 +472,126 @@ export function Calculator() {
                 </div>
               </div>
 
-              <div className="parameter-flow">
-                <OptionGroup
-                  title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Уровни хранения"}
-                  hint={dimensionHints.shelfCount}
-                  unit="шт."
-                  values={profile.shelfCountOptions}
-                  active={input.shelfCount}
-                  onSelect={(value) => setNumberField("shelfCount", value)}
-                />
-                <OptionGroup
-                  title="Секции системы"
-                  hint={dimensionHints.towerCount}
-                  unit="шт."
-                  values={profile.towerCountOptions}
-                  active={input.towerCount}
-                  onSelect={(value) => setNumberField("towerCount", value)}
-                />
-                {profile.rolloutShelfCountOptions && (
-                  <OptionGroup
-                    title="Выкатные кассеты"
-                    hint={dimensionHints.rolloutShelfCount}
-                    unit="шт."
-                    values={profile.rolloutShelfCountOptions}
-                    active={input.rolloutShelfCount}
-                    onSelect={(value) => setNumberField("rolloutShelfCount", value)}
-                  />
-                )}
-              </div>
-
-              {profile.pricing.kind === "rollout" && profile.pricing.sides && (
-                <div className="access-selector">
-                  <div>
-                    <strong>Доступ к кассетам</strong>
-                    <span>Как оператор подходит к системе</span>
+              <div className="access-layout">
+                <div className="access-column access-column-primary">
+                  <div className="access-section-heading">
+                    <span>01</span>
+                    <strong>Вместимость системы</strong>
                   </div>
-                  <div className="calc-chip-row">
-                    {profile.pricing.sides.map((side) => (
+                  <div className="parameter-flow">
+                    <OptionGroup
+                      title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Уровни хранения"}
+                      hint={dimensionHints.shelfCount}
+                      unit="шт."
+                      values={profile.shelfCountOptions}
+                      active={input.shelfCount}
+                      onSelect={(value) => setNumberField("shelfCount", value)}
+                    />
+                    <OptionGroup
+                      title="Секции системы"
+                      hint={dimensionHints.towerCount}
+                      unit="шт."
+                      values={profile.towerCountOptions}
+                      active={input.towerCount}
+                      onSelect={(value) => setNumberField("towerCount", value)}
+                    />
+                    {profile.rolloutShelfCountOptions && (
+                      <OptionGroup
+                        title="Выкатные кассеты"
+                        hint={dimensionHints.rolloutShelfCount}
+                        unit="шт."
+                        values={profile.rolloutShelfCountOptions}
+                        active={input.rolloutShelfCount}
+                        onSelect={(value) => setNumberField("rolloutShelfCount", value)}
+                      />
+                    )}
+                  </div>
+
+                  {profile.pricing.kind === "rollout" && profile.pricing.sides && (
+                    <div className="access-selector">
+                      <div>
+                        <strong>Доступ к кассетам</strong>
+                        <span>Как оператор подходит к системе</span>
+                      </div>
+                      <div className="calc-chip-row">
+                        {profile.pricing.sides.map((side) => (
+                          <button
+                            className={input.rolloutSide === side.value ? "calc-chip is-active" : "calc-chip"}
+                            key={side.value}
+                            type="button"
+                            onClick={() => setInput((current) => ({ ...current, rolloutSide: side.value }))}
+                          >
+                            {side.value === "two" ? "Две стороны" : "Одна сторона"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="access-section-heading">
+                    <span>02</span>
+                    <strong>Опции эксплуатации</strong>
+                  </div>
+                  <div className="option-list">
+                    {profile.options.map((option) => (
                       <button
-                        className={input.rolloutSide === side.value ? "calc-chip is-active" : "calc-chip"}
-                        key={side.value}
+                        className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
+                        key={option.id}
                         type="button"
-                        onClick={() => setInput((current) => ({ ...current, rolloutSide: side.value }))}
+                        onClick={() => toggleOption(option.id)}
                       >
-                        {side.value === "two" ? "Две стороны" : "Одна сторона"}
+                        <Check size={18} />
+                        <span>{optionCopy[option.id] ?? option.title}</span>
+                        <strong>+ {formatRub(option.price)}</strong>
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              <div className="option-list">
-                {profile.options.map((option) => (
-                  <button
-                    className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
-                    key={option.id}
-                    type="button"
-                    onClick={() => toggleOption(option.id)}
-                  >
-                    <Check size={18} />
-                    <span>{optionCopy[option.id] ?? option.title}</span>
-                    <strong>+ {formatRub(option.price)}</strong>
-                  </button>
-                ))}
-              </div>
+                <div className="access-column access-column-conditions">
+                  <div className="site-condition-panel">
+                    <div className="site-condition-copy">
+                      <strong>Условия объекта</strong>
+                      <span>Отметьте факторы, которые инженер должен учесть при проверке решения.</span>
+                    </div>
+                    <div className="site-condition-grid">
+                      {siteConditions.map((condition) => (
+                        <button
+                          className={selectedConditions.includes(condition) ? "condition-chip is-active" : "condition-chip"}
+                          key={condition}
+                          type="button"
+                          onClick={() => toggleCondition(condition)}
+                        >
+                          <Check size={16} />
+                          {condition}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="condition-response">
+                      <strong>{activeConditionResponses.length ? "Инженерный фокус" : "Без специальных ограничений"}</strong>
+                      <span>{activeConditionResponses[0] ?? "Можно перейти к финальному расчету. Дополнительные ограничения можно добавить позже в комментарии."}</span>
+                    </div>
+                  </div>
 
-              <div className="site-condition-panel">
-                <div className="site-condition-copy">
-                  <strong>Условия объекта</strong>
-                  <span>Отметьте факторы, которые инженер должен учесть при проверке решения.</span>
+                  <div className="calc-client-block">
+                    <label className="text-field">
+                      <span><MapPin size={16} />Город или регион</span>
+                      <input
+                        value={input.city}
+                        onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
+                        placeholder="Москва, Казань, Минск"
+                      />
+                    </label>
+                    <label className="text-field">
+                      <span><MessageSquareText size={16} />Комментарий для инженера</span>
+                      <textarea
+                        value={input.comment ?? ""}
+                        onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
+                        placeholder="Дополнительные детали: режим загрузки, требования к монтажу, сроки"
+                      />
+                    </label>
+                  </div>
                 </div>
-                <div className="site-condition-grid">
-                  {siteConditions.map((condition) => (
-                    <button
-                      className={selectedConditions.includes(condition) ? "condition-chip is-active" : "condition-chip"}
-                      key={condition}
-                      type="button"
-                      onClick={() => toggleCondition(condition)}
-                    >
-                      <Check size={16} />
-                      {condition}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="calc-client-block">
-                <label className="text-field">
-                  <span><MapPin size={16} />Город или регион</span>
-                  <input
-                    value={input.city}
-                    onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
-                    placeholder="Москва, Казань, Минск"
-                  />
-                </label>
-                <label className="text-field">
-                  <span><MessageSquareText size={16} />Комментарий для инженера</span>
-                  <textarea
-                    value={input.comment ?? ""}
-                    onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
-                    placeholder="Дополнительные детали: режим загрузки, требования к монтажу, сроки"
-                  />
-                </label>
               </div>
             </div>
           )}
@@ -558,40 +599,42 @@ export function Calculator() {
           {step === 3 && (
             <div className="calc-panel final-panel">
               <div className="recommendation-screen">
-                <div className="result-card">
-                  <div>
-                    <span>Решение выбрано</span>
+                <div className="result-card solution-hero">
+                  <div className="solution-copy">
+                    <span>Готовое промышленное решение</span>
                     <h3>{display.title}</h3>
                     <p>{display.description}</p>
                   </div>
-                  <div className="result-price-box price-live" key={`result-${roundedPrice}`}>
+                  <div className="result-price-box price-live">
                     <small>Предварительно</small>
-                    <strong>от {roundedPrice}</strong>
+                    <strong className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></strong>
                   </div>
                 </div>
 
-                <div className="project-scale-card">
-                  <div>
-                    <span>Масштаб проекта</span>
-                    <strong>{projectScale.label}</strong>
-                    <small>{projectScale.text}</small>
+                <div className="solution-evidence">
+                  <div className="project-scale-card">
+                    <div>
+                      <span>Масштаб проекта</span>
+                      <strong>{projectScale.label}</strong>
+                      <small>{projectScale.text}</small>
+                    </div>
+                    <i><b style={{ width: `${projectScale.progress}%` }} /></i>
                   </div>
-                  <i><b style={{ width: `${projectScale.progress}%` }} /></i>
-                </div>
 
-                <div className="result-facts">
-                  {resultFacts.map((fact) => (
-                    <article key={fact.label}>
-                      <small>{fact.label}</small>
-                      <strong>{fact.value}</strong>
-                    </article>
-                  ))}
-                </div>
+                  <div className="result-facts">
+                    {resultFacts.map((fact) => (
+                      <article key={fact.label}>
+                        <small>{fact.label}</small>
+                        <strong>{fact.value}</strong>
+                      </article>
+                    ))}
+                  </div>
 
-                <div className="engineering-signal-grid">
-                  {engineeringSignals.map((signal) => (
-                    <span key={signal}><Gauge size={16} />{signal}</span>
-                  ))}
+                  <div className="engineering-signal-grid">
+                    {engineeringSignals.map((signal) => (
+                      <span key={signal}><Gauge size={16} />{signal}</span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="confidence-card">
@@ -602,23 +645,30 @@ export function Calculator() {
                   </div>
                 </div>
 
-                <div className="calc-contact-grid">
-                  <label className="text-field">
-                    Ваше имя
-                    <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Иван Смирнов" />
-                  </label>
-                  <label className="text-field">
-                    Телефон
-                    <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
-                  </label>
-                  <label className="text-field">
-                    Почта
-                    <input value={contact.email} onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.ru" />
-                  </label>
-                  <label className="text-field">
-                    Адрес объекта
-                    <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
-                  </label>
+                <div className="result-request-panel">
+                  <div>
+                    <span>Следующий шаг</span>
+                    <strong>Передать конфигурацию инженеру</strong>
+                    <small>Контакты нужны только для уточнения объекта и финального расчета.</small>
+                  </div>
+                  <div className="calc-contact-grid">
+                    <label className="text-field">
+                      Ваше имя
+                      <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Иван Смирнов" />
+                    </label>
+                    <label className="text-field">
+                      Телефон
+                      <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
+                    </label>
+                    <label className="text-field">
+                      Почта
+                      <input value={contact.email} onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.ru" />
+                    </label>
+                    <label className="text-field">
+                      Адрес объекта
+                      <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
+                    </label>
+                  </div>
                 </div>
 
                 {/* Honeypot — невидимое поле для ботов. Не трогать. */}
@@ -654,8 +704,8 @@ export function Calculator() {
           <span className="line-kicker">Ваше решение</span>
           <h3>{display.shortTitle}</h3>
           <img src={display.image} alt={display.title} />
-          <div className="summary-price price-live" key={`summary-${roundedPrice}`}>
-            от {roundedPrice}
+          <div className="summary-price price-live">
+            <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
             <small>ориентир до инженерной проверки</small>
           </div>
           <div className="summary-scale">
@@ -663,8 +713,8 @@ export function Calculator() {
             <i><b style={{ width: `${projectScale.progress}%` }} /></i>
           </div>
           <div className="summary-spec-grid" aria-label="Ключевые параметры">
-            {resultFacts.slice(1).map((fact) => (
-              <span key={`${fact.label}-${fact.value}`}><Check size={16} />{fact.value}</span>
+            {summaryFacts.map((fact) => (
+              <span key={fact}><Check size={16} />{fact}</span>
             ))}
           </div>
           <button className="primary-button summary-cta" type="button" onClick={() => setStep(3)}>
@@ -675,7 +725,7 @@ export function Calculator() {
 
         <div className="mobile-summary-bar" aria-label="Краткий итог расчета">
           <button className="mobile-summary-main" type="button" onClick={() => setMobileSummaryOpen(true)}>
-            <span>от {roundedPrice}</span>
+            <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
             <small>{display.shortTitle} · {input.loadKg.toLocaleString("ru-RU")} кг</small>
           </button>
           <button
@@ -696,8 +746,8 @@ export function Calculator() {
               </button>
               <span className="line-kicker">Итог конфигурации</span>
               <h3>{display.shortTitle}</h3>
-              <div className="summary-price price-live" key={`mobile-${roundedPrice}`}>
-                от {roundedPrice}
+              <div className="summary-price price-live">
+                <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
                 <small>предварительная стоимость</small>
               </div>
               <div className="summary-scale">
@@ -705,8 +755,8 @@ export function Calculator() {
                 <i><b style={{ width: `${projectScale.progress}%` }} /></i>
               </div>
               <div className="summary-spec-grid">
-                {resultFacts.slice(1).map((fact) => (
-                  <span key={`${fact.label}-${fact.value}`}><Check size={16} />{fact.value}</span>
+                {summaryFacts.map((fact) => (
+                  <span key={fact}><Check size={16} />{fact}</span>
                 ))}
                 <span><Check size={16} />Опции: {selectedOptions.length || "не выбраны"}</span>
               </div>
@@ -727,6 +777,31 @@ export function Calculator() {
       </div>
     </section>
   );
+}
+
+function AnimatedNumber({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    const fromValue = displayValue;
+    const toValue = value;
+    const start = performance.now();
+    const duration = 420;
+    let frame = 0;
+
+    function tick(now: number) {
+      const ratio = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - ratio, 3);
+      setDisplayValue(Math.round(fromValue + (toValue - fromValue) * eased));
+      if (ratio < 1) frame = requestAnimationFrame(tick);
+    }
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return <span className="animated-number">{displayValue.toLocaleString("ru-RU")}</span>;
 }
 
 function OptionGroup({
