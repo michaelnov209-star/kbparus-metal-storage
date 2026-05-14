@@ -195,7 +195,7 @@ export function Calculator() {
     selectedConditions.includes("Работа погрузчиком") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
   ];
   const summaryFacts = [
-    `Система хранения на ${input.shelfCount.toLocaleString("ru-RU")} уровней`,
+    `${input.shelfCount.toLocaleString("ru-RU")} полок хранения в системе`,
     `Нагрузка до ${input.loadKg.toLocaleString("ru-RU")} кг на уровень хранения`,
     `${input.towerCount.toLocaleString("ru-RU")} секций, зона ${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")} мм`
   ];
@@ -203,7 +203,7 @@ export function Calculator() {
     { label: "Система", value: display.shortTitle },
     { label: "Рабочая зона", value: dimensionLabel },
     { label: "Нагрузка", value: `${input.loadKg.toLocaleString("ru-RU")} кг на уровень` },
-    { label: "Вместимость", value: `${input.shelfCount.toLocaleString("ru-RU")} уровней / ${input.towerCount.toLocaleString("ru-RU")} секций` }
+    { label: "Вместимость", value: `${input.shelfCount.toLocaleString("ru-RU")} полок / ${input.towerCount.toLocaleString("ru-RU")} секций` }
   ];
 
   useEffect(() => {
@@ -480,7 +480,7 @@ export function Calculator() {
                   </div>
                   <div className="parameter-flow">
                     <OptionGroup
-                      title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Уровни хранения"}
+                      title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"}
                       hint={dimensionHints.shelfCount}
                       unit="шт."
                       values={profile.shelfCountOptions}
