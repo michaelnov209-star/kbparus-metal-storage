@@ -158,11 +158,32 @@ export function Calculator() {
   const progress = ((step + 1) / steps.length) * 100;
   const display = profileCopy[profile.id];
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
+  const systemCharacter = profile.productType === "automated" ? "tech" : profile.productType === "hybrid" ? "hybrid" : "manual";
+  const scaleScore =
+    input.loadKg / 1000 +
+    input.shelfCount * 0.75 +
+    input.towerCount * 1.35 +
+    selectedOptions.length * 0.7 +
+    (profile.productType === "automated" ? 2.1 : 0) +
+    (profile.productType === "hybrid" ? 1.3 : 0);
+  const projectScale =
+    scaleScore >= 15
+      ? { id: "complex", label: "Тяжелый промышленный комплекс", text: "Серьезная промышленная конфигурация", progress: 100 }
+      : scaleScore >= 10
+        ? { id: "industrial", label: "Промышленная система", text: "Индустриальная складская система", progress: 78 }
+        : scaleScore >= 6
+          ? { id: "module", label: "Складской модуль", text: "Складской модуль под регулярную работу", progress: 54 }
+          : { id: "compact", label: "Компактное решение", text: "Компактное решение для участка", progress: 32 };
   const conditionsComment = selectedConditions.length ? `Условия объекта: ${selectedConditions.join(", ")}` : "";
   const dimensionLabel = `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")}×${input.heightMm.toLocaleString("ru-RU")} мм`;
   const roundedPrice = formatRoundedRub(animatedPrice);
   const storedWeightLabel = result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel = result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
+  const engineeringSignals = [
+    input.loadKg >= 3000 ? "Высокая нагрузка учтена в предварительном подборе" : "Нагрузка находится в рабочем диапазоне системы",
+    profile.productType === "automated" ? "Конфигурация подходит для интенсивной выдачи материала" : "Схема сохраняет понятный доступ к каждому уровню",
+    selectedConditions.includes("Работа погрузчиком") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
+  ];
   const resultFacts = [
     { label: "Система", value: display.shortTitle },
     { label: "Рабочая зона", value: dimensionLabel },
@@ -279,7 +300,7 @@ export function Calculator() {
   }
 
   return (
-    <section className="calculator-shell reveal" id="calculator">
+    <section className={`calculator-shell reveal character-${systemCharacter} scale-${projectScale.id}`} id="calculator">
       <div className="calculator-heading">
         <span className="line-kicker">Конфигуратор системы хранения</span>
         <h2>Соберите решение для склада за четыре спокойных шага</h2>
@@ -543,10 +564,19 @@ export function Calculator() {
                     <h3>{display.title}</h3>
                     <p>{display.description}</p>
                   </div>
-                  <div className="result-price-box">
+                  <div className="result-price-box price-live" key={`result-${roundedPrice}`}>
                     <small>Предварительно</small>
                     <strong>от {roundedPrice}</strong>
                   </div>
+                </div>
+
+                <div className="project-scale-card">
+                  <div>
+                    <span>Масштаб проекта</span>
+                    <strong>{projectScale.label}</strong>
+                    <small>{projectScale.text}</small>
+                  </div>
+                  <i><b style={{ width: `${projectScale.progress}%` }} /></i>
                 </div>
 
                 <div className="result-facts">
@@ -555,6 +585,12 @@ export function Calculator() {
                       <small>{fact.label}</small>
                       <strong>{fact.value}</strong>
                     </article>
+                  ))}
+                </div>
+
+                <div className="engineering-signal-grid">
+                  {engineeringSignals.map((signal) => (
+                    <span key={signal}><Gauge size={16} />{signal}</span>
                   ))}
                 </div>
 
@@ -618,9 +654,13 @@ export function Calculator() {
           <span className="line-kicker">Ваше решение</span>
           <h3>{display.shortTitle}</h3>
           <img src={display.image} alt={display.title} />
-          <div className="summary-price">
+          <div className="summary-price price-live" key={`summary-${roundedPrice}`}>
             от {roundedPrice}
             <small>ориентир до инженерной проверки</small>
+          </div>
+          <div className="summary-scale">
+            <span>{projectScale.label}</span>
+            <i><b style={{ width: `${projectScale.progress}%` }} /></i>
           </div>
           <div className="summary-spec-grid" aria-label="Ключевые параметры">
             {resultFacts.slice(1).map((fact) => (
@@ -656,9 +696,13 @@ export function Calculator() {
               </button>
               <span className="line-kicker">Итог конфигурации</span>
               <h3>{display.shortTitle}</h3>
-              <div className="summary-price">
+              <div className="summary-price price-live" key={`mobile-${roundedPrice}`}>
                 от {roundedPrice}
                 <small>предварительная стоимость</small>
+              </div>
+              <div className="summary-scale">
+                <span>{projectScale.label}</span>
+                <i><b style={{ width: `${projectScale.progress}%` }} /></i>
               </div>
               <div className="summary-spec-grid">
                 {resultFacts.slice(1).map((fact) => (
