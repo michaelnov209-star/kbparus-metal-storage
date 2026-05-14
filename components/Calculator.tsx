@@ -111,10 +111,10 @@ const guidedChoices: Array<{
 const siteConditions = [
   "Узкий проезд",
   "Кран-балка",
-  "Ограничение по высоте",
-  "Работа погрузчиком",
-  "Ограничение по нагрузке пола",
-  "Уличное размещение"
+  "Ограничение высоты",
+  "Погрузчик",
+  "Нагрузка пола",
+  "Улица"
 ];
 
 function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
@@ -136,7 +136,7 @@ function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
     cassetteCount: defaults.rolloutShelfCount ?? defaults.shelfCount,
     towerCount: defaults.towerCount,
     rolloutSide: defaults.rolloutSide ?? "one",
-    optionIds: profile.options.filter((option) => option.defaultSelected).map((option) => option.id),
+    optionIds: [],
     execution: profile.productType === "automated" ? "automatic" : "manual",
     needsRolloutCassettes: profile.productType === "rollout" || profile.productType === "hybrid",
     city: "Москва"
@@ -183,16 +183,16 @@ export function Calculator() {
   const conditionResponses: Record<string, string> = {
     "Узкий проезд": "Потребуется проверить зону обслуживания и траекторию подачи материала.",
     "Кран-балка": "Можно учесть верхнюю подачу и безопасные зоны работы крана.",
-    "Ограничение по высоте": "Высоту системы нужно сверить с полезным просветом помещения.",
-    "Работа погрузчиком": "Конфигурация должна учитывать радиус маневра и фронт загрузки.",
-    "Ограничение по нагрузке пола": "Инженер проверит нагрузку на основание и распределение опор.",
-    "Уличное размещение": "Понадобится проверить исполнение, защиту и условия эксплуатации."
+    "Ограничение высоты": "Высоту системы нужно сверить с полезным просветом помещения.",
+    "Погрузчик": "Конфигурация должна учитывать радиус маневра и фронт загрузки.",
+    "Нагрузка пола": "Инженер проверит нагрузку на основание и распределение опор.",
+    "Улица": "Понадобится проверить исполнение, защиту и условия эксплуатации."
   };
   const activeConditionResponses = selectedConditions.map((condition) => conditionResponses[condition]).filter(Boolean);
   const engineeringSignals = [
     input.loadKg >= 3000 ? "Высокая нагрузка учтена в предварительном подборе" : "Нагрузка находится в рабочем диапазоне системы",
     profile.productType === "automated" ? "Конфигурация подходит для интенсивной выдачи материала" : "Схема сохраняет понятный доступ к каждому уровню",
-    selectedConditions.includes("Работа погрузчиком") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
+    selectedConditions.includes("Погрузчик") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
   ];
   const summaryFacts = [
     `${input.shelfCount.toLocaleString("ru-RU")} полок хранения в системе`,
@@ -324,19 +324,19 @@ export function Calculator() {
       </div>
 
       <div className="calculator-product">
-        <div className="calc-workspace">
-          <div className="calc-progress" aria-label="Прогресс конфигуратора">
-            <div className="calc-steps">
-              {steps.map((item, index) => (
-                <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => setStep(index)}>
-                  <span>{index + 1}</span>
-                  {item}
-                </button>
-              ))}
-            </div>
-            <div className="calc-progress-line"><span style={{ width: `${progress}%` }} /></div>
+        <div className="calc-progress" aria-label="Прогресс конфигуратора">
+          <div className="calc-steps">
+            {steps.map((item, index) => (
+              <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => setStep(index)}>
+                <span>{index + 1}</span>
+                {item}
+              </button>
+            ))}
           </div>
+          <div className="calc-progress-line"><span style={{ width: `${progress}%` }} /></div>
+        </div>
 
+        <div className="calc-workspace">
           {step === 0 && (
             <div className="calc-panel calc-panel-intro">
               <div className="calc-panel-title">
