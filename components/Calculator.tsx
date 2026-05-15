@@ -114,7 +114,24 @@ const siteConditions = [
   "Ограничение высоты",
   "Погрузчик",
   "Нагрузка пола",
-  "Уличная эксплуатация"
+  "Эксплуатация на улице"
+];
+
+const citySuggestions = [
+  "Москва",
+  "Санкт-Петербург",
+  "Воронеж",
+  "Казань",
+  "Нижний Новгород",
+  "Екатеринбург",
+  "Самара",
+  "Ростов-на-Дону",
+  "Краснодар",
+  "Пермь",
+  "Уфа",
+  "Челябинск",
+  "Новосибирск",
+  "Минск"
 ];
 
 function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
@@ -139,7 +156,8 @@ function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
     optionIds: [],
     execution: profile.productType === "automated" ? "automatic" : "manual",
     needsRolloutCassettes: profile.productType === "rollout" || profile.productType === "hybrid",
-    city: "Москва"
+    city: "",
+    comment: ""
   });
 }
 
@@ -186,7 +204,7 @@ export function Calculator() {
     "Ограничение высоты": "Высоту системы нужно сверить с полезным просветом помещения.",
     "Погрузчик": "Конфигурация должна учитывать радиус маневра и фронт загрузки.",
     "Нагрузка пола": "Инженер проверит нагрузку на основание и распределение опор.",
-    "Уличная эксплуатация": "Понадобится проверить исполнение, защиту от среды и условия обслуживания вне помещения."
+    "Эксплуатация на улице": "Понадобится проверить исполнение, защиту от среды и условия обслуживания вне помещения."
   };
   const selectedConditionCards = selectedConditions.map((condition) => ({
     title: condition,
@@ -232,10 +250,11 @@ export function Calculator() {
     setLeadStatus("");
   }
 
-  function selectGuidedChoice(profileId: CalculatorProfileId, comment: string) {
+  function selectGuidedChoice(profileId: CalculatorProfileId) {
     setInput({
       ...buildInputForProfile(profileId),
-      comment
+      city: "",
+      comment: ""
     });
     setLeadStatus("");
   }
@@ -393,7 +412,7 @@ export function Calculator() {
                       className={choice.profileId === input.systemId ? "guided-choice is-active" : "guided-choice"}
                       key={choice.title}
                       type="button"
-                      onClick={() => selectGuidedChoice(choice.profileId, choice.comment)}
+                      onClick={() => selectGuidedChoice(choice.profileId)}
                     >
                       <span>{choice.title}</span>
                       <small>{choice.text}</small>
@@ -593,10 +612,16 @@ export function Calculator() {
                     <label className="text-field">
                       <span><MapPin size={16} />Город или регион</span>
                       <input
+                        list="calculator-city-suggestions"
                         value={input.city}
                         onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
-                        placeholder="Москва, Казань, Минск"
+                        placeholder="Начните вводить город"
                       />
+                      <datalist id="calculator-city-suggestions">
+                        {citySuggestions.map((city) => (
+                          <option key={city} value={city} />
+                        ))}
+                      </datalist>
                     </label>
                     <label className="text-field">
                       <span><MessageSquareText size={16} />Комментарий для инженера</span>
