@@ -188,7 +188,10 @@ export function Calculator() {
     "Нагрузка пола": "Инженер проверит нагрузку на основание и распределение опор.",
     "Улица": "Понадобится проверить исполнение, защиту и условия эксплуатации."
   };
-  const activeConditionResponses = selectedConditions.map((condition) => conditionResponses[condition]).filter(Boolean);
+  const selectedConditionCards = selectedConditions.map((condition) => ({
+    title: condition,
+    text: conditionResponses[condition]
+  }));
   const engineeringSignals = [
     input.loadKg >= 3000 ? "Высокая нагрузка учтена в предварительном подборе" : "Нагрузка находится в рабочем диапазоне системы",
     profile.productType === "automated" ? "Конфигурация подходит для интенсивной выдачи материала" : "Схема сохраняет понятный доступ к каждому уровню",
@@ -527,11 +530,11 @@ export function Calculator() {
                     </div>
                   )}
 
-                  <details className="option-details">
+                  <details className="option-details" open>
                     <summary>
                       <span>02</span>
                       <strong>Дополнительные опции</strong>
-                      <small>Откройте, если нужны весы, безопасность, кран или складской учёт.</small>
+                      <small>Выберите при необходимости: весы, безопасность, кран или складской учет.</small>
                     </summary>
                     <div className="option-list">
                       {profile.options.map((option) => (
@@ -569,9 +572,20 @@ export function Calculator() {
                         </button>
                       ))}
                     </div>
-                    <div className="condition-response">
-                      <strong>{activeConditionResponses.length ? "Инженерный фокус" : "Без специальных ограничений"}</strong>
-                      <span>{activeConditionResponses[0] ?? "Можно перейти к финальному расчету. Дополнительные ограничения можно добавить позже в комментарии."}</span>
+                    <div className="condition-response-grid">
+                      {selectedConditionCards.length > 0 ? (
+                        selectedConditionCards.map((condition) => (
+                          <div className="condition-response" key={condition.title}>
+                            <strong>{condition.title}</strong>
+                            <span>{condition.text}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="condition-response is-muted">
+                          <strong>Без специальных ограничений</strong>
+                          <span>Можно перейти к финальному расчету. Дополнительные ограничения можно добавить позже в комментарии.</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

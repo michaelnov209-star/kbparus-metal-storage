@@ -15,6 +15,7 @@ export interface CatalogCategoryView extends ExcelHomeCatalogItem {
 type CmsMediaLike = {
   url?: unknown;
   filename?: unknown;
+  sizes?: Record<string, { url?: unknown; filename?: unknown }> | null;
 };
 
 type CmsKeywordLike = {
@@ -52,16 +53,28 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function getMediaUrl(value: unknown): string | undefined {
+function mediaFileUrl(filename: string) {
+  return `/api/media/file/${filename}`;
+}
+
+function getMediaUrl(value: unknown, size?: "thumb" | "medium" | "large"): string | undefined {
   if (typeof value === "string") return undefined;
   if (!value || typeof value !== "object") return undefined;
 
   const media = value as CmsMediaLike;
+  if (size) {
+    const sized = media.sizes?.[size];
+    const sizedUrl = asString(sized?.url);
+    if (sizedUrl) return sizedUrl;
+    const sizedFilename = asString(sized?.filename);
+    if (sizedFilename) return mediaFileUrl(sizedFilename);
+  }
+
   const url = asString(media.url);
   if (url) return url;
 
   const filename = asString(media.filename);
-  return filename ? `/api/media/file/${filename}` : undefined;
+  return filename ? mediaFileUrl(filename) : undefined;
 }
 
 function getKeywords(value: unknown): string[] | undefined {
@@ -90,6 +103,9 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
     summary,
     scenario: asString(doc.scenario) ?? fallback?.scenario ?? "",
     image,
+    imageThumb: getMediaUrl(doc.image, "thumb"),
+    imageMedium: getMediaUrl(doc.image, "medium"),
+    imageLarge: getMediaUrl(doc.image, "large"),
     featured: asBoolean(doc.featured) ?? fallback?.featured,
     seoTitle: asString(doc.seoTitle),
     seoDescription: asString(doc.seoDescription),

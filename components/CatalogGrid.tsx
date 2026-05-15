@@ -13,6 +13,18 @@ function getCatalogBadge(id: string) {
   return "Категория";
 }
 
+function getCatalogImageSrcSet(item: ExcelHomeCatalogItem) {
+  const sources = [
+    item.imageThumb ? `${item.imageThumb} 320w` : null,
+    item.imageMedium ? `${item.imageMedium} 800w` : null,
+    item.imageLarge ? `${item.imageLarge} 1600w` : null
+  ]
+    .filter((source): source is string => Boolean(source))
+    .filter((source) => !source.startsWith(`${item.image} `));
+
+  return sources.length > 0 ? sources.join(", ") : undefined;
+}
+
 export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
   const [activeItem, setActiveItem] = useState<ExcelHomeCatalogItem | null>(null);
 
@@ -39,7 +51,16 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
           <article className="catalog-card reveal" key={item.id}>
             <div className="catalog-card-visual has-image">
               <a className="catalog-image-link" href={`/catalog/${item.id}`} aria-label={`Перейти в категорию: ${item.title}`}>
-                <img className="catalog-image-main" src={item.image} alt={item.title} />
+                <img
+                  className="catalog-image-main"
+                  src={item.imageMedium ?? item.image}
+                  srcSet={getCatalogImageSrcSet(item)}
+                  sizes="(max-width: 760px) 46vw, (max-width: 1180px) 31vw, 24vw"
+                  alt={item.title}
+                  loading={index < 2 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
+                />
               </a>
               <button
                 className="catalog-zoom-pill catalog-zoom-trigger"
@@ -72,7 +93,7 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
               <X size={22} />
             </button>
             <div className="catalog-lightbox-visual">
-              <img src={activeItem.image} alt={activeItem.title} />
+              <img src={activeItem.imageLarge ?? activeItem.image} alt={activeItem.title} loading="eager" decoding="async" />
             </div>
             <div className="catalog-lightbox-copy">
               <span>{getCatalogBadge(activeItem.id)}</span>

@@ -4,6 +4,9 @@ export interface ExcelHomeCatalogItem {
   summary: string;
   scenario: string;
   image: string;
+  imageThumb?: string;
+  imageMedium?: string;
+  imageLarge?: string;
   featured?: boolean;
 }
 
