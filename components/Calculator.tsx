@@ -200,10 +200,9 @@ export function Calculator() {
     `${input.towerCount.toLocaleString("ru-RU")} секций, зона ${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")} мм`
   ];
   const resultFacts = [
-    { label: "Система", value: display.shortTitle },
-    { label: "Рабочая зона", value: dimensionLabel },
+    { label: "Формат", value: `${input.shelfCount.toLocaleString("ru-RU")} полок / ${input.towerCount.toLocaleString("ru-RU")} секций` },
     { label: "Нагрузка", value: `${input.loadKg.toLocaleString("ru-RU")} кг на уровень` },
-    { label: "Вместимость", value: `${input.shelfCount.toLocaleString("ru-RU")} полок / ${input.towerCount.toLocaleString("ru-RU")} секций` }
+    { label: "Рабочая зона", value: dimensionLabel }
   ];
 
   useEffect(() => {
@@ -528,24 +527,27 @@ export function Calculator() {
                     </div>
                   )}
 
-                  <div className="access-section-heading">
-                    <span>02</span>
-                    <strong>Опции эксплуатации</strong>
-                  </div>
-                  <div className="option-list">
-                    {profile.options.map((option) => (
-                      <button
-                        className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
-                        key={option.id}
-                        type="button"
-                        onClick={() => toggleOption(option.id)}
-                      >
-                        <Check size={18} />
-                        <span>{optionCopy[option.id] ?? option.title}</span>
-                        <strong>+ {formatRub(option.price)}</strong>
-                      </button>
-                    ))}
-                  </div>
+                  <details className="option-details">
+                    <summary>
+                      <span>02</span>
+                      <strong>Дополнительные опции</strong>
+                      <small>Откройте, если нужны весы, безопасность, кран или складской учёт.</small>
+                    </summary>
+                    <div className="option-list">
+                      {profile.options.map((option) => (
+                        <button
+                          className={input.optionIds.includes(option.id) ? "option-card is-active" : "option-card"}
+                          key={option.id}
+                          type="button"
+                          onClick={() => toggleOption(option.id)}
+                        >
+                          <Check size={18} />
+                          <span>{optionCopy[option.id] ?? option.title}</span>
+                          <strong>+ {formatRub(option.price)}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </details>
                 </div>
 
                 <div className="access-column access-column-conditions">
