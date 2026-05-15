@@ -5,6 +5,7 @@ import { getCmsClient } from "./client";
 type CmsMediaLike = {
   url?: unknown;
   filename?: unknown;
+  sizes?: Record<string, { url?: unknown; filename?: unknown }> | null;
 };
 
 type CmsRelationLike = {
@@ -91,13 +92,25 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function getMediaUrl(value: unknown): string | undefined {
+function mediaFileUrl(filename: string) {
+  return `/api/media/file/${filename}`;
+}
+
+function getMediaUrl(value: unknown, size?: "thumb" | "medium" | "large"): string | undefined {
   if (!value || typeof value !== "object") return undefined;
   const media = value as CmsMediaLike;
+  if (size) {
+    const sized = media.sizes?.[size];
+    const sizedUrl = asString(sized?.url);
+    if (sizedUrl) return sizedUrl;
+    const sizedFilename = asString(sized?.filename);
+    if (sizedFilename) return mediaFileUrl(sizedFilename);
+  }
+
   const url = asString(media.url);
   if (url) return url;
   const filename = asString(media.filename);
-  return filename ? `/api/media/file/${filename}` : undefined;
+  return filename ? mediaFileUrl(filename) : undefined;
 }
 
 function getRelationSlug(value: unknown): string | undefined {
@@ -142,7 +155,7 @@ function getDocuments(value: unknown): Array<{ title: string; href: string }> | 
 function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
   const cmsGallery = Array.isArray(doc.gallery)
     ? doc.gallery
-        .map((item) => (item && typeof item === "object" ? getMediaUrl((item as CmsGalleryItem).image) : undefined))
+        .map((item) => (item && typeof item === "object" ? getMediaUrl((item as CmsGalleryItem).image, "large") : undefined))
         .filter((item): item is string => Boolean(item))
     : [];
 
@@ -189,6 +202,9 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     shortTitle: asString(doc.shortTitle) ?? fallback?.shortTitle ?? title,
     sku: asString(doc.sku) ?? fallback?.sku ?? id,
     image,
+    imageThumb: getMediaUrl(doc.image, "thumb") ?? image,
+    imageMedium: getMediaUrl(doc.image, "medium") ?? image,
+    imageLarge: getMediaUrl(doc.image, "large") ?? image,
     gallery: getGallery(doc, fallback),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,

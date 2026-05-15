@@ -44,6 +44,9 @@ export interface CatalogProduct extends SeoOverrides {
   shortTitle: string;
   sku: string;
   image: string;
+  imageThumb?: string;
+  imageMedium?: string;
+  imageLarge?: string;
   gallery: string[];
   pageMode: ProductPageMode;
   /**

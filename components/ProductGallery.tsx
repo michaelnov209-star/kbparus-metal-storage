@@ -39,8 +39,8 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
         )}
         {activeImage ? (
           <button className="product-gallery-open" type="button" onClick={() => setIsOpen(true)} aria-label={`Рассмотреть фото: ${title}`}>
-            <img className="product-gallery-backdrop" src={activeImage} alt="" aria-hidden="true" />
-            <img className="product-gallery-image" src={activeImage} alt={`${title} - фото ${activeIndex + 1}`} />
+            <img className="product-gallery-backdrop" src={activeImage} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+            <img className="product-gallery-image" src={activeImage} alt={`${title} - фото ${activeIndex + 1}`} loading="eager" decoding="async" />
             <span className="product-gallery-zoom">
               <Maximize2 size={16} />
               Увеличить
@@ -68,7 +68,7 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
               onClick={() => setActiveIndex(index)}
               aria-label={`Открыть фото ${index + 1}`}
             >
-              <img src={image} alt="" />
+              <img src={image} alt="" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>

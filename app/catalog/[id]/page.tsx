@@ -134,7 +134,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               {products.map((product) => (
                 <a className="assortment-card" href={`/catalog/${item.id}/${product.id}`} key={product.id}>
                   <div className="assortment-visual">
-                    <img src={product.image} alt={product.title} />
+                    <img src={product.imageMedium ?? product.image} alt={product.title} loading="lazy" decoding="async" />
                   </div>
                   <div className="assortment-copy">
                     <h4>{product.title}</h4>
@@ -179,7 +179,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
             <div className="related-grid">
               {related.map((relatedItem) => (
                 <a href={`/catalog/${relatedItem.id}`} key={relatedItem.id}>
-                  <img src={relatedItem.image} alt={relatedItem.title} />
+                  <img src={relatedItem.imageThumb ?? relatedItem.image} alt={relatedItem.title} loading="lazy" decoding="async" />
                   {relatedItem.title}
                 </a>
               ))}
