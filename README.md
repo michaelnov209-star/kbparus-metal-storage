@@ -1,214 +1,105 @@
-# КБ Парус: сайт «Системы хранения металла»
+# КБ Парус — «Системы хранения металла»
 
-Next.js/React MVP для направления систем хранения металла. Сайт строится как B2B-инструмент подбора: клиент выбирает оборудование, параметры и опции, получает стартовую стоимость в формате `от ... ₽` и отправляет заявку инженеру.
+Production-ready B2B-сайт для направления «Системы хранения металла» КБ Парус / ООО «Технокам». Next.js + Payload CMS на Vercel. Сайт работает как инструмент первичного подбора оборудования: клиент выбирает систему, видит ориентировочную стоимость «от ... ₽», оставляет заявку → менеджер получает структурированные данные в Bitrix24 и Telegram.
 
-Production URL: https://kbparus-metal-storage.vercel.app
+- **Production:** https://kbparus-metal-storage.vercel.app
+- **Admin:** https://kbparus-metal-storage.vercel.app/admin
+- **Health:** https://kbparus-metal-storage.vercel.app/api/health
 
-Production status: Payload CMS/admin deployed and validated; catalog, homepage content, core media assets, navigation and footer are seeded into CMS; `/api/health` возвращает `status: "ok"` и `cms.ok: true`.
+## Стек
 
-## Payload CMS / текущий статус админки
+| Слой | Технология |
+|------|------------|
+| Frontend | Next.js 16 (App Router), React 19, TypeScript 5.9 strict |
+| CMS | Payload 3 (`/admin`), Postgres (Neon), Vercel Blob |
+| Hosting | Vercel, auto-deploy из `main`, Node 22.x (exact pin) |
+| Тесты | Vitest |
+| Интеграции | Bitrix24 (webhook), Telegram Bot API |
 
-- CMS branch `feat/payload-cms` fast-forward merged в `main` для production deployment.
-- Payload 3 встроен в Next.js App Router и доступен по `/admin`.
-- Админка Payload настроена для русскоязычных менеджеров: `fallbackLanguage: "ru"`, фиксированная светлая тема и отдельный CSS-reset для контраста.
-- Проект работает как ESM-пакет: в `package.json` задано `"type": "module"`. Это важно для `payload.config.ts`, Payload CLI и генерации importMap на Vercel.
-- Node на Vercel закреплён через `engines.node: "22.x"`.
-- `payload generate:importmap` запускается на каждом `vercel-build` через `scripts/cms/safe-generate-importmap.mjs`. Если importMap не генерируется, deploy должен падать до публикации.
-- Сгенерированный importMap хранится в `app/(payload)/admin/importMap.ts`; путь явно задан в `payload.config.ts` через `admin.importMap.importMapFile`.
-- Schema push выполняется в build pipeline через `scripts/cms/push-schema.mjs`. Для Vercel нужен direct/unpooled Postgres URL: `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING`.
-- Schema push дополнительно проверяет Payload globals `contacts` и `home-content`: если глобальные таблицы не читаются, build падает до публикации.
-- Health check CMS: `/api/health`. После успешного deploy ожидаем `status: "ok"` и `components.cms.ok: true`.
-- Runtime validation: `npm run cms:validate-deployment -- <deployment-url>`. Подробный production-чеклист: `PRODUCTION_VALIDATION.md`.
-- Authenticated admin smoke: `npm run cms:admin-smoke -- <deployment-url>` with admin credentials supplied via env. Details: `ADMIN_SMOKE.md`.
-- Admin UX architecture: `CMS_ADMIN_UX.md`. Админка сгруппирована как операционный центр управления сайтом: главная, каталог, калькулятор, компания, медиа, заявки, пользователи.
-- CMS content architecture: `CMS_CONTENT_ARCHITECTURE.md`. План постепенного перехода от hardcoded frontend к CMS-driven управлению контентом.
-- Catalog content: Payload now contains 17 categories, 5 subcategories and 17 products seeded via non-destructive `cms:seed-catalog`. Frontend reads categories/products from CMS with fallback to `data/storageSystems`.
-- Homepage content: Payload `home-content` now drives materials, before/after, advantages, cases, geography, reviews, about, banners, shipment steps, partners and FAQ with safe fallback.
-- Media content: Payload Media now serves homepage banners, category images, product cover images and product galleries. Safe import command: `npm run cms:seed-media -- <deployment-url> [--apply]`.
-- Navigation/footer: Payload `site-navigation` now drives header links, compact catalog-page navigation, footer links, legal links and optional footer CTA with safe fallback. Safe import command: `npm run cms:seed-site-navigation -- <deployment-url> [--apply]`.
+Без Tailwind и CSS-in-JS — нативный CSS в `app/globals.css`. ESM-пакет (`"type": "module"`).
 
-## Текущее состояние после последней итерации
-
-- Hero использует локальное видео `public/assets/videos/metal-storage-hero-trimmed.mp4`: исходный ролик обрезан с пропуском первых 8 секунд, крутится без звука, затемнен и оставляет фото hero как poster/fallback.
-- Hero-видео дополнительно обрезано на 30 секунд в конце: итоговый ролик длится примерно 2:36 и зацикливается раньше, без лишнего хвоста.
-- Каталог главной вынесен в компонент `components/CatalogGrid.tsx`: карточки стали более визуальными, с крупными фото, минимальным текстом, переходом в категорию по клику на фото и отдельной кнопкой `Увеличить` для просмотра изображения.
-- Изображение 5-й категории обновлено на `public/assets/images/catalog/05-carousel-vertical-module.png`; все 17 категорий по-прежнему берут фото из `public/assets/images/catalog/`.
-- Изображение 7-й категории обновлено на `public/assets/images/catalog/07-inlocker.png`.
-- Визуальный принцип “продукт без вставленного квадратного фото” применен к каталогу, ассортименту внутри категории, карточке товара и превью калькулятора через общий фон, аккуратные верхние/нижние градиенты и крупные product-visual зоны без ухудшения качества самого изображения.
-- Для обработки hero-видео добавлен dev-зависимость `ffmpeg-static`; она нужна только для подготовки локальных видеоассетов, в рантайме сайта не используется.
-- В первом экране оставлены только брендовая подача, большой заголовок `Системы хранения металла` и метрики. Лишние CTA, быстрые плашки и текст между заголовком и метриками убраны, чтобы hero выглядел свободнее и дороже.
-- Калькулятор усилен как клиентский конфигуратор: добавлен быстрый старт по задаче хранения, понятная подсказка по выбору ДхШхВ и более прикладной финальный результат.
-- Для первой категории каталога `Автоматизированные системы для хранения листового металла` добавлен пилот глубины: ассортимент из 4 обычных товаров старого сайта — Compact 3000x1500, Logic, Spider и Cross — и товарные страницы без конфигуратора.
-- Расчеты по-прежнему живут отдельно от UI в `lib/calculator`, а интерфейс не показывает Excel, ячейки, внутренние сокращения или технические поля.
-- Будущая админка должна позволять создать товар в двух режимах: обычная карточка без калькулятора или товар с привязанным профилем калькулятора.
-- Для цены в будущей админке предусмотрен отдельный режим: `Цена по запросу` или конкретная цена.
-- Шапка главной оформлена ближе к сайту линий окраски: навигация лежит поверх hero без общей подложки, логотип ведет на главную страницу.
-- Блок до/после получил контрастную заголовочную плашку, футер переведен в более сильный индустриальный стиль, кнопка маршрута оформлена в общей оранжевой CTA-системе.
-- В карточках 4 пилотных товаров первой категории добавлен слайдер изображений с основным фото, стрелками, счетчиком и миниатюрами.
-- Товарные страницы усилены: сверху добавлен отдельный заголовочный блок, навигация отодвинута от названия, шапка стала крупнее, карточки ассортимента выровнены, а заявки с товарных/категорийных страниц открываются внутри текущей страницы.
-- Описания и характеристики 4 пилотных товаров первой категории дополнены по открытым данным рынка, но без публичных ссылок-источников в интерфейсе сайта.
-- В каталог главной добавлены локальные изображения для всех 17 категорий.
-
-## Что сейчас есть на сайте
-
-- Главная страница в структуре сайта по линиям окраски: видео/фото hero, каталог, калькулятор стоимости, CTA-баннеры, кейсы, география, отзывы, о компании, баннер на основной сайт, преимущества, 3 шага, партнеры, FAQ, форма связи, контакты, карта и футер.
-- Страницы разделов каталога `/catalog/[id]`: можно перейти внутрь категории, увидеть описание раздела, данные для подбора, похожие разделы и форму расчета.
-- Hero на весь первый экран с темным промышленным фоном, логотипом, навигацией, dropdown «Каталог», кнопками Telegram/MAX, двумя телефонами и метриками.
-- Каталог оборудования из 17 разделов, строго по текущей структуре Excel-листа `Главная`, без публичных ссылок на ячейки; фото и текст ведут внутрь категории, а отдельная кнопка `Увеличить` раскрывает изображение крупно.
-- Калькулятор стоимости как трехшаговый конфигуратор: выбор оборудования, параметры, живой расчет, результат и заявка.
-- Визуальные блоки: remote-фото и локальные фото категорий, крупные placeholder-визуалы для материалов, до/после склада, кейсы-слайдер, отзывы-слайдер, Яндекс.Карта географии поставок, баннер на основной сайт КБ Парус и баннер на сайт линий порошковой окраски.
-- API `/api/leads`: принимает заявку, параметры калькулятора, контактные данные и в mock-режиме работает без `BITRIX24_WEBHOOK_URL`.
-- Документация для передачи проекта другому разработчику или Claude Code.
-
-## Структура проекта
-
-- `app/` — Next.js App Router, главная страница, layout, favicon, API route.
-- `app/catalog/[id]/page.tsx` — динамические страницы разделов каталога.
-- `app/catalog/[id]/[productId]/page.tsx` — пилотные страницы товаров внутри первой категории каталога.
-- `app/api/leads/route.ts` — endpoint для заявок и будущей отправки в Bitrix24.
-- `components/` — UI-компоненты: логотип, калькулятор, форма заявки, CSS страницы.
-- `data/storageSystems/` — данные каталога, профили калькулятора, визуальные ассеты, будущая база для CMS.
-- `lib/calculator/` — расчетная логика, типы, нормализация, форматирование.
-- `public/brand/` — логотип.
-- `public/assets/images/` — локальные фото/визуалы; `public/assets/images/catalog/` — изображения категорий каталога.
-- `public/assets/videos/` — локальные видео для hero и будущих промышленных видеоблоков.
-- `tests/` — unit-тесты калькулятора.
-- `docs/` — handoff и описание процессов сайта.
-
-## Где лежат ключевые вещи
-
-- Логотип: `public/brand/logo-g.png`
-- Favicon: задается через `app/layout.tsx` и использует `public/brand/logo-g.png`
-- Open Graph / Telegram preview: `app/opengraph-image.tsx`
-- Фото и визуальные ассеты: `data/storageSystems/visualAssets.ts` и `public/assets/images/catalog/`
-- Hero-видео главной: `public/assets/videos/metal-storage-hero-trimmed.mp4`
-- Баннер на основной сайт: `public/assets/images/kbparus-cnc-banner.png`
-- Баннер на сайт линий порошковой окраски: `public/assets/images/kbparus-coating-lines-banner.png`
-- Иконки Telegram/MAX: `public/assets/icons/telegram.svg`, `public/assets/icons/max.svg`
-- CMS catalog adapters: `lib/cms/catalog.ts`, `lib/cms/products.ts`
-- Non-destructive catalog seed: `npm run cms:seed-catalog -- <deployment-url> --apply`
-- Static catalog fallback: `data/storageSystems/excelCatalog.ts`, `data/storageSystems/catalogDepth.ts`
-- Галерея товара: `components/ProductGallery.tsx`, изображения лежат в `public/assets/images/products/auto-sheet-metal/`
-- Каталог главной и lightbox изображений категорий: `components/CatalogGrid.tsx`
-- Режим товара и привязка калькулятора: поле `pageMode` и опциональный `calculatorProfileId` в `data/storageSystems/catalogDepth.ts`
-- Режим цены товара: поле `priceMode` в `data/storageSystems/catalogDepth.ts`, где `request` означает “Цена по запросу”, а `fixed` — конкретную цену.
-- Профили калькулятора: `data/storageSystems/excelCalculator.ts`
-- Логика расчета: `lib/calculator/pricing.ts`
-- Типы калькулятора: `lib/calculator/types.ts`
-- Форма связи: `components/LeadForm.tsx`
-- Калькулятор UI: `components/Calculator.tsx`
-- Формат публичной цены `от ... ₽`: `lib/calculator/format.ts`
-- Стили текущей страницы: `components/LinePageStyles.tsx`
-- Bitrix24 webhook: env `BITRIX24_WEBHOOK_URL`
-- Handoff для Claude Code: `docs/CLAUDE_CODE_HANDOFF.md`
-- Процессы сайта: `docs/SITE_PROCESSES.md`
-- Сборка контента для каталога: `docs/CONTENT_COLLECTION_WORKFLOW.md`
-
-## Excel-логика
-
-Источник: `C:/Users/micha/Downloads/Калькулятор-New.xls`
-
-- `Главная` — публичный каталог на главной странице.
-- `Админка` — имитация будущей админки: цены, коэффициенты, опции.
-- Формульные листы — профили калькулятора для отдельных типов оборудования.
-- В интерфейсе сайта не показываются Excel, адреса ячеек, технические сокращения листов и старые следы про печи/линии окраски.
-- Расчет отображает стартовую стоимость `от ... ₽`, а не финальное коммерческое предложение.
-
-## Запуск
+## Быстрый старт
 
 ```bash
+git clone https://github.com/michaelnov209-star/kbparus-metal-storage.git
+cd kbparus-metal-storage
+cp .env.example .env.local      # заполнить под локальные нужды
 npm install
-npm run dev
+npm run dev                     # http://localhost:3000
 ```
 
-Проверки:
+Проверки перед PR:
 
 ```bash
-npm run lint
-npm run test
-npm run build
+npm run lint                    # tsc --noEmit
+npm run test                    # vitest
+npm run build                   # production-сборка Next.js
 ```
+
+Полная команда сборки на Vercel — `npm run vercel-build`. Подробнее — [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md).
+
+## Структура (верхнего уровня)
+
+```
+app/                # Next.js App Router (страницы, API, /admin Payload)
+components/         # React-компоненты
+data/storageSystems/# Статический fallback-каталог
+lib/                # calculator/, cms/, leads/, seo/
+payload/            # Payload-коллекции, глобалы, структура админки
+public/             # Статика (фото, видео, иконки, robots.txt)
+scripts/cms/        # Build pipeline и seed-скрипты
+tests/              # Vitest
+docs/               # Документация (см. docs/README.md)
+```
+
+## Документация
+
+Вся документация — в [`docs/`](docs/README.md). Главные точки входа:
+
+- [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md) — onboarding для разработчика (быстрый старт, архитектура, troubleshooting Payload/Drizzle, build pipeline).
+- [`docs/planning/roadmap.md`](docs/planning/roadmap.md) — спринты и приоритеты.
+- [`docs/audits/project-audit.md`](docs/audits/project-audit.md), [`docs/audits/calculator-audit.md`](docs/audits/calculator-audit.md), [`docs/audits/customer-journey-audit.md`](docs/audits/customer-journey-audit.md) — независимые аудиты.
+- [`docs/operations/`](docs/README.md#структура) — деплой, CMS setup, валидация, Telegram-бот.
+- [`docs/architecture/`](docs/README.md#структура) — контекст проекта, процессы, CMS-архитектура.
+- [`docs/reports/report-for-director.md`](docs/reports/report-for-director.md) — отчёт руководству.
+- [`CHANGELOG.md`](CHANGELOG.md) — хронология релизов.
+
+## Переменные окружения
+
+Минимум для запуска CMS (см. `.env.example`):
+
+| Переменная | Назначение |
+|-----------|------------|
+| `PAYLOAD_SECRET` | Подписи сессий Payload (≥32 символа) |
+| `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING` | Direct connection к Neon (для DDL/schema push) |
+| `DATABASE_URL` или `POSTGRES_URL` | Pooled connection (runtime queries) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage |
+| `BITRIX24_WEBHOOK_URL` | Опционально — доставка лидов в CRM |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Опционально — уведомления о заявках |
+
+Без `BITRIX24_WEBHOOK_URL` API заявок работает в mock-режиме и логирует в Vercel Functions.
 
 ## Деплой
 
-GitHub:
+Auto-deploy на Vercel из ветки `main` (1–3 минуты). Build pipeline — `npm run vercel-build`:
 
-- Repository: https://github.com/michaelnov209-star/kbparus-metal-storage
-- Branch: `main`
-
-Vercel:
-
-- Project: `kbparus-metal-storage`
-- Production URL: https://kbparus-metal-storage.vercel.app
-- Scope: `michaelnov209-3230s-projects`
-
-Порядок обновления:
-
-1. Внести изменения.
-2. Обновить `README.md`, `CHANGELOG.md` и при необходимости `docs/CLAUDE_CODE_HANDOFF.md`.
-3. Запустить `npm run lint`, `npm run test`, `npm run build`.
-4. Сделать commit и push в `main`.
-5. Задеплоить в тот же Vercel project:
-
-```bash
-npx vercel@latest deploy --prod --yes --scope michaelnov209-3230s-projects
+```
+cms:check → cms:generate-importmap → cms:push-schema → cms:check → next build
 ```
 
-6. Проверить production URL, калькулятор и `/api/leads`.
+Если CMS-prerequisites не выполнены, build *намеренно* падает до публикации — production остаётся на предыдущей рабочей версии. Подробности — [`docs/operations/deployment-guide.md`](docs/operations/deployment-guide.md), [`docs/operations/deployment-checklist.md`](docs/operations/deployment-checklist.md).
 
-## Реализовано
+## Бизнес-правило калькулятора
 
-- Полноэкранная темная hero-шапка с фоновым промышленным фото, навигацией, CTA и метриками.
-- Светлая навигационная шапка поверх hero: логотип, каталог, разделы сайта, Telegram/MAX и два читаемых телефона.
-- Hero усилен продуктовой подачей: быстрые сигналы, акцент на калькулятор стоимости и более чистая композиция без мини-каталога в первом экране.
-- В шапке подключены реальные SVG-иконки Telegram и MAX.
-- Каталог из 17 разделов по утвержденной структуре: теперь это единая 4-колоночная сетка одинаковых карточек, где вся карточка кликабельна.
-- В начале каталога возвращены полезные метрики по разделам, задачам подбора и статусу фото, но без служебной фразы про внутреннюю структуру.
-- Основные секции главной выровнены по ширине каталога, чтобы страница выглядела цельнее и дороже.
-- Блоки «Что можно хранить», «До/после склада», кейсы, география, отзывы, преимущества, 3 шага и партнеры визуально усилены.
-- FAQ оформлен как premium accordion с плавным появлением ответов.
-- FAQ получил поиск по вопросам с фильтрацией карточек.
-- Изображения в карточках каталога визуально интегрированы в фон через blur/backdrop, чтобы не выглядели вставленными квадратами.
-- Все категории каталога теперь используют локальные продуктовые изображения из `public/assets/images/catalog/`, названные по порядковому номеру категории.
-- Преимущества и нижний блок контактов обновлены в единой industrial-дизайн-системе.
-- Калькулятор расположен третьим блоком после hero и каталога, чтобы пользователь быстрее переходил к расчету.
-- Слайдеры кейсов, отзывов и партнеров получили рабочие кнопки прокрутки.
-- География поставок переведена с условной карты на Яндекс.Карту и список городов/направлений.
-- Калькулятор переделан как более понятный инженерный конфигуратор: клиентские названия оборудования, группировка параметров, живой расчет, понятные поля объекта и результат по блокам.
-- Цены в калькуляторе округляются до тысяч рублей для публичного отображения, например `34 428 563 ₽` показывается как `34 429 000 ₽`.
-- Калькулятор доработан по контрасту, чтобы заголовки, параметры, поля ввода и результат были читаемыми на светлом фоне.
-- Баннер на основной сайт заменен на предоставленный визуал с одной кнопкой поверх изображения.
-- Добавлен отдельный баннер-переход на `линииокраски.рф` с предоставленным оригинальным изображением и кнопкой поверх.
-- Системный scrollbar стилизован под дизайн сайта: темная дорожка, оранжевый ползунок и hover-подсветка.
-- В контактах добавлена кнопка «Проложить маршрут» на Яндекс.Карты.
-- Партнеры временно показываются как заглушки под будущие логотипы из админки.
-- Добавлены favicon и Open Graph preview для Telegram/мессенджеров.
-- Адаптивность доработана под desktop, планшеты и мобильные устройства.
-- Трехшаговый калькулятор-конфигуратор с фиксированными ходовыми значениями из Excel и клиентскими названиями оборудования.
-- Пилотная глубина каталога внутри первой категории: ассортимент из 4 товаров, товарные страницы без калькулятора и галерея изображений.
-- В карточках ассортимента первой категории убрана плашка `Товар`, названия и CTA выровнены по единому ритму.
-- Модель товара подготовлена под админку: менеджер сможет создать обычный товар или товар с привязанным калькулятором.
-- Отображение цены только в формате `от ... ₽`.
-- Карточки материалов, до/после склада, кейсы, география поставок, отзывы, преимущества, FAQ, контакты и карта.
-- API заявки с mock-режимом и подготовкой под Bitrix24.
-- Архитектура с разделением данных, UI и расчетов.
+Калькулятор показывает **ориентировочную** стоимость («от ... ₽», «стартовая стоимость», «ориентир»). Финальная цена всегда определяется менеджером. В UI не должно появляться формулировок «точно», «гарантированно» — это контрактное обещание, которого сайт дать не может.
 
-## TODO
+## Контрибьюции
 
-- Заменить временные remote-фото на реальные фото/видео КБ Парус.
-- Подключить настоящий `BITRIX24_WEBHOOK_URL` и согласовать поля CRM.
-- Спроектировать CMS/admin UI для редактирования каталога, опций, коэффициентов и точек на карте.
-- Уточнить спорные значения из Excel, например цену опции «Весы на распалетчик» = `3 ₽`.
-- Наполнить страницы разделов каталога карточками конкретного оборудования внутри категорий.
-- Перенести первую волну товарного контента, который собирает Настя, в приоритетные категории.
-- Добавить аналитику, UTM parsing и события калькулятора.
+1. Перед изменением `lib/calculator/pricing.ts` или `data/storageSystems/excelCalculator.ts` — прогон `npm run test`.
+2. После изменения `payload.config.ts` или коллекций — пересборка importMap (`npm run cms:generate-importmap` на Linux/Mac/WSL).
+3. Любой non-trivial фикс — отразить в `CHANGELOG.md` или соответствующем `docs/**/*.md`.
+4. Production не ломать: эксперименты — на feature-ветках, cutover в `main` — после smoke на preview.
 
-## Архитектурные решения
+## Лицензия и владение
 
-- Контент не хардкодится в расчетных компонентах: публичные данные лежат в `data/storageSystems`.
-- Расчеты не находятся в UI: формулы и нормализация лежат в `lib/calculator`.
-- Клиентские тексты отделены от технической логики и внутренних полей.
-- В интерфейсе не показываются `SKU`, `product_id`, `external_1c_id` и другие внутренние поля.
-- MVP готовится под будущие CMS, Bitrix24 и 1С.
-
-test deploy
+Проект принадлежит ООО «Технокам» / КБ Парус. Внутренний коммерческий продукт.
