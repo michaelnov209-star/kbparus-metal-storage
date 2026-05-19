@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
-import { buildBitrix24Payload } from "@/lib/leads/bitrix24";
+import { buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
 import { buildTelegramMessage } from "@/lib/leads/telegram";
 
 describe("Telegram lead messages", () => {
@@ -66,6 +66,15 @@ describe("Telegram lead messages", () => {
 });
 
 describe("Bitrix24 lead payload", () => {
+  it("normalizes base Bitrix24 webhook URL to deal add method", () => {
+    expect(resolveBitrix24WebhookUrl("https://example.bitrix24.ru/rest/1/token/")).toBe(
+      "https://example.bitrix24.ru/rest/1/token/crm.deal.add.json"
+    );
+    expect(resolveBitrix24WebhookUrl("https://example.bitrix24.ru/rest/1/token/crm.deal.add.json")).toBe(
+      "https://example.bitrix24.ru/rest/1/token/crm.deal.add.json"
+    );
+  });
+
   it("maps ordinary contact lead to safe standard Bitrix fields", () => {
     const payload = buildBitrix24Payload({
       leadType: "contact",

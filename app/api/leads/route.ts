@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
-import { bitrix24FieldMapFromEnv, buildBitrix24Payload } from "@/lib/leads/bitrix24";
+import { bitrix24FieldMapFromEnv, buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
 import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
 
 interface LeadPayload {
@@ -241,17 +241,20 @@ export async function POST(request: Request) {
   );
 
   const channels: string[] = [];
+  const bitrix24WebhookUrl = resolveBitrix24WebhookUrl(process.env.BITRIX24_WEBHOOK_URL);
 
-  if (process.env.BITRIX24_WEBHOOK_URL) {
+  if (bitrix24WebhookUrl) {
     try {
-      const response = await fetch(process.env.BITRIX24_WEBHOOK_URL, {
+      const response = await fetch(bitrix24WebhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bitrixPayload),
         signal: AbortSignal.timeout(10_000)
       });
       if (response.ok) channels.push("bitrix24");
+      else console.warn(`Bitrix24 delivery failed with HTTP ${response.status}`);
     } catch {
+      console.warn("Bitrix24 delivery failed with network error");
       // CRM outage must not block lead processing if Telegram works.
     }
   }
@@ -259,7 +262,7 @@ export async function POST(request: Request) {
   const telegramResult = await telegramPromise;
   if (telegramResult.ok) channels.push("telegram");
 
-  if (channels.length === 0 && !process.env.BITRIX24_WEBHOOK_URL && !process.env.TELEGRAM_BOT_TOKEN) {
+  if (channels.length === 0 && !bitrix24WebhookUrl && !process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({
       ok: true,
       mode: "mock",

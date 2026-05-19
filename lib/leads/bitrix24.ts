@@ -86,6 +86,17 @@ function addCustomField(fields: Record<string, unknown>, fieldCode: string | und
   fields[fieldCode] = value;
 }
 
+export function resolveBitrix24WebhookUrl(value: string | undefined): string | undefined {
+  const webhookUrl = clean(value);
+  if (!webhookUrl) return undefined;
+
+  if (/\/crm\.[a-z.]+(?:\.json)?(?:\?.*)?$/i.test(webhookUrl)) return webhookUrl;
+
+  const [urlWithoutQuery, query] = webhookUrl.split("?", 2);
+  const baseUrl = urlWithoutQuery.endsWith("/") ? urlWithoutQuery : `${urlWithoutQuery}/`;
+  return `${baseUrl}crm.deal.add.json${query ? `?${query}` : ""}`;
+}
+
 export function buildBitrix24Payload(lead: Bitrix24Lead, fieldMap: Bitrix24FieldMap = {}): Bitrix24Payload {
   const isConfigurator = lead.leadType === "configurator" || Boolean(lead.calculatorInput);
   const selectedProduct = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "";

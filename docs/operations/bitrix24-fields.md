@@ -47,6 +47,8 @@ https://YOUR.bitrix24.ru/rest/USER_ID/TOKEN/crm.deal.add.json
 
 Если используется `crm.lead.add.json`, стандартный payload также совместим, но поля должны быть созданы именно для лидов.
 
+Если в env указан только базовый webhook вида `https://YOUR.bitrix24.ru/rest/USER_ID/TOKEN/`, приложение автоматически добавит `crm.deal.add.json`.
+
 ## Проверка
 
 1. В Vercel задать `BITRIX24_WEBHOOK_URL` и нужные `BITRIX24_FIELD_*`.
