@@ -45,7 +45,7 @@
 **Кто:** Менеджер с доступом к Bitrix24 + разработчик с доступом к Vercel.  
 **Шаги:**
 1. В Bitrix24: Приложения → Webhooks → Создать входящий webhook → разрешить `crm.deal.add`
-2. Скопировать URL webhook (формат: `https://YOUR.bitrix24.ru/rest/USER_ID/TOKEN/`)
+2. Скопировать полный URL метода (формат: `https://YOUR.bitrix24.ru/rest/USER_ID/TOKEN/crm.deal.add.json`)
 3. В Vercel Dashboard: Settings → Environment Variables → добавить `BITRIX24_WEBHOOK_URL`
 4. Redeploy проекта (или подождать следующего push в main)
 5. Тест: отправить заявку с сайта → проверить, что появилась в CRM

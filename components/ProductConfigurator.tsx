@@ -6,6 +6,8 @@ import { getCalculatorProfile, type CalculatorProfileId } from "@/data/storageSy
 import { calculateStorageSystem } from "@/lib/calculator/pricing";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import type { CalculatorInput } from "@/lib/calculator/types";
+import { trackYandexGoal } from "@/lib/analytics/metrika";
+import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
 
 function buildInput(profileId: CalculatorProfileId): CalculatorInput {
   const profile = getCalculatorProfile(profileId);
@@ -55,7 +57,10 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
   const [contact, setContact] = useState({ name: "", phone: "" });
   const [status, setStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [submittingLead, setSubmittingLead] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
+  const calculatorStarted = useRef(false);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
 
@@ -79,12 +84,45 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.fromPrice]);
 
+  useEffect(() => {
+    captureLeadUtm();
+  }, []);
+
+  useEffect(() => {
+    saveLastCalculatorLead({
+      calculatorInput: input,
+      recommendedConfig: {
+        title: productTitle ?? profile.title,
+        dimensions: result.engineeringSummary.dimensionsLabel,
+        loadKg: input.loadKg,
+        shelfCount: input.shelfCount,
+        towerCount: input.towerCount,
+        options: profile.options.filter((option) => input.optionIds.includes(option.id)).map((option) => option.title)
+      },
+      preliminaryPriceFrom: result.fromPrice,
+      sourceTitle: productTitle ?? profile.title,
+      sourceUrl: productUrl ?? (typeof window !== "undefined" ? window.location.href : undefined),
+      sourceImage: productImage
+    });
+  }, [input, productImage, productTitle, productUrl, profile.options, profile.title, result.engineeringSummary.dimensionsLabel, result.fromPrice]);
+
+  function markCalculatorStarted(action: string) {
+    if (!calculatorStarted.current) {
+      calculatorStarted.current = true;
+      trackYandexGoal("calculator_start", { action, source: "product_configurator" });
+    }
+  }
+
   function setNumberField(field: keyof CalculatorInput, value: number) {
+    markCalculatorStarted("set_number_field");
+    trackYandexGoal("calculator_parameter_change", { field: String(field), value, source: "product_configurator" });
     setInput((current) => ({ ...current, [field]: value }));
     setStatus("");
   }
 
   function toggleOption(id: string) {
+    markCalculatorStarted("toggle_option");
+    trackYandexGoal("calculator_parameter_change", { field: "optionIds", value: id, source: "product_configurator" });
     setInput((current) => ({
       ...current,
       optionIds: current.optionIds.includes(id)
@@ -95,12 +133,20 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
   }
 
   async function submitLead() {
+    if (submittingLead) return;
+    if (!consentAccepted) {
+      setStatus("Подтвердите согласие на обработку персональных данных.");
+      return;
+    }
+    setSubmittingLead(true);
     setStatus("Отправляем параметры инженеру...");
+    trackYandexGoal("form_submit", { title: productTitle ?? profile.title, leadType: "configurator" });
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          leadType: "configurator",
           contact,
           city: input.city,
           comment: input.comment,
@@ -110,12 +156,14 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
             from: result.fromPrice,
             label: `от ${formatRoundedRub(result.fromPrice)}`
           },
+          preliminaryPriceFrom: result.fromPrice,
           source: `Конфигуратор товара — ${productTitle ?? profile.title}`,
           sourceTitle: productTitle ?? profile.title,
           sourceUrl: productUrl,
           sourceImage: productImage,
           hp_url: hpUrl,
-          formStartedAt: formStartedAt.current
+          formStartedAt: formStartedAt.current,
+          utm: getStoredLeadUtm()
         })
       });
 
@@ -125,8 +173,15 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
           ? "Заявка принята. Инженер получит параметры и свяжется с вами."
           : (data?.error ?? "Не получилось отправить заявку. Попробуйте еще раз.")
       );
+      if (response.ok) {
+        trackYandexGoal("lead_submit_success", { title: productTitle ?? profile.title, leadType: "configurator" });
+        setConsentAccepted(false);
+        formStartedAt.current = Date.now();
+      }
     } catch {
       setStatus("Сеть недоступна. Попробуйте через минуту или позвоните нам.");
+    } finally {
+      setSubmittingLead(false);
     }
   }
 
@@ -194,7 +249,18 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
           <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
             <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
           </div>
-          <button className="primary-button" type="button" onClick={submitLead}>
+          <label className="product-consent consent-field">
+            <input
+              checked={consentAccepted}
+              onChange={(event) => setConsentAccepted(event.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              Согласен на обработку персональных данных и ознакомлен с{" "}
+              <a href="/privacy-policy" target="_blank" rel="noreferrer">политикой конфиденциальности</a>.
+            </span>
+          </label>
+          <button className="primary-button" type="button" onClick={submitLead} disabled={submittingLead || !consentAccepted}>
             <Send size={18} />
             Получить расчет
           </button>

@@ -58,8 +58,8 @@ docs/               # Документация (см. docs/README.md)
 
 - [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md) — onboarding для разработчика (быстрый старт, архитектура, troubleshooting Payload/Drizzle, build pipeline).
 - [`docs/planning/roadmap.md`](docs/planning/roadmap.md) — спринты и приоритеты.
-- [`docs/audits/project-audit.md`](docs/audits/project-audit.md), [`docs/audits/calculator-audit.md`](docs/audits/calculator-audit.md), [`docs/audits/customer-journey-audit.md`](docs/audits/customer-journey-audit.md) — независимые аудиты.
-- [`docs/operations/`](docs/README.md#структура) — деплой, CMS setup, валидация, Telegram-бот.
+- [`docs/audits/project-audit.md`](docs/audits/project-audit.md), [`docs/audits/calculator-audit.md`](docs/audits/calculator-audit.md), [`docs/audits/customer-journey-audit.md`](docs/audits/customer-journey-audit.md), [`docs/audits/dependency-audit-2026-05-19.md`](docs/audits/dependency-audit-2026-05-19.md) — независимые аудиты.
+- [`docs/operations/`](docs/README.md#структура) — деплой, CMS setup, валидация, Telegram-бот, Bitrix24.
 - [`docs/architecture/`](docs/README.md#структура) — контекст проекта, процессы, CMS-архитектура.
 - [`docs/reports/report-for-director.md`](docs/reports/report-for-director.md) — отчёт руководству.
 - [`CHANGELOG.md`](CHANGELOG.md) — хронология релизов.
@@ -75,9 +75,11 @@ docs/               # Документация (см. docs/README.md)
 | `DATABASE_URL` или `POSTGRES_URL` | Pooled connection (runtime queries) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage |
 | `BITRIX24_WEBHOOK_URL` | Опционально — доставка лидов в CRM |
+| `BITRIX24_FIELD_*` | Опционально — custom fields для структурированных данных в Bitrix24 |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Опционально — уведомления о заявках |
+| `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Опционально — счетчик Яндекс Метрики |
 
-Без `BITRIX24_WEBHOOK_URL` API заявок работает в mock-режиме и логирует в Vercel Functions.
+Без `BITRIX24_WEBHOOK_URL` Bitrix24 мягко пропускается. Если не настроены ни Telegram, ни Bitrix24, API заявок работает в mock-режиме и логирует в Vercel Functions.
 
 ## Деплой
 

@@ -23,6 +23,8 @@
 | `TELEGRAM_BOT_TOKEN` | @BotFather | optional |
 | `TELEGRAM_CHAT_ID` | @getmyid_bot | optional |
 | `BITRIX24_WEBHOOK_URL` | Bitrix24 admin | optional |
+| `BITRIX24_FIELD_*` | Bitrix24 CRM fields | optional |
+| `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Яндекс Метрика | optional |
 
 **Важно:** все переменные должны быть отмечены для **Production** + **Preview** environments. Иначе preview deploys будут падать.
 

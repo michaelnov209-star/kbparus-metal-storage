@@ -22,6 +22,8 @@ import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/
 import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
+import { trackYandexGoal } from "@/lib/analytics/metrika";
+import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
 
 const steps = ["Материал", "Габариты", "Доступ", "Решение"];
 
@@ -167,9 +169,12 @@ export function Calculator() {
   const [contact, setContact] = useState({ name: "", phone: "", email: "", address: "" });
   const [leadStatus, setLeadStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [submittingLead, setSubmittingLead] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const formStartedAt = useRef<number>(Date.now());
+  const calculatorStarted = useRef(false);
   const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
   const result = useMemo(() => calculateStorageSystem(input), [input]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
@@ -245,12 +250,47 @@ export function Calculator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.fromPrice]);
 
+  useEffect(() => {
+    captureLeadUtm();
+  }, []);
+
+  useEffect(() => {
+    saveLastCalculatorLead({
+      calculatorInput: input,
+      recommendedConfig: {
+        title: display.title,
+        dimensions: dimensionLabel,
+        loadKg: input.loadKg,
+        shelfCount: input.shelfCount,
+        towerCount: input.towerCount,
+        options: profile.options
+          .filter((option) => input.optionIds.includes(option.id))
+          .map((option) => optionCopy[option.id] ?? option.title)
+      },
+      preliminaryPriceFrom: result.fromPrice,
+      sourceTitle: display.title,
+      sourceUrl: typeof window !== "undefined" ? `${window.location.origin}/#calculator` : undefined,
+      sourceImage: display.image
+    });
+  }, [dimensionLabel, display.image, display.title, input, profile.options, result.fromPrice]);
+
+  function markCalculatorStarted(action: string) {
+    if (!calculatorStarted.current) {
+      calculatorStarted.current = true;
+      trackYandexGoal("calculator_start", { action });
+    }
+  }
+
   function selectProfile(profileId: CalculatorProfileId) {
+    markCalculatorStarted("select_profile");
+    trackYandexGoal("calculator_parameter_change", { field: "systemId", value: profileId });
     setInput(buildInputForProfile(profileId));
     setLeadStatus("");
   }
 
   function selectGuidedChoice(profileId: CalculatorProfileId) {
+    markCalculatorStarted("guided_choice");
+    trackYandexGoal("calculator_parameter_change", { field: "guidedChoice", value: profileId });
     setInput({
       ...buildInputForProfile(profileId),
       city: "",
@@ -260,6 +300,8 @@ export function Calculator() {
   }
 
   function setNumberField(field: keyof CalculatorInput, value: number) {
+    markCalculatorStarted("set_number_field");
+    trackYandexGoal("calculator_parameter_change", { field: String(field), value });
     setInput((current) => ({
       ...current,
       [field]: value,
@@ -272,6 +314,8 @@ export function Calculator() {
   }
 
   function toggleOption(id: string) {
+    markCalculatorStarted("toggle_option");
+    trackYandexGoal("calculator_parameter_change", { field: "optionIds", value: id });
     setInput((current) => ({
       ...current,
       optionIds: current.optionIds.includes(id)
@@ -281,6 +325,8 @@ export function Calculator() {
   }
 
   function toggleCondition(condition: string) {
+    markCalculatorStarted("toggle_condition");
+    trackYandexGoal("calculator_parameter_change", { field: "siteCondition", value: condition });
     setSelectedConditions((current) =>
       current.includes(condition)
         ? current.filter((item) => item !== condition)
@@ -288,8 +334,21 @@ export function Calculator() {
     );
   }
 
+  function setRolloutSide(value: CalculatorInput["rolloutSide"]) {
+    markCalculatorStarted("set_rollout_side");
+    trackYandexGoal("calculator_parameter_change", { field: "rolloutSide", value });
+    setInput((current) => ({ ...current, rolloutSide: value }));
+  }
+
   async function submitLead() {
+    if (submittingLead) return;
+    if (!consentAccepted) {
+      setLeadStatus("Подтвердите согласие на обработку персональных данных.");
+      return;
+    }
+    setSubmittingLead(true);
     setLeadStatus("Готовим заявку для инженера...");
+    trackYandexGoal("form_submit", { title: "calculator", leadType: "configurator" });
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
@@ -319,7 +378,7 @@ export function Calculator() {
           sourceImage: display.image,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current,
-          utm: {}
+          utm: getStoredLeadUtm()
         })
       });
 
@@ -329,8 +388,15 @@ export function Calculator() {
           ? "Заявка сформирована. Инженер увидит выбранные параметры и свяжется с вами."
           : (data?.error ?? "Не удалось сформировать заявку. Попробуйте еще раз или позвоните нам.")
       );
+      if (response.ok) {
+        trackYandexGoal("lead_submit_success", { title: "calculator", leadType: "configurator" });
+        setConsentAccepted(false);
+        formStartedAt.current = Date.now();
+      }
     } catch {
       setLeadStatus("Сеть недоступна. Попробуйте через минуту или позвоните нам.");
+    } finally {
+      setSubmittingLead(false);
     }
   }
 
@@ -540,7 +606,7 @@ export function Calculator() {
                             className={input.rolloutSide === side.value ? "calc-chip is-active" : "calc-chip"}
                             key={side.value}
                             type="button"
-                            onClick={() => setInput((current) => ({ ...current, rolloutSide: side.value }))}
+                            onClick={() => setRolloutSide(side.value)}
                           >
                             {side.value === "two" ? "Две стороны" : "Одна сторона"}
                           </button>
@@ -720,7 +786,19 @@ export function Calculator() {
                   </label>
                 </div>
 
-                <button className="primary-button result-submit" type="button" onClick={submitLead}>
+                <label className="calculator-consent consent-field">
+                  <input
+                    checked={consentAccepted}
+                    onChange={(event) => setConsentAccepted(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>
+                    Согласен на обработку персональных данных и ознакомлен с{" "}
+                    <a href="/privacy-policy" target="_blank" rel="noreferrer">политикой конфиденциальности</a>.
+                  </span>
+                </label>
+
+                <button className="primary-button result-submit" type="button" onClick={submitLead} disabled={submittingLead || !consentAccepted}>
                   <Send size={18} />
                   Получить инженерный расчет
                 </button>

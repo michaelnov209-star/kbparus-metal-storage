@@ -26,7 +26,8 @@ docs/
 ├── audits/                         # независимые оценки состояния
 │   ├── project-audit.md            # общий аудит проекта
 │   ├── calculator-audit.md         # детальный аудит калькулятора
-│   └── customer-journey-audit.md   # путь клиента, точки потери конверсии
+│   ├── customer-journey-audit.md   # путь клиента, точки потери конверсии
+│   └── dependency-audit-2026-05-19.md # npm audit без force-fix
 │
 ├── operations/                     # как эксплуатировать систему
 │   ├── deployment-guide.md         # процесс деплоя
@@ -35,6 +36,7 @@ docs/
 │   ├── admin-smoke.md              # авторизованный smoke-тест админки
 │   ├── cms-setup.md                # настройка Payload с нуля
 │   ├── telegram-bot.md             # настройка Telegram-уведомлений
+│   ├── bitrix24-fields.md          # настройка полей Bitrix24 для заявок
 │   └── content-collection-workflow.md # процесс сбора контента
 │
 ├── planning/                       # что и в каком порядке делать

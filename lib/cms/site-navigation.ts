@@ -64,7 +64,7 @@ export const DEFAULT_SITE_NAVIGATION: SiteNavigationData = {
       { label: "FAQ", href: "#faq" },
       { label: "Контакты", href: "#contacts" }
     ],
-    legalLinks: []
+    legalLinks: [{ label: "Политика конфиденциальности", href: "/privacy-policy" }]
   }
 };
 

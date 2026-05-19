@@ -250,15 +250,15 @@ export default async function Home() {
         </nav>
         <div className="line-header-contact">
           {navigation.header.contacts.showTelegram && (
-            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram"><img src="/assets/icons/telegram.svg" alt="" /></a>
+            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram" data-metrika-goal="messenger_click"><img src="/assets/icons/telegram.svg" alt="" /></a>
           )}
           {navigation.header.contacts.showMax && (
-            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX"><img src="/assets/icons/max.svg" alt="" /></a>
+            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX" data-metrika-goal="messenger_click"><img src="/assets/icons/max.svg" alt="" /></a>
           )}
           {navigation.header.contacts.showPhones && (
             <div className="phone-stack">
               {contacts.phones.map((phone) => (
-                <a className="phone-pill" href={phone.href} key={phone.href}>
+                <a className="phone-pill" href={phone.href} key={phone.href} data-metrika-goal="phone_click">
                   <PhoneCall size={17} />
                   {phone.label}
                 </a>
@@ -559,7 +559,7 @@ export default async function Home() {
           <h2>Оставьте заявку, и мы поможем подобрать систему хранения</h2>
           <p>Свяжемся с вами, уточним исходные данные и бесплатно проконсультируем по оборудованию.</p>
         </div>
-        <LeadForm title="Получить консультацию" />
+        <LeadForm title="Получить консультацию" attachLastCalculatorState />
       </section>
 
       <section className="line-contacts" id="contacts">
@@ -570,8 +570,8 @@ export default async function Home() {
         <div className="contact-cards">
           <article className="contact-card reveal">
             <span><PhoneCall size={20} />Телефон</span>
-            {contacts.phones.map((phone) => <a href={phone.href} key={phone.href}>{phone.label}</a>)}
-            <a href={contacts.email.href}>{contacts.email.label}</a>
+            {contacts.phones.map((phone) => <a href={phone.href} key={phone.href} data-metrika-goal="phone_click">{phone.label}</a>)}
+            <a href={contacts.email.href} data-metrika-goal="email_click">{contacts.email.label}</a>
           </article>
           <article className="contact-card reveal">
             <span><MapPin size={20} />Адрес</span>
@@ -581,8 +581,8 @@ export default async function Home() {
           <article className="contact-card reveal">
             <span><Sparkles size={20} />Социальные сети</span>
             <div className="social-row">
-              <a className="telegram" href={contacts.socials.telegram || contacts.email.href}><Send size={30} /></a>
-              <a className="whatsapp" href={contacts.socials.whatsapp || contacts.phones[0].href}><MessageCircle size={30} /></a>
+              <a className="telegram" href={contacts.socials.telegram || contacts.email.href} data-metrika-goal="messenger_click"><Send size={30} /></a>
+              <a className="whatsapp" href={contacts.socials.whatsapp || contacts.phones[0].href} data-metrika-goal="messenger_click"><MessageCircle size={30} /></a>
               <a className="vk" href={contacts.socials.vk || "https://www.kbparus.ru/"} target="_blank" rel="noreferrer">VK</a>
             </div>
           </article>
@@ -614,8 +614,8 @@ export default async function Home() {
           {navigation.footer.legalLinks.map((link) => <a href={link.href} key={`${link.label}-${link.href}`} {...linkTargetProps(link)}>{link.label}</a>)}
         </nav>
         <div className="footer-contacts">
-          {contacts.phones.map((phone) => <a href={phone.href} key={phone.href}><PhoneCall size={16} />{phone.label}</a>)}
-          <a href={contacts.email.href}><Mail size={16} />{contacts.email.label}</a>
+          {contacts.phones.map((phone) => <a href={phone.href} key={phone.href} data-metrika-goal="phone_click"><PhoneCall size={16} />{phone.label}</a>)}
+          <a href={contacts.email.href} data-metrika-goal="email_click"><Mail size={16} />{contacts.email.label}</a>
           <span><MapPin size={16} />{contacts.address}</span>
           {navigation.footer.cta && <a href={navigation.footer.cta.href} {...linkTargetProps(navigation.footer.cta)}><ArrowRight size={16} />{navigation.footer.cta.label}</a>}
         </div>

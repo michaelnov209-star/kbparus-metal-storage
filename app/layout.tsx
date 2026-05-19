@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AnalyticsEvents } from "@/components/AnalyticsEvents";
+import { YandexMetrika } from "@/components/YandexMetrika";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
@@ -81,7 +83,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
       </head>
-      <body>{children}</body>
+      <body>
+        <YandexMetrika />
+        <AnalyticsEvents />
+        {children}
+      </body>
     </html>
   );
 }

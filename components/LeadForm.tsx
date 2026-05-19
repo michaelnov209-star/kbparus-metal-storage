@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trackYandexGoal } from "@/lib/analytics/metrika";
+import { captureLeadUtm, getLastCalculatorLead, getStoredLeadUtm } from "@/lib/leads/client-state";
 
 interface LeadFormProps {
   title?: string;
@@ -12,19 +14,38 @@ interface LeadFormProps {
   sourceUrl?: string;
   /** Путь к картинке (превью в Telegram). */
   sourceImage?: string;
+  /** Прикрепляет последнюю конфигурацию калькулятора к обычной форме контактов. */
+  attachLastCalculatorState?: boolean;
 }
 
-export function LeadForm({ title = "Получить консультацию", source, sourceTitle, sourceUrl, sourceImage }: LeadFormProps) {
+export function LeadForm({
+  title = "Получить консультацию",
+  source,
+  sourceTitle,
+  sourceUrl,
+  sourceImage,
+  attachLastCalculatorState = false
+}: LeadFormProps) {
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
+
+  useEffect(() => {
+    captureLeadUtm();
+  }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+    if (!consentAccepted) {
+      setStatus("Подтвердите согласие на обработку персональных данных.");
+      return;
+    }
     setSubmitting(true);
     const form = new FormData(event.currentTarget);
     setStatus("Отправляем заявку...");
+    trackYandexGoal("form_submit", { title });
 
     const resolvedSource =
       source ??
@@ -32,13 +53,15 @@ export function LeadForm({ title = "Получить консультацию", 
       (typeof window !== "undefined" ? `${title} — ${window.location.pathname}` : title);
     const resolvedSourceUrl =
       sourceUrl ?? (typeof window !== "undefined" ? window.location.href : undefined);
+    captureLeadUtm();
+    const lastCalculator = attachLastCalculatorState ? getLastCalculatorLead() : undefined;
 
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leadType: "contact",
+          leadType: lastCalculator ? "configurator" : "contact",
           contact: {
             name: String(form.get("name") ?? ""),
             phone: String(form.get("phone") ?? ""),
@@ -49,17 +72,22 @@ export function LeadForm({ title = "Получить консультацию", 
           hp_url: String(form.get("hp_url") ?? ""),
           formStartedAt: formStartedAt.current,
           source: resolvedSource,
-          sourceTitle,
-          sourceUrl: resolvedSourceUrl,
-          sourceImage,
-          utm: {}
+          sourceTitle: sourceTitle ?? lastCalculator?.sourceTitle,
+          sourceUrl: resolvedSourceUrl ?? lastCalculator?.sourceUrl,
+          sourceImage: sourceImage ?? lastCalculator?.sourceImage,
+          calculatorInput: lastCalculator?.calculatorInput,
+          recommendedConfig: lastCalculator?.recommendedConfig,
+          preliminaryPriceFrom: lastCalculator?.preliminaryPriceFrom,
+          utm: getStoredLeadUtm()
         })
       });
 
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
+        trackYandexGoal("lead_submit_success", { title, leadType: lastCalculator ? "configurator" : "contact" });
         setStatus("Заявка отправлена. Инженер свяжется с вами и уточнит параметры.");
         event.currentTarget.reset();
+        setConsentAccepted(false);
         formStartedAt.current = Date.now();
       } else {
         setStatus(data?.error ?? "Не удалось отправить заявку. Попробуйте еще раз или позвоните нам.");
@@ -101,7 +129,19 @@ export function LeadForm({ title = "Получить консультацию", 
           <input name="hp_url" type="text" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
-      <button className="line-primary" type="submit" disabled={submitting}>
+      <label className="line-form-wide consent-field">
+        <input
+          checked={consentAccepted}
+          onChange={(event) => setConsentAccepted(event.target.checked)}
+          required
+          type="checkbox"
+        />
+        <span>
+          Согласен на обработку персональных данных и ознакомлен с{" "}
+          <a href="/privacy-policy" target="_blank" rel="noreferrer">политикой конфиденциальности</a>.
+        </span>
+      </label>
+      <button className="line-primary" type="submit" disabled={submitting || !consentAccepted}>
         {submitting ? "Отправляем..." : "Отправить заявку"}
       </button>
       {status && <p className="line-form-status">{status}</p>}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { bitrix24FieldMapFromEnv, buildBitrix24Payload } from "@/lib/leads/bitrix24";
 import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
 
 interface LeadPayload {
@@ -219,26 +220,25 @@ export async function POST(request: Request) {
 
   const telegramPromise = notifyTelegram(telegramLead);
 
-  const crmPayload = {
-    TITLE: result?.recommendation.title
-      ? `Заявка с конфигуратора: ${result.recommendation.title}`
-      : `Заявка с сайта${sourceTitle ? `: ${sourceTitle}` : ""}`,
-    NAME: name,
-    PHONE: phone ? [{ VALUE: phone, VALUE_TYPE: "WORK" }] : [],
-    EMAIL: email ? [{ VALUE: email, VALUE_TYPE: "WORK" }] : [],
-    COMMENTS: comment,
-    UF_CITY: city || calculatorInput?.city,
-    ...(calculatorInput && result
-      ? {
-          UF_CALCULATOR_INPUT: calculatorInput,
-          UF_RECOMMENDED_CONFIG: result.recommendation,
-          UF_PRELIMINARY_PRICE_FROM: result.fromPrice,
-          UF_PRELIMINARY_PRICE: result.preliminaryPrice
-        }
-      : {}),
-    UF_UTM: payload.utm ?? {},
-    UF_SOURCE: source
-  };
+  const bitrixPayload = buildBitrix24Payload(
+    {
+      leadType: isConfiguratorLead ? "configurator" : "contact",
+      name,
+      phone,
+      email,
+      city: city || calculatorInput?.city,
+      comment,
+      source: source || undefined,
+      sourceTitle: sourceTitle || undefined,
+      sourceUrl,
+      utm: payload.utm,
+      calculatorInput,
+      result,
+      selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean),
+      fromPrice
+    },
+    bitrix24FieldMapFromEnv(process.env)
+  );
 
   const channels: string[] = [];
 
@@ -247,7 +247,7 @@ export async function POST(request: Request) {
       const response = await fetch(process.env.BITRIX24_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: crmPayload }),
+        body: JSON.stringify(bitrixPayload),
         signal: AbortSignal.timeout(10_000)
       });
       if (response.ok) channels.push("bitrix24");
@@ -264,7 +264,7 @@ export async function POST(request: Request) {
       ok: true,
       mode: "mock",
       message: "Заявка подготовлена. Настройте TELEGRAM_BOT_TOKEN или BITRIX24_WEBHOOK_URL для реальной доставки.",
-      crmPayload
+      bitrixPayload
     });
   }
 

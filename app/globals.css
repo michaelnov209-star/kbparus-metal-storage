@@ -207,6 +207,111 @@ nav a:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px);
 .primary-button:hover, .secondary-button:hover, .ghost-button:hover { transform: translateY(-2px); }
 .primary-button:disabled, .secondary-button:disabled, .ghost-button:disabled { cursor: not-allowed; opacity: 0.45; transform: none; }
 
+.consent-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #3d4650;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.consent-field input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--accent);
+}
+
+.consent-field a {
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.calculator-consent,
+.product-consent {
+  margin: 14px 0 10px;
+}
+
+.legal-page {
+  min-height: 100vh;
+  padding: 28px clamp(18px, 4vw, 58px) 72px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(252, 84, 19, 0.08), transparent 28%),
+    linear-gradient(180deg, #ffffff, var(--paper));
+}
+
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto 28px;
+}
+
+.legal-header .brand span {
+  color: var(--ink);
+}
+
+.legal-header .brand small {
+  color: var(--muted);
+}
+
+.legal-header > a {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 900;
+}
+
+.legal-document {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 64px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(12, 16, 22, 0.08);
+}
+
+.legal-document > span {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.legal-document h1 {
+  margin: 14px 0 14px;
+  color: var(--ink);
+  font-size: clamp(38px, 6vw, 78px);
+}
+
+.legal-document h2 {
+  margin-top: 34px;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.legal-document p,
+.legal-document li {
+  color: #3d4650;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.legal-muted {
+  color: var(--muted);
+}
+
 .hero-visual {
   position: relative;
   min-height: 650px;
