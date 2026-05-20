@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { bitrix24FieldMapFromEnv, buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
 import { saveLeadToCms } from "@/lib/leads/cms";
+import { leadEmailConfigFromEnv, sendLeadEmail } from "@/lib/leads/email";
 import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
 
 interface LeadPayload {
@@ -201,6 +203,7 @@ export async function POST(request: Request) {
     : undefined;
   const result = calculatorInput ? calculateStorageSystem(calculatorInput) : undefined;
   const fromPrice = typeof payload.preliminaryPriceFrom === "number" ? payload.preliminaryPriceFrom : result?.fromPrice;
+  const selectedOptions = payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean);
 
   const telegramLead: TelegramLead = {
     leadType: isConfiguratorLead ? "configurator" : "contact",
@@ -216,34 +219,53 @@ export async function POST(request: Request) {
     recommendationTitle: sanitize(payload.recommendedConfig?.title) || result?.recommendation.title,
     fromPriceLabel: fromPrice ? `от ${formatRoundedRub(fromPrice)}` : undefined,
     calculatorInput,
-    selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean)
+    selectedOptions
   };
 
   const telegramPromise = notifyTelegram(telegramLead);
+  const baseLead = {
+    leadType: isConfiguratorLead ? "configurator" : "contact",
+    name,
+    phone,
+    email,
+    city: city || calculatorInput?.city,
+    comment,
+    source: source || undefined,
+    sourceTitle: sourceTitle || undefined,
+    sourceUrl,
+    utm: payload.utm,
+    calculatorInput,
+    result,
+    selectedOptions,
+    fromPrice
+  } as const;
 
   const bitrixPayload = buildBitrix24Payload(
-    {
-      leadType: isConfiguratorLead ? "configurator" : "contact",
-      name,
-      phone,
-      email,
-      city: city || calculatorInput?.city,
-      comment,
-      source: source || undefined,
-      sourceTitle: sourceTitle || undefined,
-      sourceUrl,
-      utm: payload.utm,
-      calculatorInput,
-      result,
-      selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean),
-      fromPrice
-    },
+    baseLead,
     bitrix24FieldMapFromEnv(process.env)
   );
 
   const channels: string[] = [];
   const deliveryErrors: string[] = [];
-  const bitrix24WebhookUrl = resolveBitrix24WebhookUrl(process.env.BITRIX24_WEBHOOK_URL);
+  const emailResult = await sendLeadEmail(
+    {
+      ...baseLead,
+      emailDelivered: false,
+      telegramDelivered: false,
+      bitrix24Delivered: false
+    },
+    leadEmailConfigFromEnv(process.env)
+  );
+  if (emailResult.ok) channels.push("email");
+  else if (emailResult.error && emailResult.error !== "email-not-configured") {
+    deliveryErrors.push(`email-${emailResult.error}`);
+    console.warn(`Email delivery failed: ${emailResult.error}`);
+  }
+
+  const bitrix24Config = getBitrix24RuntimeConfig(process.env);
+  const bitrix24WebhookUrl = bitrix24Config.enabled
+    ? resolveBitrix24WebhookUrl(process.env.BITRIX24_WEBHOOK_URL)
+    : undefined;
 
   if (bitrix24WebhookUrl) {
     try {
@@ -272,20 +294,8 @@ export async function POST(request: Request) {
   }
 
   const cmsResult = await saveLeadToCms({
-    leadType: isConfiguratorLead ? "configurator" : "contact",
-    name,
-    phone,
-    email,
-    city: city || calculatorInput?.city,
-    comment,
-    source: source || undefined,
-    sourceTitle: sourceTitle || undefined,
-    sourceUrl,
-    utm: payload.utm,
-    calculatorInput,
-    result,
-    selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean),
-    fromPrice,
+    ...baseLead,
+    emailDelivered: channels.includes("email"),
     telegramDelivered: channels.includes("telegram"),
     bitrix24Delivered: channels.includes("bitrix24"),
     deliveryErrors
@@ -293,7 +303,7 @@ export async function POST(request: Request) {
   if (cmsResult.ok) channels.push("cms");
   else if (cmsResult.error) console.warn(`CMS lead save failed: ${cmsResult.error}`);
 
-  if (channels.length === 0 && !bitrix24WebhookUrl && !process.env.TELEGRAM_BOT_TOKEN) {
+  if (channels.length === 0 && !bitrix24Config.enabled && !process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({
       ok: true,
       mode: "mock",

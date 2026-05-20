@@ -36,6 +36,7 @@ docs/
 │   ├── admin-smoke.md              # авторизованный smoke-тест админки
 │   ├── cms-setup.md                # настройка Payload с нуля
 │   ├── telegram-bot.md             # настройка Telegram-уведомлений
+│   ├── email-leads.md              # отправка заявок на email
 │   ├── internal-lead-inbox.md      # внутренний журнал заявок в CMS
 │   ├── bitrix24-fields.md          # настройка полей Bitrix24 для заявок
 │   ├── yandex-metrika.md           # счетчик и цели Яндекс Метрики

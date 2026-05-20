@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { GlobalSlug } from "payload";
 import { getCmsClient } from "@/lib/cms/client";
+import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 
 /**
  * GET /api/health
@@ -30,8 +31,9 @@ interface HealthStatus {
       | { ok: false; error: string; collectionNames?: string[]; globalNames?: string[] };
     storage: { ok: boolean; configured: boolean };
     leadIntegrations: {
+      email: { configured: boolean; to: string };
       telegram: { configured: boolean };
-      bitrix24: { configured: boolean };
+      bitrix24: { configured: boolean; enabled: boolean };
     };
     analytics: {
       yandexMetrika: { configured: boolean };
@@ -40,6 +42,7 @@ interface HealthStatus {
 }
 
 export async function GET() {
+  const bitrix24Config = getBitrix24RuntimeConfig(process.env);
   const result: HealthStatus = {
     status: "ok",
     timestamp: new Date().toISOString(),
@@ -51,12 +54,25 @@ export async function GET() {
         configured: Boolean(process.env.BLOB_READ_WRITE_TOKEN)
       },
       leadIntegrations: {
+        email: {
+          configured: Boolean(
+            process.env.SMTP_HOST &&
+              process.env.SMTP_PORT &&
+              process.env.SMTP_USER &&
+              process.env.SMTP_PASSWORD &&
+              (process.env.SMTP_FROM || process.env.SMTP_USER)
+          ),
+          to: process.env.LEAD_EMAIL_TO || "info@kbparus.ru"
+        },
         telegram: {
           configured: Boolean(
             process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
           )
         },
-        bitrix24: { configured: Boolean(process.env.BITRIX24_WEBHOOK_URL) }
+        bitrix24: {
+          configured: bitrix24Config.webhookUrlConfigured,
+          enabled: bitrix24Config.enabled
+        }
       },
       analytics: {
         yandexMetrika: { configured: Boolean(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID) }

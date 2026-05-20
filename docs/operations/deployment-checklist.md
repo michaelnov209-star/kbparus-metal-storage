@@ -20,8 +20,12 @@
 | `DATABASE_URL` | Neon integration | ✅ |
 | `DATABASE_URL_UNPOOLED` | Neon integration или Neon Console | ✅ для DDL |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob integration | ✅ |
+| `LEAD_EMAIL_TO` | `info@kbparus.ru` | recommended |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | mail provider | recommended |
+| `SMTP_SECURE`, `SMTP_FROM` | mail provider | recommended |
 | `TELEGRAM_BOT_TOKEN` | @BotFather | optional |
 | `TELEGRAM_CHAT_ID` | @getmyid_bot | optional |
+| `BITRIX24_ENABLED` | `true` only after webhook validation | optional |
 | `BITRIX24_WEBHOOK_URL` | Bitrix24 admin | optional |
 | `BITRIX24_FIELD_*` | Bitrix24 CRM fields | optional |
 | `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Яндекс Метрика | optional |

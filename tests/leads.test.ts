@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
+import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { buildCmsLeadRecord } from "@/lib/leads/cms-record";
+import { buildLeadEmailMessage, leadEmailConfigFromEnv } from "@/lib/leads/email";
 import { buildTelegramMessage } from "@/lib/leads/telegram";
 
 describe("Telegram lead messages", () => {
@@ -67,6 +69,22 @@ describe("Telegram lead messages", () => {
 });
 
 describe("Bitrix24 lead payload", () => {
+  it("keeps Bitrix24 delivery disabled until explicitly enabled", () => {
+    expect(getBitrix24RuntimeConfig({ BITRIX24_WEBHOOK_URL: "https://example.bitrix24.ru/rest/1/token/" })).toEqual({
+      enabled: false,
+      webhookUrlConfigured: true
+    });
+    expect(
+      getBitrix24RuntimeConfig({
+        BITRIX24_ENABLED: "true",
+        BITRIX24_WEBHOOK_URL: "https://example.bitrix24.ru/rest/1/token/"
+      })
+    ).toEqual({
+      enabled: true,
+      webhookUrlConfigured: true
+    });
+  });
+
   it("normalizes base Bitrix24 webhook URL to deal add method", () => {
     expect(resolveBitrix24WebhookUrl("https://example.bitrix24.ru/rest/1/token/")).toBe(
       "https://example.bitrix24.ru/rest/1/token/crm.deal.add.json"
@@ -182,6 +200,7 @@ describe("CMS lead records", () => {
       result,
       selectedOptions: ["Весы на распалетчик"],
       fromPrice: result.fromPrice,
+      emailDelivered: true,
       telegramDelivered: true,
       bitrix24Delivered: false,
       deliveryErrors: ["bitrix24-http-401"]
@@ -189,10 +208,50 @@ describe("CMS lead records", () => {
 
     expect(record.title).toContain("Заявка с конфигуратора");
     expect(record.status).toBe("new");
+    expect(record.emailDelivered).toBe(true);
     expect(record.telegramDelivered).toBe(true);
     expect(record.bitrix24Delivered).toBe(false);
     expect(record.deliveryErrors).toBe("bitrix24-http-401");
     expect(record.calculatorSummary).toContain("Габариты");
     expect(record.utm).toEqual({ utm_source: "yandex" });
+  });
+});
+
+describe("Email lead delivery", () => {
+  it("formats lead email for info mailbox and Bitrix mail intake", () => {
+    const message = buildLeadEmailMessage({
+      leadType: "contact",
+      name: "Анна",
+      phone: "+7 999 111-22-33",
+      email: "anna@example.com",
+      city: "Казань",
+      comment: "Перезвонить завтра",
+      sourceTitle: "Контакты",
+      sourceUrl: "https://example.com/#contacts",
+      utm: { utm_source: "yandex" },
+      emailDelivered: false,
+      telegramDelivered: false,
+      bitrix24Delivered: false
+    });
+
+    expect(message.subject).toBe("Заявка с сайта: Контакты");
+    expect(message.text).toContain("+7 999 111-22-33");
+    expect(message.text).toContain("Перезвонить завтра");
+    expect(message.text).toContain("utm_source: yandex");
+    expect(message.html).toContain("anna@example.com");
+  });
+
+  it("uses info mailbox as default lead recipient", () => {
+    const config = leadEmailConfigFromEnv({
+      SMTP_HOST: "smtp.example.com",
+      SMTP_PORT: "465",
+      SMTP_SECURE: "true",
+      SMTP_USER: "robot@example.com",
+      SMTP_PASSWORD: "secret"
+    });
+
+    expect(config.to).toBe("info@kbparus.ru");
+    expect(config.from).toBe("robot@example.com");
+    expect(config.secure).toBe(true);
   });
 });

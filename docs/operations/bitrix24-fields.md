@@ -4,7 +4,7 @@
 
 ## Что уже отправляется без custom fields
 
-Интеграция работает через `BITRIX24_WEBHOOK_URL`. Если webhook не задан, Bitrix24 пропускается, Telegram и mock-режим продолжают работать.
+Webhook-интеграция Bitrix24 является опциональной. Основной production-сценарий сейчас: сайт отправляет заявку на `info@kbparus.ru`, а Bitrix24 создает лид из входящей почты. Webhook работает через `BITRIX24_WEBHOOK_URL` и включается только флагом `BITRIX24_ENABLED=true`. Если флаг выключен или webhook не задан, Bitrix24 webhook пропускается, email, Telegram, CMS-журнал и mock-режим продолжают работать.
 
 Стандартные поля Bitrix24:
 
@@ -52,10 +52,11 @@ https://YOUR.bitrix24.ru/rest/USER_ID/TOKEN/crm.deal.add.json
 ## Проверка
 
 1. В Vercel задать `BITRIX24_WEBHOOK_URL` и нужные `BITRIX24_FIELD_*`.
-2. Отправить тестовую заявку с обычной формы.
-3. Отправить тестовую заявку из калькулятора.
-4. Проверить, что Telegram не изменился и продолжает получать заявку.
-5. В Bitrix24 проверить `COMMENTS` даже при пустых custom fields.
+2. После проверки webhook добавить `BITRIX24_ENABLED=true`.
+3. Отправить тестовую заявку с обычной формы.
+4. Отправить тестовую заявку из калькулятора.
+5. Проверить, что Telegram не изменился и продолжает получать заявку.
+6. В Bitrix24 проверить `COMMENTS` даже при пустых custom fields.
 
 ## Риски
 

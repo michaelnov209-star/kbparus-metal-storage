@@ -127,8 +127,9 @@ export const Leads: CollectionConfig = {
             {
               type: "row",
               fields: [
+                { name: "emailDelivered", label: { ru: "Email", en: "Email" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
                 { name: "telegramDelivered", label: { ru: "Telegram", en: "Telegram" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
-                { name: "bitrix24Delivered", label: { ru: "Bitrix24", en: "Bitrix24" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
+                { name: "bitrix24Delivered", label: { ru: "Bitrix24 webhook", en: "Bitrix24 webhook" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
                 { name: "cmsStored", label: { ru: "Сохранено в CMS", en: "Stored in CMS" }, type: "checkbox", defaultValue: true, admin: { width: "25%", readOnly: true } }
               ]
             },

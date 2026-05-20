@@ -15,6 +15,7 @@ export interface CmsLeadInput {
   result?: CalculatorResult;
   selectedOptions?: string[];
   fromPrice?: number;
+  emailDelivered: boolean;
   telegramDelivered: boolean;
   bitrix24Delivered: boolean;
   deliveryErrors?: string[];
@@ -62,6 +63,7 @@ export function buildCmsLeadRecord(lead: CmsLeadInput) {
     preliminaryPriceFrom: lead.fromPrice ?? lead.result?.fromPrice,
     calculatorSummary: buildCalculatorSummary(lead),
     calculatorInput: lead.calculatorInput,
+    emailDelivered: lead.emailDelivered,
     telegramDelivered: lead.telegramDelivered,
     bitrix24Delivered: lead.bitrix24Delivered,
     cmsStored: true,
