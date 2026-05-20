@@ -33,6 +33,9 @@ interface HealthStatus {
       telegram: { configured: boolean };
       bitrix24: { configured: boolean };
     };
+    analytics: {
+      yandexMetrika: { configured: boolean };
+    };
   };
 }
 
@@ -54,6 +57,9 @@ export async function GET() {
           )
         },
         bitrix24: { configured: Boolean(process.env.BITRIX24_WEBHOOK_URL) }
+      },
+      analytics: {
+        yandexMetrika: { configured: Boolean(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID) }
       }
     }
   };

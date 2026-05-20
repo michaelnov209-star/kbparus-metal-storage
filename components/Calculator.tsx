@@ -281,6 +281,19 @@ export function Calculator() {
     }
   }
 
+  function goToStep(nextStep: number, source: string) {
+    const normalizedStep = Math.max(0, Math.min(nextStep, steps.length - 1));
+    if (normalizedStep === step) return;
+
+    markCalculatorStarted(source);
+    trackYandexGoal("calculator_step_change", {
+      from: step + 1,
+      to: normalizedStep + 1,
+      source
+    });
+    setStep(normalizedStep);
+  }
+
   function selectProfile(profileId: CalculatorProfileId) {
     markCalculatorStarted("select_profile");
     trackYandexGoal("calculator_parameter_change", { field: "systemId", value: profileId });
@@ -414,7 +427,7 @@ export function Calculator() {
         <div className="calc-progress" aria-label="Прогресс конфигуратора">
           <div className="calc-steps">
             {steps.map((item, index) => (
-              <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => setStep(index)}>
+              <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => goToStep(index, "step_tab")}>
                 <span>{index + 1}</span>
                 {item}
               </button>
@@ -808,11 +821,11 @@ export function Calculator() {
           )}
 
           <div className="calc-controls">
-            <button className="ghost-button" type="button" disabled={step === 0} onClick={() => setStep((current) => Math.max(current - 1, 0))}>
+            <button className="ghost-button" type="button" disabled={step === 0} onClick={() => goToStep(step - 1, "back_button")}>
               <ArrowLeft size={18} />
               Назад
             </button>
-            <button className="secondary-button" type="button" disabled={step === steps.length - 1} onClick={() => setStep((current) => Math.min(current + 1, steps.length - 1))}>
+            <button className="secondary-button" type="button" disabled={step === steps.length - 1} onClick={() => goToStep(step + 1, "next_button")}>
               Далее
               <ArrowRight size={18} />
             </button>
@@ -836,7 +849,7 @@ export function Calculator() {
               <span key={fact}><Check size={16} />{fact}</span>
             ))}
           </div>
-          <button className="primary-button summary-cta" type="button" onClick={() => setStep(3)}>
+          <button className="primary-button summary-cta" type="button" onClick={() => goToStep(3, "summary_cta")}>
             <Send size={18} />
             Перейти к заявке
           </button>
@@ -850,7 +863,7 @@ export function Calculator() {
           <button
             className="mobile-summary-action"
             type="button"
-            onClick={() => (step < steps.length - 1 ? setStep((current) => current + 1) : setMobileSummaryOpen(true))}
+            onClick={() => (step < steps.length - 1 ? goToStep(step + 1, "mobile_next") : setMobileSummaryOpen(true))}
           >
             {step < steps.length - 1 ? "Далее" : "Итог"}
             <ArrowRight size={16} />
@@ -883,7 +896,7 @@ export function Calculator() {
                 className="primary-button"
                 type="button"
                 onClick={() => {
-                  setStep(3);
+                  goToStep(3, "mobile_summary_cta");
                   setMobileSummaryOpen(false);
                 }}
               >
