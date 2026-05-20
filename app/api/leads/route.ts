@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { bitrix24FieldMapFromEnv, buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
+import { saveLeadToCms } from "@/lib/leads/cms";
 import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
 
 interface LeadPayload {
@@ -241,6 +242,7 @@ export async function POST(request: Request) {
   );
 
   const channels: string[] = [];
+  const deliveryErrors: string[] = [];
   const bitrix24WebhookUrl = resolveBitrix24WebhookUrl(process.env.BITRIX24_WEBHOOK_URL);
 
   if (bitrix24WebhookUrl) {
@@ -252,8 +254,12 @@ export async function POST(request: Request) {
         signal: AbortSignal.timeout(10_000)
       });
       if (response.ok) channels.push("bitrix24");
-      else console.warn(`Bitrix24 delivery failed with HTTP ${response.status}`);
+      else {
+        deliveryErrors.push(`bitrix24-http-${response.status}`);
+        console.warn(`Bitrix24 delivery failed with HTTP ${response.status}`);
+      }
     } catch {
+      deliveryErrors.push("bitrix24-network");
       console.warn("Bitrix24 delivery failed with network error");
       // CRM outage must not block lead processing if Telegram works.
     }
@@ -261,13 +267,39 @@ export async function POST(request: Request) {
 
   const telegramResult = await telegramPromise;
   if (telegramResult.ok) channels.push("telegram");
+  else if (telegramResult.error && telegramResult.error !== "not-configured") {
+    deliveryErrors.push(telegramResult.error);
+  }
+
+  const cmsResult = await saveLeadToCms({
+    leadType: isConfiguratorLead ? "configurator" : "contact",
+    name,
+    phone,
+    email,
+    city: city || calculatorInput?.city,
+    comment,
+    source: source || undefined,
+    sourceTitle: sourceTitle || undefined,
+    sourceUrl,
+    utm: payload.utm,
+    calculatorInput,
+    result,
+    selectedOptions: payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean),
+    fromPrice,
+    telegramDelivered: channels.includes("telegram"),
+    bitrix24Delivered: channels.includes("bitrix24"),
+    deliveryErrors
+  });
+  if (cmsResult.ok) channels.push("cms");
+  else if (cmsResult.error) console.warn(`CMS lead save failed: ${cmsResult.error}`);
 
   if (channels.length === 0 && !bitrix24WebhookUrl && !process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({
       ok: true,
       mode: "mock",
       message: "Заявка подготовлена. Настройте TELEGRAM_BOT_TOKEN или BITRIX24_WEBHOOK_URL для реальной доставки.",
-      bitrixPayload
+      bitrixPayload,
+      cmsResult
     });
   }
 

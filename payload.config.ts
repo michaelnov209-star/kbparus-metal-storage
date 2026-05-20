@@ -12,6 +12,7 @@ import { Categories } from "./payload/collections/Categories";
 import { Subcategories } from "./payload/collections/Subcategories";
 import { Products } from "./payload/collections/Products";
 import { CalculatorProfiles } from "./payload/collections/CalculatorProfiles";
+import { Leads } from "./payload/collections/Leads";
 import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
 import { LeadManagement } from "./payload/globals/LeadManagement";
@@ -44,7 +45,7 @@ export default buildConfig({
     fallbackLanguage: "ru",
     supportedLanguages: { ru }
   },
-  collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles],
+  collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
   globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "change-me-locally",

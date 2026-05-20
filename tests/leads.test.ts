@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
+import { buildCmsLeadRecord } from "@/lib/leads/cms-record";
 import { buildTelegramMessage } from "@/lib/leads/telegram";
 
 describe("Telegram lead messages", () => {
@@ -150,5 +151,48 @@ describe("Bitrix24 lead payload", () => {
     expect(payload.fields.UF_CRM_PRELIMINARY_PRICE_FROM).toBe(result.fromPrice);
     expect(String(payload.fields.COMMENTS)).toContain("Ориентировочная цена");
     expect(String(payload.fields.COMMENTS)).toContain("Конфигурация");
+  });
+});
+
+describe("CMS lead records", () => {
+  it("stores delivery status and calculator context for admin inbox", () => {
+    const calculatorInput = normalizeCalculatorInput({
+      systemId: "auto-sheet-metal",
+      heightMm: 70,
+      widthMm: 1600,
+      lengthMm: 3100,
+      loadKg: 2000,
+      shelfCount: 20,
+      towerCount: 1,
+      optionIds: ["scale"]
+    });
+    const result = calculateStorageSystem(calculatorInput);
+
+    const record = buildCmsLeadRecord({
+      leadType: "configurator",
+      name: "Иван",
+      phone: "+7 999 111-22-33",
+      email: "ivan@example.com",
+      city: "Москва",
+      comment: "Нужен монтаж",
+      sourceTitle: "Калькулятор",
+      sourceUrl: "https://example.com/#calculator",
+      utm: { utm_source: "yandex" },
+      calculatorInput,
+      result,
+      selectedOptions: ["Весы на распалетчик"],
+      fromPrice: result.fromPrice,
+      telegramDelivered: true,
+      bitrix24Delivered: false,
+      deliveryErrors: ["bitrix24-http-401"]
+    });
+
+    expect(record.title).toContain("Заявка с конфигуратора");
+    expect(record.status).toBe("new");
+    expect(record.telegramDelivered).toBe(true);
+    expect(record.bitrix24Delivered).toBe(false);
+    expect(record.deliveryErrors).toBe("bitrix24-http-401");
+    expect(record.calculatorSummary).toContain("Габариты");
+    expect(record.utm).toEqual({ utm_source: "yandex" });
   });
 });

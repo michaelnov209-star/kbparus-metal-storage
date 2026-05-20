@@ -31,9 +31,9 @@ const sections = [
   },
   {
     title: "Заявки",
-    text: "Операционный статус форм, Telegram и подготовка к интеграции Bitrix24.",
-    href: "/admin/globals/lead-management",
-    cta: "Проверить каналы"
+    text: "Внутренний журнал заявок с сайта: контактные данные, источник, UTM, параметры калькулятора и статус обработки.",
+    href: "/admin/collections/leads",
+    cta: "Открыть заявки"
   }
 ];
 
