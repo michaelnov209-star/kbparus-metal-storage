@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { ArrowRight, Maximize2, X } from "lucide-react";
 import type { ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 
@@ -11,18 +12,6 @@ function getCatalogBadge(id: string) {
   if (id.includes("warehouse") || id.includes("erp")) return "Склад и учет";
   if (id.includes("lifting")) return "Подача и подъем";
   return "Категория";
-}
-
-function getCatalogImageSrcSet(item: ExcelHomeCatalogItem) {
-  const sources = [
-    item.imageThumb ? `${item.imageThumb} 320w` : null,
-    item.imageMedium ? `${item.imageMedium} 800w` : null,
-    item.imageLarge ? `${item.imageLarge} 1600w` : null
-  ]
-    .filter((source): source is string => Boolean(source))
-    .filter((source) => !source.startsWith(`${item.image} `));
-
-  return sources.length > 0 ? sources.join(", ") : undefined;
 }
 
 export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
@@ -51,15 +40,14 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
           <article className="catalog-card reveal" key={item.id}>
             <div className="catalog-card-visual has-image">
               <a className="catalog-image-link" href={`/catalog/${item.id}`} aria-label={`Перейти в категорию: ${item.title}`}>
-                <img
+                <Image
                   className="catalog-image-main"
                   src={item.imageMedium ?? item.image}
-                  srcSet={getCatalogImageSrcSet(item)}
-                  sizes="(max-width: 760px) 46vw, (max-width: 1180px) 31vw, 24vw"
                   alt={item.title}
-                  loading={index < 2 ? "eager" : "lazy"}
-                  fetchPriority={index === 0 ? "high" : "auto"}
-                  decoding="async"
+                  fill
+                  sizes="(max-width: 760px) 46vw, (max-width: 1180px) 31vw, 24vw"
+                  style={{ objectFit: "contain" }}
+                  priority={index < 2}
                 />
               </a>
               <button
