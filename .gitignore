@@ -12,3 +12,6 @@ npm-debug.log*
 
 # Payload CMS auto-generated
 payload-types.ts
+
+# graphify knowledge graph artifacts (rebuild with /graphify .)
+graphify-out/
