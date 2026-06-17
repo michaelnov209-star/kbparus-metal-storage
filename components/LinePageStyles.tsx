@@ -271,6 +271,10 @@ export function LinePageStyles() {
       .line-faq summary{transition:background .2s ease}.line-faq summary:hover{background:rgba(252,84,19,.06)}.line-faq summary span{transition:transform .25s ease}.line-faq details[open]>summary span{transform:scale(1.6)}.line-faq details[open]>p{animation:faqReveal .3s ease}@keyframes faqReveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
       @media(max-width:540px){.line-hero-actions{width:100%;gap:10px}.line-hero-cta{flex:1 1 100%;min-height:52px;font-size:16px;padding:0 22px}}
       @media(prefers-reduced-motion:reduce){.line-faq details[open]>p,.catalog-card-visual.has-image img,.line-hero-cta,.line-header{animation:none!important;transition:none!important}}
+      /* Mobile calculator fix: the 2-column grid squeezed the workspace column to ~0
+         on phones, so the step-0 title/description wrapped one word per line.
+         On mobile collapse the calculator to a simple vertical stack (full width). */
+      @media(max-width:900px){.calculator-product{display:block!important}.calculator-product>.calc-progress,.calculator-product>.calc-workspace{width:100%!important;max-width:100%!important;margin:0 0 18px!important}.calc-workspace,.calc-panel,.calc-panel-intro,.calc-panel-focus,.calc-panel-title,.calc-panel-title>div{width:100%!important;max-width:100%!important;min-width:0!important}.calc-panel-title{display:block!important}.catalog-card b{flex-wrap:wrap}}
     `}</style>
   );
 }
