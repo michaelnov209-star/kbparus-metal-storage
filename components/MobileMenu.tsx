@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X, ChevronRight, PhoneCall } from "lucide-react";
 
 interface MobileMenuLink {
@@ -63,7 +64,7 @@ export function MobileMenu({ catalogLabel, catalogHref, categories, links, phone
         <Menu size={22} />
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <div className="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="Меню сайта" onClick={() => setOpen(false)}>
           <nav className="mobile-menu-panel" aria-label="Мобильная навигация" onClick={(event) => event.stopPropagation()}>
             <div className="mobile-menu-head">
@@ -111,7 +112,8 @@ export function MobileMenu({ catalogLabel, catalogHref, categories, links, phone
               </div>
             )}
           </nav>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
