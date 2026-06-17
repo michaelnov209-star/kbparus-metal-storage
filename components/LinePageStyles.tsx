@@ -280,6 +280,26 @@ export function LinePageStyles() {
          3-line titles the bottom "Перейти в категорию" CTA got clipped. Let cards grow
          to fit content (image row fixed, body auto), so the CTA is never cut off. */
       @media(max-width:760px){.catalog-grid{align-items:stretch}.catalog-card{min-height:0!important;grid-template-rows:118px auto!important}.catalog-card-body{padding:13px 13px 16px!important;gap:8px!important;overflow:visible!important}.catalog-card h3{overflow:visible!important}.catalog-card b{white-space:normal!important;flex-wrap:wrap;line-height:1.25;overflow:visible!important}}
+      /* Mobile calculator compact: step-0 was ~3860px (≈5 screens). System cards were
+         392px each (vertical photo). Make them compact horizontal rows (78px photo +
+         text), shrink stepper/heading/helper → much less scrolling. */
+      @media(max-width:760px){
+        .system-showcase{grid-template-columns:1fr!important;gap:10px!important}
+        .system-card{display:grid!important;grid-template-columns:78px 1fr!important;grid-template-rows:auto!important;grid-template-areas:"img tags" "img title" "img desc"!important;column-gap:12px!important;row-gap:3px!important;align-items:center!important;min-height:0!important;padding:12px!important;border-radius:18px!important}
+        .system-card .system-card-tags{grid-area:tags!important;min-height:0!important;margin:0!important;flex-wrap:wrap}
+        .system-card img{grid-area:img!important;width:78px!important;height:78px!important;margin:0!important;align-self:center!important;padding:6px!important}
+        .system-card strong{grid-area:title!important;min-height:0!important;font-size:16px!important;line-height:1.15!important}
+        .system-card small{grid-area:desc!important;min-height:0!important;font-size:13px!important;line-height:1.3!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .system-card.is-active:after{top:8px!important;right:8px!important}
+        .calc-progress{padding:8px!important;margin-bottom:14px!important}
+        .calc-steps button{min-height:42px!important;font-size:11px!important}
+        .calculator-heading{gap:8px!important;margin-bottom:14px!important}
+        .calculator-heading h2{font-size:clamp(25px,7vw,34px)!important}
+        .calculator-heading p{font-size:14px!important}
+        .guided-assist{padding:12px!important}
+        .guided-assist>div:first-child small{display:none!important}
+        .guided-choice{min-height:0!important;padding:12px!important}
+      }
     `}</style>
   );
 }
