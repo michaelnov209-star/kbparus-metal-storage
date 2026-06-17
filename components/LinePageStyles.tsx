@@ -275,6 +275,10 @@ export function LinePageStyles() {
          on phones, so the step-0 title/description wrapped one word per line.
          On mobile collapse the calculator to a simple vertical stack (full width). */
       @media(max-width:900px){.calculator-product{display:block!important}.calculator-product>.calc-progress,.calculator-product>.calc-workspace{width:100%!important;max-width:100%!important;margin:0 0 18px!important}.calc-workspace,.calc-panel,.calc-panel-intro,.calc-panel-focus,.calc-panel-title,.calc-panel-title>div{width:100%!important;max-width:100%!important;min-width:0!important}.calc-panel-title{display:block!important}.catalog-card b{flex-wrap:wrap}}
+      /* Mobile catalog card: cards had fixed min-height + overflow:hidden, so on long
+         3-line titles the bottom "Перейти в категорию" CTA got clipped. Let cards grow
+         to fit content (image row fixed, body auto), so the CTA is never cut off. */
+      @media(max-width:760px){.catalog-grid{align-items:stretch}.catalog-card{min-height:0!important;grid-template-rows:118px auto!important}.catalog-card-body{padding:13px 13px 16px!important;gap:8px!important;overflow:visible!important}.catalog-card h3{overflow:visible!important}.catalog-card b{white-space:normal!important;flex-wrap:wrap;line-height:1.25;overflow:visible!important}}
     `}</style>
   );
 }
