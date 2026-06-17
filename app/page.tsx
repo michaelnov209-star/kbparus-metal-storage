@@ -4,6 +4,7 @@ import { Calculator } from "@/components/Calculator";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
+import { MobileMenu } from "@/components/MobileMenu";
 import { SliderControls } from "@/components/SliderControls";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
@@ -232,6 +233,13 @@ export default async function Home() {
 
       <header className="line-header">
         <BrandMark />
+        <MobileMenu
+          catalogLabel={navigation.header.catalog.label}
+          catalogHref={navigation.header.catalog.href}
+          categories={catalogCategories.map((item) => ({ id: item.id, title: item.title }))}
+          links={navigation.header.links}
+          phones={contacts.phones}
+        />
         <nav aria-label="Навигация по сайту">
           <div className="catalog-menu">
             <a href={navigation.header.catalog.href} className="catalog-trigger"><Menu size={16} />{navigation.header.catalog.label}</a>
