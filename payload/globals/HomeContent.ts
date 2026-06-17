@@ -125,6 +125,28 @@ export const HomeContent: GlobalConfig = {
                       { name: "label", label: { ru: "Подпись (напр. «проектов»)", en: "Label" }, type: "text", required: true, admin: { width: "60%" } }
                     ]}
                   ]
+                },
+                {
+                  name: "actions",
+                  label: { ru: "Кнопки призыва к действию (под заголовком)", en: "Hero CTAs" },
+                  type: "array",
+                  maxRows: 3,
+                  admin: {
+                    description: {
+                      ru: "Кнопки под главным заголовком. Если оставить пустым — показываются стандартные «Рассчитать стоимость» и «Получить КП». Рекомендуем 1–2 кнопки. В поле «Куда ведёт» можно указать якорь раздела: #calculator (калькулятор) или #request (форма заявки).",
+                      en: "Buttons under the main headline. Empty = default CTAs."
+                    }
+                  },
+                  fields: [
+                    { type: "row", fields: [
+                      { name: "label", label: { ru: "Текст кнопки", en: "Label" }, type: "text", required: true, admin: { width: "40%", placeholder: "Рассчитать стоимость" } },
+                      { name: "href", label: { ru: "Куда ведёт (URL или #якорь)", en: "Href" }, type: "text", required: true, admin: { width: "40%", placeholder: "#calculator" } },
+                      { name: "style", label: { ru: "Стиль", en: "Style" }, type: "select", defaultValue: "primary", admin: { width: "20%" }, options: [
+                        { label: { ru: "Основная (оранжевая)", en: "Primary" }, value: "primary" },
+                        { label: { ru: "Второстепенная (контурная)", en: "Secondary" }, value: "secondary" }
+                      ] }
+                    ]}
+                  ]
                 }
               ]
             }

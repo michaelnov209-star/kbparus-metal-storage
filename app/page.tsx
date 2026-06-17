@@ -5,6 +5,7 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
 import { LinePageStyles } from "@/components/LinePageStyles";
 import { MobileMenu } from "@/components/MobileMenu";
+import { HeaderScroll } from "@/components/HeaderScroll";
 import { SliderControls } from "@/components/SliderControls";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
@@ -229,6 +230,7 @@ export default async function Home() {
   return (
     <main className="line-page" id="top">
       <LinePageStyles />
+      <HeaderScroll />
       <JsonLd data={faqSchema(home.faq)} />
 
       <header className="line-header">
@@ -307,6 +309,19 @@ export default async function Home() {
             <span className="line-kicker">{hero.eyebrow}</span>
             <h1>{hero.title}</h1>
             {hero.description && <p className="line-hero-lede">{hero.description}</p>}
+            {hero.actions.length > 0 && (
+              <div className="line-hero-actions">
+                {hero.actions.map((action) => (
+                  <a
+                    key={`${action.label}-${action.href}`}
+                    href={action.href}
+                    className={`line-hero-cta line-hero-cta--${action.style}`}
+                  >
+                    {action.label}
+                  </a>
+                ))}
+              </div>
+            )}
             <div className="hero-metrics" aria-label="Ключевые показатели КБ Парус">
               {hero.metrics.map((item) => (
                 <article key={`${item.value}-${item.label}`}>

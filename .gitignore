@@ -15,3 +15,9 @@ payload-types.ts
 
 # graphify knowledge graph artifacts (rebuild with /graphify .)
 graphify-out/
+
+# Сторонние проекты в той же рабочей папке — НЕ часть kbparus (см. CLAUDE.md)
+3x-ui/
+3x-ui-telegram-bot/
+technokam-payroll/
+vedomost-audit/

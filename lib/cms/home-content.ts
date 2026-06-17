@@ -17,6 +17,12 @@ export type IconKey =
   | "wrench"
   | "zap";
 
+export interface HeroAction {
+  label: string;
+  href: string;
+  style: "primary" | "secondary";
+}
+
 export interface HeroData {
   eyebrow: string;
   title: string;
@@ -25,6 +31,7 @@ export interface HeroData {
     | { type: "video"; videoUrl: string; posterUrl: string }
     | { type: "image"; imageUrl: string; imageSrcSet?: string; alt: string };
   metrics: Array<{ value: string; label: string }>;
+  actions: HeroAction[];
 }
 
 export interface HomePageContent {
@@ -78,6 +85,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       { value: "500+", label: "проектов" },
       { value: "20+", label: "лет на рынке" },
       { value: "12 000+", label: "тонн металла под управлением" }
+    ],
+    actions: [
+      { label: "Рассчитать стоимость", href: "#calculator", style: "primary" },
+      { label: "Получить КП", href: "#request", style: "secondary" }
     ]
   },
   storedMaterials: [
@@ -451,6 +462,16 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
       .filter((item: { value?: string; label?: string }) => item.value && item.label),
     defaults.metrics
   );
+  const actions = withFallback(
+    hero.actions
+      ?.map((item: AnyRecord) => ({
+        label: item.label,
+        href: item.href,
+        style: (item.style === "secondary" ? "secondary" : "primary") as HeroAction["style"]
+      }))
+      .filter((item: { label?: string; href?: string }) => item.label && item.href),
+    defaults.actions
+  );
   const bg = hero.background;
   const wantVideo = bg?.type === "video" || !bg?.type;
 
@@ -464,7 +485,8 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
         videoUrl: pickUrl(bg?.video) ?? (defaults.background as { videoUrl: string }).videoUrl,
         posterUrl: pickUrl(bg?.poster) ?? (defaults.background as { posterUrl: string }).posterUrl
       },
-      metrics
+      metrics,
+      actions
     };
   }
 
@@ -481,7 +503,8 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
       imageSrcSet: buildSrcSet(bg?.image),
       alt: pickAlt(bg?.image) ?? "Производство КБ Парус — системы хранения металла"
     },
-    metrics
+    metrics,
+    actions
   };
 }
 
