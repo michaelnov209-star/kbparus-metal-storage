@@ -28,6 +28,22 @@ export default buildConfig({
       importMapFile: path.resolve(dirname, "app/(payload)/admin/importMap.ts")
     },
     components: {
+      graphics: {
+        Logo: {
+          path: "@/app/(payload)/components/Logo",
+          exportName: "Logo"
+        },
+        Icon: {
+          path: "@/app/(payload)/components/Icon",
+          exportName: "Icon"
+        }
+      },
+      beforeLogin: [
+        {
+          path: "@/app/(payload)/components/LoginBranding",
+          exportName: "LoginBranding"
+        }
+      ],
       beforeDashboard: [
         {
           path: "@/app/(payload)/components/AdminDashboard",

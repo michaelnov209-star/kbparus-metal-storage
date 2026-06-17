@@ -107,8 +107,36 @@ html[data-theme] textarea::placeholder {
 html[data-theme] .btn--style-primary,
 html[data-theme] .btn--style-pill {
   color: #ffffff;
-  background: #202832;
-  border-color: #202832;
+  background: linear-gradient(135deg, #fc5413, #ff7e45);
+  border-color: transparent;
+  box-shadow: 0 12px 28px rgba(252, 84, 19, 0.24);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+html[data-theme] .btn--style-primary:hover,
+html[data-theme] .btn--style-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(252, 84, 19, 0.32);
+}
+
+// Оранжевый акцент на активной навигации и фокусе инпутов
+html[data-theme] .nav__link--active,
+html[data-theme] .nav__link.active {
+  color: #9b3a12;
+  background: rgba(252, 84, 19, 0.08);
+  box-shadow: inset 3px 0 0 #fc5413;
+}
+
+html[data-theme] input:focus,
+html[data-theme] textarea:focus,
+html[data-theme] select:focus {
+  border-color: #fc5413;
+  box-shadow: 0 0 0 2px rgba(252, 84, 19, 0.25);
+  outline: none;
+}
+
+html[data-theme] a:not(.btn):not(.kb-admin-dashboard__card):not(.kb-admin-dashboard__kpi):hover {
+  color: #c2440f;
 }
 
 html[data-theme] .btn--style-secondary,
@@ -151,24 +179,97 @@ html[data-theme] .upload-card__thumbnail {
   background: var(--theme-elevation-100);
 }
 
+// Логотип в шапке админки
+html[data-theme] .kb-admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+html[data-theme] .kb-admin-logo img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+html[data-theme] .kb-admin-logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+html[data-theme] .kb-admin-logo__text strong {
+  color: #121820;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+html[data-theme] .kb-admin-logo__text small {
+  color: #6b7682;
+  font-size: 12px;
+}
+
+html[data-theme] .kb-admin-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+// Брендинг экрана логина
+html[data-theme] .kb-login-branding {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 0 26px;
+  padding: 30px 26px;
+  text-align: center;
+  border-radius: 16px;
+  background: radial-gradient(circle at 78% 12%, rgba(252, 84, 19, 0.22), transparent 38%),
+    linear-gradient(135deg, #111923, #273543);
+  box-shadow: 0 26px 70px rgba(15, 24, 32, 0.28);
+}
+
+html[data-theme] .kb-login-branding__logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+}
+
+html[data-theme] .kb-login-branding h2 {
+  margin: 8px 0 0;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+html[data-theme] .kb-login-branding p {
+  max-width: 360px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+}
+
+// Дашборд
 html[data-theme] .kb-admin-dashboard {
   margin: 0 0 34px;
   color: var(--theme-text);
 }
 
 html[data-theme] .kb-admin-dashboard__hero {
-  max-width: 1120px;
-  margin: 0 0 20px;
-  padding: 28px;
-  border: 1px solid var(--theme-border-color);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #eef3f8 100%);
-  box-shadow: 0 18px 50px rgba(17, 24, 32, 0.08);
+  max-width: 1180px;
+  margin: 0 0 22px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: radial-gradient(circle at 88% 10%, rgba(252, 84, 19, 0.28), transparent 32%),
+    linear-gradient(135deg, #101820, #243240);
+  box-shadow: 0 26px 70px rgba(15, 24, 32, 0.26);
 }
 
 html[data-theme] .kb-admin-dashboard__eyebrow {
   margin: 0 0 10px;
-  color: #46525f;
+  color: #ff9b6b;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -177,57 +278,176 @@ html[data-theme] .kb-admin-dashboard__eyebrow {
 
 html[data-theme] .kb-admin-dashboard__hero h2 {
   margin: 0 0 12px;
-  color: #121820;
-  font-size: 32px;
-  line-height: 1.12;
+  color: #ffffff;
+  font-size: 34px;
+  line-height: 1.1;
 }
 
-html[data-theme] .kb-admin-dashboard__hero p:last-child {
+html[data-theme] .kb-admin-dashboard__hero p {
   max-width: 760px;
   margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+html[data-theme] .kb-admin-dashboard__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+html[data-theme] .kb-admin-dashboard__quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+html[data-theme] .kb-admin-dashboard__quick-link:first-child {
+  background: linear-gradient(135deg, #fc5413, #ff7e45);
+  border-color: transparent;
+  box-shadow: 0 12px 26px rgba(252, 84, 19, 0.32);
+}
+
+html[data-theme] .kb-admin-dashboard__quick-link:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+html[data-theme] .kb-admin-dashboard__quick-link:first-child:hover {
+  background: linear-gradient(135deg, #ff7e45, #fc5413);
+}
+
+html[data-theme] .kb-admin-dashboard__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  max-width: 1180px;
+  margin: 0 0 26px;
+}
+
+html[data-theme] .kb-admin-dashboard__kpi {
+  display: grid;
+  gap: 4px;
+  padding: 22px;
+  border: 1px solid var(--theme-border-color);
+  border-radius: 16px;
+  background: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 14px 36px rgba(17, 24, 32, 0.07);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+html[data-theme] .kb-admin-dashboard__kpi:hover {
+  border-color: rgba(252, 84, 19, 0.42);
+  box-shadow: 0 20px 48px rgba(252, 84, 19, 0.14);
+  transform: translateY(-2px);
+}
+
+html[data-theme] .kb-admin-dashboard__kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  color: #fc5413;
+  background: #fff3ed;
+  border: 1px solid rgba(252, 84, 19, 0.22);
+}
+
+html[data-theme] .kb-admin-dashboard__kpi-value {
+  color: #121820;
+  font-size: 34px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+html[data-theme] .kb-admin-dashboard__kpi-label {
+  color: #56616c;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+html[data-theme] .kb-admin-dashboard__section {
+  max-width: 1180px;
+  margin: 0 0 22px;
+}
+
+html[data-theme] .kb-admin-dashboard__section-title {
+  margin: 0 0 12px;
   color: #46525f;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 html[data-theme] .kb-admin-dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
-  max-width: 1120px;
 }
 
 html[data-theme] .kb-admin-dashboard__card {
   display: flex;
-  min-height: 168px;
+  min-height: 176px;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 20px;
+  padding: 22px;
   border: 1px solid var(--theme-border-color);
-  border-radius: 8px;
+  border-radius: 16px;
   background: #ffffff;
   color: #121820;
   text-decoration: none;
+  box-shadow: 0 12px 32px rgba(17, 24, 32, 0.06);
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 html[data-theme] .kb-admin-dashboard__card:hover {
-  border-color: #778594;
-  box-shadow: 0 16px 40px rgba(17, 24, 32, 0.1);
-  transform: translateY(-1px);
+  border-color: rgba(252, 84, 19, 0.42);
+  box-shadow: 0 20px 48px rgba(252, 84, 19, 0.12);
+  transform: translateY(-2px);
 }
 
-html[data-theme] .kb-admin-dashboard__card span {
+html[data-theme] .kb-admin-dashboard__card-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  border-radius: 11px;
+  color: #fc5413;
+  background: #fff3ed;
+  border: 1px solid rgba(252, 84, 19, 0.22);
+}
+
+html[data-theme] .kb-admin-dashboard__card-title {
   color: #121820;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 850;
 }
 
 html[data-theme] .kb-admin-dashboard__card p {
-  margin: 12px 0 18px;
-  color: #46525f;
+  margin: 10px 0 16px;
+  color: #56616c;
   font-size: 14px;
 }
 
 html[data-theme] .kb-admin-dashboard__card strong {
-  color: #202832;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  color: #c2440f;
   font-size: 14px;
+  font-weight: 900;
 }
