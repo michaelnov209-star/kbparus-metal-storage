@@ -215,39 +215,64 @@ html[data-theme] .kb-admin-icon {
   object-fit: contain;
 }
 
-// Брендинг экрана логина
-html[data-theme] .kb-login-branding {
+// ── Экран логина: единая премиум-карточка ───────────────────────────
+// Центрируем minimal-шаблон и оформляем как одну аккуратную карточку
+// с тонким оранжевым акцентом сверху. Лого (graphics.Logo) → заголовок
+// (beforeLogin) → форма читаются как один блок.
+html[data-theme] .template-minimal {
   display: grid;
-  justify-items: center;
-  gap: 8px;
-  margin: 0 0 26px;
-  padding: 30px 26px;
-  text-align: center;
-  border-radius: 16px;
-  background: radial-gradient(circle at 78% 12%, rgba(252, 84, 19, 0.22), transparent 38%),
-    linear-gradient(135deg, #111923, #273543);
-  box-shadow: 0 26px 70px rgba(15, 24, 32, 0.28);
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(252, 84, 19, 0.1), transparent 36%),
+    linear-gradient(180deg, #eef2f6, #e2e8ef);
 }
 
-html[data-theme] .kb-login-branding__logo {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+html[data-theme] .template-minimal__wrap {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 34px 34px;
+  background: #ffffff;
+  border: 1px solid var(--theme-border-color);
+  border-top: 3px solid #fc5413;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(15, 24, 32, 0.16);
+}
+
+// Лого над формой — компактно по центру
+html[data-theme] .template-minimal .kb-admin-logo {
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+html[data-theme] .kb-login-branding {
+  margin: 0 0 22px;
+  padding: 0 0 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--theme-elevation-150);
 }
 
 html[data-theme] .kb-login-branding h2 {
-  margin: 8px 0 0;
-  color: #ffffff;
-  font-size: 24px;
-  line-height: 1.12;
+  margin: 0 0 6px;
+  color: #121820;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
 }
 
 html[data-theme] .kb-login-branding p {
-  max-width: 360px;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  max-width: 320px;
+  margin: 0 auto;
+  color: #56616c;
   font-size: 14px;
+  line-height: 1.5;
+}
+
+// Кнопка «Войти» на всю ширину
+html[data-theme] .login .btn,
+html[data-theme] .login form .btn {
+  width: 100%;
 }
 
 // Дашборд
@@ -450,4 +475,124 @@ html[data-theme] .kb-admin-dashboard__card strong {
   color: #c2440f;
   font-size: 14px;
   font-weight: 900;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  Тёмный сайдбар навигации (premium SaaS pattern: dark nav + light content)
+//  Классы Payload: .nav, .nav__header, .nav__wrap, .nav__scroll,
+//  .nav__controls, .nav__link (+ .nav__link-indicator на активном),
+//  .nav-group__label / __toggle / __indicator.
+// ════════════════════════════════════════════════════════════════════
+html[data-theme] .nav {
+  color: rgba(255, 255, 255, 0.82);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(252, 84, 19, 0.12), transparent 40%),
+    linear-gradient(180deg, #131c25, #0d131b);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+// Шапка сайдбара с логотипом
+html[data-theme] .nav__header {
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme] .nav__header .kb-admin-logo__text strong {
+  color: #ffffff;
+}
+
+html[data-theme] .nav__header .kb-admin-logo__text small {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+// Заголовки групп
+html[data-theme] .nav-group__label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+html[data-theme] .nav-group__indicator,
+html[data-theme] .nav-group__toggle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+// Ссылки навигации
+html[data-theme] .nav__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  margin: 2px 10px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.78);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+html[data-theme] .nav__link:visited {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+html[data-theme] .nav__link svg {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+html[data-theme] .nav__link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme] .nav__link:hover svg {
+  color: #ffffff;
+}
+
+// Активный пункт — оранжевый акцент (Payload рендерит .nav__link-indicator внутри)
+html[data-theme] .nav__link:has(.nav__link-indicator) {
+  color: #ffffff;
+  font-weight: 700;
+  background: linear-gradient(90deg, rgba(252, 84, 19, 0.22), rgba(252, 84, 19, 0.08));
+  box-shadow: inset 3px 0 0 #fc5413;
+}
+
+html[data-theme] .nav__link:has(.nav__link-indicator) svg {
+  color: #ff8a57;
+}
+
+html[data-theme] .nav__link-indicator {
+  background: #fc5413;
+}
+
+// Нижние контролы (аккаунт / выход)
+html[data-theme] .nav__controls {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme] .nav__controls a,
+html[data-theme] .nav__controls button {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+html[data-theme] .nav__controls a:hover,
+html[data-theme] .nav__controls button:hover {
+  color: #ffffff;
+}
+
+// Полоса прокрутки сайдбара
+html[data-theme] .nav__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+html[data-theme] .nav__scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+// Гамбургер мобильной навигации на тёмном фоне
+html[data-theme] .nav-toggler {
+  color: rgba(255, 255, 255, 0.85);
 }
