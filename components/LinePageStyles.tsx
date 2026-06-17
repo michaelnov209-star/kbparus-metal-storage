@@ -245,14 +245,14 @@ export function LinePageStyles() {
       .calc-chip em,.calc-chip:hover em,.calc-chip.is-active em{display:inline!important;color:#3d3d3d!important;opacity:1!important;white-space:nowrap!important}.calc-chip.is-active{color:#1a1a1a!important}.calc-chip.is-active:after{display:none!important}.condition-chip{font-size:14px!important;line-height:1.18!important}.condition-chip.is-active{color:#1a1a1a!important}
       .mobile-menu-burger{display:none}
       .mobile-menu-overlay{position:fixed;inset:0;z-index:300;display:flex;justify-content:flex-end;background:rgba(6,10,15,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:mmFade .2s ease both}
-      .mobile-menu-panel{display:flex;flex-direction:column;gap:12px;width:min(90vw,380px);height:100%;padding:16px;background:#0f1620;color:#fff;overflow-y:auto;-webkit-text-size-adjust:100%;text-size-adjust:100%;box-shadow:-20px 0 60px rgba(0,0,0,.42);animation:mmSlide .26s cubic-bezier(.2,.8,.2,1) both}
+      .mobile-menu-panel{display:flex;flex-direction:column;gap:12px;width:min(90vw,380px);height:100%;padding:16px;background:#0f1620;color:#fff;overflow-y:auto;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;box-shadow:-20px 0 60px rgba(0,0,0,.42);animation:mmSlide .26s cubic-bezier(.2,.8,.2,1) both}
       .mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
       .mobile-menu-head strong{font-size:18px;color:#fff}
       .mobile-menu-close{display:grid;place-items:center;width:44px;height:44px;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:12px;cursor:pointer}
       .mobile-menu-catalog-title{display:inline-flex;align-items:center;min-height:50px;padding:0 16px;color:#fff;background:linear-gradient(135deg,var(--accent),#ff7b42);border-radius:13px;font-size:15px;font-weight:950}
       .mobile-menu-categories{display:grid;gap:2px}
       .mobile-menu-categories a{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:9px 12px;color:#e7edf3;border-radius:11px;font-size:15px;font-weight:700;line-height:1.25;transition:background .15s ease}
-      .mobile-menu-categories a span{flex:1;min-width:0}
+      .mobile-menu-categories a span{flex:1;min-width:0;overflow-wrap:anywhere;word-break:break-word}
       .mobile-menu-categories a:active{background:rgba(255,255,255,.09)}
       .mobile-menu-categories svg{color:var(--accent);flex:0 0 auto}
       .mobile-menu-links{display:grid;gap:2px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)}
