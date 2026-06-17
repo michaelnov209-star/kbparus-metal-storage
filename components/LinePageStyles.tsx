@@ -263,6 +263,9 @@ export function LinePageStyles() {
       @keyframes mmFade{from{opacity:0}to{opacity:1}}
       @keyframes mmSlide{from{transform:translateX(100%)}to{transform:none}}
       @media(max-width:760px){.line-header{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important}.line-header .brand{flex:1 1 auto;min-width:0!important;max-width:none!important;justify-content:flex-start!important}.line-header nav{display:none!important}.mobile-menu-burger{display:grid;place-items:center;flex:0 0 auto;width:46px;height:46px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:13px;cursor:pointer}.line-header-contact{flex:0 0 auto}.line-header-contact .phone-stack{display:none}}
+      @media(max-width:760px){.catalog-card h3{font-size:13.5px!important;line-height:1.14!important}.catalog-card b{font-size:12px!important}.catalog-card small{min-height:20px!important;font-size:10px!important}.catalog-card-meta>span{min-width:30px!important;height:26px!important;font-size:12px!important}.catalog-zoom-pill,.catalog-zoom-trigger{min-height:38px!important}.line-map-section iframe{min-height:340px!important}.line-contacts iframe{min-height:300px!important}}
+      @media(max-width:430px){.catalog-card h3{font-size:12.5px!important}.catalog-card small{font-size:9.5px!important}.catalog-card-meta>span{min-width:28px!important;height:24px!important;font-size:11px!important}}
+      @media(max-width:360px){.line-page h1{font-size:clamp(30px,11vw,40px)!important}.catalog-card{grid-template-rows:118px 1fr!important;min-height:224px!important}.catalog-card h3{font-size:12px!important}.hero-metrics strong{font-size:22px!important}.hero-metrics span{font-size:11px!important}.mobile-menu-panel{width:92vw!important}}
     `}</style>
   );
 }
