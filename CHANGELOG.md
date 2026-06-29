@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 2026-06-29 — Premium Payload admin dashboard and guided training
+
+- Пересобран кастомный dashboard админки в стиле SaaS: hero-панель, быстрые действия, KPI-карточки, навигационные карточки и workflow публикации.
+- Добавлен клиентский компонент `AdminTraining` — пункт “Обучение” с пошаговыми всплывающими подсказками, стрелками, подсветкой целевых элементов и прогрессом.
+- Усилены стили `/admin` в `custom.scss`: premium industrial фон, карточки, hover-состояния, adaptive layout и `prefers-reduced-motion`.
+- Обновлён Payload `importMap` через штатную генерацию.
+- Исправлена типизация сохранения заявок в CMS: `status`, `leadType` и `calculatorInput` теперь передаются в формате, совместимом с Payload.
+
+Затронутые файлы:
+
+- `app/(payload)/components/AdminDashboard.tsx`
+- `app/(payload)/components/AdminTraining.tsx`
+- `app/(payload)/custom.scss`
+- `app/(payload)/admin/importMap.ts`
+- `lib/leads/cms-record.ts`
+- `README.md`
+- `CHANGELOG.md`
+
+Что проверить:
+
+- `/admin`: dashboard открывается после входа и выглядит как единая SaaS-панель.
+- Кнопка “Начать обучение” запускает тур, подсказки позиционируются рядом с нужными блоками.
+- Быстрые действия ведут в правильные разделы CMS.
+- Заявка с калькулятора сохраняется в CMS без TypeScript/JSON-конфликтов.
+
 ## 2026-05-14 — Production navigation/footer CMS migration
 
 - Deployed `511d699` to production: `https://kbparus-metal-storage.vercel.app`.

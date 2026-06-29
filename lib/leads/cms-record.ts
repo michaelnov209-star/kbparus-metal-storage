@@ -41,6 +41,8 @@ function buildCalculatorSummary(lead: CmsLeadInput): string {
 
 export function buildCmsLeadRecord(lead: CmsLeadInput) {
   const isConfigurator = lead.leadType === "configurator" || Boolean(lead.calculatorInput);
+  const leadType: "contact" | "configurator" = isConfigurator ? "configurator" : "contact";
+  const calculatorInput: Record<string, unknown> | undefined = lead.calculatorInput ? { ...lead.calculatorInput } : undefined;
   const recommendedTitle = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "";
   const title = isConfigurator
     ? `Заявка с конфигуратора: ${recommendedTitle || lead.phone}`
@@ -48,8 +50,8 @@ export function buildCmsLeadRecord(lead: CmsLeadInput) {
 
   return {
     title,
-    status: "new",
-    leadType: isConfigurator ? "configurator" : "contact",
+    status: "new" as const,
+    leadType,
     name: lead.name,
     phone: lead.phone,
     email: lead.email,
@@ -62,7 +64,7 @@ export function buildCmsLeadRecord(lead: CmsLeadInput) {
     recommendedTitle,
     preliminaryPriceFrom: lead.fromPrice ?? lead.result?.fromPrice,
     calculatorSummary: buildCalculatorSummary(lead),
-    calculatorInput: lead.calculatorInput,
+    calculatorInput,
     emailDelivered: lead.emailDelivered,
     telegramDelivered: lead.telegramDelivered,
     bitrix24Delivered: lead.bitrix24Delivered,
