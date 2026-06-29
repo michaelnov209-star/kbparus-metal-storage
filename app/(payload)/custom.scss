@@ -959,6 +959,311 @@ html[data-theme] .kb-admin-dashboard__workflow-item p {
   font-size: 13px;
 }
 
+html[data-theme] .kb-admin-dashboard__site-map,
+html[data-theme] .kb-admin-dashboard__catalog-map,
+html[data-theme] .kb-admin-dashboard__roles,
+html[data-theme] .kb-admin-dashboard__ops {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid rgba(130, 145, 160, 0.24);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 252, 0.88)),
+    radial-gradient(circle at 100% 0%, rgba(252, 84, 19, 0.1), transparent 34%);
+  box-shadow: 0 20px 54px rgba(16, 26, 38, 0.08);
+}
+
+html[data-theme] .kb-admin-dashboard__site-map::before,
+html[data-theme] .kb-admin-dashboard__catalog-map::before,
+html[data-theme] .kb-admin-dashboard__roles::before,
+html[data-theme] .kb-admin-dashboard__ops::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(17, 24, 32, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 32, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 72%);
+  content: "";
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow,
+html[data-theme] .kb-admin-dashboard__catalog-list,
+html[data-theme] .kb-admin-dashboard__roles-grid,
+html[data-theme] .kb-admin-dashboard__ops-grid {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow {
+  display: grid;
+  gap: 10px;
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-item {
+  display: grid;
+  grid-template-columns: 46px 42px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid rgba(130, 145, 160, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(252, 84, 19, 0.34);
+  box-shadow: 0 18px 42px rgba(16, 26, 38, 0.1);
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-number,
+html[data-theme] .kb-admin-dashboard__category-number {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #fc5413;
+  font-size: 13px;
+  font-weight: 950;
+  border: 1px solid rgba(252, 84, 19, 0.22);
+  border-radius: 14px;
+  background: #fff4ee;
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #25313c;
+  border: 1px solid rgba(130, 145, 160, 0.22);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #f2f5f8);
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-item h3,
+html[data-theme] .kb-admin-dashboard__category-card h3,
+html[data-theme] .kb-admin-dashboard__role-card h3,
+html[data-theme] .kb-admin-dashboard__ops-card h3 {
+  margin: 0;
+  color: var(--kb-admin-ink);
+  font-size: 17px;
+  line-height: 1.18;
+}
+
+html[data-theme] .kb-admin-dashboard__site-flow-item p,
+html[data-theme] .kb-admin-dashboard__category-card p,
+html[data-theme] .kb-admin-dashboard__role-card p,
+html[data-theme] .kb-admin-dashboard__ops-card p {
+  margin: 6px 0 0;
+  color: var(--kb-admin-muted);
+  font-size: 13px;
+}
+
+html[data-theme] .kb-admin-dashboard__mini-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+html[data-theme] .kb-admin-dashboard__mini-actions a,
+html[data-theme] .kb-admin-dashboard__product-row a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  color: #25313c;
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  border: 1px solid rgba(130, 145, 160, 0.26);
+  border-radius: 999px;
+  background: #ffffff;
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+html[data-theme] .kb-admin-dashboard__mini-actions a:hover,
+html[data-theme] .kb-admin-dashboard__product-row a:hover {
+  transform: translateY(-1px);
+  color: #c2440f;
+  border-color: rgba(252, 84, 19, 0.36);
+  box-shadow: 0 12px 24px rgba(252, 84, 19, 0.12);
+}
+
+html[data-theme] .kb-admin-dashboard__catalog-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+html[data-theme] .kb-admin-dashboard__category-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(130, 145, 160, 0.2);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+html[data-theme] .kb-admin-dashboard__category-top {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+html[data-theme] .kb-admin-dashboard__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 9px;
+  color: #17643b;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+  border: 1px solid rgba(41, 148, 91, 0.2);
+  border-radius: 999px;
+  background: #eaf8ef;
+}
+
+html[data-theme] .kb-admin-dashboard__badge.is-warning {
+  color: #9a3b0e;
+  border-color: rgba(252, 84, 19, 0.22);
+  background: #fff1e9;
+}
+
+html[data-theme] .kb-admin-dashboard__product-list {
+  display: grid;
+  gap: 8px;
+}
+
+html[data-theme] .kb-admin-dashboard__product-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 54px;
+  padding: 10px;
+  border: 1px solid rgba(130, 145, 160, 0.16);
+  border-radius: 14px;
+  background: rgba(247, 249, 251, 0.78);
+}
+
+html[data-theme] .kb-admin-dashboard__product-row strong {
+  display: block;
+  color: #18212b;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+html[data-theme] .kb-admin-dashboard__product-row div > span {
+  display: block;
+  margin-top: 3px;
+  color: #6a7580;
+  font-size: 12px;
+}
+
+html[data-theme] .kb-admin-dashboard__more {
+  margin: 2px 0 0;
+  color: #6a7580;
+  font-size: 12px;
+}
+
+html[data-theme] .kb-admin-dashboard__empty {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  color: #4d5965;
+  border: 1px dashed rgba(252, 84, 19, 0.34);
+  border-radius: 16px;
+  background: rgba(255, 244, 238, 0.7);
+}
+
+html[data-theme] .kb-admin-dashboard__roles-grid,
+html[data-theme] .kb-admin-dashboard__ops-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+html[data-theme] .kb-admin-dashboard__role-card,
+html[data-theme] .kb-admin-dashboard__ops-card {
+  position: relative;
+  min-height: 190px;
+  padding: 16px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(130, 145, 160, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+html[data-theme] .kb-admin-dashboard__role-card:hover,
+html[data-theme] .kb-admin-dashboard__ops-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(252, 84, 19, 0.34);
+  box-shadow: 0 18px 42px rgba(16, 26, 38, 0.1);
+}
+
+html[data-theme] .kb-admin-dashboard__role-card > span,
+html[data-theme] .kb-admin-dashboard__ops-card > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  place-items: center;
+  color: #fc5413;
+  border-radius: 14px;
+  background: #fff0e9;
+}
+
+html[data-theme] .kb-admin-dashboard__role-card ul {
+  display: grid;
+  gap: 7px;
+  padding: 0;
+  margin: 14px 0 0;
+  list-style: none;
+}
+
+html[data-theme] .kb-admin-dashboard__role-card li {
+  position: relative;
+  padding-left: 14px;
+  color: #43505d;
+  font-size: 12px;
+}
+
+html[data-theme] .kb-admin-dashboard__role-card li::before {
+  position: absolute;
+  top: 0.55em;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #fc5413;
+  content: "";
+}
+
+html[data-theme] .kb-admin-dashboard__ops-card > svg {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  color: #fc5413;
+}
+
 html[data-theme] .kb-admin-dashboard__section {
   max-width: none;
 }
@@ -1181,8 +1486,27 @@ html[data-theme] .sr-only {
   }
 
   html[data-theme] .kb-admin-dashboard__workflow-grid,
-  html[data-theme] .kb-admin-dashboard__grid {
+  html[data-theme] .kb-admin-dashboard__grid,
+  html[data-theme] .kb-admin-dashboard__roles-grid,
+  html[data-theme] .kb-admin-dashboard__ops-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html[data-theme] .kb-admin-dashboard__catalog-list {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-theme] .kb-admin-dashboard__site-flow-item {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  html[data-theme] .kb-admin-dashboard__site-flow-icon {
+    display: none;
+  }
+
+  html[data-theme] .kb-admin-dashboard__site-flow-item .kb-admin-dashboard__mini-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }
 
@@ -1194,8 +1518,32 @@ html[data-theme] .sr-only {
 
   html[data-theme] .kb-admin-dashboard__kpis,
   html[data-theme] .kb-admin-dashboard__workflow-grid,
-  html[data-theme] .kb-admin-dashboard__grid {
+  html[data-theme] .kb-admin-dashboard__grid,
+  html[data-theme] .kb-admin-dashboard__roles-grid,
+  html[data-theme] .kb-admin-dashboard__ops-grid {
     grid-template-columns: 1fr;
+  }
+
+  html[data-theme] .kb-admin-dashboard__site-map,
+  html[data-theme] .kb-admin-dashboard__catalog-map,
+  html[data-theme] .kb-admin-dashboard__roles,
+  html[data-theme] .kb-admin-dashboard__ops {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  html[data-theme] .kb-admin-dashboard__category-top,
+  html[data-theme] .kb-admin-dashboard__product-row {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-theme] .kb-admin-dashboard__category-number {
+    width: fit-content;
+    min-width: 42px;
+  }
+
+  html[data-theme] .kb-admin-dashboard__mini-actions {
+    justify-content: flex-start;
   }
 
   html[data-theme] .kb-admin-training-popover {
@@ -1215,6 +1563,9 @@ html[data-theme] .sr-only {
   html[data-theme] .kb-admin-dashboard__quick-link,
   html[data-theme] .kb-admin-dashboard__kpi,
   html[data-theme] .kb-admin-dashboard__card,
+  html[data-theme] .kb-admin-dashboard__site-flow-item,
+  html[data-theme] .kb-admin-dashboard__role-card,
+  html[data-theme] .kb-admin-dashboard__ops-card,
   html[data-theme] .kb-admin-training__button,
   html[data-theme] .kb-admin-training__link {
     animation: none;
