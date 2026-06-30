@@ -3,3 +3,12 @@ app/taste/
 index.html
 novikov-logo.png
 server-*.log
+
+# Local side-work artifacts: not part of kbparus-metal-storage deploy
+.claude/
+contract_work/
+guarantee_letter_work/
+render_kp_moon_word/
+edit_kp_moon.py
+/*.docx
+/*.pdf
