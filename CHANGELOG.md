@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-06-30 — Payload media processing production fix
+
+- Payload config теперь явно подключает `sharp` для resize/preview изображений в CMS.
+- Убрана причина production warning: image resizing был включён для Media, но Payload не получал `sharp` в `buildConfig`.
+- README обновлён: зафиксировано, что CMS использует Vercel Blob + `sharp` для медиа.
+
+Затронутые файлы:
+
+- `payload.config.ts`
+- `README.md`
+- `CHANGELOG.md`
+
+Что проверить:
+
+- Vercel build проходит без warning про отсутствующий `sharp`.
+- `/admin` открывается.
+- Загрузка и preview изображений в Payload Media работают.
+
 ## 2026-06-29 — Admin site-map, catalog map and role workflows
 
 - Добавлена карта сайта в `/admin`: блоки главной показаны в порядке публичной витрины с быстрыми ссылками на редактирование и preview.

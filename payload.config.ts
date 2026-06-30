@@ -3,6 +3,7 @@ import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import { ru } from "@payloadcms/translations/languages/ru";
+import sharp from "sharp";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -64,6 +65,7 @@ export default buildConfig({
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
   globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
   editor: lexicalEditor(),
+  sharp,
   secret: process.env.PAYLOAD_SECRET || "change-me-locally",
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts")
