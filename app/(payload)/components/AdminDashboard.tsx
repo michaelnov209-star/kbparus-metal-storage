@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
-import type { Category, Product } from "@/payload-types";
+import type { Category, Media, Product } from "@/payload-types";
 import {
   Activity,
   ArrowRight,
@@ -47,6 +47,8 @@ type AdminCatalogProduct = {
   priceMode: Product["priceMode"];
   pageMode: Product["pageMode"];
   categorySlug: string;
+  imageUrl: string | null;
+  readiness: number;
 };
 
 type AdminCatalogCategory = {
@@ -56,6 +58,8 @@ type AdminCatalogCategory = {
   sortOrder: number;
   isDraft: boolean;
   isFeatured: boolean;
+  imageUrl: string | null;
+  readiness: number;
   products: AdminCatalogProduct[];
 };
 
@@ -271,6 +275,35 @@ function pageModeLabel(mode: Product["pageMode"]): string {
   return mode === "configurator" ? "с калькулятором" : "обычная карточка";
 }
 
+function resolveImageUrl(image: (number | null) | Media | undefined, legacyPath?: string | null): string | null {
+  if (image && typeof image === "object") {
+    return image.sizes?.thumb?.url || image.thumbnailURL || image.url || legacyPath || null;
+  }
+
+  return legacyPath || null;
+}
+
+function categoryReadiness(category: Category, productCount: number): number {
+  let score = 20;
+  if (category.title) score += 15;
+  if (category.summary) score += 15;
+  if (resolveImageUrl(category.image, category.legacyImagePath)) score += 25;
+  if (productCount > 0) score += 15;
+  if (category._status !== "draft") score += 10;
+  return Math.min(score, 100);
+}
+
+function productReadiness(product: Product): number {
+  let score = 15;
+  if (product.title) score += 15;
+  if (product.summary) score += 15;
+  if (product.description) score += 15;
+  if (resolveImageUrl(product.image, product.legacyImagePath)) score += 20;
+  if (product.priceMode) score += 10;
+  if (!product.draft && product._status !== "draft") score += 10;
+  return Math.min(score, 100);
+}
+
 async function getDashboardContext(): Promise<DashboardContext> {
   try {
     const payload = await getPayload({ config });
@@ -281,7 +314,7 @@ async function getDashboardContext(): Promise<DashboardContext> {
       payload.count({ collection: "leads", overrideAccess: true }),
       payload.find({
         collection: "categories",
-        depth: 0,
+        depth: 1,
         draft: true,
         limit: 100,
         overrideAccess: true,
@@ -310,6 +343,8 @@ async function getDashboardContext(): Promise<DashboardContext> {
         sortOrder: sortNumber(category.sortOrder, index + 1),
         isDraft: category._status === "draft",
         isFeatured: Boolean(category.featured),
+        imageUrl: resolveImageUrl(category.image, category.legacyImagePath),
+        readiness: 0,
         products: []
       }))
       .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, "ru"));
@@ -332,12 +367,15 @@ async function getDashboardContext(): Promise<DashboardContext> {
         isDraft: Boolean(product.draft) || product._status === "draft",
         priceMode: product.priceMode,
         pageMode: product.pageMode,
-        categorySlug: category.slug
+        categorySlug: category.slug,
+        imageUrl: resolveImageUrl(product.image, product.legacyImagePath),
+        readiness: productReadiness(product)
       });
     });
 
     catalog.forEach((category) => {
       category.products.sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, "ru"));
+      category.readiness = categoryReadiness(categoryDocs.find((item) => String(item.id) === category.id)!, category.products.length);
     });
 
     return {
@@ -503,6 +541,10 @@ export async function AdminDashboard() {
           <div className="kb-admin-dashboard__catalog-list">
             {dashboard.catalog.map((category, index) => (
               <article className="kb-admin-dashboard__category-card" key={category.id}>
+                <a className="kb-admin-dashboard__category-preview" href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer" aria-label={`Посмотреть категорию ${category.title}`}>
+                  {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <span>Фото категории не добавлено</span>}
+                  <strong>{category.readiness}% готово</strong>
+                </a>
                 <div className="kb-admin-dashboard__category-top">
                   <span className="kb-admin-dashboard__category-number">{String(index + 1).padStart(2, "0")}</span>
                   <div>
@@ -524,12 +566,16 @@ export async function AdminDashboard() {
                 <div className="kb-admin-dashboard__product-list">
                   {category.products.slice(0, 5).map((product) => (
                     <div className="kb-admin-dashboard__product-row" key={product.id}>
+                      <span className="kb-admin-dashboard__product-thumb" aria-hidden>
+                        {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : null}
+                      </span>
                       <div>
                         <strong>{product.title}</strong>
                         <span>
                           {pageModeLabel(product.pageMode)} · {priceModeLabel(product.priceMode)}
                         </span>
                       </div>
+                      <span className="kb-admin-dashboard__readiness">{product.readiness}%</span>
                       <span className={product.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{product.isDraft ? "черновик" : "live"}</span>
                       <a href={`/admin/collections/products/${product.id}`}>Изменить</a>
                       <a href={`/catalog/${product.categorySlug}/${product.slug}`} target="_blank" rel="noreferrer">
