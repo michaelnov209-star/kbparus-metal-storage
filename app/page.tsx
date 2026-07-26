@@ -35,7 +35,6 @@ import {
   MessageCircle,
   PackageCheck,
   PhoneCall,
-  Quote,
   Route,
   Send,
   ShieldCheck,
@@ -226,6 +225,11 @@ export default async function Home() {
   const contacts = await getSiteContacts();
   const navigation = await getSiteNavigation();
   const catalogCategories = await getCatalogCategories();
+  const visiblePartners = home.partners.filter((partner) => Boolean(partner.logoUrl));
+  const visibleReviews = home.reviews.filter((review) => Boolean(review.imageUrl));
+  const hasVerifiedCases = home.cases.some(
+    (item) => item.customer.trim() && item.customer !== "Компания-заказчик"
+  );
 
   return (
     <main className="line-page" id="top">
@@ -351,8 +355,8 @@ export default async function Home() {
             <span>лист, трубы, профиль, паллеты, кабель, складская техника и учет</span>
           </article>
           <article>
-            <strong>Фото добавляются</strong>
-            <span>категории без утвержденного изображения показываются с аккуратной заглушкой</span>
+            <strong>Наглядный подбор</strong>
+            <span>изображения и характеристики помогают быстро выбрать подходящий тип системы</span>
           </article>
         </div>
         <CatalogGrid items={catalogCategories} />
@@ -378,10 +382,22 @@ export default async function Home() {
         <div className="material-grid">
           {home.storedMaterials.map((item) => (
             <article className="material-card reveal" key={item.title}>
-              <div className="material-placeholder" aria-hidden="true">
-                <ContentIcon name={item.icon} size={46} />
-                <strong>{item.label}</strong>
-              </div>
+              {item.imageUrl ? (
+                <div className="material-card-media">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.imageAlt ?? item.title}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <strong>{item.label}</strong>
+                </div>
+              ) : (
+                <div className="material-placeholder" aria-hidden="true">
+                  <ContentIcon name={item.icon} size={46} />
+                  <strong>{item.label}</strong>
+                </div>
+              )}
               <div>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
@@ -428,17 +444,20 @@ export default async function Home() {
       <section className="line-section" id="cases">
         <div className="section-title-row reveal">
           <div>
-            <span className="line-kicker">Кейсы</span>
-            <h2>Кейсы внедрения систем хранения</h2>
+            <span className="line-kicker">{hasVerifiedCases ? "Кейсы" : "Типовые сценарии"}</span>
+            <h2>{hasVerifiedCases ? "Кейсы внедрения систем хранения" : "Сценарии внедрения систем хранения"}</h2>
           </div>
-          <SliderControls targetId="cases-slider" label="Навигация по кейсам" />
+          <SliderControls
+            targetId="cases-slider"
+            label={hasVerifiedCases ? "Навигация по кейсам" : "Навигация по сценариям"}
+          />
         </div>
         <div className="case-slider" id="cases-slider">
           {home.cases.map((item) => (
             <article className="case-card reveal" key={item.title}>
               <img src={item.imageUrl} alt={item.imageAlt} />
               <a href="#contacts" aria-label={`Обсудить кейс: ${item.title}`}><ArrowRight size={24} /></a>
-              <h3>{item.customer}</h3>
+              <h3>{hasVerifiedCases ? item.customer : "Типовой сценарий"}</h3>
               <strong>{item.title}</strong>
               <p><b>Задача:</b> {item.task}</p>
               <p><b>Результат:</b> {item.result}</p>
@@ -471,28 +490,32 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="line-section reviews-section" id="reviews">
-        <div className="section-title-row reveal">
-          <div>
-            <span className="line-kicker">Отзывы</span>
-            <h2>Покупатели хвалят качество нашего оборудования</h2>
+      {visibleReviews.length > 0 && (
+        <section className="line-section reviews-section" id="reviews">
+          <div className="section-title-row reveal">
+            <div>
+              <span className="line-kicker">Отзывы</span>
+              <h2>Отзывы клиентов о системах хранения</h2>
+            </div>
+            <SliderControls targetId="reviews-slider" label="Навигация по отзывам" />
           </div>
-          <SliderControls targetId="reviews-slider" label="Навигация по отзывам" />
-        </div>
-        <div className="review-slider" id="reviews-slider">
-          {home.reviews.map((review) => (
-            <article className="review-card reveal" key={review.name}>
-              <div className="review-avatar"><Quote size={24} /></div>
-              <div>
-                <strong>{review.name}</strong>
-                <span>{review.role}</span>
-                <div className="stars" aria-label="5 звезд">{Array.from({ length: 5 }).map((_, index) => <Star size={16} fill="currentColor" key={index} />)}</div>
-              </div>
-              <p>{review.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+          <div className="review-slider" id="reviews-slider">
+            {visibleReviews.map((review) => (
+              <article className="review-card reveal" key={review.name}>
+                <div className="review-avatar">
+                  <img src={review.imageUrl} alt={review.imageAlt ?? review.name} loading="lazy" decoding="async" />
+                </div>
+                <div>
+                  <strong>{review.name}</strong>
+                  <span>{review.role}</span>
+                  <div className="stars" aria-label="5 звезд">{Array.from({ length: 5 }).map((_, index) => <Star size={16} fill="currentColor" key={index} />)}</div>
+                </div>
+                <p>{review.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="line-about reveal" id="about">
         <div className="about-copy">
@@ -547,23 +570,25 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="line-section partners-section">
-        <div className="section-title-row reveal">
-          <div>
-            <span className="line-kicker">Партнеры</span>
-            <h2>Партнеры, которые нам доверяют</h2>
+      {visiblePartners.length > 0 && (
+        <section className="line-section partners-section">
+          <div className="section-title-row reveal">
+            <div>
+              <span className="line-kicker">Партнеры</span>
+              <h2>Партнеры, которые нам доверяют</h2>
+            </div>
+            <SliderControls targetId="partners-slider" label="Навигация по партнерам" />
           </div>
-          <SliderControls targetId="partners-slider" label="Навигация по партнерам" />
-        </div>
-        <div className="line-partners" id="partners-slider">
-          {home.partners.map((partner) => (
-            <article className="partner-logo reveal" key={partner.name}>
-              {partner.logoUrl ? <img src={partner.logoUrl} alt={partner.logoAlt ?? partner.name} /> : <span>{partner.mark}</span>}
-              <strong>{partner.logoUrl ? partner.name : "Логотип будет добавлен"}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
+          <div className="line-partners" id="partners-slider">
+            {visiblePartners.map((partner) => (
+              <article className="partner-logo reveal" key={partner.name}>
+                <img src={partner.logoUrl} alt={partner.logoAlt ?? partner.name} loading="lazy" decoding="async" />
+                <strong>{partner.name}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="line-section" id="faq">
         <div className="section-title-row reveal">

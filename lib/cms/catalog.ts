@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { excelHomeCatalog, type ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 import { getCmsClient } from "./client";
+import { resolveCmsMediaUrl } from "./media-url";
 
 export interface CatalogCategoryView extends ExcelHomeCatalogItem {
   seoTitle?: string;
@@ -11,12 +12,6 @@ export interface CatalogCategoryView extends ExcelHomeCatalogItem {
   sortOrder?: number;
   source: "cms" | "fallback";
 }
-
-type CmsMediaLike = {
-  url?: unknown;
-  filename?: unknown;
-  sizes?: Record<string, { url?: unknown; filename?: unknown }> | null;
-};
 
 type CmsKeywordLike = {
   value?: unknown;
@@ -53,30 +48,6 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function mediaFileUrl(filename: string) {
-  return `/api/media/file/${filename}`;
-}
-
-function getMediaUrl(value: unknown, size?: "thumb" | "medium" | "large"): string | undefined {
-  if (typeof value === "string") return undefined;
-  if (!value || typeof value !== "object") return undefined;
-
-  const media = value as CmsMediaLike;
-  if (size) {
-    const sized = media.sizes?.[size];
-    const sizedUrl = asString(sized?.url);
-    if (sizedUrl) return sizedUrl;
-    const sizedFilename = asString(sized?.filename);
-    if (sizedFilename) return mediaFileUrl(sizedFilename);
-  }
-
-  const url = asString(media.url);
-  if (url) return url;
-
-  const filename = asString(media.filename);
-  return filename ? mediaFileUrl(filename) : undefined;
-}
-
 function getKeywords(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -94,7 +65,8 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
   if (!id || !title || !summary) return null;
 
   const fallback = fallbackById.get(id);
-  const image = getMediaUrl(doc.image) ?? asString(doc.legacyImagePath) ?? fallback?.image;
+  const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
+  const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
 
   return {
@@ -103,13 +75,13 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
     summary,
     scenario: asString(doc.scenario) ?? fallback?.scenario ?? "",
     image,
-    imageThumb: getMediaUrl(doc.image, "thumb"),
-    imageMedium: getMediaUrl(doc.image, "medium"),
-    imageLarge: getMediaUrl(doc.image, "large"),
+    imageThumb: resolveCmsMediaUrl(doc.image, { size: "thumb", fallback: localFallback }),
+    imageMedium: resolveCmsMediaUrl(doc.image, { size: "medium", fallback: localFallback }),
+    imageLarge: resolveCmsMediaUrl(doc.image, { size: "large", fallback: localFallback }),
     featured: asBoolean(doc.featured) ?? fallback?.featured,
     seoTitle: asString(doc.seoTitle),
     seoDescription: asString(doc.seoDescription),
-    ogImage: getMediaUrl(doc.ogImage),
+    ogImage: resolveCmsMediaUrl(doc.ogImage),
     keywords: getKeywords(doc.keywords),
     noIndex: asBoolean(doc.noIndex),
     sortOrder: asNumber(doc.sortOrder) ?? fallbackOrder.get(id),

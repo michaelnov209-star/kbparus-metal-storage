@@ -77,9 +77,9 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
     eyebrow: "КБ Парус / складские системы для металла",
     title: "Системы хранения металла",
     background: {
-      type: "video",
-      videoUrl: "/assets/videos/metal-storage-hero-trimmed.mp4",
-      posterUrl: visualAssets.hero
+      type: "image",
+      imageUrl: "/assets/images/home/generated/sheet-metal-cassettes.webp",
+      alt: "Автоматизированная система хранения листового металла КБ Парус"
     },
     metrics: [
       { value: "500+", label: "проектов" },
@@ -96,25 +96,33 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       title: "Листовой металл",
       text: "Пачки листа, форматные заготовки, деловые обрезки.",
       label: "Лист / кассеты",
-      icon: "layers"
+      icon: "layers",
+      imageUrl: "/assets/images/home/generated/sheet-metal-cassettes.webp",
+      imageAlt: "Листовой металл в выдвижных кассетах промышленной системы хранения"
     },
     {
       title: "Трубы и профиль",
       text: "Круглые и профильные трубы, уголок, швеллер, балка.",
       label: "Трубы / профиль",
-      icon: "boxes"
+      icon: "boxes",
+      imageUrl: "/assets/images/home/generated/tubes-and-profiles.webp",
+      imageAlt: "Трубы и профиль, организованные на промышленном стеллаже"
     },
     {
       title: "Сортовой прокат",
       text: "Пруток, уголок, швеллер, балка, пачки заготовок и смешанная номенклатура.",
       label: "Пруток / балка",
-      icon: "warehouse"
+      icon: "warehouse",
+      imageUrl: "/assets/images/home/generated/long-steel-products.webp",
+      imageAlt: "Сортовой металлопрокат на консольной системе хранения"
     },
     {
       title: "Оснастка и комплектующие",
       text: "Инструмент, расходники, кабель, паллеты и складские позиции.",
       label: "Оснастка / ЗИП",
-      icon: "package-check"
+      icon: "package-check",
+      imageUrl: "/assets/images/home/generated/tooling-and-spares.webp",
+      imageAlt: "Производственная оснастка и комплектующие в выдвижных секциях хранения"
     }
   ],
   beforeAfter: {
@@ -476,14 +484,31 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
   const wantVideo = bg?.type === "video" || !bg?.type;
 
   if (wantVideo) {
+    const videoUrl = pickUrl(bg?.video);
+    if (!videoUrl) {
+      return {
+        eyebrow: nonEmptyString(hero.eyebrow, defaults.eyebrow),
+        title: nonEmptyString(hero.title, defaults.title),
+        description: hero.description ?? undefined,
+        background: defaults.background,
+        metrics,
+        actions
+      };
+    }
+
+    const defaultPoster =
+      defaults.background.type === "video"
+        ? defaults.background.posterUrl
+        : defaults.background.imageUrl;
+
     return {
       eyebrow: nonEmptyString(hero.eyebrow, defaults.eyebrow),
       title: nonEmptyString(hero.title, defaults.title),
       description: hero.description ?? undefined,
       background: {
         type: "video",
-        videoUrl: pickUrl(bg?.video) ?? (defaults.background as { videoUrl: string }).videoUrl,
-        posterUrl: pickUrl(bg?.poster) ?? (defaults.background as { posterUrl: string }).posterUrl
+        videoUrl,
+        posterUrl: pickUrl(bg?.poster) ?? defaultPoster
       },
       metrics,
       actions

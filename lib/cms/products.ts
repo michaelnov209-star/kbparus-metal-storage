@@ -1,12 +1,7 @@
 import { cache } from "react";
 import { catalogProducts, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { getCmsClient } from "./client";
-
-type CmsMediaLike = {
-  url?: unknown;
-  filename?: unknown;
-  sizes?: Record<string, { url?: unknown; filename?: unknown }> | null;
-};
+import { resolveCmsMediaUrl } from "./media-url";
 
 type CmsRelationLike = {
   slug?: unknown;
@@ -92,27 +87,6 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function mediaFileUrl(filename: string) {
-  return `/api/media/file/${filename}`;
-}
-
-function getMediaUrl(value: unknown, size?: "thumb" | "medium" | "large"): string | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const media = value as CmsMediaLike;
-  if (size) {
-    const sized = media.sizes?.[size];
-    const sizedUrl = asString(sized?.url);
-    if (sizedUrl) return sizedUrl;
-    const sizedFilename = asString(sized?.filename);
-    if (sizedFilename) return mediaFileUrl(sizedFilename);
-  }
-
-  const url = asString(media.url);
-  if (url) return url;
-  const filename = asString(media.filename);
-  return filename ? mediaFileUrl(filename) : undefined;
-}
-
 function getRelationSlug(value: unknown): string | undefined {
   if (typeof value === "string") return undefined;
   if (!value || typeof value !== "object") return undefined;
@@ -155,7 +129,14 @@ function getDocuments(value: unknown): Array<{ title: string; href: string }> | 
 function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
   const cmsGallery = Array.isArray(doc.gallery)
     ? doc.gallery
-        .map((item) => (item && typeof item === "object" ? getMediaUrl((item as CmsGalleryItem).image, "large") : undefined))
+        .map((item, index) =>
+          item && typeof item === "object"
+            ? resolveCmsMediaUrl((item as CmsGalleryItem).image, {
+                size: "large",
+                fallback: fallback?.gallery[index] ?? fallback?.image
+              })
+            : undefined
+        )
         .filter((item): item is string => Boolean(item))
     : [];
 
@@ -186,7 +167,8 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
   if (!id || !title || !summary || !description || !categoryId) return null;
 
   const fallback = fallbackById.get(id);
-  const image = getMediaUrl(doc.image) ?? asString(doc.legacyImagePath) ?? fallback?.image;
+  const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
+  const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
 
   const applications = getTextValues(doc.applications);
@@ -202,9 +184,9 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     shortTitle: asString(doc.shortTitle) ?? fallback?.shortTitle ?? title,
     sku: asString(doc.sku) ?? fallback?.sku ?? id,
     image,
-    imageThumb: getMediaUrl(doc.image, "thumb"),
-    imageMedium: getMediaUrl(doc.image, "medium"),
-    imageLarge: getMediaUrl(doc.image, "large"),
+    imageThumb: resolveCmsMediaUrl(doc.image, { size: "thumb", fallback: localFallback }),
+    imageMedium: resolveCmsMediaUrl(doc.image, { size: "medium", fallback: localFallback }),
+    imageLarge: resolveCmsMediaUrl(doc.image, { size: "large", fallback: localFallback }),
     gallery: getGallery(doc, fallback),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,
@@ -225,7 +207,7 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     draft: asBoolean(doc.draft),
     seoTitle: asString(doc.seoTitle) ?? fallback?.seoTitle,
     seoDescription: asString(doc.seoDescription) ?? fallback?.seoDescription,
-    ogImage: getMediaUrl(doc.ogImage) ?? fallback?.ogImage,
+    ogImage: resolveCmsMediaUrl(doc.ogImage, { fallback: fallback?.ogImage }),
     keywords: getKeywords(doc.keywords) ?? fallback?.keywords,
     noIndex: asBoolean(doc.noIndex) ?? fallback?.noIndex
   };

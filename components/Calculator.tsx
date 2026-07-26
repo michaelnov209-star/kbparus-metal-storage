@@ -56,13 +56,13 @@ const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: stri
     title: "Двухсторонняя система хранения с выкатными полками",
     shortTitle: "Двухсторонняя выкатная система",
     description: "Для складов, где нужен доступ к кассетам с одной или двух сторон.",
-    image: "/assets/images/calculator-configurator.svg"
+    image: "/assets/images/products/manual-sheet-metal/2.4.png"
   },
   "hybrid-rollout-rack": {
     title: "Комбинированная система хранения с выкатными полками",
     shortTitle: "Гибридная система",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
-    image: "/assets/images/calculator-configurator.svg"
+    image: "/assets/images/products/manual-sheet-metal/2.3.png"
   }
 };
 

@@ -78,7 +78,7 @@ export default function Image() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 820 }}>
             <span style={{ color: "#fc5413", fontSize: 24, fontWeight: 800, textTransform: "uppercase" }}>
-              Здесь будет изображение
+              Инженерные системы для производства
             </span>
             <h1 style={{ margin: 0, fontSize: 76, lineHeight: .94, fontWeight: 900 }}>
               Системы хранения металла

@@ -1,5 +1,8 @@
+import { ResponsiveStyles } from "./ResponsiveStyles";
+
 export function LinePageStyles() {
   return (
+    <>
     <style>{`
       html{scrollbar-width:thin;scrollbar-color:#fc5413 #111923;-webkit-text-size-adjust:100%;text-size-adjust:100%}body{-webkit-text-size-adjust:100%;text-size-adjust:100%}html::-webkit-scrollbar{width:14px}html::-webkit-scrollbar-track{background:linear-gradient(180deg,#0d141c,#182331)}html::-webkit-scrollbar-thumb{border:3px solid #111923;border-radius:999px;background:linear-gradient(180deg,#ff8a57,#fc5413 48%,#d83c08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 0 22px rgba(252,84,19,.35)}html::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#ffa176,#fc5413 50%,#f04a0d);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 30px rgba(252,84,19,.55)}
       .line-page{--accent:#fc5413;--ink:#2f3338;--dark:#101820;--muted:#7c858f;--paper:#f5f7f9;--soft:#e8edf3;--blue:#91a6bb;--border:rgba(25,31,38,.13);--shadow:0 24px 70px rgba(15,23,32,.12);--wide:min(1560px,calc(100vw - 40px));font-family:"Manrope","Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--paper);overflow:hidden}
@@ -301,6 +304,8 @@ export function LinePageStyles() {
         .guided-choice{min-height:0!important;padding:12px!important}
       }
     `}</style>
+    <ResponsiveStyles />
+    </>
   );
 }
 
