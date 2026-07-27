@@ -2,14 +2,14 @@
 
 Дата: 27 июля 2026  
 Production: https://kbparus-metal-storage.vercel.app
-Production deployment: `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`
+Production deployment: `dpl_EuwjR3GLb2yfzUP3ZCeiFvDVRNFe`
 Проверенный Preview: https://kbparus-metal-storage-av94wr6ie-michaelnov209-3230s-projects.vercel.app
 Ветка: `codex/mobile-responsive-20260726`
 
 ## Итог
 
 - Готовность публичного интерфейса, адаптивности и производительности: **90%**.
-- Общая коммерческая production-ready готовность: **76%**.
+- Общая коммерческая production-ready готовность: **77%**.
 - Проверенный Preview опубликован в production 27 июля 2026.
 - Главный технический P0 — медленная загрузка изображений категорий — закрыт.
 - Hero остаётся видео на всех устройствах; для телефонов и планшетов используется отдельный облегчённый файл.
@@ -90,10 +90,10 @@ Production deployment: `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`
 ## Проверки
 
 - TypeScript: пройден.
-- Vitest: **31/31**.
+- Vitest: **41/41**.
 - Production build: пройден, 42 маршрута.
 - CMS preflight: **15/15**.
-- Production: READY, основной alias направлен на `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`.
+- Production: READY, основной alias направлен на `dpl_EuwjR3GLb2yfzUP3ZCeiFvDVRNFe`.
 - После публикации: 36/36 публичных URL — HTTP 200, HTTP 5xx отсутствуют.
 - Health:
   - приложение — ok;
@@ -116,9 +116,9 @@ Production deployment: `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`
 | Performance | 10% | 94% |
 | Privacy / 152-ФЗ | 10% | 60% |
 | Analytics | 5% | 20% |
-| Deploy / эксплуатация | 5% | 90% |
-| Tests | 5% | 90% |
-| **Итого** | **100%** | **76%** |
+| Deploy / эксплуатация | 5% | 95% |
+| Tests | 5% | 95% |
+| **Итого** | **100%** | **77%** |
 
 ## Что необходимо до коммерческого запуска
 
@@ -135,14 +135,14 @@ Production deployment: `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`
 
 1. Перевести Payload с `push: true` на контролируемые миграции.
 2. Перенести rate limit заявок из памяти функции в Redis / Vercel KV.
-3. Указать `sslmode=verify-full` в строке подключения Postgres.
-4. Настроить Payload email adapter.
+3. ✅ Postgres runtime автоматически нормализует SSL в `sslmode=verify-full`.
+4. ✅ Payload email adapter подключён к единому SMTP-транспорту; для фактической отправки остаётся добавить SMTP-секреты в Vercel.
 5. Добавить Sentry, Web Vitals, uptime и visual regression.
 6. Подключить постоянный домен и environment-based canonical URL.
 
 ## Риски
 
-- Предыдущий production deployment `dpl_75jcLJZmQPBvN47Vo28s5Q27G4gB` остаётся доступным для rollback.
+- Предыдущий production deployment `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G` остаётся доступным для rollback.
 - Preview build выполняет schema push; поле `mobileVideo` добавлено как необязательное и обратно совместимое, но при общей БД схема уже могла примениться к production-окружению.
 - Desktop hero-video по требованию сохранено и остаётся тяжёлым — 10,2 МБ. Для первого экрана используется постер и metadata preload, но дальнейшее уменьшение потребует отдельного desktop-рекодирования или сокращения ролика.
 - Без SMTP заявка зависит от Telegram/CMS; без Метрики нет полноценной конверсионной аналитики.
