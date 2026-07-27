@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AnalyticsEvents } from "@/components/AnalyticsEvents";
+import { CookieConsent } from "@/components/CookieConsent";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
 
@@ -86,7 +88,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <YandexMetrika />
         <AnalyticsEvents />
+        <WebVitalsReporter />
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

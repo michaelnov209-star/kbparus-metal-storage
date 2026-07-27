@@ -388,22 +388,15 @@ export default async function Home() {
         <div className="material-grid">
           {home.storedMaterials.map((item) => (
             <article className="material-card reveal" key={item.title}>
-              {item.imageUrl ? (
-                <div className="material-card-media">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.imageAlt ?? item.title}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <strong>{item.label}</strong>
-                </div>
-              ) : (
-                <div className="material-placeholder" aria-hidden="true">
-                  <ContentIcon name={item.icon} size={46} />
-                  <strong>{item.label}</strong>
-                </div>
-              )}
+              <div className="material-card-media">
+                <img
+                  src={item.imageUrl}
+                  alt={item.imageAlt}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <strong>{item.label}</strong>
+              </div>
               <div>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
@@ -665,8 +658,22 @@ export default async function Home() {
           <article className="contact-card reveal">
             <span><Sparkles size={20} />Социальные сети</span>
             <div className="social-row">
-              <a className="telegram" href={contacts.socials.telegram || contacts.email.href} data-metrika-goal="messenger_click"><Send size={30} /></a>
-              <a className="whatsapp" href={contacts.socials.whatsapp || contacts.phones[0].href} data-metrika-goal="messenger_click"><MessageCircle size={30} /></a>
+              <a
+                aria-label={contacts.socials.telegram ? "Написать в Telegram" : "Написать по электронной почте"}
+                className="telegram"
+                href={contacts.socials.telegram || contacts.email.href}
+                data-metrika-goal="messenger_click"
+              >
+                <Send size={30} />
+              </a>
+              <a
+                aria-label={contacts.socials.whatsapp ? "Написать в WhatsApp" : "Позвонить в отдел продаж"}
+                className="whatsapp"
+                href={contacts.socials.whatsapp || contacts.phones[0].href}
+                data-metrika-goal="messenger_click"
+              >
+                <MessageCircle size={30} />
+              </a>
               <a className="vk" href={contacts.socials.vk || "https://www.kbparus.ru/"} target="_blank" rel="noreferrer">VK</a>
             </div>
           </article>

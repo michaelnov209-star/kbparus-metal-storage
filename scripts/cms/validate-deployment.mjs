@@ -10,25 +10,13 @@
  * CMS records, uploads media, or mutates database schema.
  */
 
-const REQUIRED_COLLECTIONS = [
-  "calculator-profiles",
-  "categories",
-  "media",
-  "products",
-  "subcategories",
-  "users"
-];
-const REQUIRED_GLOBALS = [
-  "contacts",
-  "home-content",
-  "lead-management",
-  "site-navigation"
-];
 const PRODUCTION_URL = "https://kbparus-metal-storage.vercel.app";
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_PAGE_ATTEMPTS = 3;
 const SITEMAP_CONCURRENCY = 6;
 const IMMUTABLE_MAX_AGE = 31_536_000;
+const protectionBypassSecret =
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() || "";
 
 const args = process.argv.slice(2);
 const productionMode = args.includes("--production");
@@ -82,6 +70,12 @@ async function request(pathOrUrl, init = {}, attempts = 1) {
         ...init,
         headers: {
           "user-agent": "kbparus-deployment-smoke/2.0",
+          ...(protectionBypassSecret
+            ? {
+                "x-vercel-protection-bypass": protectionBypassSecret,
+                "x-vercel-set-bypass-cookie": "true"
+              }
+            : {}),
           ...(init.headers || {})
         }
       });
@@ -114,10 +108,6 @@ async function fetchText(pathOrUrl, options = {}) {
     options.attempts || 1
   );
   return { response, text: await response.text() };
-}
-
-function missing(expected, actual) {
-  return expected.filter((item) => !actual.includes(item));
 }
 
 function extractAttribute(tag, attribute) {
@@ -231,27 +221,12 @@ async function checkHealth() {
   record("health.status is ok", health.status === "ok", `status=${health.status}`);
 
   const cms = health.components?.cms;
-  record("cms.ok is true", cms?.ok === true, cms?.error || "");
-  const collectionNames = Array.isArray(cms?.collectionNames)
-    ? cms.collectionNames
-    : [];
-  const missingCollections = missing(REQUIRED_COLLECTIONS, collectionNames);
   record(
-    "required collections are present",
-    missingCollections.length === 0,
-    missingCollections.length
-      ? `missing: ${missingCollections.join(", ")}`
-      : `${collectionNames.length} collections`
-  );
-
-  const globalNames = Array.isArray(cms?.globalNames) ? cms.globalNames : [];
-  const missingGlobals = missing(REQUIRED_GLOBALS, globalNames);
-  record(
-    "required globals are present",
-    missingGlobals.length === 0,
-    missingGlobals.length
-      ? `missing: ${missingGlobals.join(", ")}`
-      : `${globalNames.length} globals`
+    "CMS is configured and readable",
+    cms?.configured === true &&
+      cms?.ok === true &&
+      cms?.requiredContentReadable === true,
+    `configured=${Boolean(cms?.configured)}, ok=${Boolean(cms?.ok)}, content=${Boolean(cms?.requiredContentReadable)}`
   );
 
   const storage = health.components?.storage;
@@ -302,13 +277,21 @@ async function checkAdminRender() {
 }
 
 async function checkAuthBoundary() {
-  const response = await request("/api/users?limit=1", { method: "GET" });
+  const [users, leadManagement] = await Promise.all([
+    request("/api/users?limit=1", { method: "GET" }),
+    request("/api/globals/lead-management", { method: "GET" })
+  ]);
   record(
     "users API is not publicly readable",
-    [401, 403, 404].includes(response.status),
-    `HTTP ${response.status}`
+    [401, 403, 404].includes(users.status),
+    `HTTP ${users.status}`
   );
-  await response.body?.cancel();
+  record(
+    "lead-management API is not publicly readable",
+    [401, 403, 404].includes(leadManagement.status),
+    `HTTP ${leadManagement.status}`
+  );
+  await Promise.all([users.body?.cancel(), leadManagement.body?.cancel()]);
 }
 
 async function mapWithConcurrency(items, concurrency, worker) {

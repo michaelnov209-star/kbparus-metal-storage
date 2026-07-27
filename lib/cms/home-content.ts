@@ -37,7 +37,14 @@ export interface HeroData {
 
 export interface HomePageContent {
   hero: HeroData;
-  storedMaterials: Array<{ title: string; text: string; label: string; icon: IconKey; imageUrl?: string; imageAlt?: string }>;
+  storedMaterials: Array<{
+    title: string;
+    text: string;
+    label: string;
+    icon: IconKey;
+    imageUrl: string;
+    imageAlt: string;
+  }>;
   beforeAfter: {
     before: { title: string; text: string; imageUrl: string; imageAlt: string; points: string[] };
     after: { title: string; text: string; imageUrl: string; imageAlt: string; points: string[] };
@@ -544,8 +551,11 @@ function normalizeStoredMaterials(items: AnyRecord[] | null | undefined, default
         text: item.description,
         label: item.label ?? defaults[index]?.label ?? item.title,
         icon: (item.icon ?? defaults[index]?.icon ?? "package-check") as IconKey,
-        imageUrl: pickUrl(item.image) ?? defaults[index]?.imageUrl,
-        imageAlt: pickAlt(item.image) ?? item.title
+        imageUrl:
+          pickUrl(item.image) ??
+          defaults[index]?.imageUrl ??
+          visualAssets.warehouse,
+        imageAlt: pickAlt(item.image) ?? item.title ?? "Система хранения металла"
       }))
       .filter((item) => item.title && item.text) ?? [];
   return normalized.length > 0 ? normalized : defaults;

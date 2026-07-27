@@ -13,7 +13,7 @@ Production-ready B2B-сайт для направления «Системы х�
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 5.9 strict |
 | CMS | Payload 3 (`/admin`), Postgres (Neon), Vercel Blob, `sharp` для обработки изображений |
 | Hosting | Vercel, auto-deploy из `main`, Node 22.x (exact pin) |
-| Тесты | Vitest |
+| Тесты | Vitest + Playwright (390/768/1280, WCAG, visual regression) |
 | Интеграции | Bitrix24 (webhook), Telegram Bot API |
 
 Без Tailwind и CSS-in-JS — нативный CSS в `app/globals.css`. ESM-пакет (`"type": "module"`).
@@ -88,26 +88,36 @@ Payload admin доступен по `/admin`. Сейчас это не толь�
 
 | Переменная | Назначение |
 |-----------|------------|
-| `PAYLOAD_SECRET` | Подписи сессий Payload (≥32 символа) |
-| `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING` | Direct connection к Neon (для DDL/schema push) |
+| `PAYLOAD_SECRET` | Подписи сессий Payload (≥32 символа); без него Vercel Production не собирается |
+| `NEXT_PUBLIC_SITE_URL` | Канонический публичный origin сайта |
+| `DATABASE_URL_UNPOOLED` или `POSTGRES_URL_NON_POOLING` | Direct connection к Neon только для контролируемых audit/migration-команд |
 | `DATABASE_URL` или `POSTGRES_URL` | Pooled connection (runtime queries) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage |
+| `LEAD_ALLOWED_ORIGINS` | Дополнительные разрешённые origin форм заявок через запятую |
+| `LEAD_ALLOW_NO_ORIGIN` | Разрешение запросов без `Origin`; в production оставлять `false` |
+| `LEAD_RATE_LIMIT_MAX`, `LEAD_RATE_LIMIT_WINDOW_MS` | Лимит заявок на клиента и окно ограничения |
+| `LEAD_RATE_LIMIT_SALT` | Опциональная соль хеша клиента; иначе используется `PAYLOAD_SECRET` |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Распределённый rate limit между Vercel-инстансами |
 | `BITRIX24_WEBHOOK_URL` | Опционально — доставка лидов в CRM |
 | `BITRIX24_FIELD_*` | Опционально — custom fields для структурированных данных в Bitrix24 |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Опционально — уведомления о заявках |
 | `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Опционально — счетчик Яндекс Метрики |
 
-Без `BITRIX24_WEBHOOK_URL` Bitrix24 мягко пропускается. Если не настроены ни Telegram, ни Bitrix24, API заявок работает в mock-режиме и логирует в Vercel Functions.
+Без `BITRIX24_WEBHOOK_URL` Bitrix24 мягко пропускается. Заявка считается принятой только после успешной доставки хотя бы в один реальный канал: CMS, email, Telegram или Bitrix24. Если все каналы недоступны, API возвращает `503`, а интерфейс не показывает ложный успех. Для стабильного общего лимита на всех Vercel-инстансах рекомендуется Upstash Redis; без него действует ограниченный in-memory fallback каждого инстанса.
 
 ## Деплой
 
 Auto-deploy на Vercel из ветки `main` (1–3 минуты). Build pipeline — `npm run vercel-build`:
 
 ```
-cms:check → cms:generate-importmap → cms:push-schema → cms:check → next build
+cms:check → cms:generate-importmap → cms:check → next build
 ```
 
-Если CMS-prerequisites не выполнены, build *намеренно* падает до публикации — production остаётся на предыдущей рабочей версии. Подробности — [`docs/operations/deployment-guide.md`](docs/operations/deployment-guide.md), [`docs/operations/deployment-checklist.md`](docs/operations/deployment-checklist.md).
+Build не изменяет production-БД. Payload migrations запускаются отдельно,
+после Neon branch/restore point и проверки schema status. Подробности —
+[`docs/operations/cms-migrations.md`](docs/operations/cms-migrations.md),
+[`docs/operations/deployment-guide.md`](docs/operations/deployment-guide.md) и
+[`docs/operations/deployment-checklist.md`](docs/operations/deployment-checklist.md).
 
 ## Бизнес-правило калькулятора
 
@@ -117,8 +127,9 @@ cms:check → cms:generate-importmap → cms:push-schema → cms:check → next 
 
 1. Перед изменением `lib/calculator/pricing.ts` или `data/storageSystems/excelCalculator.ts` — прогон `npm run test`.
 2. После изменения `payload.config.ts` или коллекций — пересборка importMap (`npm run cms:generate-importmap` на Linux/Mac/WSL).
-3. Любой non-trivial фикс — отразить в `CHANGELOG.md` или соответствующем `docs/**/*.md`.
-4. Production не ломать: эксперименты — на feature-ветках, cutover в `main` — после smoke на preview.
+3. Изменение Payload schema — новая проверенная миграция; Vercel build никогда не выполняет DDL.
+4. Любой non-trivial фикс — отразить в `CHANGELOG.md` или соответствующем `docs/**/*.md`.
+5. Production не ломать: эксперименты — на feature-ветках, cutover в `main` — после smoke на preview.
 
 ## Лицензия и владение
 

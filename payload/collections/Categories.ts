@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
 
 export const Categories: CollectionConfig = {
   slug: "categories",
@@ -126,5 +127,12 @@ export const Categories: CollectionConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    admin: contentAdminUi,
+    create: contentManagersOnly,
+    delete: contentManagersOnly,
+    read: publicReadPublished,
+    readVersions: contentManagersOnly,
+    update: contentManagersOnly
+  }
 };

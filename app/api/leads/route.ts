@@ -1,84 +1,34 @@
 import { NextResponse } from "next/server";
-import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
+import {
+  calculateStorageSystem,
+  normalizeCalculatorInput,
+  type CalculatorInput
+} from "@/lib/calculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import {
+  LEAD_CONSENT_POLICY_PATH,
+  LEAD_CONSENT_VERSION
+} from "@/lib/leads/contract";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { bitrix24FieldMapFromEnv, buildBitrix24Payload, resolveBitrix24WebhookUrl } from "@/lib/leads/bitrix24";
 import { saveLeadToCms } from "@/lib/leads/cms";
 import { leadEmailConfigFromEnv, sendLeadEmail } from "@/lib/leads/email";
+import {
+  checkLeadRateLimit,
+  getLeadClientIdentity,
+  rateLimitHeaders
+} from "@/lib/leads/rate-limit";
 import { buildTelegramMessage, type TelegramLead } from "@/lib/leads/telegram";
+import {
+  LeadValidationError,
+  parseLeadPayload,
+  readLeadJsonBody
+} from "@/lib/leads/validation";
 
-interface LeadPayload {
-  leadType?: "contact" | "configurator";
-  contact?: {
-    name?: string;
-    phone?: string;
-    email?: string;
-  };
-  city?: string;
-  comment?: string;
-  utm?: Record<string, string>;
-  calculatorInput?: Record<string, unknown>;
-  recommendedConfig?: {
-    title?: string;
-    dimensions?: string;
-    loadKg?: number;
-    shelfCount?: number;
-    towerCount?: number;
-    options?: string[];
-  };
-  preliminaryPriceFrom?: number;
-  hp_url?: string;
-  formStartedAt?: number;
-  source?: string;
-  sourceUrl?: string;
-  sourceTitle?: string;
-  sourceImage?: string;
-}
+export const runtime = "nodejs";
 
-const SITE_URL = "https://kbparus-metal-storage.vercel.app";
-
-const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW_MS = 60_000;
+const PRODUCTION_ORIGIN = "https://kbparus-metal-storage.vercel.app";
 const MIN_FORM_FILL_MS = 2_000;
-const MAX_FIELD_LENGTH = 1000;
-
-const requestLog = new Map<string, number[]>();
-
-function getClientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
-}
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const recent = (requestLog.get(ip) ?? []).filter((time) => now - time < RATE_LIMIT_WINDOW_MS);
-  if (recent.length >= RATE_LIMIT_MAX) return true;
-  recent.push(now);
-  requestLog.set(ip, recent);
-
-  if (requestLog.size > 1000) {
-    for (const [key, times] of requestLog) {
-      if (times.every((time) => now - time > RATE_LIMIT_WINDOW_MS)) requestLog.delete(key);
-    }
-  }
-
-  return false;
-}
-
-function isValidPhone(phone: string): boolean {
-  const cleaned = phone.replace(/[\s\-()+]/g, "");
-  return /^\d{10,15}$/.test(cleaned);
-}
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function sanitize(value: unknown): string {
-  if (typeof value !== "string") return "";
-  return value.slice(0, MAX_FIELD_LENGTH).trim();
-}
 
 async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?: string }> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -125,85 +75,146 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
   }
 }
 
-function resolveAbsoluteUrl(value: string | undefined): string | undefined {
+function normalizeOrigin(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith("/")) return `${SITE_URL}${value}`;
-  return `${SITE_URL}/${value}`;
+  try {
+    const normalized = value.startsWith("http") ? value : `https://${value}`;
+    return new URL(normalized).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+function getAllowedOrigins(request: Request): Set<string> {
+  const requestOrigin = new URL(request.url).origin;
+  const configuredOrigins = [
+    PRODUCTION_ORIGIN,
+    requestOrigin,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_URL,
+    ...(process.env.LEAD_ALLOWED_ORIGINS?.split(",") ?? [])
+  ]
+    .map((value) => normalizeOrigin(value?.trim()))
+    .filter((value): value is string => Boolean(value));
+
+  return new Set(configuredOrigins);
+}
+
+function isOriginAllowed(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) {
+    return process.env.NODE_ENV !== "production" || process.env.LEAD_ALLOW_NO_ORIGIN === "true";
+  }
+  const normalized = normalizeOrigin(origin);
+  return Boolean(normalized && getAllowedOrigins(request).has(normalized));
+}
+
+function resolveAbsoluteUrl(
+  value: string | undefined,
+  request: Request,
+  kind: "page" | "image"
+): string | undefined {
+  if (!value) return undefined;
+  try {
+    const requestOrigin = new URL(request.url).origin;
+    const url = new URL(value, requestOrigin);
+    if (!["http:", "https:"].includes(url.protocol)) return undefined;
+
+    const allowedOrigins = getAllowedOrigins(request);
+    const isAllowedBlob =
+      kind === "image" &&
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".public.blob.vercel-storage.com");
+    if (!allowedOrigins.has(url.origin) && !isAllowedBlob) return undefined;
+
+    return url.toString();
+  } catch {
+    return undefined;
+  }
 }
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-
-  if (isRateLimited(ip)) {
+  if (!isOriginAllowed(request)) {
     return NextResponse.json(
-      { ok: false, error: "Слишком много запросов. Подождите минуту и попробуйте снова." },
-      { status: 429 }
+      { ok: false, code: "origin_forbidden", error: "Источник запроса не разрешён." },
+      { status: 403 }
     );
   }
 
-  let payload: LeadPayload;
-  try {
-    payload = (await request.json()) as LeadPayload;
-  } catch {
-    return NextResponse.json({ ok: false, error: "Некорректный JSON" }, { status: 400 });
+  const rateLimit = await checkLeadRateLimit(getLeadClientIdentity(request));
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "rate_limited",
+        error: "Слишком много запросов. Подождите минуту и попробуйте снова."
+      },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    );
   }
 
-  if (payload.hp_url && payload.hp_url.length > 0) {
-    return NextResponse.json({ ok: true, mode: "honeypot-blocked" });
+  let payload;
+  try {
+    payload = parseLeadPayload(await readLeadJsonBody(request));
+  } catch (error) {
+    if (error instanceof LeadValidationError) {
+      return NextResponse.json(
+        { ok: false, code: error.code, error: error.message },
+        { status: error.status, headers: rateLimitHeaders(rateLimit) }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, code: "invalid_request", error: "Некорректный запрос." },
+      { status: 400, headers: rateLimitHeaders(rateLimit) }
+    );
+  }
+
+  if (payload.hp_url) {
+    return NextResponse.json(
+      { ok: true, mode: "accepted" },
+      { headers: rateLimitHeaders(rateLimit) }
+    );
   }
 
   if (typeof payload.formStartedAt === "number") {
     const elapsed = Date.now() - payload.formStartedAt;
     if (elapsed < MIN_FORM_FILL_MS) {
-      return NextResponse.json({ ok: true, mode: "speed-blocked" });
+      return NextResponse.json(
+        { ok: true, mode: "accepted" },
+        { headers: rateLimitHeaders(rateLimit) }
+      );
     }
   }
 
-  const name = sanitize(payload.contact?.name);
-  const phone = sanitize(payload.contact?.phone);
-  const email = sanitize(payload.contact?.email);
-  const city = sanitize(payload.city);
-  const comment = sanitize(payload.comment);
-  const source = sanitize(payload.source);
-  const sourceTitle = sanitize(payload.sourceTitle);
-  const sourceUrl = resolveAbsoluteUrl(sanitize(payload.sourceUrl) || undefined);
-  const sourceImageUrl = resolveAbsoluteUrl(sanitize(payload.sourceImage) || undefined);
+  const { name, phone, email } = payload.contact;
+  const { city, comment, source, sourceTitle } = payload;
+  const sourceUrl = resolveAbsoluteUrl(payload.sourceUrl || undefined, request, "page");
+  const sourceImageUrl = resolveAbsoluteUrl(payload.sourceImage || undefined, request, "image");
   const rawCalculatorInput = payload.calculatorInput ?? {};
   const hasCalculatorInput = Object.keys(rawCalculatorInput).length > 0;
   const isConfiguratorLead = payload.leadType === "configurator" || hasCalculatorInput;
 
-  if (!phone) {
-    return NextResponse.json(
-      { ok: false, error: "Укажите телефон, чтобы инженер мог связаться с вами." },
-      { status: 400 }
-    );
-  }
-
-  if (!isValidPhone(phone)) {
-    return NextResponse.json(
-      { ok: false, error: "Телефон указан в неверном формате." },
-      { status: 400 }
-    );
-  }
-
-  if (email && !isValidEmail(email)) {
-    return NextResponse.json(
-      { ok: false, error: "Email указан в неверном формате." },
-      { status: 400 }
-    );
-  }
-
   const calculatorInput = isConfiguratorLead
     ? normalizeCalculatorInput({
-        ...rawCalculatorInput,
+        ...(rawCalculatorInput as Partial<CalculatorInput>),
         city: city || String(rawCalculatorInput.city ?? ""),
         comment
       })
     : undefined;
   const result = calculatorInput ? calculateStorageSystem(calculatorInput) : undefined;
-  const fromPrice = typeof payload.preliminaryPriceFrom === "number" ? payload.preliminaryPriceFrom : result?.fromPrice;
-  const selectedOptions = payload.recommendedConfig?.options?.map((option) => sanitize(option)).filter(Boolean);
+  const fromPrice = result?.fromPrice ?? payload.preliminaryPriceFrom;
+  const selectedOptions = payload.recommendedConfig?.options?.filter(Boolean);
+  const acceptedAt = new Date().toISOString();
+  const requestOrigin = new URL(request.url).origin;
+  const utm = {
+    ...payload.utm,
+    consent_accepted: "true",
+    consent_version: LEAD_CONSENT_VERSION,
+    consent_accepted_at: acceptedAt,
+    consent_policy_url: `${requestOrigin}${LEAD_CONSENT_POLICY_PATH}`
+  };
 
   const telegramLead: TelegramLead = {
     leadType: isConfiguratorLead ? "configurator" : "contact",
@@ -216,7 +227,8 @@ export async function POST(request: Request) {
     sourceUrl,
     sourceTitle: sourceTitle || undefined,
     sourceImageUrl,
-    recommendationTitle: sanitize(payload.recommendedConfig?.title) || result?.recommendation.title,
+    recommendationTitle:
+      sourceTitle || payload.recommendedConfig?.title || result?.recommendation.title,
     fromPriceLabel: fromPrice ? `от ${formatRoundedRub(fromPrice)}` : undefined,
     calculatorInput,
     selectedOptions
@@ -233,7 +245,7 @@ export async function POST(request: Request) {
     source: source || undefined,
     sourceTitle: sourceTitle || undefined,
     sourceUrl,
-    utm: payload.utm,
+    utm,
     calculatorInput,
     result,
     selectedOptions,
@@ -303,22 +315,19 @@ export async function POST(request: Request) {
   if (cmsResult.ok) channels.push("cms");
   else if (cmsResult.error) console.warn(`CMS lead save failed: ${cmsResult.error}`);
 
-  if (channels.length === 0 && !bitrix24Config.enabled && !process.env.TELEGRAM_BOT_TOKEN) {
-    return NextResponse.json({
-      ok: true,
-      mode: "mock",
-      message: "Заявка подготовлена. Настройте TELEGRAM_BOT_TOKEN или BITRIX24_WEBHOOK_URL для реальной доставки.",
-      bitrixPayload,
-      cmsResult
-    });
-  }
-
   if (channels.length === 0) {
     return NextResponse.json(
-      { ok: false, error: "Не удалось отправить заявку. Попробуйте через минуту или позвоните нам." },
-      { status: 502 }
+      {
+        ok: false,
+        code: "delivery_unavailable",
+        error: "Не удалось отправить заявку. Попробуйте через минуту или позвоните нам."
+      },
+      { status: 503, headers: rateLimitHeaders(rateLimit) }
     );
   }
 
-  return NextResponse.json({ ok: true, channels });
+  return NextResponse.json(
+    { ok: true, channels },
+    { headers: rateLimitHeaders(rateLimit) }
+  );
 }

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups } from "../admin/structure";
+import { adminOnly, adminUiOnly } from "../access/rbac";
 
 export const Users: CollectionConfig = {
   slug: "users",
@@ -17,6 +18,14 @@ export const Users: CollectionConfig = {
       en: "CMS staff access."
     },
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
+  },
+  access: {
+    admin: adminUiOnly,
+    create: adminOnly,
+    delete: adminOnly,
+    read: adminOnly,
+    unlock: adminOnly,
+    update: adminOnly
   },
   auth: {
     cookies: {

@@ -14,13 +14,19 @@
     "images:optimize-products": "node scripts/media/optimize-product-images.mjs",
     "prebuild": "npm run images:optimize",
     "build": "next build",
-    "vercel-build": "npm run images:optimize && node scripts/cms/check.mjs && node scripts/cms/safe-generate-importmap.mjs && node scripts/cms/push-schema.mjs && node scripts/cms/check.mjs && next build",
+    "vercel-build": "npm run images:optimize && node scripts/cms/check.mjs && node scripts/cms/safe-generate-importmap.mjs && node scripts/cms/check.mjs && next build",
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "npm run build && node e2e/run.mjs",
+    "test:e2e:update": "npm run build && node e2e/run.mjs visual.spec.ts --update-snapshots",
+    "test:e2e:report": "playwright show-report output/playwright/report",
     "cms:check": "node scripts/cms/check.mjs",
     "cms:generate-importmap": "node scripts/cms/safe-generate-importmap.mjs",
-    "cms:push-schema": "node scripts/cms/push-schema.mjs",
+    "cms:migrate:audit": "node scripts/cms/audit-migration-state.mjs",
+    "cms:migrate:create": "node scripts/cms/run-payload-migration.mjs migrate:create",
+    "cms:migrate:status": "node scripts/cms/run-payload-migration.mjs migrate:status",
+    "cms:migrate:apply": "node scripts/cms/run-payload-migration.mjs migrate",
     "cms:validate-deployment": "node scripts/cms/validate-deployment.mjs",
     "smoke:deployment": "node scripts/cms/validate-deployment.mjs",
     "smoke:production": "node scripts/cms/validate-deployment.mjs https://kbparus-metal-storage.vercel.app --production",
@@ -42,17 +48,25 @@
     "next": "^16.2.12",
     "nodemailer": "^9.0.3",
     "payload": "3.86.0",
+    "pg": "8.20.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "sharp": "0.34.5"
+    "sharp": "0.35.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.62.0",
     "@types/node": "24.9.2",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "tsx": "^4.19.2",
     "typescript": "5.9.3",
-    "vitest": "4.0.2"
+    "vitest": "4.1.10"
+  },
+  "overrides": {
+    "dompurify": "3.4.12",
+    "postcss": "8.5.23",
+    "sharp": "$sharp"
   }
 }

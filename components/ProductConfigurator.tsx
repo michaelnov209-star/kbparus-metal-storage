@@ -8,6 +8,7 @@ import { formatRoundedRub } from "@/lib/calculator/format";
 import type { CalculatorInput } from "@/lib/calculator/types";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
+import { createLeadConsent } from "@/lib/leads/contract";
 
 function buildInput(profileId: CalculatorProfileId): CalculatorInput {
   const profile = getCalculatorProfile(profileId);
@@ -151,10 +152,15 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
           city: input.city,
           comment: input.comment,
           calculatorInput: input,
-          recommendedConfig: result.recommendation,
-          preliminaryPriceRange: {
-            from: result.fromPrice,
-            label: `от ${formatRoundedRub(result.fromPrice)}`
+          recommendedConfig: {
+            title: productTitle ?? profile.title,
+            dimensions: result.engineeringSummary.dimensionsLabel,
+            loadKg: input.loadKg,
+            shelfCount: input.shelfCount,
+            towerCount: input.towerCount,
+            options: profile.options
+              .filter((option) => input.optionIds.includes(option.id))
+              .map((option) => option.title)
           },
           preliminaryPriceFrom: result.fromPrice,
           source: `Конфигуратор товара — ${productTitle ?? profile.title}`,
@@ -163,7 +169,8 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
           sourceImage: productImage,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current,
-          utm: getStoredLeadUtm()
+          utm: getStoredLeadUtm(),
+          consent: createLeadConsent()
         })
       });
 
@@ -186,7 +193,7 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
   }
 
   return (
-    <section className="product-configurator">
+    <section className="product-configurator" data-testid="product-configurator">
       <div className="product-configurator-main">
         <div className="product-configurator-title">
           <span>Конфигуратор товара</span>
@@ -221,7 +228,13 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
         >
           <div className="product-option-grid">
             {profile.options.map((option) => (
-              <button className={input.optionIds.includes(option.id) ? "product-option is-active" : "product-option"} key={option.id} type="button" onClick={() => toggleOption(option.id)}>
+              <button
+                aria-pressed={input.optionIds.includes(option.id)}
+                className={input.optionIds.includes(option.id) ? "product-option is-active" : "product-option"}
+                key={option.id}
+                type="button"
+                onClick={() => toggleOption(option.id)}
+              >
                 <CheckCircle2 size={18} />
                 <span>{option.title}</span>
               </button>
@@ -241,18 +254,56 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
           <span>Башни: <b>{input.towerCount}</b></span>
         </div>
         <div className="product-lead-mini">
-          <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Ваше имя" />
-          <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
-          <input value={input.city} onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))} placeholder="Город поставки" />
-          <textarea value={input.comment} onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))} placeholder="Комментарий для инженера" />
+          <input
+            aria-label="Ваше имя"
+            autoComplete="name"
+            data-testid="product-lead-name"
+            maxLength={120}
+            name="name"
+            value={contact.name}
+            onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))}
+            placeholder="Ваше имя"
+          />
+          <input
+            aria-label="Телефон"
+            autoComplete="tel"
+            data-testid="product-lead-phone"
+            inputMode="tel"
+            maxLength={30}
+            name="phone"
+            required
+            value={contact.phone}
+            onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
+            placeholder="+7 (999) 999-99-99"
+          />
+          <input
+            aria-label="Город поставки"
+            autoComplete="address-level2"
+            maxLength={120}
+            name="city"
+            value={input.city}
+            onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
+            placeholder="Город поставки"
+          />
+          <textarea
+            aria-label="Комментарий для инженера"
+            maxLength={1000}
+            name="comment"
+            value={input.comment}
+            onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
+            placeholder="Комментарий для инженера"
+          />
           {/* Honeypot — невидимое поле для ботов. Не трогать. */}
           <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
-            <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
+            <input name="hp_url" value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
           </div>
           <label className="product-consent consent-field">
             <input
               checked={consentAccepted}
+              data-testid="product-lead-consent"
+              name="consent"
               onChange={(event) => setConsentAccepted(event.target.checked)}
+              required
               type="checkbox"
             />
             <span>
@@ -260,11 +311,21 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
               <a href="/privacy-policy" target="_blank" rel="noreferrer">политикой конфиденциальности</a>.
             </span>
           </label>
-          <button className="primary-button" type="button" onClick={submitLead} disabled={submittingLead || !consentAccepted}>
+          <button
+            className="primary-button"
+            data-testid="product-lead-submit"
+            type="button"
+            onClick={submitLead}
+            disabled={submittingLead || !consentAccepted}
+          >
             <Send size={18} />
             Получить расчет
           </button>
-          {status && <small>{status}</small>}
+          {status && (
+            <small aria-live="polite" data-testid="product-lead-status" role="status">
+              {status}
+            </small>
+          )}
         </div>
       </aside>
     </section>
@@ -292,7 +353,13 @@ function ChipRow({ title, unit, values, active, onSelect }: { title: string; uni
       <span>{title}</span>
       <div>
         {values.map((value) => (
-          <button className={active === value ? "is-active" : ""} key={value} type="button" onClick={() => onSelect(value)}>
+          <button
+            aria-pressed={active === value}
+            className={active === value ? "is-active" : ""}
+            key={value}
+            type="button"
+            onClick={() => onSelect(value)}
+          >
             {value.toLocaleString("ru-RU")} <em>{unit}</em>
           </button>
         ))}

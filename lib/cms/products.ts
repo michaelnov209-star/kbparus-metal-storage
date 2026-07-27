@@ -65,7 +65,6 @@ type CmsProductLike = {
   referenceUrl?: unknown;
   featured?: unknown;
   sortOrder?: unknown;
-  draft?: unknown;
   seoTitle?: unknown;
   seoDescription?: unknown;
   ogImage?: unknown;
@@ -229,7 +228,6 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     referenceUrl: asString(doc.referenceUrl) ?? fallback?.referenceUrl,
     featured: asBoolean(doc.featured) ?? fallback?.featured,
     sortOrder: asNumber(doc.sortOrder) ?? fallback?.sortOrder ?? fallbackOrder.get(id),
-    draft: asBoolean(doc.draft),
     seoTitle: asString(doc.seoTitle) ?? fallback?.seoTitle,
     seoDescription: asString(doc.seoDescription) ?? fallback?.seoDescription,
     ogImage: resolveCmsMediaUrl(doc.ogImage, { fallback: fallback?.ogImage }),
@@ -244,7 +242,7 @@ function bySortOrder(a: CatalogProduct, b: CatalogProduct) {
 
 export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
   const cms = await getCmsClient();
-  if (!cms) return fallbackProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
+  if (!cms) return fallbackProducts.slice().sort(bySortOrder);
 
   try {
     const response = await cms.find({
@@ -257,27 +255,27 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
     });
 
     const merged = new Map<string, CatalogProduct>(
-      fallbackProducts.filter((product) => !product.draft).map((product) => [product.id, product])
+      fallbackProducts.map((product) => [product.id, product])
     );
 
     for (const doc of response.docs) {
       const product = normalizeCmsProduct(doc as CmsProductLike);
-      if (product && !product.draft) merged.set(product.id, product);
+      if (product) merged.set(product.id, product);
     }
 
     return Array.from(merged.values()).sort(bySortOrder);
   } catch (error) {
     console.warn("[cms] Catalog products fallback is active:", error);
-    return fallbackProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
+    return fallbackProducts.slice().sort(bySortOrder);
   }
 });
 
 export async function getCatalogProductsByCategory(categoryId: string) {
   const products = await getCatalogProducts();
-  return products.filter((product) => product.categoryId === categoryId && !product.draft).sort(bySortOrder);
+  return products.filter((product) => product.categoryId === categoryId).sort(bySortOrder);
 }
 
 export async function getCatalogProductView(categoryId: string, productId: string) {
   const products = await getCatalogProducts();
-  return products.find((product) => product.categoryId === categoryId && product.id === productId && !product.draft);
+  return products.find((product) => product.categoryId === categoryId && product.id === productId);
 }

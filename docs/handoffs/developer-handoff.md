@@ -216,12 +216,11 @@ CMS встроена в Next.js App Router и развёрнута в production
 
 ## Build pipeline
 
-Команда `npm run vercel-build` запускает 5 шагов:
+Команда `npm run vercel-build` запускает безопасные build-шаги:
 
 ```bash
 node scripts/cms/check.mjs                       # preflight assertions
 node scripts/cms/safe-generate-importmap.mjs     # payload generate:importmap (Linux/Mac)
-node scripts/cms/push-schema.mjs                 # explicit pushDevSchema(payload.db)
 node scripts/cms/check.mjs                       # повторная валидация
 next build
 ```
@@ -230,9 +229,11 @@ next build
 
 1. **`cms:check`** — 13 assertions: env vars (`PAYLOAD_SECRET≥32`, DB URL, unpooled URL, BLOB token), наличие файлов, контент `importMap.ts` (должен содержать VercelBlobClientUploadHandler + Lexical), `next.config.mjs` (serverExternalPackages + withPayload), Node major = 22. Любая failed (не warn) → build aborts.
 2. **`cms:generate-importmap`** — на Linux/Mac запускает `npx payload generate:importmap`, который перезаписывает `app/(payload)/admin/importMap.ts`. На Windows — graceful skip с использованием закоммиченного fallback.
-3. **`cms:push-schema`** — через `npx tsx` запускает `scripts/cms/push-schema.ts`, который вызывает `pushDevSchema(payload.db)` из `@payloadcms/drizzle`, затем верифицирует, что globals `contacts` и `home-content` читаемы. Без этого Payload в `NODE_ENV=production` не пушит схему автоматически.
-4. **`cms:check`** (повторно) — на случай, если шаг 2 повёл себя странно.
-5. **`next build`** — стандартная сборка.
+3. **`cms:check`** (повторно) — на случай, если шаг 2 повёл себя странно.
+4. **`next build`** — стандартная сборка. DDL здесь запрещён.
+
+Payload schema выпускается отдельным защищённым workflow. Полный порядок:
+`docs/operations/cms-migrations.md`.
 
 ### Почему deploy *намеренно* падает раньше публикации
 
@@ -277,16 +278,18 @@ npm run cms:admin-smoke -- <url>                        # авторизован
 Проверяй именно эти причины в порядке убывания частоты:
 
 1. **`importMap.ts` пустой или потерял запись плагина.** Открой `app/(payload)/admin/importMap.ts` — он должен содержать как минимум `VercelBlobClientUploadHandler`, `RscEntryLexicalCell`, `RscEntryLexicalField`, `LexicalDiffComponent`. Если плагин добавлен в `payload.config.ts`, но в importMap нет — перегенерь.
-2. **Схема не пушнута.** Проверь `/api/health` — если `cms.ok: false` или нет globals, значит DDL не прошёл.
-3. **Pooled connection использовался для DDL.** Neon pgbouncer не поддерживает multi-statement DDL. Schema push должен идти через `DATABASE_URL_UNPOOLED`.
+2. **Миграция не применена.** Сначала проверить её на отдельной Neon branch;
+   production workflow пока разрешает только read-only аудит.
+3. **Migration job получил pooled URL.** DDL должен идти через environment secret `DATABASE_URL_UNPOOLED`.
 
 ### `relation "users" does not exist` / `relation "contacts" does not exist`
 
-В `NODE_ENV=production` Payload/Drizzle **не делает** автоматический `push: true`. Решение:
+Payload работает с `push: false`. Решение:
 
-- В build pipeline должен быть `cms:push-schema` (вызывает `pushDevSchema(payload.db)` явно).
-- В env должен быть direct/unpooled URL для DDL.
-- После deploy `/api/health` должен показать `globalNames: ["contacts", "home-content", ...]`.
+- Создать/проверить миграцию на Neon branch.
+- Запустить из `main` защищённый workflow `CMS schema audit — production`.
+- Не применять production-миграцию до подтверждённого baseline и отдельного
+  security review apply-workflow.
 
 ### `ERR_MODULE_NOT_FOUND: Cannot find module './payload/collections/Users'` при `payload generate:importmap`
 

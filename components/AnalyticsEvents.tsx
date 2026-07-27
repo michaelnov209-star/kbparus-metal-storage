@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { getAnalyticsConsent } from "@/lib/analytics/consent";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 
 export function AnalyticsEvents() {
@@ -23,6 +24,7 @@ export function AnalyticsEvents() {
 
   useEffect(() => {
     function handleScrollDepth() {
+      if (getAnalyticsConsent() !== true) return;
       const documentElement = document.documentElement;
       const scrollableHeight = documentElement.scrollHeight - window.innerHeight;
       if (scrollableHeight <= 0) return;

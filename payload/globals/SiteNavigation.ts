@@ -1,5 +1,6 @@
 import type { GlobalConfig } from "payload";
 import { adminGroups } from "../admin/structure";
+import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
 const linkFields = [
   {
@@ -46,6 +47,7 @@ export const SiteNavigation: GlobalConfig = {
   label: { ru: "Компания: навигация и футер", en: "Site navigation" },
   admin: {
     group: adminGroups.company,
+    hidden: ({ user }) => !canEditContent(user),
     description: {
       ru: "Управляет ссылками в шапке, мобильной навигации и футере. Меняйте только понятные публичные ссылки: якоря секций, страницы каталога и внешние сайты.",
       en: "Header, mobile and footer navigation."
@@ -166,5 +168,8 @@ export const SiteNavigation: GlobalConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    read: publicRead,
+    update: contentManagersOnly
+  }
 };

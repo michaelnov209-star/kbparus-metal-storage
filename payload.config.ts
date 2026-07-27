@@ -19,7 +19,11 @@ import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
 import { LeadManagement } from "./payload/globals/LeadManagement";
 import { SiteNavigation } from "./payload/globals/SiteNavigation";
-import { getPostgresConnectionString } from "./lib/config/postgres";
+import {
+  getDirectPostgresConnectionString,
+  getPostgresConnectionString
+} from "./lib/config/postgres";
+import { getPayloadSecret } from "./lib/config/payload-secret";
 import {
   getSmtpTransport,
   isSmtpConfigured,
@@ -85,24 +89,24 @@ export default buildConfig({
       })
     : undefined,
   sharp,
-  secret: process.env.PAYLOAD_SECRET || "change-me-locally",
+  secret: getPayloadSecret(process.env),
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts")
   },
   db: postgresAdapter({
+    migrationDir: path.resolve(dirname, "migrations"),
     pool: {
-      // Используем DIRECT (unpooled) connection. Drizzle push DDL не работает
-      // через pgbouncer (Neon pooled). Vercel + Neon integration предоставляет
-      // оба env var; Payload использует direct, runtime-запросы Next.js Lambda
-      // и без того короткие — connection pool не критичен.
-      connectionString: getPostgresConnectionString(process.env)
+      connectionString:
+        process.env.PAYLOAD_MIGRATING === "true"
+          ? getDirectPostgresConnectionString(process.env)
+          : getPostgresConnectionString(process.env)
     },
-    // Принудительно создаём/обновляем схему БД даже в production. Безопасно для
-    // нашего масштаба (один dev). На зрелом production-deploy переключим на
-    // controlled migrations через `payload migrate`.
-    push: true,
-    // Neon serverless через pgbouncer не поддерживает многооператорные транзакции.
-    transactionOptions: false
+    push: false,
+    // Runtime сохраняет прежний serverless-режим без многооператорных
+    // транзакций. Migration wrapper включает настоящую транзакцию на direct URL.
+    ...(process.env.PAYLOAD_MIGRATING === "true"
+      ? {}
+      : { transactionOptions: false as const })
   }),
   plugins: [
     vercelBlobStorage({

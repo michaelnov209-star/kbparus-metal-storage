@@ -1,11 +1,13 @@
 import type { GlobalConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
 export const Contacts: GlobalConfig = {
   slug: "contacts",
   label: { ru: "Компания: контакты и реквизиты", en: "Company contacts" },
   admin: {
     group: adminGroups.company,
+    hidden: ({ user }) => !canEditContent(user),
     description: {
       ru: adminHints.company,
       en: "Company-wide contacts shown across the website."
@@ -143,5 +145,8 @@ export const Contacts: GlobalConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    read: publicRead,
+    update: contentManagersOnly
+  }
 };

@@ -81,14 +81,20 @@ check(
   "Database URL set (DATABASE_URL/POSTGRES_URL/_UNPOOLED variant)",
   () => Boolean(
     process.env.DATABASE_URL ||
+    process.env.DATABASE_POSTGRES_URL ||
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL_UNPOOLED ||
+    process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
     process.env.POSTGRES_URL_NON_POOLING
   )
 );
 check(
-  "Direct (unpooled) DB URL available — required for schema push",
-  () => Boolean(process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL_NON_POOLING),
+  "Direct (unpooled) DB URL available — required only by controlled migrations",
+  () => Boolean(
+    process.env.DATABASE_URL_UNPOOLED ||
+    process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+    process.env.POSTGRES_URL_NON_POOLING
+  ),
   { soft: true }
 );
 check("BLOB_READ_WRITE_TOKEN set", () => Boolean(process.env.BLOB_READ_WRITE_TOKEN));
@@ -105,6 +111,9 @@ check("api route exists", () =>
 check("payload layout exists", () => existsSync(resolve("app/(payload)/layout.tsx")));
 check("importMap.ts exists", () =>
   existsSync(resolve("app/(payload)/admin/importMap.ts"))
+);
+check("Payload migration index exists", () =>
+  existsSync(resolve("migrations/index.ts"))
 );
 
 // === 3. importMap content ===

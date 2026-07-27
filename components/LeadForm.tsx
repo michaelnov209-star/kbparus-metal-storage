@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getLastCalculatorLead, getStoredLeadUtm } from "@/lib/leads/client-state";
+import { createLeadConsent } from "@/lib/leads/contract";
 
 interface LeadFormProps {
   title?: string;
@@ -43,7 +44,8 @@ export function LeadForm({
       return;
     }
     setSubmitting(true);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setStatus("Отправляем заявку...");
     trackYandexGoal("form_submit", { title });
 
@@ -78,7 +80,8 @@ export function LeadForm({
           calculatorInput: lastCalculator?.calculatorInput,
           recommendedConfig: lastCalculator?.recommendedConfig,
           preliminaryPriceFrom: lastCalculator?.preliminaryPriceFrom,
-          utm: getStoredLeadUtm()
+          utm: getStoredLeadUtm(),
+          consent: createLeadConsent()
         })
       });
 
@@ -86,7 +89,7 @@ export function LeadForm({
       if (response.ok) {
         trackYandexGoal("lead_submit_success", { title, leadType: lastCalculator ? "configurator" : "contact" });
         setStatus("Заявка отправлена. Инженер свяжется с вами и уточнит параметры.");
-        event.currentTarget.reset();
+        formElement.reset();
         setConsentAccepted(false);
         formStartedAt.current = Date.now();
       } else {
@@ -100,15 +103,33 @@ export function LeadForm({
   }
 
   return (
-    <form className="line-form" onSubmit={submit}>
-      <h3>{title}</h3>
+    <form
+      aria-busy={submitting}
+      className="line-form"
+      data-testid="lead-form"
+      onSubmit={submit}
+    >
+      <h3 data-testid="lead-form-source">{title}</h3>
       <label>
         Имя
-        <input name="name" placeholder="Как к вам обращаться" autoComplete="name" maxLength={120} />
+        <input
+          name="name"
+          placeholder="Как к вам обращаться"
+          autoComplete="name"
+          maxLength={120}
+        />
       </label>
       <label>
         Телефон
-        <input name="phone" placeholder="+7" required autoComplete="tel" maxLength={30} inputMode="tel" />
+        <input
+          data-testid="lead-phone"
+          name="phone"
+          placeholder="+7"
+          required
+          autoComplete="tel"
+          maxLength={30}
+          inputMode="tel"
+        />
       </label>
       <label>
         Email
@@ -132,6 +153,8 @@ export function LeadForm({
       <label className="line-form-wide consent-field">
         <input
           checked={consentAccepted}
+          data-testid="lead-consent"
+          name="consent"
           onChange={(event) => setConsentAccepted(event.target.checked)}
           required
           type="checkbox"
@@ -141,10 +164,22 @@ export function LeadForm({
           <a href="/privacy-policy" target="_blank" rel="noreferrer">политикой конфиденциальности</a>.
         </span>
       </label>
-      <button className="line-primary" type="submit" disabled={submitting || !consentAccepted}>
+      <button
+        className="line-primary"
+        data-testid="lead-submit"
+        type="submit"
+        disabled={submitting || !consentAccepted}
+      >
         {submitting ? "Отправляем..." : "Отправить заявку"}
       </button>
-      {status && <p className="line-form-status">{status}</p>}
+      <p
+        aria-live="polite"
+        className="line-form-status"
+        data-testid="lead-status"
+        role="status"
+      >
+        {status}
+      </p>
     </form>
   );
 }

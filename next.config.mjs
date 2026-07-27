@@ -1,7 +1,30 @@
 import { withPayload } from "@payloadcms/next/withPayload";
 
 /** @type {import('next').NextConfig} */
+const isDevelopment = process.env.NODE_ENV !== "production";
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://mc.yandex.ru https://yastatic.net`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://mc.yandex.ru https://*.public.blob.vercel-storage.com",
+  "font-src 'self' data:",
+  "media-src 'self' blob: https://*.public.blob.vercel-storage.com",
+  `connect-src 'self' https://mc.yandex.ru https://mc.yandex.com https://*.public.blob.vercel-storage.com${isDevelopment ? " ws: http://localhost:* http://127.0.0.1:*" : ""}`,
+  "frame-src 'self' https://yandex.ru https://*.yandex.ru",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  ...(isDevelopment ? [] : ["upgrade-insecure-requests"])
+].join("; ");
+
 const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: contentSecurityPolicy,
+  },
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",

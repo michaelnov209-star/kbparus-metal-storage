@@ -24,6 +24,7 @@ import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculato
 import type { CalculatorInput } from "@/lib/calculator";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
+import { createLeadConsent } from "@/lib/leads/contract";
 
 const steps = ["Материал", "Габариты", "Доступ", "Решение"];
 
@@ -391,7 +392,8 @@ export function Calculator() {
           sourceImage: display.image,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current,
-          utm: getStoredLeadUtm()
+          utm: getStoredLeadUtm(),
+          consent: createLeadConsent()
         })
       });
 
@@ -414,7 +416,11 @@ export function Calculator() {
   }
 
   return (
-    <section className={`calculator-shell reveal character-${systemCharacter} scale-${projectScale.id}`} id="calculator">
+    <section
+      className={`calculator-shell reveal character-${systemCharacter} scale-${projectScale.id}`}
+      data-testid="calculator"
+      id="calculator"
+    >
       <div className="calculator-heading">
         <span className="line-kicker">Конфигуратор системы хранения</span>
         <h2>Соберите решение для склада за четыре спокойных шага</h2>
@@ -697,7 +703,10 @@ export function Calculator() {
                     <label className="text-field">
                       <span><MapPin size={16} />Город или регион</span>
                       <input
+                        autoComplete="address-level2"
                         list="calculator-city-suggestions"
+                        maxLength={120}
+                        name="city"
                         value={input.city}
                         onChange={(event) => setInput((current) => ({ ...current, city: event.target.value }))}
                         placeholder="Начните вводить город"
@@ -711,6 +720,8 @@ export function Calculator() {
                     <label className="text-field">
                       <span><MessageSquareText size={16} />Комментарий для инженера</span>
                       <textarea
+                        maxLength={1000}
+                        name="comment"
                         value={input.comment ?? ""}
                         onChange={(event) => setInput((current) => ({ ...current, comment: event.target.value }))}
                         placeholder="Дополнительные детали: режим загрузки, требования к монтажу, сроки"
@@ -780,19 +791,52 @@ export function Calculator() {
                   <div className="calc-contact-grid">
                     <label className="text-field">
                       Ваше имя
-                      <input value={contact.name} onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))} placeholder="Иван Смирнов" />
+                      <input
+                        autoComplete="name"
+                        data-testid="calculator-name"
+                        maxLength={120}
+                        name="name"
+                        value={contact.name}
+                        onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))}
+                        placeholder="Иван Смирнов"
+                      />
                     </label>
                     <label className="text-field">
                       Телефон
-                      <input value={contact.phone} onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))} placeholder="+7 (999) 999-99-99" />
+                      <input
+                        autoComplete="tel"
+                        data-testid="calculator-phone"
+                        inputMode="tel"
+                        maxLength={30}
+                        name="phone"
+                        required
+                        value={contact.phone}
+                        onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
+                        placeholder="+7 (999) 999-99-99"
+                      />
                     </label>
                     <label className="text-field">
                       Почта
-                      <input value={contact.email} onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.ru" />
+                      <input
+                        autoComplete="email"
+                        maxLength={254}
+                        name="email"
+                        type="email"
+                        value={contact.email}
+                        onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))}
+                        placeholder="name@company.ru"
+                      />
                     </label>
                     <label className="text-field">
                       Адрес объекта
-                      <input value={contact.address} onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))} placeholder="Город, адрес или ориентир" />
+                      <input
+                        autoComplete="street-address"
+                        maxLength={240}
+                        name="address"
+                        value={contact.address}
+                        onChange={(event) => setContact((current) => ({ ...current, address: event.target.value }))}
+                        placeholder="Город, адрес или ориентир"
+                      />
                     </label>
                   </div>
                 </div>
@@ -801,14 +845,17 @@ export function Calculator() {
                 <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>
                   <label>
                     Не заполняйте это поле
-                    <input value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
+                    <input name="hp_url" value={hpUrl} onChange={(event) => setHpUrl(event.target.value)} type="text" tabIndex={-1} autoComplete="off" />
                   </label>
                 </div>
 
                 <label className="calculator-consent consent-field">
                   <input
                     checked={consentAccepted}
+                    data-testid="calculator-consent"
+                    name="consent"
                     onChange={(event) => setConsentAccepted(event.target.checked)}
+                    required
                     type="checkbox"
                   />
                   <span>
@@ -817,11 +864,21 @@ export function Calculator() {
                   </span>
                 </label>
 
-                <button className="primary-button result-submit" type="button" onClick={submitLead} disabled={submittingLead || !consentAccepted}>
+                <button
+                  className="primary-button result-submit"
+                  data-testid="calculator-submit"
+                  type="button"
+                  onClick={submitLead}
+                  disabled={submittingLead || !consentAccepted}
+                >
                   <Send size={18} />
                   Получить инженерный расчет
                 </button>
-                {leadStatus && <p className="lead-status">{leadStatus}</p>}
+                {leadStatus && (
+                  <p aria-live="polite" className="lead-status" data-testid="calculator-status" role="status">
+                    {leadStatus}
+                  </p>
+                )}
               </div>
             </div>
           )}

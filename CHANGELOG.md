@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-07-27 — Mobile, media and production hardening
+
+- Каталог полностью переведён на заранее подготовленные responsive WebP:
+  17 исходников категорий `27,71 МБ` → 51 вариант `1,35 МБ`.
+- Для 28 уникальных товарных изображений подготовлено 70 WebP-вариантов:
+  `26,26 МБ` → `2,61 МБ`.
+- Hero-видео сохранено; для экранов до 1180 px добавлена отдельная версия
+  `2,4 МБ` вместо desktop-файла `10,2 МБ`.
+- Переработана адаптивность главной, каталога, товара, меню, калькуляторов и
+  форм для 390/768/1280 px; добавлены 44 px touch-targets и контроль overflow.
+- Заменены визуальные заглушки сценариев на шесть локальных industrial-tech
+  изображений с хешированными именами и immutable cache.
+- Добавлены privacy-consent, consent-gated Метрика/Web Vitals, строгая
+  валидация заявок, origin-проверка, rate limit и запрет ложного успеха формы.
+- Payload переведён на fail-closed RBAC, `push: false` и read-only production
+  schema audit; применение production-миграций заблокировано до сверки baseline.
+- Добавлен CI quality gate и 27 E2E-сценариев для mobile/tablet/desktop:
+  маршруты, меню, формы, калькуляторы, WCAG и визуальная регрессия.
+- Vercel Production теперь fail-closed: сборка останавливается, если `PAYLOAD_SECRET` отсутствует или короче 32 символов; локальная разработка, preview и CI-сборки сохраняют безопасный локальный fallback.
+- Добавлены unit-тесты конфигурации секрета и обязательный `npm audit --omit=dev --audit-level=high` в CI quality gate.
+- `.env.example` и README дополнены origin-защитой заявок, rate limit и настройками Upstash Redis.
+- README приведён к фактическому поведению форм: при недоступности всех каналов API возвращает `503`, без ложного успешного ответа.
+
 ## 2026-06-30 — Payload media processing production fix
 
 - Payload config теперь явно подключает `sharp` для resize/preview изображений в CMS.

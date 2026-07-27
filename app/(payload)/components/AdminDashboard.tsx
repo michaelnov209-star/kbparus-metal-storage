@@ -1,6 +1,11 @@
-import { getPayload } from "payload";
-import config from "@payload-config";
+import type { Payload, ServerProps } from "payload";
 import type { Category, Media, Product } from "@/payload-types";
+import {
+  canEditContent,
+  canManageMedia,
+  getCmsRole,
+  type CmsRole
+} from "@/payload/access/rbac";
 import {
   Activity,
   ArrowRight,
@@ -158,7 +163,7 @@ const workflow = [
   },
   {
     title: "4. Опубликовать",
-    text: "Снимите черновик, проверьте страницу на сайте и отправьте ссылку инженеру.",
+    text: "Нажмите «Опубликовать», проверьте страницу на сайте и передайте ссылку ответственному.",
     icon: Rocket
   }
 ];
@@ -203,28 +208,22 @@ const siteFlow = [
 
 const roleWorkflows = [
   {
-    title: "Контент-менеджер",
-    text: "Меняет главную, фото, категории, товары, FAQ и отзывы без разработчика.",
+    title: "Администратор",
+    text: "Управляет сотрудниками, заявками, всем контентом, медиа и настройками сайта.",
+    checks: ["Права сотрудников", "Обработка заявок", "Контроль публикаций"],
+    icon: ShieldCheck
+  },
+  {
+    title: "Редактор контента",
+    text: "Меняет главную, категории, товары, калькуляторы, FAQ и контакты без доступа к заявкам и сотрудникам.",
     checks: ["Порядок блоков как на сайте", "Preview после правки", "Черновик перед публикацией"],
     icon: Pencil
   },
   {
-    title: "Менеджер продаж",
-    text: "Смотрит заявки, город, контакты, источник и параметры расчёта клиента.",
-    checks: ["Статус заявки", "UTM и источник", "Передача в CRM"],
-    icon: Inbox
-  },
-  {
-    title: "Инженер",
-    text: "Контролирует калькуляторы: размеры, нагрузки, коэффициенты и опции.",
-    checks: ["Цена не точная, а «от»", "Нагрузки и габариты", "Опции расчёта"],
-    icon: CalculatorIcon
-  },
-  {
-    title: "Руководитель",
-    text: "Проверяет готовность сайта, количество заявок, здоровье CMS и ключевые разделы.",
-    checks: ["Health сайта", "Каталог опубликован", "Заявки не теряются"],
-    icon: ShieldCheck
+    title: "Медиа-менеджер",
+    text: "Загружает и обновляет изображения, видео и документы без доступа к контенту, заявкам и сотрудникам.",
+    checks: ["Понятное название файла", "Alt-текст", "Правильная область использования"],
+    icon: ImageIcon
   }
 ];
 
@@ -300,37 +299,61 @@ function productReadiness(product: Product): number {
   if (product.description) score += 15;
   if (resolveImageUrl(product.image, product.legacyImagePath)) score += 20;
   if (product.priceMode) score += 10;
-  if (!product.draft && product._status !== "draft") score += 10;
+  if (product._status !== "draft") score += 10;
   return Math.min(score, 100);
 }
 
-async function getDashboardContext(): Promise<DashboardContext> {
+function canOpenAdminHref(role: CmsRole | null, href: string): boolean {
+  if (!href.startsWith("/admin")) return true;
+  if (role === "admin") return true;
+  if (role === "photographer") return href.startsWith("/admin/collections/media");
+  if (role !== "editor") return false;
+
+  return !href.startsWith("/admin/collections/leads") && !href.startsWith("/admin/collections/users");
+}
+
+function roleLabel(role: CmsRole | null): string {
+  if (role === "admin") return "Администратор";
+  if (role === "editor") return "Редактор контента";
+  if (role === "photographer") return "Медиа-менеджер";
+  return "Доступ ограничен";
+}
+
+async function getDashboardContext(payload: Payload, role: CmsRole | null): Promise<DashboardContext> {
   try {
-    const payload = await getPayload({ config });
-    const [products, categories, media, leads, categoryList, productList] = await Promise.all([
-      payload.count({ collection: "products", overrideAccess: true }),
-      payload.count({ collection: "categories", overrideAccess: true }),
-      payload.count({ collection: "media", overrideAccess: true }),
-      payload.count({ collection: "leads", overrideAccess: true }),
-      payload.find({
-        collection: "categories",
-        depth: 1,
-        draft: true,
-        limit: 100,
-        overrideAccess: true,
-        pagination: false,
-        sort: "sortOrder"
-      }),
-      payload.find({
-        collection: "products",
-        depth: 1,
-        draft: true,
-        limit: 300,
-        overrideAccess: true,
-        pagination: false,
-        sort: "sortOrder"
-      })
+    const hasContentAccess = canEditContent({ role });
+    const hasMediaAccess = canManageMedia({ role });
+    const hasLeadAccess = role === "admin";
+
+    const [products, categories, media, leads] = await Promise.all([
+      hasContentAccess ? payload.count({ collection: "products", overrideAccess: true }) : null,
+      hasContentAccess ? payload.count({ collection: "categories", overrideAccess: true }) : null,
+      hasMediaAccess ? payload.count({ collection: "media", overrideAccess: true }) : null,
+      hasLeadAccess ? payload.count({ collection: "leads", overrideAccess: true }) : null
     ]);
+
+    const [categoryList, productList] = hasContentAccess
+      ? await Promise.all([
+          payload.find({
+            collection: "categories",
+            depth: 1,
+            draft: true,
+            limit: 100,
+            overrideAccess: true,
+            pagination: false,
+            sort: "sortOrder"
+          }),
+          payload.find({
+            collection: "products",
+            depth: 1,
+            draft: true,
+            limit: 300,
+            overrideAccess: true,
+            pagination: false,
+            sort: "sortOrder"
+          })
+        ])
+      : [{ docs: [] }, { docs: [] }];
 
     const categoryDocs = categoryList.docs as Category[];
     const productDocs = productList.docs as Product[];
@@ -364,7 +387,7 @@ async function getDashboardContext(): Promise<DashboardContext> {
         title: product.shortTitle || product.title,
         slug: product.slug,
         sortOrder: sortNumber(product.sortOrder, index + 1),
-        isDraft: Boolean(product.draft) || product._status === "draft",
+        isDraft: product._status === "draft",
         priceMode: product.priceMode,
         pageMode: product.pageMode,
         categorySlug: category.slug,
@@ -381,10 +404,10 @@ async function getDashboardContext(): Promise<DashboardContext> {
     return {
       cmsOk: true,
       counts: {
-        products: products.totalDocs,
-        categories: categories.totalDocs,
-        media: media.totalDocs,
-        leads: leads.totalDocs
+        products: products?.totalDocs ?? null,
+        categories: categories?.totalDocs ?? null,
+        media: media?.totalDocs ?? null,
+        leads: leads?.totalDocs ?? null
       },
       catalog
     };
@@ -398,8 +421,12 @@ function fmt(value: number | null): string {
   return value === null ? "—" : String(value);
 }
 
-export async function AdminDashboard() {
-  const dashboard = await getDashboardContext();
+type AdminDashboardProps = Pick<ServerProps, "payload" | "user">;
+
+export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
+  const role = getCmsRole(user);
+  const hasContentAccess = canEditContent(user);
+  const dashboard = await getDashboardContext(payload, role);
   const counts = dashboard.counts;
 
   const kpis = [
@@ -407,7 +434,28 @@ export async function AdminDashboard() {
     { label: "Категорий", value: fmt(counts.categories), icon: Layers, href: "/admin/collections/categories" },
     { label: "Медиа", value: fmt(counts.media), icon: Boxes, href: "/admin/collections/media" },
     { label: "Заявок", value: fmt(counts.leads), icon: Inbox, href: "/admin/collections/leads", tourId: "kpi-leads" }
-  ];
+  ].filter((item) => canOpenAdminHref(role, item.href) && item.value !== "—");
+
+  const visibleQuickActions = quickActions.filter((item) => canOpenAdminHref(role, item.href));
+  const visibleOperations = operations.filter((item) => canOpenAdminHref(role, item.href));
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canOpenAdminHref(role, item.href))
+    }))
+    .filter((section) => section.items.length > 0);
+  const dashboardIntro =
+    role === "photographer"
+      ? "Ваша рабочая зона — медиа-библиотека. Загружайте изображения, видео и документы, заполняйте alt-тексты и проверяйте результат на публичном сайте."
+      : role === "editor"
+        ? "Главная, каталог, товары, калькуляторы и медиа собраны в один рабочий центр. После каждой правки проверяйте результат на публичном сайте."
+        : "Главная, каталог, товары, калькуляторы, медиа, сотрудники и заявки собраны в один рабочий центр с контролем публикаций и доступов.";
+  const dashboardChecks =
+    role === "photographer"
+      ? ["Медиа загружаются в единую библиотеку", "Alt-текст обязателен для изображений", "Публичный сайт доступен для проверки"]
+      : role === "editor"
+        ? ["Каталог и товары редактируются по порядку сайта", "Черновики не видны посетителям", "Заявки и сотрудники закрыты от редактора"]
+        : ["Каталог и товары редактируются по порядку сайта", "Заявки доступны только администратору", "Права сотрудников ограничены ролями"];
 
   return (
     <section className="kb-admin-dashboard" aria-label="Центр управления сайтом">
@@ -415,16 +463,13 @@ export async function AdminDashboard() {
         <div className="kb-admin-dashboard__hero-copy">
           <span className="kb-admin-dashboard__status">
             <Sparkles size={15} aria-hidden />
-            SaaS-панель управления
+            {roleLabel(role)}
           </span>
           <p className="kb-admin-dashboard__eyebrow">КБ Парус CMS</p>
           <h2>Управляйте сайтом в той же логике, как он выглядит для клиента</h2>
-          <p>
-            Главная, каталог, товары, калькуляторы и заявки собраны в один рабочий центр. Редактор видит структуру сайта сверху вниз, быстро переходит в нужный раздел и проверяет
-            результат на витрине.
-          </p>
+          <p>{dashboardIntro}</p>
           <div className="kb-admin-dashboard__quick">
-            {quickActions.map((action) => (
+            {visibleQuickActions.map((action) => (
               <a className="kb-admin-dashboard__quick-link" href={action.href} key={action.href} data-tour={action.tourId}>
                 <action.icon size={16} aria-hidden />
                 {action.label}
@@ -442,18 +487,12 @@ export async function AdminDashboard() {
             <span />
           </div>
           <ul>
-            <li>
-              <CheckCircle2 size={16} aria-hidden />
-              Каталог и товары редактируются по порядку сайта
-            </li>
-            <li>
-              <CheckCircle2 size={16} aria-hidden />
-              Заявки сохраняются в CMS
-            </li>
-            <li>
-              <Clock3 size={16} aria-hidden />
-              Интеграции CRM и 1С подключаются отдельным этапом
-            </li>
+            {dashboardChecks.map((check, index) => (
+              <li key={check}>
+                {index === dashboardChecks.length - 1 ? <Clock3 size={16} aria-hidden /> : <CheckCircle2 size={16} aria-hidden />}
+                {check}
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -470,10 +509,11 @@ export async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="kb-admin-dashboard__learning-row">
-        <AdminTraining />
+      {hasContentAccess ? (
+        <div className="kb-admin-dashboard__learning-row">
+          <AdminTraining />
 
-        <div className="kb-admin-dashboard__workflow" data-tour="workflow">
+          <div className="kb-admin-dashboard__workflow" data-tour="workflow">
           <div className="kb-admin-dashboard__block-head">
             <span>
               <ShieldCheck size={17} aria-hidden />
@@ -492,10 +532,12 @@ export async function AdminDashboard() {
               </article>
             ))}
           </div>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <section className="kb-admin-dashboard__site-map" data-tour="site-map">
+      {hasContentAccess ? (
+        <section className="kb-admin-dashboard__site-map" data-tour="site-map">
         <div className="kb-admin-dashboard__block-head">
           <span>
             <ListChecks size={17} aria-hidden />
@@ -527,9 +569,11 @@ export async function AdminDashboard() {
             </article>
           ))}
         </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="kb-admin-dashboard__catalog-map" data-tour="catalog-map">
+      {hasContentAccess ? (
+        <section className="kb-admin-dashboard__catalog-map" data-tour="catalog-map">
         <div className="kb-admin-dashboard__block-head">
           <span>
             <Layers size={17} aria-hidden />
@@ -594,7 +638,8 @@ export async function AdminDashboard() {
             <span>Каталог не загрузился. Проверьте `/api/health` и подключение CMS к базе.</span>
           </div>
         )}
-      </section>
+        </section>
+      ) : null}
 
       <section className="kb-admin-dashboard__roles" data-tour="roles-map">
         <div className="kb-admin-dashboard__block-head">
@@ -631,7 +676,7 @@ export async function AdminDashboard() {
           <strong>{dashboard.cmsOk ? "CMS отвечает" : "нужна диагностика"}</strong>
         </div>
         <div className="kb-admin-dashboard__ops-grid">
-          {operations.map((item) => (
+          {visibleOperations.map((item) => (
             <a className="kb-admin-dashboard__ops-card" href={item.href} key={item.title} target={item.href.startsWith("/admin") ? undefined : "_blank"} rel="noreferrer">
               <span>
                 <item.icon size={18} aria-hidden />
@@ -644,7 +689,7 @@ export async function AdminDashboard() {
         </div>
       </section>
 
-      {sections.map((section) => (
+      {visibleSections.map((section) => (
         <div className="kb-admin-dashboard__section" key={section.group}>
           <p className="kb-admin-dashboard__section-title">{section.group}</p>
           <div className="kb-admin-dashboard__grid">

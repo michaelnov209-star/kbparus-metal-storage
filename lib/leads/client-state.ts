@@ -13,6 +13,22 @@ const UTM_KEYS = [
   "utm_referrer"
 ] as const;
 
+function sanitizeUtm(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const record = value as Record<string, unknown>;
+  const sanitized: Record<string, string> = {};
+
+  for (const key of UTM_KEYS) {
+    const item = record[key];
+    if (typeof item !== "string") continue;
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+    sanitized[key] = trimmed.slice(0, key === "utm_referrer" ? 500 : 200);
+  }
+
+  return sanitized;
+}
+
 export interface StoredCalculatorLead {
   calculatorInput: object;
   recommendedConfig?: {
@@ -59,7 +75,7 @@ export function captureLeadUtm() {
   if (typeof window === "undefined") return;
 
   const params = new URLSearchParams(window.location.search);
-  const existing = readJson<Record<string, string>>(UTM_STORAGE_KEY) ?? {};
+  const existing = sanitizeUtm(readJson<unknown>(UTM_STORAGE_KEY));
   const next: Record<string, string> = { ...existing };
   let changed = false;
 
@@ -80,7 +96,7 @@ export function captureLeadUtm() {
 }
 
 export function getStoredLeadUtm(): Record<string, string> {
-  return readJson<Record<string, string>>(UTM_STORAGE_KEY) ?? {};
+  return sanitizeUtm(readJson<unknown>(UTM_STORAGE_KEY));
 }
 
 export function saveLastCalculatorLead(value: Omit<StoredCalculatorLead, "savedAt">) {

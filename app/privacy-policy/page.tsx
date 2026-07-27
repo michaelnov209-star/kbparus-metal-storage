@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BrandMark } from "@/components/BrandMark";
+import { PrivacyAnalyticsControls } from "@/components/CookieConsent";
 import { JsonLd, breadcrumbSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true }
 };
 
-const updatedAt = "19 мая 2026";
+const updatedAt = "27 июля 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -52,7 +53,7 @@ export default function PrivacyPolicyPage() {
             <li>комментарий и параметры заявки;</li>
             <li>параметры конфигуратора и ориентировочная стоимость;</li>
             <li>страница-источник заявки и UTM-метки;</li>
-            <li>технические данные браузера и событий аналитики, если подключена Яндекс Метрика.</li>
+            <li>технические данные браузера и события аналитики — только после согласия на Яндекс Метрику.</li>
           </ul>
         </section>
 
@@ -97,6 +98,16 @@ export default function PrivacyPolicyPage() {
           <p>
             Оператор: ООО «Технокам» / КБ Парус. Контакты для обращений размещены на сайте в разделе «Контакты».
           </p>
+        </section>
+
+        <section>
+          <h2>8. Аналитика и ваш выбор</h2>
+          <p>
+            Яндекс Метрика по умолчанию отключена и загружается только после
+            отдельного согласия. Вы можете изменить решение в любой момент.
+            Отключение аналитики не влияет на каталог, калькулятор и отправку заявок.
+          </p>
+          <PrivacyAnalyticsControls />
         </section>
       </article>
     </main>

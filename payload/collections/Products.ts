@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
 
 export const Products: CollectionConfig = {
   slug: "products",
@@ -14,7 +15,7 @@ export const Products: CollectionConfig = {
       en: "Concrete equipment models within subcategories."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "pageMode", "priceMode", "draft"],
+    defaultColumns: ["title", "pageMode", "priceMode", "_status"],
     listSearchableFields: ["title", "shortTitle", "slug", "summary"],
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
@@ -218,10 +219,16 @@ export const Products: CollectionConfig = {
           fields: [
             {
               name: "draft",
-              label: { ru: "Черновик (не показывать на сайте)", en: "Draft" },
+              label: { ru: "Устаревший признак черновика", en: "Legacy draft flag" },
               type: "checkbox",
               defaultValue: false,
-              admin: { description: { ru: "Поставьте галочку, чтобы скрыть от посетителей до готовности.", en: "" } }
+              admin: {
+                hidden: true,
+                description: {
+                  ru: "Служебное поле оставлено только для совместимости. Публикацией управляет штатный статус Payload.",
+                  en: "Kept for backwards compatibility. Payload draft status is authoritative."
+                }
+              }
             },
             {
               name: "featured",
@@ -234,10 +241,11 @@ export const Products: CollectionConfig = {
     }
   ],
   access: {
-    read: ({ req }) => {
-      // Не показывать черновики неавторизованным
-      if (req.user) return true;
-      return { draft: { not_equals: true } };
-    }
+    admin: contentAdminUi,
+    create: contentManagersOnly,
+    delete: contentManagersOnly,
+    read: publicReadPublished,
+    readVersions: contentManagersOnly,
+    update: contentManagersOnly
   }
 };

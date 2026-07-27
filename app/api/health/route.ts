@@ -7,9 +7,9 @@ import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 /**
  * GET /api/health
  *
- * Safe runtime health endpoint. It does not expose secrets or connection
- * strings. The CMS check validates both collection metadata and readable
- * global tables, because Payload globals are required by the public site.
+ * Public, low-detail runtime health endpoint. It exposes only booleans needed
+ * by monitoring; provider names, recipients, table names and raw errors stay
+ * in server logs.
  */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,18 +21,14 @@ interface HealthStatus {
   timestamp: string;
   components: {
     app: { ok: true };
-    cms:
-      | {
-          ok: true;
-          collections: number;
-          collectionNames: string[];
-          globals: number;
-          globalNames: string[];
-        }
-      | { ok: false; error: string; collectionNames?: string[]; globalNames?: string[] };
+    cms: {
+      ok: boolean;
+      configured: boolean;
+      requiredContentReadable: boolean;
+    };
     storage: { ok: boolean; configured: boolean };
     leadIntegrations: {
-      email: { configured: boolean; to: string };
+      email: { configured: boolean };
       telegram: { configured: boolean };
       bitrix24: { configured: boolean; enabled: boolean };
     };
@@ -45,20 +41,34 @@ interface HealthStatus {
 export async function GET() {
   const bitrix24Config = getBitrix24RuntimeConfig(process.env);
   const smtpSettings = smtpSettingsFromEnv(process.env);
+  const cmsConfigured = Boolean(
+    process.env.PAYLOAD_SECRET &&
+      (
+        process.env.DATABASE_URL ||
+        process.env.DATABASE_POSTGRES_URL ||
+        process.env.POSTGRES_URL ||
+        process.env.DATABASE_URL_UNPOOLED ||
+        process.env.DATABASE_POSTGRES_URL_NON_POOLING ||
+        process.env.POSTGRES_URL_NON_POOLING
+      )
+  );
   const result: HealthStatus = {
     status: "ok",
     timestamp: new Date().toISOString(),
     components: {
       app: { ok: true },
-      cms: { ok: false, error: "not initialized" },
+      cms: {
+        ok: false,
+        configured: cmsConfigured,
+        requiredContentReadable: false
+      },
       storage: {
         ok: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
         configured: Boolean(process.env.BLOB_READ_WRITE_TOKEN)
       },
       leadIntegrations: {
         email: {
-          configured: isSmtpConfigured(smtpSettings),
-          to: process.env.LEAD_EMAIL_TO || "info@kbparus.ru"
+          configured: isSmtpConfigured(smtpSettings)
         },
         telegram: {
           configured: Boolean(
@@ -79,48 +89,22 @@ export async function GET() {
   try {
     const cms = await getCmsClient();
     if (!cms) {
-      result.components.cms = {
-        ok: false,
-        error: "CMS not configured (no DATABASE_URL or PAYLOAD_SECRET)"
-      };
       result.status = "degraded";
     } else {
-      const collectionNames = Object.keys(cms.collections).sort();
-      const globalNames = cms.globals.config.map((global) => global.slug).sort();
-      const globalReadErrors: string[] = [];
-
-      for (const slug of REQUIRED_GLOBALS) {
-        try {
-          await cms.findGlobal({ slug, depth: 0 });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          globalReadErrors.push(`${slug}: ${message}`);
-        }
-      }
-
-      if (globalReadErrors.length > 0) {
-        result.components.cms = {
-          ok: false,
-          error: `CMS globals are not readable: ${globalReadErrors.join("; ")}`,
-          collectionNames,
-          globalNames
-        };
-        result.status = "degraded";
-      } else {
-        result.components.cms = {
-          ok: true,
-          collections: collectionNames.length,
-          collectionNames,
-          globals: globalNames.length,
-          globalNames
-        };
-      }
+      await Promise.all(
+        REQUIRED_GLOBALS.map((slug) => cms.findGlobal({ slug, depth: 0 }))
+      );
+      result.components.cms = {
+        ok: true,
+        configured: true,
+        requiredContentReadable: true
+      };
     }
   } catch (err) {
-    result.components.cms = {
-      ok: false,
-      error: err instanceof Error ? err.message : "unknown error"
-    };
+    console.error(
+      "CMS health check failed",
+      err instanceof Error ? err.name : "UnknownError"
+    );
     result.status = "degraded";
   }
 
@@ -129,5 +113,8 @@ export async function GET() {
   }
 
   const httpStatus = result.status === "ok" ? 200 : result.status === "degraded" ? 200 : 503;
-  return NextResponse.json(result, { status: httpStatus });
+  return NextResponse.json(result, {
+    status: httpStatus,
+    headers: { "Cache-Control": "no-store, max-age=0" }
+  });
 }

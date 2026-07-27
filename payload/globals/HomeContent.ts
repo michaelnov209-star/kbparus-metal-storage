@@ -1,5 +1,6 @@
 import type { GlobalConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
 const iconOptions = [
   { label: { ru: "Инженерная проверка", en: "Engineering check" }, value: "badge-check" },
@@ -23,6 +24,7 @@ export const HomeContent: GlobalConfig = {
   label: { ru: "Главная страница", en: "Home content" },
   admin: {
     group: adminGroups.home,
+    hidden: ({ user }) => !canEditContent(user),
     description: {
       ru: `${adminHints.homepage} Раздел устроен как редактор лендинга: двигайтесь по вкладкам сверху вниз в порядке появления блоков на сайте.`,
       en: "Homepage blocks."
@@ -392,5 +394,8 @@ export const HomeContent: GlobalConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    read: publicRead,
+    update: contentManagersOnly
+  }
 };

@@ -1,11 +1,13 @@
 import type { GlobalConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { adminOnly, isAdminUser } from "../access/rbac";
 
 export const LeadManagement: GlobalConfig = {
   slug: "lead-management",
   label: { ru: "Заявки: формы и интеграции", en: "Lead forms and integrations" },
   admin: {
     group: adminGroups.leads,
+    hidden: ({ user }) => !isAdminUser(user),
     description: {
       ru: `${adminHints.leads} Этот раздел не хранит секреты и не заменяет переменные окружения Vercel.`,
       en: "Operational notes for lead forms and integrations."
@@ -141,5 +143,8 @@ export const LeadManagement: GlobalConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    read: adminOnly,
+    update: adminOnly
+  }
 };

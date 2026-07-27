@@ -3,7 +3,8 @@
 ## Важное по текущему CMS pipeline
 
 - Vercel должен использовать Node 22.x.
-- `vercel-build` намеренно запускает CMS-проверки до `next build`: `cms:check`, `cms:generate-importmap`, `cms:push-schema`, повторный `cms:check`.
+- `vercel-build` намеренно запускает CMS-проверки до `next build`: `cms:check`, `cms:generate-importmap`, повторный `cms:check`.
+- Vercel build не меняет схему БД. Миграции запускаются отдельно по `docs/operations/cms-migrations.md`.
 - `payload generate:importmap` должен реально проходить на Vercel. Если он падает, deploy не должен публиковаться.
 - importMap не поддерживается вручную как финальное решение: файл `app/(payload)/admin/importMap.ts` генерируется Payload CLI.
 - После deploy обязательно проверить `/api/health` и `/admin`.
@@ -62,10 +63,9 @@ git push origin feat/payload-cms
 Vercel автоматически создаёт Preview Deployment. Должно произойти:
 
 1. **Install:** `npm install` (или cache hit)
-2. **Build:** `npm run vercel-build` → 6 шагов:
+2. **Build:** `npm run vercel-build` → безопасные шаги:
    - `cms:check` (env vars, files, importMap valid)
    - `cms:generate-importmap` (Linux: regenerates from config)
-   - `cms:push-schema` (Linux: создаёт/обновляет таблицы Postgres)
    - `cms:check` второй раз (после generate)
    - `next build` (генерирует все статические + API роуты)
 3. **Deploy:** Vercel переключает Preview URL на новую сборку
@@ -157,9 +157,10 @@ Neon free tier может уйти в idle (auto-suspend через 5 минут
 
 ## Рекомендации в долгой перспективе
 
-1. **Перейти с `push: true` на controlled migrations** через `payload migrate:create`. Делается когда:
-   - Появятся реальные production-данные, которые нельзя терять при schema rebuild
-   - Команда вырастет > 1 разработчика
+1. **Завершить одноразовое принятие legacy baseline** по
+   `docs/operations/cms-migrations.md`: read-only аудит, Neon restore point,
+   сверка физической схемы и проверенное восстановление. Текущий production
+   workflow audit-only и не применяет миграции.
 2. **Сменить free Neon tier на paid** ($19/мес) когда:
    - БД > 0.5 ГБ
    - Нужен >1 концурентного коннекта без auto-suspend

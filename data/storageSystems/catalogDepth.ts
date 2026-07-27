@@ -667,7 +667,7 @@ export function getSubcategoriesByCategory(categoryId: string) {
 
 export function getProductsByCategory(categoryId: string) {
   return catalogProducts
-    .filter((item) => item.categoryId === categoryId && !item.draft)
+    .filter((item) => item.categoryId === categoryId)
     .slice()
     .sort(bySortOrder)
     .map(enrichProduct);
@@ -675,14 +675,14 @@ export function getProductsByCategory(categoryId: string) {
 
 export function getProductsBySubcategory(categoryId: string, subcategoryId: string) {
   return catalogProducts
-    .filter((item) => item.categoryId === categoryId && item.subcategoryId === subcategoryId && !item.draft)
+    .filter((item) => item.categoryId === categoryId && item.subcategoryId === subcategoryId)
     .slice()
     .sort(bySortOrder)
     .map(enrichProduct);
 }
 
 export function getCatalogProduct(categoryId: string, productId: string) {
-  const product = catalogProducts.find((item) => item.categoryId === categoryId && item.id === productId && !item.draft);
+  const product = catalogProducts.find((item) => item.categoryId === categoryId && item.id === productId);
   return product ? enrichProduct(product) : undefined;
 }
 

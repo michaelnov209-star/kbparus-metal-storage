@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { contentAdminUi, contentManagersOnly } from "../access/rbac";
 
 /**
  * Профиль калькулятора. Структура 1-в-1 повторяет лист «Админка»
@@ -230,5 +231,12 @@ export const CalculatorProfiles: CollectionConfig = {
       ]
     }
   ],
-  access: { read: () => true }
+  access: {
+    admin: contentAdminUi,
+    create: contentManagersOnly,
+    delete: contentManagersOnly,
+    read: contentManagersOnly,
+    readVersions: contentManagersOnly,
+    update: contentManagersOnly
+  }
 };

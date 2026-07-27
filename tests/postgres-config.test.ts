@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getDirectPostgresConnectionString,
   getPostgresConnectionString,
   normalizePostgresConnectionString
 } from "@/lib/config/postgres";
@@ -31,14 +32,41 @@ describe("Postgres runtime configuration", () => {
     ).toBe("postgresql://localhost/database?sslmode=disable");
   });
 
-  it("keeps the existing connection priority while normalizing the selected URL", () => {
+  it("prefers the pooled URL for serverless runtime queries", () => {
     expect(
       getPostgresConnectionString({
         DATABASE_URL: "postgresql://pooled/database?sslmode=require",
         DATABASE_URL_UNPOOLED:
           "postgresql://direct/database?sslmode=verify-ca"
       })
+    ).toBe("postgresql://pooled/database?sslmode=verify-full");
+  });
+
+  it("uses the direct URL for controlled migrations", () => {
+    expect(
+      getDirectPostgresConnectionString({
+        DATABASE_URL: "postgresql://pooled/database?sslmode=require",
+        DATABASE_URL_UNPOOLED:
+          "postgresql://direct/database?sslmode=verify-ca"
+      })
     ).toBe("postgresql://direct/database?sslmode=verify-full");
+  });
+
+  it("fails closed instead of falling back to a pooled URL for migrations", () => {
+    expect(() =>
+      getDirectPostgresConnectionString({
+        DATABASE_URL: "postgresql://pooled/database?sslmode=require"
+      })
+    ).toThrow(/direct PostgreSQL connection is required/i);
+  });
+
+  it("supports Vercel Postgres integration variable names", () => {
+    expect(
+      getPostgresConnectionString({
+        DATABASE_POSTGRES_URL:
+          "postgresql://integration-pool/database?sslmode=require"
+      })
+    ).toBe("postgresql://integration-pool/database?sslmode=verify-full");
   });
 
   it("returns an empty value when no database URL is configured", () => {

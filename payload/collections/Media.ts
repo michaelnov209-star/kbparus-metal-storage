@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { mediaAdminUi, mediaManagersOnly, publicRead } from "../access/rbac";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -139,6 +140,10 @@ export const Media: CollectionConfig = {
     }
   ],
   access: {
-    read: () => true
+    admin: mediaAdminUi,
+    create: mediaManagersOnly,
+    delete: mediaManagersOnly,
+    read: publicRead,
+    update: mediaManagersOnly
   }
 };

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
 
 export const Subcategories: CollectionConfig = {
   slug: "subcategories",
@@ -71,5 +72,12 @@ export const Subcategories: CollectionConfig = {
     },
     { name: "sortOrder", label: { ru: "Порядок показа", en: "Sort order" }, type: "number", defaultValue: 0 }
   ],
-  access: { read: () => true }
+  access: {
+    admin: contentAdminUi,
+    create: contentManagersOnly,
+    delete: contentManagersOnly,
+    read: publicReadPublished,
+    readVersions: contentManagersOnly,
+    update: contentManagersOnly
+  }
 };

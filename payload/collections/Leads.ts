@@ -1,8 +1,10 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
+import { adminOnly, adminUiOnly } from "../access/rbac";
 
 export const Leads: CollectionConfig = {
   slug: "leads",
+  defaultSort: "-createdAt",
   labels: {
     singular: { ru: "Заявка", en: "Lead" },
     plural: { ru: "Заявки с сайта", en: "Website leads" }
@@ -19,10 +21,11 @@ export const Leads: CollectionConfig = {
     pagination: { defaultLimit: 20, limits: [10, 20, 50, 100] }
   },
   access: {
-    read: ({ req }) => Boolean(req.user),
-    create: ({ req }) => Boolean(req.user),
-    update: ({ req }) => Boolean(req.user),
-    delete: ({ req }) => Boolean(req.user)
+    admin: adminUiOnly,
+    read: adminOnly,
+    create: adminOnly,
+    update: adminOnly,
+    delete: adminOnly
   },
   fields: [
     {

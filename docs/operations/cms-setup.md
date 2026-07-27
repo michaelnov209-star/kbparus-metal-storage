@@ -49,7 +49,7 @@ kbparus-metal-storage/
 |------------|----------|-----------|
 | `PAYLOAD_SECRET` | вручную (генерируется) | Ключ для подписи сессий админки. ≥32 символа. |
 | `DATABASE_URL` | Neon integration | Connection string к Postgres (pooled, через pgbouncer) |
-| `DATABASE_URL_UNPOOLED` | Neon integration | Direct connection (для DDL: schema push). **Критично!** |
+| `DATABASE_URL_UNPOOLED` | Neon integration | Direct connection только для controlled migration job. **Критично!** |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob integration | Доступ к хранилищу файлов |
 
 Опционально (для существующего функционала заявок):
@@ -58,14 +58,20 @@ kbparus-metal-storage/
 
 ## Как создаётся БД-схема
 
-При первом обращении Payload запускает Drizzle `db.push()` с `push: true` в config — автоматически создаёт/обновляет таблицы на основе TypeScript-схем коллекций.
+Payload работает с `push: false`. Схема создаётся и изменяется только
+контролируемыми миграциями по `docs/operations/cms-migrations.md`.
 
-**Критично:** push-операции (DDL) НЕ работают через Neon's pooled connection (pgbouncer). Используем **`DATABASE_URL_UNPOOLED`** для direct-соединения. Если у вас на Vercel есть только pooled — добавьте unpooled через Neon Console.
+Runtime предпочитает pooled URL. Migration wrapper выставляет
+`PAYLOAD_MIGRATING=true` и требует direct URL без fallback:
 
-В нашем `payload.config.ts` подбор connection string идёт по приоритету:
+```text
+runtime: DATABASE_URL → DATABASE_POSTGRES_URL → POSTGRES_URL → direct fallback
+migration: DATABASE_URL_UNPOOLED → DATABASE_POSTGRES_URL_NON_POOLING → POSTGRES_URL_NON_POOLING
 ```
-DATABASE_URL_UNPOOLED → POSTGRES_URL_NON_POOLING → DATABASE_URL → POSTGRES_URL
-```
+
+Production workflow сейчас выполняет только read-only аудит из `main`.
+Применение миграций заблокировано до подтверждённого baseline и проверенного
+восстановления Neon.
 
 ## Как генерируется importMap
 
@@ -91,8 +97,11 @@ npm run cms:check
 # Регенерировать importMap (Linux/Mac, иначе — skip)
 npm run cms:generate-importmap
 
-# Принудительно push БД-схему (Linux/Mac, иначе — skip)
-npm run cms:push-schema
+# Проверить состояние на явно выбранной non-production Neon branch
+npm run cms:migrate:status
+
+# Создать инкрементальную миграцию после изменения Payload config
+npm run cms:migrate:create -- add_feature_name
 
 # Полный Vercel-build локально (если есть env)
 npm run vercel-build
@@ -116,12 +125,13 @@ importMap не содержит запись для нужного клиент�
 
 ### `relation "users" does not exist (code 42P01)`
 
-Postgres-таблицы не созданы. Причины:
-1. **`DATABASE_URL_UNPOOLED` не задан** — DDL не работает через pooled. Добавь в Vercel env vars.
-2. **Schema push не прошёл при build** — проверить логи Vercel Build → должна быть строка `✓ Schema push complete`
-3. **Подключились к другой Postgres-БД** — проверить что connection string правильный
+Postgres-таблицы не созданы или приложение и схема разошлись.
 
-Решение: нажать **Redeploy** в Vercel, который запустит build заново с `vercel-build` командой и push'нет схему.
+1. Не запускать повторный deploy: build намеренно не выполняет DDL.
+2. Выполнить production read-only аудит из `main`.
+3. Пока baseline не подтверждён, не применять миграции к production.
+4. После отдельного разблокирования apply — проверить status/smoke и только
+   затем повторить deploy.
 
 ### React #418 / hydration mismatch / blank /admin
 
@@ -137,16 +147,15 @@ Postgres-таблицы не созданы. Причины:
 ## CI/Vercel build flow
 
 ```
-1. npm install                 (Vercel cache hit обычно)
-2. node scripts/cms/check.mjs  (валидирует env, файлы, importMap)
-3. node scripts/cms/safe-generate-importmap.mjs  (Linux: generate; Win: skip)
-4. node scripts/cms/push-schema.mjs              (Linux: push; Win: skip)
-5. node scripts/cms/check.mjs  (повторная проверка после генерации)
-6. next build
-7. Deploy
+1. npm ci
+2. node scripts/cms/check.mjs
+3. node scripts/cms/safe-generate-importmap.mjs
+4. node scripts/cms/check.mjs
+5. next build
+6. Deploy
 ```
 
-Если любой из шагов 2-5 падает — build останавливается, deploy НЕ идёт. Production не сломается из-за криво обновлённого CMS.
+Если любой из шагов 2-5 падает — build останавливается. Изменения схемы всегда выпускаются отдельным migration job до application deploy.
 
 ## Health endpoint
 

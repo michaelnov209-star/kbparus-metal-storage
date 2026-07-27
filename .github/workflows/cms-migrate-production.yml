@@ -1,0 +1,48 @@
+name: CMS schema audit — production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Введите AUDIT_PRODUCTION"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cms-production-schema-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Read-only Payload schema audit
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+
+    steps:
+      - name: Validate manual confirmation
+        shell: bash
+        run: |
+          if [ "${{ inputs.confirmation }}" != "AUDIT_PRODUCTION" ]; then
+            echo "Incorrect production audit confirmation."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - name: Read-only production schema audit
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: npm run cms:migrate:audit

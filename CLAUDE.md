@@ -28,12 +28,12 @@ Next.js 16 (App Router) · React 19 · TypeScript strict · Payload CMS 3 · Neo
 
 **Payload-админка:** `payload.config.ts` + `payload/collections/*` + `payload/globals/*`. Бизнес-группировка меню (`payload/admin/structure.ts`), русский UI, light theme, кастомный `AdminDashboard`. God-node доступа к CMS: `getCmsClient()`.
 
-**Build-pipeline (критично):** `vercel-build` = `cms:check → cms:generate-importmap → cms:push-schema → cms:check → next build`. Любой шаг падает → deploy не публикуется (защита от сломанной админки). Schema push через `@payloadcms/drizzle` `pushDevSchema()` на unpooled-соединении (`DATABASE_URL_UNPOOLED`).
+**Build-pipeline (критично):** `vercel-build` = `cms:check → cms:generate-importmap → cms:check → next build`. Build никогда не меняет схему БД. Payload работает с `push: false`; текущий production workflow audit-only, запускается только из `main` и не применяет DDL до подтверждённого baseline.
 
 ## Инженерные правила (НЕ нарушать)
 
 - **Формулы калькулятора** (`lib/calculator/pricing.ts`) — менять только с прогоном тестов. `npm run test` = 7/7 (Vitest, фиксируют эталонные цены).
-- **`push: true`** в Payload — добавлять поля можно, удалять нельзя (потеря данных).
+- **Payload schema** — любое изменение требует новой миграции и проверки на Neon branch. Production apply остаётся заблокированным до подтверждённого baseline и отдельного security review; `pushDevSchema`, `migrate:fresh/reset/refresh` в production запрещены.
 - **Новые CMS-поля** обязаны иметь `label: { ru }` и `admin.description: { ru }` — иначе маркетолог видит slug'и.
 - **importMap** регенерируется на каждый Vercel build; кастомные admin-компоненты обязаны туда попадать (иначе `getFromImportMap not found` → blank /admin).
 - **Seed-скрипты идемпотентны** — повторный запуск не перетирает заполненные поля.
