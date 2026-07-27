@@ -1,5 +1,60 @@
 @use "./seo-reports";
 
+@keyframes kb-admin-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.46;
+  }
+
+  50% {
+    opacity: 0.82;
+  }
+}
+
+html[data-theme] .kb-admin-dashboard--loading {
+  min-height: 520px;
+  pointer-events: none;
+}
+
+html[data-theme] .kb-admin-dashboard__skeleton-line,
+html[data-theme] .kb-admin-dashboard__kpi-placeholder {
+  display: block;
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--theme-elevation-150);
+  animation: kb-admin-skeleton-pulse 1.35s ease-in-out infinite;
+}
+
+html[data-theme] .kb-admin-dashboard__skeleton-line.is-short {
+  width: 34%;
+}
+
+html[data-theme] .kb-admin-dashboard__skeleton-line.is-medium {
+  width: 68%;
+}
+
+html[data-theme] .kb-admin-dashboard__skeleton-line.is-title {
+  width: 88%;
+  height: 34px;
+  margin: 16px 0 10px;
+  border-radius: 12px;
+}
+
+html[data-theme] .kb-admin-dashboard__kpi-placeholder {
+  min-height: 116px;
+  border: 1px solid var(--theme-border-color);
+  border-radius: 16px;
+  background: var(--theme-elevation-100);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] .kb-admin-dashboard__skeleton-line,
+  html[data-theme] .kb-admin-dashboard__kpi-placeholder {
+    animation: none;
+  }
+}
+
 html[data-theme="light"] {
   --theme-bg: #f4f6f8;
   --theme-text: #121820;

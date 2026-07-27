@@ -83,15 +83,15 @@ export default buildConfig({
       ],
       beforeDashboard: [
         {
-          path: "@/app/(payload)/components/AdminDashboard",
-          exportName: "AdminDashboard"
+          path: "@/app/(payload)/components/AdminDashboardLoader",
+          exportName: "AdminDashboardLoader"
         }
       ],
       views: {
         seo: {
           Component: {
-            path: "@/app/(payload)/components/SeoReportingView",
-            exportName: "SeoReportingView"
+            path: "@/app/(payload)/components/SeoReportingViewLoader",
+            exportName: "SeoReportingViewLoader"
           },
           path: "/seo",
           exact: true,
