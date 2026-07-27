@@ -1,5 +1,6 @@
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
+import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import { ru } from "@payloadcms/translations/languages/ru";
@@ -18,8 +19,16 @@ import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
 import { LeadManagement } from "./payload/globals/LeadManagement";
 import { SiteNavigation } from "./payload/globals/SiteNavigation";
+import { getPostgresConnectionString } from "./lib/config/postgres";
+import {
+  getSmtpTransport,
+  isSmtpConfigured,
+  smtpSettingsFromEnv
+} from "./lib/email/smtp";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const smtpSettings = smtpSettingsFromEnv(process.env);
+const smtpFromName = process.env.SMTP_FROM_NAME?.trim() || "КБ Парус";
 
 export default buildConfig({
   admin: {
@@ -65,6 +74,16 @@ export default buildConfig({
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
   globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
   editor: lexicalEditor(),
+  email: isSmtpConfigured(smtpSettings)
+    ? nodemailerAdapter({
+        defaultFromAddress: smtpSettings.from,
+        defaultFromName: smtpFromName,
+        transport: getSmtpTransport(smtpSettings),
+        // Runtime sends expose delivery failures. Avoid an outbound SMTP
+        // connection while Payload config is evaluated during Vercel builds.
+        skipVerify: true
+      })
+    : undefined,
   sharp,
   secret: process.env.PAYLOAD_SECRET || "change-me-locally",
   typescript: {
@@ -76,12 +95,7 @@ export default buildConfig({
       // через pgbouncer (Neon pooled). Vercel + Neon integration предоставляет
       // оба env var; Payload использует direct, runtime-запросы Next.js Lambda
       // и без того короткие — connection pool не критичен.
-      connectionString:
-        process.env.DATABASE_URL_UNPOOLED ||
-        process.env.POSTGRES_URL_NON_POOLING ||
-        process.env.DATABASE_URL ||
-        process.env.POSTGRES_URL ||
-        ""
+      connectionString: getPostgresConnectionString(process.env)
     },
     // Принудительно создаём/обновляем схему БД даже в production. Безопасно для
     // нашего масштаба (один dev). На зрелом production-deploy переключим на

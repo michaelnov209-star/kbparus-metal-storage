@@ -1,15 +1,13 @@
-import nodemailer from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import {
+  getSmtpTransport,
+  isSmtpConfigured,
+  smtpSettingsFromEnv,
+  type SmtpSettings
+} from "@/lib/email/smtp";
 import type { CmsLeadInput } from "@/lib/leads/cms-record";
 
-export interface LeadEmailConfig {
-  host?: string;
-  port?: number;
-  secure: boolean;
-  user?: string;
-  password?: string;
-  from?: string;
+export interface LeadEmailConfig extends SmtpSettings {
   to: string;
 }
 
@@ -111,35 +109,26 @@ export function buildLeadEmailMessage(lead: CmsLeadInput): LeadEmailMessage {
 }
 
 export function leadEmailConfigFromEnv(env: Record<string, string | undefined>): LeadEmailConfig {
-  const port = Number(env.SMTP_PORT || 0);
   return {
-    host: env.SMTP_HOST,
-    port: Number.isFinite(port) && port > 0 ? port : undefined,
-    secure: env.SMTP_SECURE === "true",
-    user: env.SMTP_USER,
-    password: env.SMTP_PASSWORD,
-    from: env.SMTP_FROM || env.SMTP_USER,
+    ...smtpSettingsFromEnv(env),
     to: env.LEAD_EMAIL_TO || "info@kbparus.ru"
   };
 }
 
 export async function sendLeadEmail(lead: CmsLeadInput, config: LeadEmailConfig): Promise<{ ok: boolean; error?: string }> {
-  if (!config.host || !config.port || !config.user || !config.password || !config.from || !config.to) {
+  if (!isSmtpConfigured(config) || !config.to) {
     return { ok: false, error: "email-not-configured" };
   }
 
   try {
-    const transportOptions: SMTPTransport.Options = {
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      auth: { user: config.user, pass: config.password }
-    };
-    const transporter = nodemailer.createTransport(transportOptions);
+    const transporter = getSmtpTransport(config);
     const message = buildLeadEmailMessage(lead);
 
     await transporter.sendMail({
-      from: config.from,
+      from: {
+        address: config.from,
+        name: process.env.SMTP_FROM_NAME?.trim() || "КБ Парус"
+      },
       to: config.to,
       subject: message.subject,
       text: message.text,

@@ -7,7 +7,7 @@
 Preview:
 
 ```bash
-npm run cms:validate-deployment -- https://<preview-url>
+npm run smoke:deployment -- https://<preview-url>
 ```
 
 Если preview защищён Vercel Deployment Protection и прямой запрос возвращает `401`, использовать Vercel Dashboard/CLI для просмотра защищённого деплоя. Production URL после cutover должен проходить прямую проверку без `401`.
@@ -15,7 +15,7 @@ npm run cms:validate-deployment -- https://<preview-url>
 Production:
 
 ```bash
-npm run cms:validate-deployment -- https://kbparus-metal-storage.vercel.app --production
+npm run smoke:production
 ```
 
 Скрипт проверяет:

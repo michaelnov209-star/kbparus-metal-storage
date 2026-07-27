@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { GlobalSlug } from "payload";
 import { getCmsClient } from "@/lib/cms/client";
+import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 
 /**
@@ -43,6 +44,7 @@ interface HealthStatus {
 
 export async function GET() {
   const bitrix24Config = getBitrix24RuntimeConfig(process.env);
+  const smtpSettings = smtpSettingsFromEnv(process.env);
   const result: HealthStatus = {
     status: "ok",
     timestamp: new Date().toISOString(),
@@ -55,13 +57,7 @@ export async function GET() {
       },
       leadIntegrations: {
         email: {
-          configured: Boolean(
-            process.env.SMTP_HOST &&
-              process.env.SMTP_PORT &&
-              process.env.SMTP_USER &&
-              process.env.SMTP_PASSWORD &&
-              (process.env.SMTP_FROM || process.env.SMTP_USER)
-          ),
+          configured: isSmtpConfigured(smtpSettings),
           to: process.env.LEAD_EMAIL_TO || "info@kbparus.ru"
         },
         telegram: {

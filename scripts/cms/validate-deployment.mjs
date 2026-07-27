@@ -3,12 +3,11 @@
  * Non-destructive runtime validation for a Vercel deployment.
  *
  * Usage:
- *   npm run cms:validate-deployment -- https://preview-url.vercel.app
- *   npm run cms:validate-deployment -- https://kbparus-metal-storage.vercel.app --production
+ *   npm run smoke:deployment -- https://preview-url.vercel.app
+ *   npm run smoke:production
  *
- * This script does not create users, upload files, mutate globals, or touch DB
- * schema. It validates only public/runtime signals that are safe to check after
- * preview or production deploy.
+ * Only GET/HEAD requests are used. The validator never submits leads, changes
+ * CMS records, uploads media, or mutates database schema.
  */
 
 const REQUIRED_COLLECTIONS = [
@@ -19,25 +18,38 @@ const REQUIRED_COLLECTIONS = [
   "subcategories",
   "users"
 ];
-
-const REQUIRED_GLOBALS = ["contacts", "home-content", "lead-management", "site-navigation"];
+const REQUIRED_GLOBALS = [
+  "contacts",
+  "home-content",
+  "lead-management",
+  "site-navigation"
+];
 const PRODUCTION_URL = "https://kbparus-metal-storage.vercel.app";
+const REQUEST_TIMEOUT_MS = 12_000;
+const MAX_PAGE_ATTEMPTS = 3;
+const SITEMAP_CONCURRENCY = 6;
+const IMMUTABLE_MAX_AGE = 31_536_000;
 
 const args = process.argv.slice(2);
-const baseUrlArg = args.find((arg) => !arg.startsWith("--"));
 const productionMode = args.includes("--production");
+const baseUrlArg = args.find((arg) => !arg.startsWith("--"));
 
 if (!baseUrlArg) {
-  console.error("Usage: npm run cms:validate-deployment -- <deployment-url> [--production]");
+  console.error(
+    "Usage: npm run smoke:deployment -- <deployment-url> [--production]"
+  );
   process.exit(1);
 }
 
 const baseUrl = normalizeBaseUrl(baseUrlArg);
+const baseOrigin = new URL(baseUrl).origin;
 const checks = [];
 let protectedResponses = 0;
 
 function normalizeBaseUrl(value) {
-  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  const withProtocol = /^https?:\/\//i.test(value)
+    ? value
+    : `https://${value}`;
   return withProtocol.replace(/\/+$/, "");
 }
 
@@ -48,32 +60,163 @@ function record(name, ok, detail = "", required = true) {
   console.log(`[${icon}] ${name}${suffix}`);
 }
 
-async function fetchText(path, init) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    redirect: "follow",
-    ...init,
-    headers: {
-      "user-agent": "kbparus-cms-validator/1.0",
-      ...(init?.headers || {})
+function toTargetUrl(pathOrUrl) {
+  const url = new URL(pathOrUrl, `${baseUrl}/`);
+  if (url.origin === baseOrigin) return url;
+
+  // Sitemap entries may use the canonical production origin while a Preview
+  // deployment is being validated. Keep the path/query but target the exact
+  // deployment supplied on the command line.
+  return new URL(`${url.pathname}${url.search}`, `${baseUrl}/`);
+}
+
+async function request(pathOrUrl, init = {}, attempts = 1) {
+  const url = toTargetUrl(pathOrUrl);
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        ...init,
+        headers: {
+          "user-agent": "kbparus-deployment-smoke/2.0",
+          ...(init.headers || {})
+        }
+      });
+
+      if (
+        response.status === 401 &&
+        (response.headers.get("content-type") || "").includes("text/html")
+      ) {
+        protectedResponses += 1;
+      }
+
+      if (response.status >= 500 && attempt < attempts) {
+        await response.body?.cancel();
+        continue;
+      }
+      return response;
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) throw error;
     }
-  });
-  const text = await response.text();
-  if (response.status === 401 && text.toLowerCase().includes("authentication")) {
-    protectedResponses++;
   }
-  return { response, text };
+
+  throw lastError || new Error(`Request failed: ${url}`);
+}
+
+async function fetchText(pathOrUrl, options = {}) {
+  const response = await request(
+    pathOrUrl,
+    { method: "GET" },
+    options.attempts || 1
+  );
+  return { response, text: await response.text() };
 }
 
 function missing(expected, actual) {
   return expected.filter((item) => !actual.includes(item));
 }
 
+function extractAttribute(tag, attribute) {
+  const pattern = new RegExp(
+    `${attribute}\\s*=\\s*(?:"([^"]+)"|'([^']+)')`,
+    "i"
+  );
+  const match = tag.match(pattern);
+  return match?.[1] || match?.[2] || "";
+}
+
+function extractSitemapUrls(xml) {
+  return [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)].map((match) =>
+    match[1]
+      .replaceAll("&amp;", "&")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+  );
+}
+
+function extractHeroAssets(html) {
+  const videoMatch = html.match(/<video\b[^>]*>[\s\S]*?<\/video>/i);
+  if (!videoMatch) {
+    return { videoFound: false, mobile: "", desktop: "", poster: "" };
+  }
+
+  const video = videoMatch[0];
+  const openingTag = video.match(/<video\b[^>]*>/i)?.[0] || "";
+  const sources = [...video.matchAll(/<source\b[^>]*>/gi)].map(
+    (match) => match[0]
+  );
+  const mobileTag = sources.find((tag) =>
+    extractAttribute(tag, "media").includes("max-width: 1180px")
+  );
+  const desktopTag = sources.find((tag) => !extractAttribute(tag, "media"));
+
+  return {
+    videoFound: true,
+    mobile: mobileTag ? extractAttribute(mobileTag, "src") : "",
+    desktop: desktopTag ? extractAttribute(desktopTag, "src") : "",
+    poster: extractAttribute(openingTag, "poster")
+  };
+}
+
+function extractOptimizedAsset(html, segment) {
+  const escaped = segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(
+      `(?:src|srcset)\\s*=\\s*(?:"|')[^"']*(${escaped}[^"'\\s,]+)`,
+      "i"
+    )
+  );
+  if (!match) return "";
+
+  const value = match[1]
+    .replaceAll("&amp;", "&")
+    .replaceAll("\\u0026", "&");
+  return value.startsWith("/") ? value : `/${value}`;
+}
+
+function cacheMaxAge(cacheControl) {
+  const match = cacheControl.match(/(?:s-maxage|max-age)=(\d+)/i);
+  return match ? Number(match[1]) : 0;
+}
+
+async function checkAsset(label, path, expectedType) {
+  if (!path) {
+    record(`${label} is referenced`, false, "asset URL not found");
+    return;
+  }
+
+  const response = await request(path, { method: "HEAD" });
+  const contentType = response.headers.get("content-type") || "";
+  const cacheControl = response.headers.get("cache-control") || "";
+  const cacheIsImmutable =
+    cacheControl.toLowerCase().includes("immutable") &&
+    cacheMaxAge(cacheControl) >= IMMUTABLE_MAX_AGE;
+
+  record(`${label} returns 200`, response.status === 200, `HTTP ${response.status}`);
+  record(
+    `${label} has ${expectedType}`,
+    contentType.toLowerCase().includes(expectedType),
+    contentType || "missing content-type"
+  );
+  record(
+    `${label} has immutable one-year cache`,
+    cacheIsImmutable,
+    cacheControl || "missing cache-control"
+  );
+}
+
 async function checkHealth() {
-  const { response, text } = await fetchText("/api/health");
+  const { response, text } = await fetchText("/api/health", {
+    attempts: MAX_PAGE_ATTEMPTS
+  });
 
   if (response.status !== 200) {
     record("/api/health returns 200", false, `HTTP ${response.status}`);
-    return null;
+    return;
   }
 
   let health;
@@ -81,21 +224,24 @@ async function checkHealth() {
     health = JSON.parse(text);
   } catch (error) {
     record("/api/health returns JSON", false, error.message);
-    return null;
+    return;
   }
 
   record("/api/health returns JSON", true);
   record("health.status is ok", health.status === "ok", `status=${health.status}`);
 
   const cms = health.components?.cms;
-  record("cms.ok is true", cms?.ok === true, cms?.ok === true ? "" : cms?.error || "cms not ok");
-
-  const collectionNames = Array.isArray(cms?.collectionNames) ? cms.collectionNames : [];
+  record("cms.ok is true", cms?.ok === true, cms?.error || "");
+  const collectionNames = Array.isArray(cms?.collectionNames)
+    ? cms.collectionNames
+    : [];
   const missingCollections = missing(REQUIRED_COLLECTIONS, collectionNames);
   record(
     "required collections are present",
     missingCollections.length === 0,
-    missingCollections.length ? `missing: ${missingCollections.join(", ")}` : collectionNames.join(", ")
+    missingCollections.length
+      ? `missing: ${missingCollections.join(", ")}`
+      : `${collectionNames.length} collections`
   );
 
   const globalNames = Array.isArray(cms?.globalNames) ? cms.globalNames : [];
@@ -103,14 +249,18 @@ async function checkHealth() {
   record(
     "required globals are present",
     missingGlobals.length === 0,
-    missingGlobals.length ? `missing: ${missingGlobals.join(", ")}` : globalNames.join(", ")
+    missingGlobals.length
+      ? `missing: ${missingGlobals.join(", ")}`
+      : `${globalNames.length} globals`
   );
 
   const storage = health.components?.storage;
   record(
-    "Blob storage token is configured",
+    "Blob storage is ready",
     storage?.configured === true && storage?.ok === true,
-    storage ? `configured=${storage.configured}, ok=${storage.ok}` : "storage missing"
+    storage
+      ? `configured=${storage.configured}, ok=${storage.ok}`
+      : "storage missing"
   );
 
   const integrations = health.components?.leadIntegrations || {};
@@ -121,17 +271,23 @@ async function checkHealth() {
     false
   );
   record(
+    "Email env signal",
+    integrations.email?.configured === true,
+    `configured=${Boolean(integrations.email?.configured)}`,
+    false
+  );
+  record(
     "Bitrix24 env signal",
     integrations.bitrix24?.configured === true,
     `configured=${Boolean(integrations.bitrix24?.configured)}`,
     false
   );
-
-  return health;
 }
 
 async function checkAdminRender() {
-  const { response, text } = await fetchText("/admin/create-first-user");
+  const { response, text } = await fetchText("/admin/create-first-user", {
+    attempts: MAX_PAGE_ATTEMPTS
+  });
   const body = text.toLowerCase();
   const looksLikePayloadAdmin =
     body.includes("payload") ||
@@ -140,31 +296,144 @@ async function checkAdminRender() {
 
   record(
     "/admin/create-first-user renders",
-    response.status >= 200 && response.status < 400 && looksLikePayloadAdmin,
+    response.status === 200 && looksLikePayloadAdmin,
     `HTTP ${response.status}, body=${text.length} chars`
   );
 }
 
 async function checkAuthBoundary() {
-  const { response } = await fetchText("/api/users?limit=1");
-  const protectedStatus = [401, 403, 404].includes(response.status);
+  const response = await request("/api/users?limit=1", { method: "GET" });
   record(
     "users API is not publicly readable",
-    protectedStatus,
+    [401, 403, 404].includes(response.status),
     `HTTP ${response.status}`
   );
+  await response.body?.cancel();
 }
 
-async function checkPublicSite() {
-  const home = await fetchText("/");
+async function mapWithConcurrency(items, concurrency, worker) {
+  let nextIndex = 0;
+  const results = new Array(items.length);
+
+  async function run() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await worker(items[index], index);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, run)
+  );
+  return results;
+}
+
+async function checkSitemap() {
+  const { response, text } = await fetchText("/sitemap.xml", {
+    attempts: MAX_PAGE_ATTEMPTS
+  });
+  const contentType = response.headers.get("content-type") || "";
+  record("/sitemap.xml returns 200", response.status === 200, `HTTP ${response.status}`);
+  record(
+    "/sitemap.xml returns XML",
+    contentType.includes("xml") && /<urlset\b/i.test(text),
+    contentType || "missing content-type"
+  );
+
+  const urls = extractSitemapUrls(text);
+  record("sitemap contains public URLs", urls.length > 0, `${urls.length} URLs`);
+
+  const invalidOrigins = urls.filter(
+    (value) => new URL(value, `${baseUrl}/`).origin !== new URL(PRODUCTION_URL).origin
+  );
+  record(
+    "sitemap URLs use the canonical production origin",
+    invalidOrigins.length === 0,
+    invalidOrigins.length ? `${invalidOrigins.length} invalid origins` : ""
+  );
+
+  const statuses = await mapWithConcurrency(
+    urls,
+    SITEMAP_CONCURRENCY,
+    async (value) => {
+      try {
+        const response = await request(value, { method: "HEAD" });
+        await response.body?.cancel();
+        return { value, status: response.status };
+      } catch (error) {
+        return {
+          value,
+          status: 0,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    }
+  );
+  const failures = statuses.filter((item) => item.status !== 200);
+  record(
+    "all sitemap URLs return exactly 200",
+    failures.length === 0,
+    failures.length
+      ? failures
+          .slice(0, 3)
+          .map((item) => `${new URL(item.value).pathname}: ${item.status || item.error}`)
+          .join("; ")
+      : `${statuses.length}/${statuses.length}`
+  );
+
+  const paths = urls.map((value) => new URL(value).pathname);
+  const productPath = paths.find(
+    (path) => path.startsWith("/catalog/") && path.split("/").filter(Boolean).length >= 3
+  );
+  const categoryPath = paths.find(
+    (path) =>
+      path.startsWith("/catalog/") &&
+      path.split("/").filter(Boolean).length === 2
+  );
+
+  return { categoryPath, productPath };
+}
+
+async function checkPublicMedia(categoryPath, productPath) {
+  const home = await fetchText("/", { attempts: MAX_PAGE_ATTEMPTS });
   record("public homepage returns 200", home.response.status === 200, `HTTP ${home.response.status}`);
 
-  const catalog = await fetchText("/catalog/auto-sheet-metal");
-  record(
-    "catalog page returns 200",
-    catalog.response.status === 200,
-    `HTTP ${catalog.response.status}`
+  const hero = extractHeroAssets(home.text);
+  record("homepage contains hero video", hero.videoFound);
+  record("hero has mobile source", Boolean(hero.mobile), hero.mobile || "missing");
+  record("hero has desktop source", Boolean(hero.desktop), hero.desktop || "missing");
+  record("hero has poster", Boolean(hero.poster), hero.poster || "missing");
+
+  await checkAsset("mobile hero video", hero.mobile, "video/");
+  await checkAsset("hero poster", hero.poster, "image/");
+
+  if (!categoryPath || !productPath) {
+    record(
+      "sitemap exposes category and product routes",
+      false,
+      `category=${categoryPath || "missing"}, product=${productPath || "missing"}`
+    );
+    return;
+  }
+
+  const [category, product] = await Promise.all([
+    fetchText(categoryPath, { attempts: MAX_PAGE_ATTEMPTS }),
+    fetchText(productPath, { attempts: MAX_PAGE_ATTEMPTS })
+  ]);
+  record("category page returns 200", category.response.status === 200, categoryPath);
+  record("product page returns 200", product.response.status === 200, productPath);
+
+  const categoryAsset = extractOptimizedAsset(
+    category.text,
+    "/assets/images/catalog/optimized/"
   );
+  const productAsset = extractOptimizedAsset(
+    product.text,
+    "/assets/images/products/optimized/"
+  );
+  await checkAsset("optimized category image", categoryAsset, "image/webp");
+  await checkAsset("optimized product image", productAsset, "image/webp");
 }
 
 async function main() {
@@ -182,9 +451,14 @@ async function main() {
     await checkHealth();
     await checkAdminRender();
     await checkAuthBoundary();
-    await checkPublicSite();
+    const { categoryPath, productPath } = await checkSitemap();
+    await checkPublicMedia(categoryPath, productPath);
   } catch (error) {
-    record("validator completed without network/runtime exception", false, error.message);
+    record(
+      "validator completed without network/runtime exception",
+      false,
+      error instanceof Error ? error.message : String(error)
+    );
   }
 
   const failed = checks.filter((check) => check.required && !check.ok);
@@ -195,13 +469,11 @@ async function main() {
   console.log(`  warnings: ${warnings.length}`);
   if (protectedResponses > 0) {
     console.log(
-      "  note: deployment returned 401 authentication responses; preview may be protected by Vercel Deployment Protection"
+      "  note: one or more routes returned deployment protection HTML; use an authorized Preview URL"
     );
   }
 
-  if (failed.length > 0) {
-    process.exit(1);
-  }
+  if (failed.length > 0) process.exit(1);
 }
 
 main();

@@ -11,6 +11,7 @@ import { pushDevSchema } from "@payloadcms/drizzle";
 import type { DrizzleAdapter } from "@payloadcms/drizzle";
 import type { GlobalSlug, Payload } from "payload";
 import config from "../../payload.config";
+import { getPostgresConnectionString } from "../../lib/config/postgres";
 
 const REQUIRED_GLOBALS = ["contacts", "home-content"] as const satisfies readonly GlobalSlug[];
 
@@ -39,11 +40,7 @@ async function verifyGlobalSchema(payload: Payload) {
 }
 
 async function main() {
-  const dbUrl =
-    process.env.DATABASE_URL_UNPOOLED ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL;
+  const dbUrl = getPostgresConnectionString(process.env);
 
   if (!dbUrl) {
     console.log("⚠ No DATABASE_URL found. Skipping schema push for DB-less build.");
