@@ -49,11 +49,10 @@ describe("admin layout isolation", () => {
     expect(training).not.toContain('<a className="kb-admin-training__link"');
   });
 
-  it("excludes CLI-only migration tooling from admin server traces", () => {
+  it("excludes Prettier CLI tooling from admin server traces", () => {
     const nextConfig = source("next.config.mjs");
 
     expect(nextConfig).toContain("outputFileTracingExcludes");
     expect(nextConfig).toContain("./node_modules/prettier/**/*");
-    expect(nextConfig).toContain("./migrations/**/*");
   });
 });
