@@ -35,8 +35,9 @@ const nextConfig = {
   // нельзя externalize — у них есть CSS, которые Node ESM не загружает.
   serverExternalPackages: ["sharp", "drizzle-kit", "drizzle-orm", "pg", "@payloadcms/db-postgres"],
   images: {
-    // Современные форматы: AVIF/WebP отдаются автоматически вместо PNG/JPG.
-    formats: ["image/avif", "image/webp"],
+    // WebP заметно быстрее кодируется на холодном CDN, чем AVIF. Карточки
+    // каталога используют готовые responsive-варианты и обходят runtime resize.
+    formats: ["image/webp"],
     // Год кеширования оптимизированных вариантов на CDN.
     minimumCacheTTL: 31536000,
     remotePatterns: [
@@ -51,9 +52,16 @@ const nextConfig = {
         headers: securityHeaders,
       },
       {
-        // CMS-медиа (Payload Blob proxy) иммутабельно: имя файла = содержимое.
-        // По умолчанию route отдаёт max-age=0 — перекрываем на год, чтобы
-        // повторные визиты и навигация не перекачивали 2-3 МБ заново.
+        // Контент-хеш входит в имя каждого файла, поэтому годовой immutable
+        // кеш безопасен и не удерживает устаревшую версию после обновления.
+        source: "/assets/images/catalog/optimized/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Новые Blob-загрузки получают addRandomSuffix, поэтому их URL уникален.
+        // Повторные визиты и навигация не перекачивают 2-3 МБ заново.
         source: "/api/media/file/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },

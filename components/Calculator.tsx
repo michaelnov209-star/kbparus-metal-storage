@@ -471,7 +471,13 @@ export function Calculator() {
                         {isRecommended && <em>Рекомендуем</em>}
                         {isActive && <b>Выбрано</b>}
                       </div>
-                      <img src={card.image} alt={card.title} />
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                      />
                       <strong>{card.shortTitle}</strong>
                       <small>{card.description}</small>
                     </button>
@@ -835,7 +841,13 @@ export function Calculator() {
         <aside className="calc-summary">
           <span className="line-kicker">Ваше решение</span>
           <h3>{display.shortTitle}</h3>
-          <img src={display.image} alt={display.title} />
+          <img
+            src={display.image}
+            alt={display.title}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+          />
           <div className="summary-price price-live">
             <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
             <small>ориентир до инженерной проверки</small>

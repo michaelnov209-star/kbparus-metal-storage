@@ -1,0 +1,87 @@
+{
+  "/assets/images/catalog/01-auto-sheet-metal.jpg": {
+    "thumb": "/assets/images/catalog/optimized/01-auto-sheet-metal-320-8e8878e900.webp",
+    "medium": "/assets/images/catalog/optimized/01-auto-sheet-metal-640-8e8878e900.webp",
+    "large": "/assets/images/catalog/optimized/01-auto-sheet-metal-960-8e8878e900.webp"
+  },
+  "/assets/images/catalog/02-manual-sheet-metal.png": {
+    "thumb": "/assets/images/catalog/optimized/02-manual-sheet-metal-320-a8c0ab5660.webp",
+    "medium": "/assets/images/catalog/optimized/02-manual-sheet-metal-640-a8c0ab5660.webp",
+    "large": "/assets/images/catalog/optimized/02-manual-sheet-metal-960-a8c0ab5660.webp"
+  },
+  "/assets/images/catalog/03-sort-and-pipe-storage.jpg": {
+    "thumb": "/assets/images/catalog/optimized/03-sort-and-pipe-storage-320-afd104f184.webp",
+    "medium": "/assets/images/catalog/optimized/03-sort-and-pipe-storage-640-afd104f184.webp",
+    "large": "/assets/images/catalog/optimized/03-sort-and-pipe-storage-960-afd104f184.webp"
+  },
+  "/assets/images/catalog/04-manual-sort-and-pipe-storage.png": {
+    "thumb": "/assets/images/catalog/optimized/04-manual-sort-and-pipe-storage-320-bb0bc89d22.webp",
+    "medium": "/assets/images/catalog/optimized/04-manual-sort-and-pipe-storage-640-bb0bc89d22.webp",
+    "large": "/assets/images/catalog/optimized/04-manual-sort-and-pipe-storage-960-bb0bc89d22.webp"
+  },
+  "/assets/images/catalog/05-carousel-vertical-module.png": {
+    "thumb": "/assets/images/catalog/optimized/05-carousel-vertical-module-320-c0f8534d24.webp",
+    "medium": "/assets/images/catalog/optimized/05-carousel-vertical-module-640-c0f8534d24.webp",
+    "large": "/assets/images/catalog/optimized/05-carousel-vertical-module-960-c0f8534d24.webp"
+  },
+  "/assets/images/catalog/06-automated-warehouse-systems.png": {
+    "thumb": "/assets/images/catalog/optimized/06-automated-warehouse-systems-320-5a18b7e367.webp",
+    "medium": "/assets/images/catalog/optimized/06-automated-warehouse-systems-640-5a18b7e367.webp",
+    "large": "/assets/images/catalog/optimized/06-automated-warehouse-systems-960-5a18b7e367.webp"
+  },
+  "/assets/images/catalog/07-inlocker.png": {
+    "thumb": "/assets/images/catalog/optimized/07-inlocker-320-40534f9bad.webp",
+    "medium": "/assets/images/catalog/optimized/07-inlocker-640-40534f9bad.webp",
+    "large": "/assets/images/catalog/optimized/07-inlocker-960-40534f9bad.webp"
+  },
+  "/assets/images/catalog/08-lifting-equipment.png": {
+    "thumb": "/assets/images/catalog/optimized/08-lifting-equipment-320-8eb4da0930.webp",
+    "medium": "/assets/images/catalog/optimized/08-lifting-equipment-640-8eb4da0930.webp",
+    "large": "/assets/images/catalog/optimized/08-lifting-equipment-960-8eb4da0930.webp"
+  },
+  "/assets/images/catalog/09-rollout-shelf-storage.png": {
+    "thumb": "/assets/images/catalog/optimized/09-rollout-shelf-storage-320-b3a9d5cb71.webp",
+    "medium": "/assets/images/catalog/optimized/09-rollout-shelf-storage-640-b3a9d5cb71.webp",
+    "large": "/assets/images/catalog/optimized/09-rollout-shelf-storage-960-b3a9d5cb71.webp"
+  },
+  "/assets/images/catalog/10-cantilever-racks.png": {
+    "thumb": "/assets/images/catalog/optimized/10-cantilever-racks-320-6cfb88d160.webp",
+    "medium": "/assets/images/catalog/optimized/10-cantilever-racks-640-6cfb88d160.webp",
+    "large": "/assets/images/catalog/optimized/10-cantilever-racks-960-6cfb88d160.webp"
+  },
+  "/assets/images/catalog/11-front-pallet-racks.png": {
+    "thumb": "/assets/images/catalog/optimized/11-front-pallet-racks-320-36f01bb57d.webp",
+    "medium": "/assets/images/catalog/optimized/11-front-pallet-racks-640-36f01bb57d.webp",
+    "large": "/assets/images/catalog/optimized/11-front-pallet-racks-960-36f01bb57d.webp"
+  },
+  "/assets/images/catalog/12-warehouse-equipment.png": {
+    "thumb": "/assets/images/catalog/optimized/12-warehouse-equipment-320-e5e4c19468.webp",
+    "medium": "/assets/images/catalog/optimized/12-warehouse-equipment-640-e5e4c19468.webp",
+    "large": "/assets/images/catalog/optimized/12-warehouse-equipment-960-e5e4c19468.webp"
+  },
+  "/assets/images/catalog/13-shelf-racks.png": {
+    "thumb": "/assets/images/catalog/optimized/13-shelf-racks-320-ff760dee18.webp",
+    "medium": "/assets/images/catalog/optimized/13-shelf-racks-640-ff760dee18.webp",
+    "large": "/assets/images/catalog/optimized/13-shelf-racks-960-ff760dee18.webp"
+  },
+  "/assets/images/catalog/14-mezzanines.png": {
+    "thumb": "/assets/images/catalog/optimized/14-mezzanines-320-789218e047.webp",
+    "medium": "/assets/images/catalog/optimized/14-mezzanines-640-789218e047.webp",
+    "large": "/assets/images/catalog/optimized/14-mezzanines-960-789218e047.webp"
+  },
+  "/assets/images/catalog/15-cable-racks.png": {
+    "thumb": "/assets/images/catalog/optimized/15-cable-racks-320-8a057407e7.webp",
+    "medium": "/assets/images/catalog/optimized/15-cable-racks-640-8a057407e7.webp",
+    "large": "/assets/images/catalog/optimized/15-cable-racks-960-8a057407e7.webp"
+  },
+  "/assets/images/catalog/16-packing-marking-storage.png": {
+    "thumb": "/assets/images/catalog/optimized/16-packing-marking-storage-320-31d3cccbb0.webp",
+    "medium": "/assets/images/catalog/optimized/16-packing-marking-storage-640-31d3cccbb0.webp",
+    "large": "/assets/images/catalog/optimized/16-packing-marking-storage-960-31d3cccbb0.webp"
+  },
+  "/assets/images/catalog/17-warehouse-erp.png": {
+    "thumb": "/assets/images/catalog/optimized/17-warehouse-erp-320-8f5a729d7e.webp",
+    "medium": "/assets/images/catalog/optimized/17-warehouse-erp-640-8f5a729d7e.webp",
+    "large": "/assets/images/catalog/optimized/17-warehouse-erp-960-8f5a729d7e.webp"
+  }
+}

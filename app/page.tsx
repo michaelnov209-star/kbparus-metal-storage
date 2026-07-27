@@ -416,11 +416,23 @@ export default async function Home() {
         </div>
         <div className="before-after-grid">
           <article className="before-after-card reveal">
-            <img src={home.beforeAfter.before.imageUrl} alt={home.beforeAfter.before.imageAlt} />
+            <img
+              src={home.beforeAfter.before.imageUrl}
+              alt={home.beforeAfter.before.imageAlt}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
             <div><span>До</span><h3>{home.beforeAfter.before.title}</h3><p>{home.beforeAfter.before.text}</p></div>
           </article>
           <article className="before-after-card is-after reveal">
-            <img src={home.beforeAfter.after.imageUrl} alt={home.beforeAfter.after.imageAlt} />
+            <img
+              src={home.beforeAfter.after.imageUrl}
+              alt={home.beforeAfter.after.imageAlt}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
             <div><span>После</span><h3>{home.beforeAfter.after.title}</h3><p>{home.beforeAfter.after.text}</p></div>
           </article>
         </div>
@@ -455,7 +467,13 @@ export default async function Home() {
         <div className="case-slider" id="cases-slider">
           {home.cases.map((item) => (
             <article className="case-card reveal" key={item.title}>
-              <img src={item.imageUrl} alt={item.imageAlt} />
+              <img
+                src={item.imageUrl}
+                alt={item.imageAlt}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+              />
               <a href="#contacts" aria-label={`Обсудить кейс: ${item.title}`}><ArrowRight size={24} /></a>
               <h3>{hasVerifiedCases ? item.customer : "Типовой сценарий"}</h3>
               <strong>{item.title}</strong>
@@ -541,12 +559,24 @@ export default async function Home() {
       </section>
 
       <section className="line-main-site-banner reveal">
-        <img src={home.banners.kbparus.imageUrl} alt={home.banners.kbparus.imageAlt} />
+        <img
+          src={home.banners.kbparus.imageUrl}
+          alt={home.banners.kbparus.imageAlt}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+        />
         <a className="line-primary" href={home.banners.kbparus.url} target="_blank" rel="noreferrer">{home.banners.kbparus.ctaLabel}</a>
       </section>
 
       <section className="line-main-site-banner line-coating-site-banner reveal" aria-label="КБ Парус — линии порошковой окраски">
-        <img src={home.banners.coating.imageUrl} alt={home.banners.coating.imageAlt} />
+        <img
+          src={home.banners.coating.imageUrl}
+          alt={home.banners.coating.imageAlt}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+        />
         <a className="line-primary" href={home.banners.coating.url} target="_blank" rel="noreferrer">{home.banners.coating.ctaLabel}</a>
       </section>
 

@@ -5,6 +5,24 @@ import Image from "next/image";
 import { ArrowRight, Maximize2, X } from "lucide-react";
 import type { ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 
+const CATALOG_CARD_SIZES =
+  "(max-width: 640px) 38vw, (max-width: 900px) calc(50vw - 28px), (max-width: 1180px) calc(33.333vw - 32px), calc(25vw - 32px)";
+
+function hasResponsiveCatalogImageVariants(
+  item: ExcelHomeCatalogItem
+): item is ExcelHomeCatalogItem & {
+  imageThumb: string;
+  imageMedium: string;
+  imageLarge: string;
+} {
+  return Boolean(
+    item.imageThumb &&
+      item.imageMedium &&
+      item.imageLarge &&
+      new Set([item.imageThumb, item.imageMedium, item.imageLarge]).size === 3
+  );
+}
+
 function getCatalogBadge(id: string) {
   if (id.includes("auto") || id.includes("automated")) return "Автоматизация";
   if (id.includes("manual")) return "Ручная система";
@@ -40,15 +58,31 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
           <article className="catalog-card reveal" key={item.id}>
             <div className="catalog-card-visual has-image">
               <a className="catalog-image-link" href={`/catalog/${item.id}`} aria-label={`Перейти в категорию: ${item.title}`}>
-                <Image
-                  className="catalog-image-main"
-                  src={item.imageMedium ?? item.image}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 760px) 46vw, (max-width: 1180px) 31vw, 24vw"
-                  style={{ objectFit: "contain" }}
-                  priority={index < 2}
-                />
+                {hasResponsiveCatalogImageVariants(item) ? (
+                  <img
+                    className="catalog-image-main"
+                    src={item.imageMedium}
+                    srcSet={`${item.imageThumb} 320w, ${item.imageMedium} 640w, ${item.imageLarge} 960w`}
+                    sizes={CATALOG_CARD_SIZES}
+                    width={960}
+                    height={720}
+                    alt={item.title}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
+                  />
+                ) : (
+                  <Image
+                    className="catalog-image-main"
+                    src={item.imageMedium ?? item.image}
+                    alt={item.title}
+                    fill
+                    sizes={CATALOG_CARD_SIZES}
+                    style={{ objectFit: "contain" }}
+                    loading="lazy"
+                    quality={75}
+                  />
+                )}
               </a>
               <button
                 className="catalog-zoom-pill catalog-zoom-trigger"

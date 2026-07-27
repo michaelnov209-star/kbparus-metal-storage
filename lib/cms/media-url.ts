@@ -1,4 +1,10 @@
-export type CmsMediaSize = "thumb" | "medium" | "large";
+export type CmsMediaSize =
+  | "thumb"
+  | "medium"
+  | "large"
+  | "cardSm"
+  | "cardMd"
+  | "cardLg";
 
 type CmsMediaLike = {
   url?: unknown;

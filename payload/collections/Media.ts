@@ -23,7 +23,31 @@ export const Media: CollectionConfig = {
     imageSizes: [
       { name: "thumb", width: 320, height: undefined, position: "centre" },
       { name: "medium", width: 800, height: undefined, position: "centre" },
-      { name: "large", width: 1600, height: undefined, position: "centre" }
+      { name: "large", width: 1600, height: undefined, position: "centre" },
+      {
+        name: "cardSm",
+        width: 320,
+        height: 240,
+        fit: "contain",
+        position: "centre",
+        withoutEnlargement: false
+      },
+      {
+        name: "cardMd",
+        width: 640,
+        height: 480,
+        fit: "contain",
+        position: "centre",
+        withoutEnlargement: false
+      },
+      {
+        name: "cardLg",
+        width: 960,
+        height: 720,
+        fit: "contain",
+        position: "centre",
+        withoutEnlargement: false
+      }
     ],
     formatOptions: { format: "webp", options: { quality: 80 } }
   },

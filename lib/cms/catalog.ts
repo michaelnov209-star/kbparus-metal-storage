@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { excelHomeCatalog, type ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 import { getCmsClient } from "./client";
+import { getLocalCatalogImageVariants } from "./catalog-image-variants";
 import { resolveCmsMediaUrl } from "./media-url";
 
 export interface CatalogCategoryView extends ExcelHomeCatalogItem {
@@ -66,6 +67,7 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
 
   const fallback = fallbackById.get(id);
   const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
+  const localVariants = getLocalCatalogImageVariants(localFallback);
   const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
 
@@ -75,9 +77,18 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
     summary,
     scenario: asString(doc.scenario) ?? fallback?.scenario ?? "",
     image,
-    imageThumb: resolveCmsMediaUrl(doc.image, { size: "thumb", fallback: localFallback }),
-    imageMedium: resolveCmsMediaUrl(doc.image, { size: "medium", fallback: localFallback }),
-    imageLarge: resolveCmsMediaUrl(doc.image, { size: "large", fallback: localFallback }),
+    imageThumb: resolveCmsMediaUrl(doc.image, {
+      size: "cardSm",
+      fallback: localVariants?.thumb ?? localFallback
+    }),
+    imageMedium: resolveCmsMediaUrl(doc.image, {
+      size: "cardMd",
+      fallback: localVariants?.medium ?? localFallback
+    }),
+    imageLarge: resolveCmsMediaUrl(doc.image, {
+      size: "cardLg",
+      fallback: localVariants?.large ?? localFallback
+    }),
     featured: asBoolean(doc.featured) ?? fallback?.featured,
     seoTitle: asString(doc.seoTitle),
     seoDescription: asString(doc.seoDescription),
@@ -91,14 +102,20 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
 
 export function mergeCatalogCategories(cmsCategories: CatalogCategoryView[]): CatalogCategoryView[] {
   const byId = new Map<string, CatalogCategoryView>(
-    excelHomeCatalog.map((item, index) => [
-      item.id,
-      {
-        ...item,
-        sortOrder: index,
-        source: "fallback"
-      }
-    ])
+    excelHomeCatalog.map((item, index) => {
+      const variants = getLocalCatalogImageVariants(item.image);
+      return [
+        item.id,
+        {
+          ...item,
+          imageThumb: variants?.thumb,
+          imageMedium: variants?.medium,
+          imageLarge: variants?.large,
+          sortOrder: index,
+          source: "fallback"
+        }
+      ];
+    })
   );
 
   for (const category of cmsCategories) {
