@@ -507,6 +507,7 @@ html{scrollbar-width:thin;scrollbar-color:#fc5413 #111923;-webkit-text-size-adju
       /* Final mobile ergonomics: 44px touch targets and readable word wrapping. */
       @media(max-width:760px){
         .line-page .social-btn{width:44px!important;height:44px!important}
+        .line-page .mobile-menu-burger{width:44px!important;height:44px!important}
         .catalog-detail-page .product-chip-row button,
         .catalog-detail-page .catalog-filter-row button{min-height:44px!important}
         .catalog-detail-page :is(.catalog-detail-hero h1,.product-title-strip h1){
