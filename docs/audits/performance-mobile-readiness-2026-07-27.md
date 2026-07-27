@@ -1,15 +1,16 @@
 # Аудит производительности и mobile/tablet-готовности
 
 Дата: 27 июля 2026  
-Production: https://kbparus-metal-storage.vercel.app  
-Финальный Preview: https://kbparus-metal-storage-av94wr6ie-michaelnov209-3230s-projects.vercel.app  
+Production: https://kbparus-metal-storage.vercel.app
+Production deployment: `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`
+Проверенный Preview: https://kbparus-metal-storage-av94wr6ie-michaelnov209-3230s-projects.vercel.app
 Ветка: `codex/mobile-responsive-20260726`
 
 ## Итог
 
 - Готовность публичного интерфейса, адаптивности и производительности: **90%**.
 - Общая коммерческая production-ready готовность: **76%**.
-- Текущий production не переключался и остаётся на прежней версии.
+- Проверенный Preview опубликован в production 27 июля 2026.
 - Главный технический P0 — медленная загрузка изображений категорий — закрыт.
 - Hero остаётся видео на всех устройствах; для телефонов и планшетов используется отдельный облегчённый файл.
 
@@ -92,7 +93,8 @@ Production: https://kbparus-metal-storage.vercel.app
 - Vitest: **31/31**.
 - Production build: пройден, 42 маршрута.
 - CMS preflight: **15/15**.
-- Preview: READY, `target: null`, без production alias.
+- Production: READY, основной alias направлен на `dpl_GmgxNhfbRAWNDFNQXhVxCarDMt5G`.
+- После публикации: 36/36 публичных URL — HTTP 200, HTTP 5xx отсутствуют.
 - Health:
   - приложение — ok;
   - CMS — ok, 11 коллекций и 4 globals;
@@ -140,16 +142,15 @@ Production: https://kbparus-metal-storage.vercel.app
 
 ## Риски
 
-- Production пока показывает старую версию: Preview нужно принять визуально и только потом продвигать.
+- Предыдущий production deployment `dpl_75jcLJZmQPBvN47Vo28s5Q27G4gB` остаётся доступным для rollback.
 - Preview build выполняет schema push; поле `mobileVideo` добавлено как необязательное и обратно совместимое, но при общей БД схема уже могла примениться к production-окружению.
 - Desktop hero-video по требованию сохранено и остаётся тяжёлым — 10,2 МБ. Для первого экрана используется постер и metadata preload, но дальнейшее уменьшение потребует отдельного desktop-рекодирования или сокращения ролика.
 - Без SMTP заявка зависит от Telegram/CMS; без Метрики нет полноценной конверсионной аналитики.
 
 ## Рекомендуемый порядок
 
-1. Визуально принять финальный Preview.
-2. Выполнить одну контролируемую реальную заявку.
-3. Подключить SMTP, Метрику и при необходимости Bitrix24.
-4. Загрузить подтверждённый коммерческий контент.
-5. Провести юридическое принятие.
-6. Развернуть в production и включить мониторинг.
+1. Выполнить одну контролируемую реальную заявку.
+2. Подключить SMTP, Метрику и при необходимости Bitrix24.
+3. Загрузить подтверждённый коммерческий контент.
+4. Провести юридическое принятие.
+5. Подключить постоянный мониторинг ошибок и Web Vitals.
