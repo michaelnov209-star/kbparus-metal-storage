@@ -1,10 +1,11 @@
 "use client";
 
 import { getAnalyticsConsent } from "@/lib/analytics/consent";
+import type { YandexMetrikaFunction } from "@/lib/analytics/metrika-runtime";
 
 declare global {
   interface Window {
-    ym?: (counterId: number, action: string, ...args: unknown[]) => void;
+    ym?: YandexMetrikaFunction;
     __kbparusMetrikaInitialized?: boolean;
   }
 }

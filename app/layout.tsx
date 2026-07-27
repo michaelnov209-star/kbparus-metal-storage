@@ -5,10 +5,8 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
+import { buildSearchVerificationMetadata } from "@/lib/seo/verification";
 import { getSiteContacts } from "@/lib/cms/contacts";
-
-const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
-const yandexVerification = process.env.YANDEX_SITE_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -75,10 +73,7 @@ export const metadata: Metadata = {
     description: "Каталог и калькулятор стоимости систем хранения металла.",
     images: ["/opengraph-image"]
   },
-  verification: {
-    ...(googleVerification ? { google: googleVerification } : {}),
-    ...(yandexVerification ? { yandex: yandexVerification } : {})
-  }
+  verification: buildSearchVerificationMetadata()
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
