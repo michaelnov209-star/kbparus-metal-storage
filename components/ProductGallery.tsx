@@ -3,11 +3,27 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 
-export function ProductGallery({ images, title, badge }: { images: string[]; title: string; badge?: string }) {
+export interface ProductGalleryImage {
+  src: string;
+  srcSet?: string;
+  sizes?: string;
+  thumbSrc?: string;
+  largeSrc?: string;
+}
+
+export function ProductGallery({
+  images,
+  title,
+  badge
+}: {
+  images: ProductGalleryImage[];
+  title: string;
+  badge?: string;
+}) {
   const gallery = images.length > 0 ? images : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const activeImage = gallery[activeIndex] ?? "";
+  const activeImage = gallery[activeIndex];
 
   const goPrev = () => setActiveIndex((current) => (current === 0 ? gallery.length - 1 : current - 1));
   const goNext = () => setActiveIndex((current) => (current === gallery.length - 1 ? 0 : current + 1));
@@ -38,9 +54,22 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
           </span>
         )}
         {activeImage ? (
-          <button className="product-gallery-open" type="button" onClick={() => setIsOpen(true)} aria-label={`Рассмотреть фото: ${title}`}>
-            <img className="product-gallery-backdrop" src={activeImage} alt="" aria-hidden="true" loading="lazy" decoding="async" />
-            <img className="product-gallery-image" src={activeImage} alt={`${title} - фото ${activeIndex + 1}`} loading="eager" decoding="async" />
+          <button
+            className="product-gallery-open"
+            type="button"
+            onClick={() => setIsOpen(true)}
+            aria-label={`Рассмотреть фото: ${title}`}
+          >
+            <img
+              className="product-gallery-image"
+              src={activeImage.src}
+              srcSet={activeImage.srcSet}
+              sizes={activeImage.sizes ?? "(max-width: 1180px) calc(100vw - 40px), 540px"}
+              alt={`${title} — фото ${activeIndex + 1}`}
+              loading={activeIndex === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={activeIndex === 0 ? "high" : "auto"}
+            />
             <span className="product-gallery-zoom">
               <Maximize2 size={16} />
               Увеличить
@@ -64,22 +93,37 @@ export function ProductGallery({ images, title, badge }: { images: string[]; tit
             <button
               className={index === activeIndex ? "is-active" : ""}
               type="button"
-              key={image}
+              key={`${image.largeSrc ?? image.src}-${index}`}
               onClick={() => setActiveIndex(index)}
               aria-label={`Открыть фото ${index + 1}`}
             >
-              <img src={image} alt="" loading="lazy" decoding="async" />
+              <img src={image.thumbSrc ?? image.src} alt="" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>
       )}
       {isOpen && activeImage ? (
-        <div className="product-gallery-lightbox" role="dialog" aria-modal="true" aria-label={title} onClick={() => setIsOpen(false)}>
+        <div
+          className="product-gallery-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          onClick={() => setIsOpen(false)}
+        >
           <div className="product-gallery-lightbox-panel" onClick={(event) => event.stopPropagation()}>
-            <button className="product-gallery-lightbox-close" type="button" onClick={() => setIsOpen(false)} aria-label="Закрыть просмотр">
+            <button
+              className="product-gallery-lightbox-close"
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Закрыть просмотр"
+            >
               <X size={22} />
             </button>
-            <img src={activeImage} alt={`${title} - крупное фото ${activeIndex + 1}`} />
+            <img
+              src={activeImage.largeSrc ?? activeImage.src}
+              alt={`${title} — крупное фото ${activeIndex + 1}`}
+              decoding="async"
+            />
           </div>
         </div>
       ) : null}

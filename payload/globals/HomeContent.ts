@@ -85,6 +85,20 @@ export const HomeContent: GlobalConfig = {
                       }
                     },
                     {
+                      name: "mobileVideo",
+                      label: { ru: "Облегчённое видео для телефонов и планшетов", en: "Mobile and tablet video" },
+                      type: "upload",
+                      relationTo: "media",
+                      filterOptions: { mimeType: { contains: "video" } },
+                      admin: {
+                        description: {
+                          ru: "Необязательный MP4/WebM: ширина 720–960 px, без звука, желательно до 3 МБ. Телефоны и планшеты до 1180 px загрузят этот файл вместо тяжёлого основного видео.",
+                          en: "Optional lightweight video used on screens up to 1180 px."
+                        },
+                        condition: (_, sibling) => sibling?.type === "video"
+                      }
+                    },
+                    {
                       name: "poster",
                       label: { ru: "Постер (картинка-заглушка пока видео грузится)", en: "Video poster" },
                       type: "upload",

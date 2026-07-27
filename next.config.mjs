@@ -60,8 +60,27 @@ const nextConfig = {
         ],
       },
       {
+        source: "/assets/images/products/optimized/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Content hash is part of the filename, so immutable edge caching is safe.
+        source: "/assets/videos/optimized/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        source: "/assets/images/home/optimized/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
         // Новые Blob-загрузки получают addRandomSuffix, поэтому их URL уникален.
-        // Повторные визиты и навигация не перекачивают 2-3 МБ заново.
+        // Повторные визиты и навигация не перекачивают тяжёлые медиа заново.
         source: "/api/media/file/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },

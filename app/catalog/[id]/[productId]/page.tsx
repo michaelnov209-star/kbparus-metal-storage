@@ -2,14 +2,15 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, PackageCheck, Ruler, ShieldCheck } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { LeadForm } from "@/components/LeadForm";
-import { LinePageStyles } from "@/components/LinePageStyles";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
-import { ProductGallery } from "@/components/ProductGallery";
-import { getSeoForItem } from "@/data/storageSystems/catalogDepth";
+import { ProductGallery, type ProductGalleryImage } from "@/components/ProductGallery";
+import { getSeoForItem, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategory } from "@/lib/cms/catalog";
+import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
 import { getCatalogProducts, getCatalogProductView } from "@/lib/cms/products";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
+import { buildImageSrcSet } from "@/lib/media/srcset";
 import { JsonLd, breadcrumbSchema, productSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const revalidate = 60;
@@ -20,6 +21,29 @@ function toAbsoluteUrl(value: string) {
 
 function linkTargetProps(link: SiteLink) {
   return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
+}
+
+function toProductGalleryImage(source: string, product: CatalogProduct): ProductGalleryImage {
+  const localVariants = getLocalProductImageVariants(source);
+  if (localVariants) {
+    return {
+      src: localVariants.medium.src,
+      srcSet: buildImageSrcSet(Object.values(localVariants)),
+      sizes: "(max-width: 1180px) calc(100vw - 40px), 540px",
+      thumbSrc: localVariants.thumb.src,
+      largeSrc: localVariants.large.src
+    };
+  }
+
+  if (source === product.image) {
+    return {
+      src: product.imageMedium ?? source,
+      thumbSrc: product.imageThumb ?? product.imageMedium ?? source,
+      largeSrc: product.imageLarge ?? source
+    };
+  }
+
+  return { src: source, thumbSrc: source, largeSrc: source };
 }
 
 export async function generateStaticParams() {
@@ -64,6 +88,9 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   const product = await getCatalogProductView(id, productId);
   if (!category || !product) notFound();
   const navigation = await getSiteNavigation();
+  const productGallery = (product.gallery.length > 0 ? product.gallery : [product.image]).map((source) =>
+    toProductGalleryImage(source, product)
+  );
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
   const breadcrumb = breadcrumbSchema([
@@ -83,7 +110,6 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
 
   return (
     <main className="line-page catalog-detail-page product-detail-page" id="top">
-      <LinePageStyles />
       <JsonLd data={breadcrumb} />
       <JsonLd data={productLd} />
       <header className="catalog-detail-header">
@@ -113,7 +139,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       </section>
 
       <section className="product-hero">
-        <ProductGallery images={product.gallery.length > 0 ? product.gallery : [product.image]} title={product.title} />
+        <ProductGallery images={productGallery} title={product.title} />
         <div className="product-hero-copy">
           <span className="line-kicker">Подбор исполнения</span>
           <h2>Подберём систему под ваш склад</h2>

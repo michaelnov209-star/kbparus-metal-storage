@@ -3,11 +3,13 @@ import { ArrowLeft, ArrowRight, ClipboardCheck, PackageCheck, Ruler, ShieldCheck
 import { BrandMark } from "@/components/BrandMark";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
-import { LinePageStyles } from "@/components/LinePageStyles";
+import type { CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
+import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
 import { getCatalogProductsByCategory } from "@/lib/cms/products";
+import { buildImageSrcSet } from "@/lib/media/srcset";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const revalidate = 60;
@@ -18,6 +20,20 @@ function toAbsoluteUrl(value: string) {
 
 function linkTargetProps(link: SiteLink) {
   return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
+}
+
+function getAssortmentImage(product: CatalogProduct) {
+  const localVariants = getLocalProductImageVariants(product.image);
+  return {
+    src: product.imageMedium ?? localVariants?.medium.src ?? product.image,
+    srcSet: localVariants
+      ? buildImageSrcSet(Object.values(localVariants))
+      : buildImageSrcSet([
+          { src: product.imageThumb, width: 320 },
+          { src: product.imageMedium, width: 800 },
+          { src: product.imageLarge, width: 1600 }
+        ])
+  };
 }
 
 export async function generateStaticParams() {
@@ -65,6 +81,11 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   const isPilotCategory = products.length > 0;
   const related = await getRelatedCatalogCategories(item.id, 4);
   const navigation = await getSiteNavigation();
+  const categoryImageSrcSet = buildImageSrcSet([
+    { src: item.imageThumb, width: 320 },
+    { src: item.imageMedium, width: 640 },
+    { src: item.imageLarge, width: 960 }
+  ]);
 
   const categoryUrl = `${SITE_URL}/catalog/${item.id}`;
   const breadcrumb = breadcrumbSchema([
@@ -85,7 +106,6 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
 
   return (
     <main className="line-page catalog-detail-page" id="top">
-      <LinePageStyles />
       <JsonLd data={breadcrumb} />
       {productList && <JsonLd data={productList} />}
       <header className="catalog-detail-header">
@@ -119,7 +139,14 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
             <a className="line-secondary" href="#category-request">Связаться с инженером</a>
           </div>
         </div>
-        <ImageLightbox src={item.image} alt={item.title} className="catalog-detail-image" />
+        <ImageLightbox
+          src={item.imageMedium ?? item.image}
+          srcSet={categoryImageSrcSet}
+          sizes="(max-width: 760px) calc(100vw - 24px), (max-width: 1180px) calc(100vw - 40px), 480px"
+          largeSrc={item.imageLarge ?? item.image}
+          alt={item.title}
+          className="catalog-detail-image"
+        />
       </section>
 
       {isPilotCategory ? (
@@ -131,10 +158,19 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               <p>Выберите готовое решение или оставьте заявку — инженер подберёт конфигурацию под ваши размеры, нагрузку и способ загрузки.</p>
             </div>
             <div className="assortment-grid">
-              {products.map((product) => (
+              {products.map((product) => {
+                const assortmentImage = getAssortmentImage(product);
+                return (
                 <a className="assortment-card" href={`/catalog/${item.id}/${product.id}`} key={product.id}>
                   <div className="assortment-visual">
-                    <img src={product.imageMedium ?? product.image} alt={product.title} loading="lazy" decoding="async" />
+                    <img
+                      src={assortmentImage.src}
+                      srcSet={assortmentImage.srcSet}
+                      sizes="(max-width: 760px) calc(100vw - 24px), (max-width: 1180px) calc(50vw - 32px), 275px"
+                      alt={product.title}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <div className="assortment-copy">
                     <h4>{product.title}</h4>
@@ -149,7 +185,8 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
                     <b>Перейти в товар <ArrowRight size={16} /></b>
                   </div>
                 </a>
-              ))}
+                );
+              })}
             </div>
           </section>
         </>

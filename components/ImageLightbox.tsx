@@ -3,7 +3,23 @@
 import { useEffect, useState } from "react";
 import { Maximize2, X } from "lucide-react";
 
-export function ImageLightbox({ src, alt, className }: { src: string; alt: string; className?: string }) {
+interface ImageLightboxProps {
+  src: string;
+  alt: string;
+  className?: string;
+  srcSet?: string;
+  sizes?: string;
+  largeSrc?: string;
+}
+
+export function ImageLightbox({
+  src,
+  alt,
+  className,
+  srcSet,
+  sizes,
+  largeSrc
+}: ImageLightboxProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -25,7 +41,15 @@ export function ImageLightbox({ src, alt, className }: { src: string; alt: strin
   return (
     <>
       <div className={className ? `image-lightbox-card ${className}` : "image-lightbox-card"}>
-        <img src={src} alt={alt} />
+        <img
+          src={src}
+          srcSet={srcSet}
+          sizes={sizes}
+          alt={alt}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
         <button className="image-lightbox-open" type="button" onClick={() => setIsOpen(true)} aria-label={`Увеличить изображение: ${alt}`}>
           <Maximize2 size={16} />
           Увеличить
@@ -39,7 +63,7 @@ export function ImageLightbox({ src, alt, className }: { src: string; alt: strin
               <X size={22} />
             </button>
             <div className="catalog-lightbox-visual">
-              <img src={src} alt={alt} />
+              <img src={largeSrc ?? src} alt={alt} decoding="async" />
             </div>
           </div>
         </div>

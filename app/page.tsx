@@ -3,7 +3,6 @@ import { CatalogGrid } from "@/components/CatalogGrid";
 import { Calculator } from "@/components/Calculator";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LeadForm } from "@/components/LeadForm";
-import { LinePageStyles } from "@/components/LinePageStyles";
 import { MobileMenu } from "@/components/MobileMenu";
 import { HeaderScroll } from "@/components/HeaderScroll";
 import { SliderControls } from "@/components/SliderControls";
@@ -13,6 +12,7 @@ import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import { JsonLd, faqSchema } from "@/lib/seo/schema";
+import "@/styles/line-page.css";
 
 /**
  * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
@@ -233,7 +233,6 @@ export default async function Home() {
 
   return (
     <main className="line-page" id="top">
-      <LinePageStyles />
       <HeaderScroll />
       <JsonLd data={faqSchema(home.faq)} />
 
@@ -286,7 +285,6 @@ export default async function Home() {
         <div className="line-hero-bg" aria-hidden={hero.background.type === "video" ? "true" : undefined}>
           {hero.background.type === "video" ? (
             <video
-              src={hero.background.videoUrl}
               poster={hero.background.posterUrl}
               autoPlay
               muted
@@ -294,7 +292,15 @@ export default async function Home() {
               playsInline
               preload="metadata"
               aria-hidden="true"
-            />
+            >
+              {hero.background.mobileVideoUrl && (
+                <source
+                  src={hero.background.mobileVideoUrl}
+                  media="(max-width: 1180px)"
+                />
+              )}
+              <source src={hero.background.videoUrl} />
+            </video>
           ) : (
             <img
               src={hero.background.imageUrl}

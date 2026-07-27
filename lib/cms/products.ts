@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { catalogProducts, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
+import { getLocalProductImageVariants } from "./product-image-variants";
 import { getCmsClient } from "./client";
 import { resolveCmsMediaUrl } from "./media-url";
 
@@ -74,6 +75,20 @@ type CmsProductLike = {
 
 const fallbackById = new Map(catalogProducts.map((product) => [product.id, product]));
 const fallbackOrder = new Map(catalogProducts.map((product, index) => [product.id, index]));
+
+function withLocalImageVariants(product: CatalogProduct): CatalogProduct {
+  const variants = getLocalProductImageVariants(product.image);
+  if (!variants) return product;
+
+  return {
+    ...product,
+    imageThumb: variants.thumb.src,
+    imageMedium: variants.medium.src,
+    imageLarge: variants.large.src
+  };
+}
+
+const fallbackProducts = catalogProducts.map(withLocalImageVariants);
 
 function asString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -168,6 +183,7 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
 
   const fallback = fallbackById.get(id);
   const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
+  const localVariants = getLocalProductImageVariants(localFallback);
   const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
 
@@ -184,9 +200,18 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     shortTitle: asString(doc.shortTitle) ?? fallback?.shortTitle ?? title,
     sku: asString(doc.sku) ?? fallback?.sku ?? id,
     image,
-    imageThumb: resolveCmsMediaUrl(doc.image, { size: "thumb", fallback: localFallback }),
-    imageMedium: resolveCmsMediaUrl(doc.image, { size: "medium", fallback: localFallback }),
-    imageLarge: resolveCmsMediaUrl(doc.image, { size: "large", fallback: localFallback }),
+    imageThumb: resolveCmsMediaUrl(doc.image, {
+      size: "thumb",
+      fallback: localVariants?.thumb.src ?? localFallback
+    }),
+    imageMedium: resolveCmsMediaUrl(doc.image, {
+      size: "medium",
+      fallback: localVariants?.medium.src ?? localFallback
+    }),
+    imageLarge: resolveCmsMediaUrl(doc.image, {
+      size: "large",
+      fallback: localVariants?.large.src ?? localFallback
+    }),
     gallery: getGallery(doc, fallback),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,
@@ -219,7 +244,7 @@ function bySortOrder(a: CatalogProduct, b: CatalogProduct) {
 
 export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
   const cms = await getCmsClient();
-  if (!cms) return catalogProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
+  if (!cms) return fallbackProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
 
   try {
     const response = await cms.find({
@@ -232,7 +257,7 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
     });
 
     const merged = new Map<string, CatalogProduct>(
-      catalogProducts.filter((product) => !product.draft).map((product) => [product.id, product])
+      fallbackProducts.filter((product) => !product.draft).map((product) => [product.id, product])
     );
 
     for (const doc of response.docs) {
@@ -243,7 +268,7 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
     return Array.from(merged.values()).sort(bySortOrder);
   } catch (error) {
     console.warn("[cms] Catalog products fallback is active:", error);
-    return catalogProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
+    return fallbackProducts.filter((product) => !product.draft).slice().sort(bySortOrder);
   }
 });
 

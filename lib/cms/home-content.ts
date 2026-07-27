@@ -1,4 +1,5 @@
 import { visualAssets } from "@/data/storageSystems/visualAssets";
+import { DEFAULT_HERO_VIDEO, resolveMobileHeroVideo } from "@/lib/media/hero";
 import { getCmsClient } from "./client";
 
 export type IconKey =
@@ -28,7 +29,7 @@ export interface HeroData {
   title: string;
   description?: string;
   background:
-    | { type: "video"; videoUrl: string; posterUrl: string }
+    | { type: "video"; videoUrl: string; mobileVideoUrl?: string; posterUrl: string }
     | { type: "image"; imageUrl: string; imageSrcSet?: string; alt: string };
   metrics: Array<{ value: string; label: string }>;
   actions: HeroAction[];
@@ -77,9 +78,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
     eyebrow: "КБ Парус / складские системы для металла",
     title: "Системы хранения металла",
     background: {
-      type: "image",
-      imageUrl: "/assets/images/home/generated/sheet-metal-cassettes.webp",
-      alt: "Автоматизированная система хранения листового металла КБ Парус"
+      type: "video",
+      videoUrl: DEFAULT_HERO_VIDEO.desktopUrl,
+      mobileVideoUrl: DEFAULT_HERO_VIDEO.mobileUrl,
+      posterUrl: DEFAULT_HERO_VIDEO.posterUrl
     },
     metrics: [
       { value: "500+", label: "проектов" },
@@ -508,6 +510,7 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
       background: {
         type: "video",
         videoUrl,
+        mobileVideoUrl: resolveMobileHeroVideo(videoUrl, pickUrl(bg?.mobileVideo)),
         posterUrl: pickUrl(bg?.poster) ?? defaultPoster
       },
       metrics,
