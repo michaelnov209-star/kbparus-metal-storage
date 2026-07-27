@@ -2,7 +2,7 @@ import { cache } from "react";
 import { catalogProducts, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { getLocalProductImageVariants } from "./product-image-variants";
 import { getCmsClient } from "./client";
-import { resolveCmsMediaUrl } from "./media-url";
+import { resolveCmsMediaAlt, resolveCmsMediaUrl } from "./media-url";
 
 type CmsRelationLike = {
   slug?: unknown;
@@ -40,6 +40,7 @@ type CmsCalculatorProfileLike = {
 
 type CmsProductLike = {
   slug?: unknown;
+  _status?: unknown;
   title?: unknown;
   shortTitle?: unknown;
   sku?: unknown;
@@ -163,6 +164,25 @@ function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
   return cmsGallery.length > 0 ? cmsGallery : legacyGallery.length > 0 ? legacyGallery : fallback?.gallery ?? [];
 }
 
+function getGalleryAlts(
+  doc: CmsProductLike,
+  fallback: CatalogProduct | undefined,
+  productTitle: string
+): string[] {
+  const cmsAlts = Array.isArray(doc.gallery)
+    ? doc.gallery.map((item, index) =>
+        item && typeof item === "object"
+          ? resolveCmsMediaAlt(
+              (item as CmsGalleryItem).image,
+              `${productTitle} — фото ${index + 1}`
+            ) ?? ""
+          : ""
+      )
+    : [];
+
+  return cmsAlts.length > 0 ? cmsAlts : fallback?.galleryAlts ?? [];
+}
+
 function getKeywords(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const keywords = value
@@ -199,6 +219,7 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     shortTitle: asString(doc.shortTitle) ?? fallback?.shortTitle ?? title,
     sku: asString(doc.sku) ?? fallback?.sku ?? id,
     image,
+    imageAlt: resolveCmsMediaAlt(doc.image, title),
     imageThumb: resolveCmsMediaUrl(doc.image, {
       size: "thumb",
       fallback: localVariants?.thumb.src ?? localFallback
@@ -212,6 +233,7 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
       fallback: localVariants?.large.src ?? localFallback
     }),
     gallery: getGallery(doc, fallback),
+    galleryAlts: getGalleryAlts(doc, fallback, title),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,
     priceMode: asString(doc.priceMode) === "fixed" ? "fixed" : "request",
@@ -249,6 +271,7 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
       collection: "products",
       depth: 1,
       draft: false,
+      overrideAccess: true,
       limit: 500,
       pagination: false,
       sort: "sortOrder"
@@ -258,8 +281,11 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
       fallbackProducts.map((product) => [product.id, product])
     );
 
-    for (const doc of response.docs) {
-      const product = normalizeCmsProduct(doc as CmsProductLike);
+    for (const rawDoc of response.docs) {
+      const doc = rawDoc as CmsProductLike;
+      if (doc._status === "draft") continue;
+
+      const product = normalizeCmsProduct(doc);
       if (product) merged.set(product.id, product);
     }
 

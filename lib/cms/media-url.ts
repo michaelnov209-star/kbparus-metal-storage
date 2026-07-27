@@ -9,6 +9,7 @@ export type CmsMediaSize =
 type CmsMediaLike = {
   url?: unknown;
   filename?: unknown;
+  alt?: unknown;
   sizes?: Record<string, { url?: unknown; filename?: unknown } | undefined> | null;
 };
 
@@ -52,4 +53,12 @@ export function resolveCmsMediaUrl(
   if (!candidate) return fallback;
   if (fallback && isLocalCmsMediaUrl(candidate)) return fallback;
   return candidate;
+}
+
+export function resolveCmsMediaAlt(
+  value: unknown,
+  fallback?: string
+): string | undefined {
+  if (!value || typeof value !== "object") return fallback;
+  return asString((value as CmsMediaLike).alt) ?? fallback;
 }

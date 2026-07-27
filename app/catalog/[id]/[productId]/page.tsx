@@ -23,10 +23,12 @@ function linkTargetProps(link: SiteLink) {
   return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
 }
 
-function toProductGalleryImage(source: string, product: CatalogProduct): ProductGalleryImage {
+function toProductGalleryImage(source: string, product: CatalogProduct, index: number): ProductGalleryImage {
+  const alt = product.galleryAlts?.[index] ?? product.imageAlt ?? `${product.title} — фото ${index + 1}`;
   const localVariants = getLocalProductImageVariants(source);
   if (localVariants) {
     return {
+      alt,
       src: localVariants.medium.src,
       srcSet: buildImageSrcSet(Object.values(localVariants)),
       sizes: "(max-width: 1180px) calc(100vw - 40px), 540px",
@@ -37,13 +39,14 @@ function toProductGalleryImage(source: string, product: CatalogProduct): Product
 
   if (source === product.image) {
     return {
+      alt,
       src: product.imageMedium ?? source,
       thumbSrc: product.imageThumb ?? product.imageMedium ?? source,
       largeSrc: product.imageLarge ?? source
     };
   }
 
-  return { src: source, thumbSrc: source, largeSrc: source };
+  return { alt, src: source, thumbSrc: source, largeSrc: source };
 }
 
 export async function generateStaticParams() {
@@ -88,14 +91,14 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   const product = await getCatalogProductView(id, productId);
   if (!category || !product) notFound();
   const navigation = await getSiteNavigation();
-  const productGallery = (product.gallery.length > 0 ? product.gallery : [product.image]).map((source) =>
-    toProductGalleryImage(source, product)
+  const productGallery = (product.gallery.length > 0 ? product.gallery : [product.image]).map((source, index) =>
+    toProductGalleryImage(source, product, index)
   );
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
   const breadcrumb = breadcrumbSchema([
     { name: "Главная", url: SITE_URL },
-    { name: "Каталог", url: `${SITE_URL}/#catalog` },
+    { name: "Каталог", url: `${SITE_URL}/catalog` },
     { name: category.title, url: `${SITE_URL}/catalog/${id}` },
     { name: product.title, url: productUrl }
   ]);
@@ -104,8 +107,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
     description: product.description,
     image: toAbsoluteUrl(product.image),
     sku: product.sku,
-    url: productUrl,
-    priceFrom: product.priceMode === "fixed" ? product.priceFrom : undefined
+    url: productUrl
   });
 
   return (
@@ -125,7 +127,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       <div className="product-breadcrumbs">
         <a href="/">Главная</a>
         <ArrowRight size={14} />
-        <a href="/#catalog">Каталог</a>
+        <a href="/catalog">Каталог</a>
         <ArrowRight size={14} />
         <a href={`/catalog/${category.id}`}>{category.title}</a>
         <ArrowRight size={14} />

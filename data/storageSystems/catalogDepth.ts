@@ -44,10 +44,12 @@ export interface CatalogProduct extends SeoOverrides {
   shortTitle: string;
   sku: string;
   image: string;
+  imageAlt?: string;
   imageThumb?: string;
   imageMedium?: string;
   imageLarge?: string;
   gallery: string[];
+  galleryAlts?: string[];
   pageMode: ProductPageMode;
   /**
    * Future CMS behavior:

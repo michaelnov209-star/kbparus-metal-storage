@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const PRODUCTION_URL = "https://kbparus-metal-storage.vercel.app";
+import { getSiteUrl } from "./site";
 
 export type SitemapCategory = {
   id: string;
@@ -16,9 +15,7 @@ export type SitemapProduct = {
 export function getSitemapBaseUrl(
   value = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL
 ): string {
-  const candidate = value?.trim() || PRODUCTION_URL;
-  const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
-  return withProtocol.replace(/\/+$/, "");
+  return getSiteUrl(value);
 }
 
 export function buildSitemapEntries(
@@ -51,6 +48,11 @@ export function buildSitemapEntries(
       url: baseUrl,
       changeFrequency: "weekly",
       priority: 1
+    },
+    {
+      url: `${baseUrl}/catalog`,
+      changeFrequency: "weekly",
+      priority: 0.9
     },
     {
       url: `${baseUrl}/privacy-policy`,

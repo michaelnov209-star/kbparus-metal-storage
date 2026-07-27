@@ -11,7 +11,6 @@ import { getCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
-import { JsonLd, faqSchema } from "@/lib/seo/schema";
 import "@/styles/line-page.css";
 
 /**
@@ -234,7 +233,6 @@ export default async function Home() {
   return (
     <main className="line-page" id="top">
       <HeaderScroll />
-      <JsonLd data={faqSchema(home.faq)} />
 
       <header className="line-header">
         <BrandMark />

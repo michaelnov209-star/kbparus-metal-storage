@@ -58,12 +58,31 @@ export default buildConfig({
           exportName: "LoginBranding"
         }
       ],
+      beforeNavLinks: [
+        {
+          path: "@/app/(payload)/components/SeoNavLink",
+          exportName: "SeoNavLink"
+        }
+      ],
       beforeDashboard: [
         {
           path: "@/app/(payload)/components/AdminDashboard",
           exportName: "AdminDashboard"
         }
-      ]
+      ],
+      views: {
+        seo: {
+          Component: {
+            path: "@/app/(payload)/components/SeoReportingView",
+            exportName: "SeoReportingView"
+          },
+          path: "/seo",
+          exact: true,
+          meta: {
+            title: "SEO и позиции — КБ Парус"
+          }
+        }
+      }
     },
     meta: {
       titleSuffix: " — Админка КБ Парус",

@@ -68,20 +68,17 @@ const nextConfig = {
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" }
     ]
   },
-  async redirects() {
-    return [
-      {
-        source: "/catalog",
-        destination: "/#catalog",
-        permanent: true,
-      },
-    ];
-  },
   async headers() {
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/admin/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+        ],
       },
       {
         // Контент-хеш входит в имя каждого файла, поэтому годовой immutable

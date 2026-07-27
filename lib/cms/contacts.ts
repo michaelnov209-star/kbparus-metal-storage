@@ -10,6 +10,8 @@ export interface SiteContacts {
   email: { label: string; href: string };
   address: string;
   worktime: string;
+  legalName: string;
+  inn?: string;
   socials: {
     telegram?: string;
     whatsapp?: string;
@@ -26,6 +28,7 @@ export const DEFAULT_CONTACTS: SiteContacts = {
   email: { label: "info@kbparus.ru", href: "mailto:info@kbparus.ru" },
   address: "МО, г. Ногинск, 1-й Кардолентный проезд, д. 5",
   worktime: "Пн–Пт 9:00–18:00",
+  legalName: "ООО «Технокам»",
   socials: {
     telegram: "mailto:info@kbparus.ru",
     whatsapp: "tel:+74994033962",
@@ -39,6 +42,8 @@ interface ContactsGlobal {
   email?: string | null;
   workingHours?: string | null;
   address?: string | null;
+  legalName?: string | null;
+  inn?: string | null;
   socials?: Array<{ platform?: string | null; url?: string | null }> | null;
 }
 
@@ -84,6 +89,8 @@ export async function getSiteContacts(): Promise<SiteContacts> {
       email: email ? { label: email, href: emailHref(email) } : DEFAULT_CONTACTS.email,
       address: contacts.address?.trim() || DEFAULT_CONTACTS.address,
       worktime: contacts.workingHours?.trim() || DEFAULT_CONTACTS.worktime,
+      legalName: contacts.legalName?.trim() || DEFAULT_CONTACTS.legalName,
+      inn: contacts.inn?.trim() || undefined,
       socials: mapSocials(contacts.socials)
     };
   } catch (error) {

@@ -66,7 +66,7 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
                     sizes={CATALOG_CARD_SIZES}
                     width={960}
                     height={720}
-                    alt={item.title}
+                    alt={item.imageAlt ?? item.title}
                     loading="lazy"
                     decoding="async"
                     fetchPriority="low"
@@ -75,7 +75,7 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
                   <Image
                     className="catalog-image-main"
                     src={item.imageMedium ?? item.image}
-                    alt={item.title}
+                    alt={item.imageAlt ?? item.title}
                     fill
                     sizes={CATALOG_CARD_SIZES}
                     style={{ objectFit: "contain" }}
@@ -115,7 +115,7 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
               <X size={22} />
             </button>
             <div className="catalog-lightbox-visual">
-              <img src={activeItem.imageLarge ?? activeItem.image} alt={activeItem.title} loading="eager" decoding="async" />
+              <img src={activeItem.imageLarge ?? activeItem.image} alt={activeItem.imageAlt ?? activeItem.title} loading="eager" decoding="async" />
             </div>
             <div className="catalog-lightbox-copy">
               <span>{getCatalogBadge(activeItem.id)}</span>

@@ -2,7 +2,7 @@ import { cache } from "react";
 import { excelHomeCatalog, type ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 import { getCmsClient } from "./client";
 import { getLocalCatalogImageVariants } from "./catalog-image-variants";
-import { resolveCmsMediaUrl } from "./media-url";
+import { resolveCmsMediaAlt, resolveCmsMediaUrl } from "./media-url";
 
 export interface CatalogCategoryView extends ExcelHomeCatalogItem {
   seoTitle?: string;
@@ -20,6 +20,7 @@ type CmsKeywordLike = {
 
 export type CmsCategoryLike = {
   slug?: unknown;
+  _status?: unknown;
   title?: unknown;
   summary?: unknown;
   scenario?: unknown;
@@ -77,6 +78,7 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
     summary,
     scenario: asString(doc.scenario) ?? fallback?.scenario ?? "",
     image,
+    imageAlt: resolveCmsMediaAlt(doc.image, title),
     imageThumb: resolveCmsMediaUrl(doc.image, {
       size: "cardSm",
       fallback: localVariants?.thumb ?? localFallback
@@ -100,7 +102,10 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
   };
 }
 
-export function mergeCatalogCategories(cmsCategories: CatalogCategoryView[]): CatalogCategoryView[] {
+export function mergeCatalogCategories(
+  cmsCategories: CatalogCategoryView[],
+  suppressedFallbackIds: Iterable<string> = []
+): CatalogCategoryView[] {
   const byId = new Map<string, CatalogCategoryView>(
     excelHomeCatalog.map((item, index) => {
       const variants = getLocalCatalogImageVariants(item.image);
@@ -117,6 +122,10 @@ export function mergeCatalogCategories(cmsCategories: CatalogCategoryView[]): Ca
       ];
     })
   );
+
+  for (const id of suppressedFallbackIds) {
+    byId.delete(id);
+  }
 
   for (const category of cmsCategories) {
     byId.set(category.id, category);
@@ -138,13 +147,16 @@ export const getCatalogCategories = cache(async (): Promise<CatalogCategoryView[
       collection: "categories",
       depth: 1,
       draft: false,
+      overrideAccess: true,
       limit: 100,
       pagination: false,
       sort: "sortOrder"
     });
 
     const cmsCategories = response.docs
-      .map((doc) => normalizeCmsCategory(doc as CmsCategoryLike))
+      .map((doc) => doc as CmsCategoryLike)
+      .filter((doc) => doc._status !== "draft")
+      .map((doc) => normalizeCmsCategory(doc))
       .filter((item): item is CatalogCategoryView => Boolean(item));
 
     return mergeCatalogCategories(cmsCategories);

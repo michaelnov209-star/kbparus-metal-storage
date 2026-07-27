@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
 import type { CatalogProduct } from "@/data/storageSystems/catalogDepth";
+import { categorySeoGuides } from "@/data/storageSystems/categorySeoGuides";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
@@ -78,6 +79,8 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   if (!item) notFound();
 
   const products = await getCatalogProductsByCategory(item.id);
+  const guide =
+    categorySeoGuides[item.id as keyof typeof categorySeoGuides] ?? null;
   const isPilotCategory = products.length > 0;
   const related = await getRelatedCatalogCategories(item.id, 4);
   const navigation = await getSiteNavigation();
@@ -90,7 +93,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
   const categoryUrl = `${SITE_URL}/catalog/${item.id}`;
   const breadcrumb = breadcrumbSchema([
     { name: "Главная", url: SITE_URL },
-    { name: "Каталог", url: `${SITE_URL}/#catalog` },
+    { name: "Каталог", url: `${SITE_URL}/catalog` },
     { name: item.title, url: categoryUrl }
   ]);
   const productList =
@@ -121,7 +124,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
       <div className="product-breadcrumbs">
         <a href="/">Главная</a>
         <ArrowRight size={14} />
-        <a href="/#catalog">Каталог</a>
+        <a href="/catalog">Каталог</a>
         <ArrowRight size={14} />
         <span>{item.title}</span>
       </div>
@@ -148,6 +151,52 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
           className="catalog-detail-image"
         />
       </section>
+
+      {guide ? (
+        <section
+          className="category-expertise"
+          aria-labelledby="category-expertise-title"
+        >
+          <div className="category-expertise__heading">
+            <span className="line-kicker">Инженерный гид</span>
+            <h2 id="category-expertise-title">Подбор решения: {item.title}</h2>
+            <div className="category-expertise__intro">
+              {guide.intro.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+
+          <div className="category-expertise__grid">
+            <article className="category-expertise__card">
+              <h3>Критерии подбора</h3>
+              <ul>
+                {guide.selectionCriteria.map((criterion) => (
+                  <li key={criterion}>{criterion}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="category-expertise__card">
+              <h3>Где применяется</h3>
+              <ul>
+                {guide.suitableFor.map((scenario) => (
+                  <li key={scenario}>{scenario}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="category-expertise__card">
+              <h3>Что учесть при внедрении</h3>
+              <ul>
+                {guide.integrationNotes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+      ) : null}
 
       {isPilotCategory ? (
         <>

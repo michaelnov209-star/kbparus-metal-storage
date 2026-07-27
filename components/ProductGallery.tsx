@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 
 export interface ProductGalleryImage {
+  alt?: string;
   src: string;
   srcSet?: string;
   sizes?: string;
@@ -65,7 +66,7 @@ export function ProductGallery({
               src={activeImage.src}
               srcSet={activeImage.srcSet}
               sizes={activeImage.sizes ?? "(max-width: 1180px) calc(100vw - 40px), 540px"}
-              alt={`${title} — фото ${activeIndex + 1}`}
+              alt={activeImage.alt ?? `${title} — фото ${activeIndex + 1}`}
               loading={activeIndex === 0 ? "eager" : "lazy"}
               decoding="async"
               fetchPriority={activeIndex === 0 ? "high" : "auto"}
@@ -121,7 +122,7 @@ export function ProductGallery({
             </button>
             <img
               src={activeImage.largeSrc ?? activeImage.src}
-              alt={`${title} — крупное фото ${activeIndex + 1}`}
+              alt={activeImage.alt ?? `${title} — крупное фото ${activeIndex + 1}`}
               decoding="async"
             />
           </div>

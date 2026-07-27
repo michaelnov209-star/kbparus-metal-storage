@@ -5,6 +5,10 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
+import { getSiteContacts } from "@/lib/cms/contacts";
+
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+const yandexVerification = process.env.YANDEX_SITE_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -72,17 +76,31 @@ export const metadata: Metadata = {
     images: ["/opengraph-image"]
   },
   verification: {
-    // Добавьте здесь после регистрации в Search Console / Webmaster:
-    // google: "google-verification-code",
-    // yandex: "yandex-verification-code"
+    ...(googleVerification ? { google: googleVerification } : {}),
+    ...(yandexVerification ? { yandex: yandexVerification } : {})
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const contacts = await getSiteContacts();
+  const phone = contacts.phones[0]?.label;
+  const sameAs = Object.values(contacts.socials).filter(
+    (value): value is string => typeof value === "string" && /^https?:\/\//i.test(value)
+  );
+
   return (
     <html lang="ru">
       <head>
-        <JsonLd data={organizationSchema()} />
+        <JsonLd
+          data={organizationSchema({
+            legalName: contacts.legalName,
+            phone,
+            email: contacts.email.label,
+            address: contacts.address,
+            taxId: contacts.inn,
+            sameAs
+          })}
+        />
         <JsonLd data={websiteSchema()} />
       </head>
       <body>

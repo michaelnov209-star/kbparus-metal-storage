@@ -8,12 +8,14 @@ import {
 } from "./helpers";
 
 test.describe("публичные маршруты", () => {
-  test("/catalog перенаправляет к каталогу на главной", async ({ page }) => {
+  test("/catalog открывает индексируемый каталог", async ({ page }) => {
     const response = await page.goto("/catalog", { waitUntil: "domcontentloaded" });
 
     expect(response?.status()).toBeLessThan(400);
-    expect(page.url()).toContain("/#catalog");
-    await expect(page.locator("#catalog")).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe("/catalog");
+    await expect(page.locator("main h1")).toContainText("Системы хранения металла");
+    await expect(page.locator(".catalog-grid")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
   });
 
   test("главная, категория и товар открываются без горизонтального overflow", async ({

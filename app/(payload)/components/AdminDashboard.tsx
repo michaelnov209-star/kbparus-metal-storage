@@ -9,6 +9,7 @@ import {
 import {
   Activity,
   ArrowRight,
+  BarChart3,
   BookOpen,
   Boxes,
   Calculator as CalculatorIcon,
@@ -121,6 +122,18 @@ const sections = [
         cta: "Загрузить медиа",
         icon: ImageIcon,
         tourId: "card-media"
+      }
+    ]
+  },
+  {
+    group: "SEO и аналитика",
+    items: [
+      {
+        title: "Позиции в поиске",
+        text: "Запросы, страницы, клики, показы, CTR и средняя позиция за месяц, квартал, полгода или год.",
+        href: "/admin/seo",
+        cta: "Открыть SEO-отчёты",
+        icon: BarChart3
       }
     ]
   },

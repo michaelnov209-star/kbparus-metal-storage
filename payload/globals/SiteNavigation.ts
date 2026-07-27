@@ -71,7 +71,7 @@ export const SiteNavigation: GlobalConfig = {
                   type: "row",
                   fields: [
                     { name: "label", label: { ru: "Текст", en: "Label" }, type: "text", defaultValue: "Каталог", admin: { width: "35%" } },
-                    { name: "href", label: { ru: "Ссылка", en: "URL" }, type: "text", defaultValue: "#catalog", admin: { width: "45%" } },
+                    { name: "href", label: { ru: "Ссылка", en: "URL" }, type: "text", defaultValue: "/catalog", admin: { width: "45%", description: { ru: "Основная индексируемая страница каталога. Для SEO рекомендуется сохранять путь /catalog." } } },
                     {
                       name: "showDropdown",
                       label: { ru: "Показывать разделы", en: "Show categories" },

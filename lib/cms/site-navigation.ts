@@ -32,7 +32,7 @@ export interface SiteNavigationData {
 
 export const DEFAULT_SITE_NAVIGATION: SiteNavigationData = {
   header: {
-    catalog: { label: "Каталог", href: "#catalog", showDropdown: true },
+    catalog: { label: "Каталог", href: "/catalog", showDropdown: true },
     links: [
       { label: "Калькулятор", href: "#calculator" },
       { label: "Кейсы", href: "#cases" },
@@ -42,7 +42,7 @@ export const DEFAULT_SITE_NAVIGATION: SiteNavigationData = {
       { label: "Контакты", href: "#contacts" }
     ],
     detailLinks: [
-      { label: "Каталог", href: "/#catalog" },
+      { label: "Каталог", href: "/catalog" },
       { label: "Калькулятор", href: "/#calculator" },
       { label: "Контакты", href: "/#contacts" }
     ],
@@ -56,7 +56,7 @@ export const DEFAULT_SITE_NAVIGATION: SiteNavigationData = {
     description: "Системы хранения металла",
     links: [
       { label: "Главная", href: "#top" },
-      { label: "Каталог", href: "#catalog" },
+      { label: "Каталог", href: "/catalog" },
       { label: "Калькулятор", href: "#calculator" },
       { label: "Кейсы", href: "#cases" },
       { label: "География", href: "#geography" },
@@ -115,7 +115,9 @@ export const getSiteNavigation = cache(async (): Promise<SiteNavigationData> => 
       header: {
         catalog: {
           label: navigation.catalog?.label?.trim() || DEFAULT_SITE_NAVIGATION.header.catalog.label,
-          href: navigation.catalog?.href?.trim() || DEFAULT_SITE_NAVIGATION.header.catalog.href,
+          href: normalizeCatalogHref(
+            navigation.catalog?.href?.trim() || DEFAULT_SITE_NAVIGATION.header.catalog.href
+          ),
           showDropdown: navigation.catalog?.showDropdown ?? DEFAULT_SITE_NAVIGATION.header.catalog.showDropdown
         },
         links: headerLinks,
@@ -139,6 +141,10 @@ export const getSiteNavigation = cache(async (): Promise<SiteNavigationData> => 
   }
 });
 
+function normalizeCatalogHref(href: string): string {
+  return href === "#catalog" || href === "/#catalog" ? "/catalog" : href;
+}
+
 function normalizeLinks(value: NavigationGlobal["headerLinks"], fallback: SiteLink[]): SiteLink[] {
   const links =
     value
@@ -146,7 +152,7 @@ function normalizeLinks(value: NavigationGlobal["headerLinks"], fallback: SiteLi
       .filter((item) => item.enabled !== false)
       .map((item) => ({
         label: item.label?.trim() || "",
-        href: item.href?.trim() || "",
+        href: normalizeCatalogHref(item.href?.trim() || ""),
         openInNewTab: Boolean(item.openInNewTab)
       }))
       .filter((item) => item.label && item.href) || [];
