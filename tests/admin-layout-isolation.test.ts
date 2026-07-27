@@ -48,11 +48,4 @@ describe("admin layout isolation", () => {
     expect(training).toContain("@payloadcms/ui/elements/Link");
     expect(training).not.toContain('<a className="kb-admin-training__link"');
   });
-
-  it("excludes Prettier CLI tooling from admin server traces", () => {
-    const nextConfig = source("next.config.mjs");
-
-    expect(nextConfig).toContain("outputFileTracingExcludes");
-    expect(nextConfig).toContain("./node_modules/prettier/**/*");
-  });
 });

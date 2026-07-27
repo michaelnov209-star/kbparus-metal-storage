@@ -57,12 +57,6 @@ const nextConfig = {
   // Только server-only пакеты без CSS-импортов. @payloadcms/next/richtext-lexical
   // нельзя externalize — у них есть CSS, которые Node ESM не загружает.
   serverExternalPackages: ["sharp", "drizzle-kit", "drizzle-orm", "pg", "@payloadcms/db-postgres"],
-  // Runtime admin/API routes never format generated schema files.
-  // Keep Prettier CLI tooling out of serverless traces.
-  outputFileTracingExcludes: {
-    "/admin/**": ["./node_modules/prettier/**/*"],
-    "/api/**": ["./node_modules/prettier/**/*"],
-  },
   images: {
     // WebP заметно быстрее кодируется на холодном CDN, чем AVIF. Карточки
     // каталога используют готовые responsive-варианты и обходят runtime resize.
