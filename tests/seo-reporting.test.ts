@@ -3,7 +3,10 @@ import {
   aggregateSeoMetrics,
   buildSeoQueryMetrics
 } from "@/lib/seo-reporting/aggregate";
-import { readSeoReportingConfig } from "@/lib/seo-reporting/config";
+import {
+  isYandexHistoryEnabled,
+  readSeoReportingConfig
+} from "@/lib/seo-reporting/config";
 import {
   buildSeoDateWindow,
   clampYandexStart,
@@ -74,6 +77,16 @@ describe("SEO reporting dates and input", () => {
 });
 
 describe("SEO reporting configuration", () => {
+  it("keeps persisted Yandex history disabled unless explicitly enabled", () => {
+    expect(isYandexHistoryEnabled({})).toBe(false);
+    expect(
+      isYandexHistoryEnabled({ SEO_YANDEX_HISTORY_ENABLED: " true " })
+    ).toBe(true);
+    expect(
+      isYandexHistoryEnabled({ SEO_YANDEX_HISTORY_ENABLED: "1" })
+    ).toBe(false);
+  });
+
   it("reports missing providers without creating placeholder credentials", () => {
     const config = readSeoReportingConfig({});
     expect(config.google).toEqual({

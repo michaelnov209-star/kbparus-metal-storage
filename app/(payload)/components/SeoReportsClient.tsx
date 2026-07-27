@@ -250,7 +250,7 @@ function exportCsv(report: SeoReportResponse) {
 
 export function SeoReportsClient() {
   const [period, setPeriod] = useState<number>(30);
-  const [provider, setProvider] = useState<SeoProvider>("google");
+  const [provider, setProvider] = useState<SeoProvider>("yandex");
   const [device, setDevice] = useState<SeoReportDevice>("all");
   const [queryDraft, setQueryDraft] = useState("");
   const [query, setQuery] = useState("");
@@ -366,27 +366,16 @@ export function SeoReportsClient() {
         <div className="kb-seo-control-group">
           <span>Период</span>
           <div className="kb-seo-segmented">
-            {PERIODS.map((item) => {
-              const unavailable = provider === "yandex" && item.days > 30;
-              return (
-                <button
-                  className={period === item.days ? "is-active" : undefined}
-                  type="button"
-                  key={item.days}
-                  onClick={() => setPeriod(item.days)}
-                  disabled={unavailable}
-                  title={
-                    unavailable
-                      ? "Период станет доступен после накопления ежедневной истории"
-                      : undefined
-                  }
-                >
-                  {provider === "yandex" && item.days === 30
-                    ? "14 дней"
-                    : item.label}
-                </button>
-              );
-            })}
+            {PERIODS.map((item) => (
+              <button
+                className={period === item.days ? "is-active" : undefined}
+                type="button"
+                key={item.days}
+                onClick={() => setPeriod(item.days)}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -398,10 +387,7 @@ export function SeoReportsClient() {
                 className={provider === item.value ? "is-active" : undefined}
                 type="button"
                 key={item.value}
-                onClick={() => {
-                  setProvider(item.value);
-                  if (item.value === "yandex" && period > 30) setPeriod(30);
-                }}
+                onClick={() => setProvider(item.value)}
               >
                 {item.label}
               </button>
@@ -505,7 +491,7 @@ export function SeoReportsClient() {
             </span>
             <strong>
               {provider === "yandex"
-                ? `Доступно ${report.coverageDays} дней из API Яндекса`
+                ? `Накоплено ${report.coverageDays} из ${report.requestedDays} дней истории`
                 : `Покрытие ${report.coverageDays} из ${report.requestedDays} дней`}
             </strong>
           </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { GlobalSlug } from "payload";
 import { getCmsClient } from "@/lib/cms/client";
-import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp";
+import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 
 /**

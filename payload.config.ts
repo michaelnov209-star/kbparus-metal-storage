@@ -1,7 +1,5 @@
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
-import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import { ru } from "@payloadcms/translations/languages/ru";
 import sharp from "sharp";
@@ -25,14 +23,33 @@ import {
 } from "./lib/config/postgres";
 import { getPayloadSecret } from "./lib/config/payload-secret";
 import {
-  getSmtpTransport,
   isSmtpConfigured,
   smtpSettingsFromEnv
-} from "./lib/email/smtp";
+} from "./lib/email/smtp-config";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const smtpSettings = smtpSettingsFromEnv(process.env);
 const smtpFromName = process.env.SMTP_FROM_NAME?.trim() || "КБ Парус";
+
+async function createPayloadEmailAdapter() {
+  if (!isSmtpConfigured(smtpSettings)) return undefined;
+
+  const [{ nodemailerAdapter }, { getSmtpTransport }] = await Promise.all([
+    import("@payloadcms/email-nodemailer"),
+    import("./lib/email/smtp")
+  ]);
+
+  return nodemailerAdapter({
+    defaultFromAddress: smtpSettings.from,
+    defaultFromName: smtpFromName,
+    transport: getSmtpTransport(smtpSettings),
+    // Runtime sends expose delivery failures. Avoid an outbound SMTP
+    // connection while Payload config is evaluated during Vercel builds.
+    skipVerify: true
+  });
+}
+
+const payloadEmail = await createPayloadEmailAdapter();
 
 export default buildConfig({
   admin: {
@@ -96,17 +113,7 @@ export default buildConfig({
   },
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
   globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
-  editor: lexicalEditor(),
-  email: isSmtpConfigured(smtpSettings)
-    ? nodemailerAdapter({
-        defaultFromAddress: smtpSettings.from,
-        defaultFromName: smtpFromName,
-        transport: getSmtpTransport(smtpSettings),
-        // Runtime sends expose delivery failures. Avoid an outbound SMTP
-        // connection while Payload config is evaluated during Vercel builds.
-        skipVerify: true
-      })
-    : undefined,
+  email: payloadEmail,
   sharp,
   secret: getPayloadSecret(process.env),
   typescript: {

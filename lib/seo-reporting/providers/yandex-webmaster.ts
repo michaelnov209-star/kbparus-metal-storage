@@ -36,6 +36,7 @@ type YandexFetchOptions = {
   device: SeoReportDevice;
   query: string;
   fetchImpl?: typeof fetch;
+  includePages?: boolean;
 };
 
 const YANDEX_PAGE_SIZE = 500;
@@ -216,6 +217,20 @@ async function fetchYandexDimension(
 export async function fetchYandexWebmasterDataset(
   options: YandexFetchOptions
 ): Promise<SeoSourceDataset> {
+  if (options.includePages === false) {
+    const queries = await fetchYandexDimension(options, "QUERY");
+    const dates = queries.rows.map((row) => row.date).sort();
+
+    return {
+      summaryRows: queries.rows,
+      queryRows: queries.rows,
+      pageRows: [],
+      actualStart: dates[0] ?? null,
+      actualEnd: dates.at(-1) ?? null,
+      truncated: queries.truncated
+    };
+  }
+
   const [queries, pages] = await Promise.all([
     fetchYandexDimension(options, "QUERY"),
     fetchYandexDimension(options, "URL")

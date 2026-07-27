@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "@payloadcms/ui/elements/Link";
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, GraduationCap, MousePointerClick, X } from "lucide-react";
 
 type Step = {
@@ -195,10 +196,10 @@ export function AdminTraining() {
             <MousePointerClick size={16} aria-hidden />
             {completed ? "Повторить обучение" : "Начать обучение"}
           </button>
-          <a className="kb-admin-training__link" href="/admin/collections/products">
+          <Link className="kb-admin-training__link" href="/admin/collections/products">
             Открыть каталог
             <ArrowRight size={15} aria-hidden />
-          </a>
+          </Link>
         </div>
       </article>
 

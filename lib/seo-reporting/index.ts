@@ -1,5 +1,5 @@
 export { aggregateSeoMetrics, buildSeoQueryMetrics } from "./aggregate";
-export { readSeoReportingConfig } from "./config";
+export { isYandexHistoryEnabled, readSeoReportingConfig } from "./config";
 export {
   buildSeoDateWindow,
   clampYandexStart,

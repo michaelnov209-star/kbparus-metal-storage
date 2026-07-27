@@ -31,6 +31,12 @@ function parseRegionIds(value: string | undefined): number[] {
   );
 }
 
+export function isYandexHistoryEnabled(
+  env: Environment = process.env
+): boolean {
+  return env.SEO_YANDEX_HISTORY_ENABLED?.trim().toLowerCase() === "true";
+}
+
 export function readSeoReportingConfig(env: Environment = process.env): SeoReportingConfig {
   const googleRequired = [
     "GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL",

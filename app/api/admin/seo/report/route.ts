@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import { canEditContent } from "@/payload/access/rbac";
 import { getCmsClient } from "@/lib/cms/client";
 import {
+  buildSeoDateWindow,
   getLiveSeoReport,
-  parseSeoReportInput
+  isYandexHistoryEnabled,
+  parseSeoReportInput,
+  readSeoReportingConfig
 } from "@/lib/seo-reporting";
+import { buildSeoReportResponse } from "@/lib/seo-reporting/report";
+import { readYandexHistoryDataset } from "@/lib/seo-reporting/yandex-history";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const privateHeaders = {
   "cache-control": "private, no-store, max-age=0",
@@ -56,6 +62,44 @@ export async function GET(request: Request) {
     );
   }
 
-  const report = await getLiveSeoReport(parsed.value);
+  const input = parsed.value;
+  if (input.provider === "yandex") {
+    const config = readSeoReportingConfig();
+    if (config.yandex.configured && isYandexHistoryEnabled()) {
+      const generatedAt = new Date();
+      try {
+        const pool = cms.db.pool;
+        const window = buildSeoDateWindow(
+          input.period,
+          generatedAt,
+          "Europe/Moscow"
+        );
+        const history = await readYandexHistoryDataset({
+          pool,
+          window,
+          device: input.device,
+          query: input.query
+        });
+        const report = buildSeoReportResponse({
+          input,
+          generatedAt,
+          execution: {
+            state: "ok",
+            dataset: history.dataset,
+            coverageDates: history.coverageDates,
+            lastCollectedAt: history.lastCollectedAt
+          }
+        });
+        return NextResponse.json(report, { headers: privateHeaders });
+      } catch (error) {
+        console.error(
+          "[seo-reporting] Persisted Yandex history failed; using live fallback",
+          error
+        );
+      }
+    }
+  }
+
+  const report = await getLiveSeoReport(input);
   return NextResponse.json(report, { headers: privateHeaders });
 }

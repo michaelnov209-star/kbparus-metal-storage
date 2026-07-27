@@ -1,4 +1,6 @@
+import type { ComponentPropsWithoutRef } from "react";
 import type { Payload, ServerProps } from "payload";
+import { Link } from "@payloadcms/ui/elements/Link";
 import type { Category, Media, Product } from "@/payload-types";
 import {
   canEditContent,
@@ -63,7 +65,6 @@ type AdminCatalogCategory = {
   slug: string;
   sortOrder: number;
   isDraft: boolean;
-  isFeatured: boolean;
   imageUrl: string | null;
   readiness: number;
   products: AdminCatalogProduct[];
@@ -268,6 +269,17 @@ const operations = [
 ];
 
 const emptyCounts: Counts = { products: null, categories: null, media: null, leads: null };
+type DashboardLinkProps = Omit<ComponentPropsWithoutRef<"a">, "href"> & {
+  href: string;
+};
+
+function DashboardLink({ href, ...props }: DashboardLinkProps) {
+  return href.startsWith("/admin") ? (
+    <Link href={href} {...props} />
+  ) : (
+    <a href={href} {...props} />
+  );
+}
 
 function relationId(value: number | { id: number } | null | undefined): string | null {
   if (typeof value === "number") return String(value);
@@ -338,38 +350,84 @@ async function getDashboardContext(payload: Payload, role: CmsRole | null): Prom
     const hasMediaAccess = canManageMedia({ role });
     const hasLeadAccess = role === "admin";
 
-    const [products, categories, media, leads] = await Promise.all([
-      hasContentAccess ? payload.count({ collection: "products", overrideAccess: true }) : null,
-      hasContentAccess ? payload.count({ collection: "categories", overrideAccess: true }) : null,
-      hasMediaAccess ? payload.count({ collection: "media", overrideAccess: true }) : null,
-      hasLeadAccess ? payload.count({ collection: "leads", overrideAccess: true }) : null
-    ]);
+    const [media, leads, categoryList, productList] = await Promise.all([
 
-    const [categoryList, productList] = hasContentAccess
-      ? await Promise.all([
-          payload.find({
+      hasMediaAccess ? payload.count({ collection: "media", overrideAccess: true }) : null,
+      hasLeadAccess ? payload.count({ collection: "leads", overrideAccess: true }) : null,
+      hasContentAccess
+        ? payload.find({
             collection: "categories",
             depth: 1,
             draft: true,
             limit: 100,
             overrideAccess: true,
-            pagination: false,
+            pagination: true,
+            populate: {
+              media: {
+                url: true,
+                thumbnailURL: true,
+                sizes: {
+                  thumb: {
+                    url: true
+                  }
+                }
+              }
+            },
+            select: {
+              slug: true,
+              sortOrder: true,
+              title: true,
+              summary: true,
+              image: true,
+              legacyImagePath: true,
+              _status: true
+            },
             sort: "sortOrder"
-          }),
-          payload.find({
+          })
+        : null,
+      hasContentAccess
+        ? payload.find({
             collection: "products",
             depth: 1,
             draft: true,
             limit: 300,
             overrideAccess: true,
-            pagination: false,
+            pagination: true,
+            populate: {
+              categories: {
+                slug: true
+              },
+              media: {
+                url: true,
+                thumbnailURL: true,
+                sizes: {
+                  thumb: {
+                    url: true
+                  }
+                }
+              }
+            },
+            select: {
+              slug: true,
+              sortOrder: true,
+              title: true,
+              shortTitle: true,
+              category: true,
+              summary: true,
+              description: true,
+              image: true,
+              legacyImagePath: true,
+              priceMode: true,
+              pageMode: true,
+              _status: true
+            },
             sort: "sortOrder"
           })
-        ])
-      : [{ docs: [] }, { docs: [] }];
+        : null
+    ]);
 
-    const categoryDocs = categoryList.docs as Category[];
-    const productDocs = productList.docs as Product[];
+    const categoryDocs = (categoryList?.docs ?? []) as Category[];
+    const productDocs = (productList?.docs ?? []) as Product[];
     const categoryById = new Map(categoryDocs.map((category) => [String(category.id), category]));
     const catalog = categoryDocs
       .map<AdminCatalogCategory>((category, index) => ({
@@ -378,7 +436,6 @@ async function getDashboardContext(payload: Payload, role: CmsRole | null): Prom
         slug: category.slug,
         sortOrder: sortNumber(category.sortOrder, index + 1),
         isDraft: category._status === "draft",
-        isFeatured: Boolean(category.featured),
         imageUrl: resolveImageUrl(category.image, category.legacyImagePath),
         readiness: 0,
         products: []
@@ -417,8 +474,8 @@ async function getDashboardContext(payload: Payload, role: CmsRole | null): Prom
     return {
       cmsOk: true,
       counts: {
-        products: products?.totalDocs ?? null,
-        categories: categories?.totalDocs ?? null,
+        products: productList?.totalDocs ?? null,
+        categories: categoryList?.totalDocs ?? null,
         media: media?.totalDocs ?? null,
         leads: leads?.totalDocs ?? null
       },
@@ -483,10 +540,10 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
           <p>{dashboardIntro}</p>
           <div className="kb-admin-dashboard__quick">
             {visibleQuickActions.map((action) => (
-              <a className="kb-admin-dashboard__quick-link" href={action.href} key={action.href} data-tour={action.tourId}>
+              <DashboardLink className="kb-admin-dashboard__quick-link" href={action.href} key={action.href} data-tour={action.tourId}>
                 <action.icon size={16} aria-hidden />
                 {action.label}
-              </a>
+              </DashboardLink>
             ))}
           </div>
         </div>
@@ -512,13 +569,13 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
 
       <div className="kb-admin-dashboard__kpis">
         {kpis.map((kpi) => (
-          <a className="kb-admin-dashboard__kpi" href={kpi.href} key={kpi.label} data-tour={kpi.tourId}>
+          <DashboardLink className="kb-admin-dashboard__kpi" href={kpi.href} key={kpi.label} data-tour={kpi.tourId}>
             <span className="kb-admin-dashboard__kpi-icon">
               <kpi.icon size={22} aria-hidden />
             </span>
             <strong className="kb-admin-dashboard__kpi-value">{kpi.value}</strong>
             <span className="kb-admin-dashboard__kpi-label">{kpi.label}</span>
-          </a>
+          </DashboardLink>
         ))}
       </div>
 
@@ -570,14 +627,14 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
                 <p>{item.text}</p>
               </div>
               <div className="kb-admin-dashboard__mini-actions">
-                <a href={item.editHref}>
+                <DashboardLink href={item.editHref}>
                   <Pencil size={14} aria-hidden />
                   Редактировать
-                </a>
-                <a href={item.previewHref} target="_blank" rel="noreferrer">
+                </DashboardLink>
+                <DashboardLink href={item.previewHref} target="_blank" rel="noreferrer">
                   <ExternalLink size={14} aria-hidden />
                   Посмотреть
-                </a>
+                </DashboardLink>
               </div>
             </article>
           ))}
@@ -598,10 +655,10 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
           <div className="kb-admin-dashboard__catalog-list">
             {dashboard.catalog.map((category, index) => (
               <article className="kb-admin-dashboard__category-card" key={category.id}>
-                <a className="kb-admin-dashboard__category-preview" href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer" aria-label={`Посмотреть категорию ${category.title}`}>
+                <DashboardLink className="kb-admin-dashboard__category-preview" href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer" aria-label={`Посмотреть категорию ${category.title}`}>
                   {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <span>Фото категории не добавлено</span>}
                   <strong>{category.readiness}% готово</strong>
-                </a>
+                </DashboardLink>
                 <div className="kb-admin-dashboard__category-top">
                   <span className="kb-admin-dashboard__category-number">{String(index + 1).padStart(2, "0")}</span>
                   <div>
@@ -611,14 +668,14 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
                   <span className={category.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{category.isDraft ? "черновик" : "опубликовано"}</span>
                 </div>
                 <div className="kb-admin-dashboard__mini-actions">
-                  <a href={`/admin/collections/categories/${category.id}`}>
+                  <DashboardLink href={`/admin/collections/categories/${category.id}`}>
                     <Pencil size={14} aria-hidden />
                     Категория
-                  </a>
-                  <a href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer">
+                  </DashboardLink>
+                  <DashboardLink href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer">
                     <ExternalLink size={14} aria-hidden />
                     На сайте
-                  </a>
+                  </DashboardLink>
                 </div>
                 <div className="kb-admin-dashboard__product-list">
                   {category.products.slice(0, 5).map((product) => (
@@ -634,10 +691,10 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
                       </div>
                       <span className="kb-admin-dashboard__readiness">{product.readiness}%</span>
                       <span className={product.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{product.isDraft ? "черновик" : "live"}</span>
-                      <a href={`/admin/collections/products/${product.id}`}>Изменить</a>
-                      <a href={`/catalog/${product.categorySlug}/${product.slug}`} target="_blank" rel="noreferrer">
+                      <DashboardLink href={`/admin/collections/products/${product.id}`}>Изменить</DashboardLink>
+                      <DashboardLink href={`/catalog/${product.categorySlug}/${product.slug}`} target="_blank" rel="noreferrer">
                         Preview
-                      </a>
+                      </DashboardLink>
                     </div>
                   ))}
                   {category.products.length > 5 ? <p className="kb-admin-dashboard__more">Ещё {category.products.length - 5} товаров в разделе</p> : null}
@@ -690,14 +747,14 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
         </div>
         <div className="kb-admin-dashboard__ops-grid">
           {visibleOperations.map((item) => (
-            <a className="kb-admin-dashboard__ops-card" href={item.href} key={item.title} target={item.href.startsWith("/admin") ? undefined : "_blank"} rel="noreferrer">
+            <DashboardLink className="kb-admin-dashboard__ops-card" href={item.href} key={item.title} target={item.href.startsWith("/admin") ? undefined : "_blank"} rel="noreferrer">
               <span>
                 <item.icon size={18} aria-hidden />
               </span>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
               <ArrowRight size={15} aria-hidden />
-            </a>
+            </DashboardLink>
           ))}
         </div>
       </section>
@@ -707,7 +764,7 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
           <p className="kb-admin-dashboard__section-title">{section.group}</p>
           <div className="kb-admin-dashboard__grid">
             {section.items.map((item) => (
-              <a className="kb-admin-dashboard__card" href={item.href} key={item.href} data-tour={item.tourId}>
+              <DashboardLink className="kb-admin-dashboard__card" href={item.href} key={item.href} data-tour={item.tourId}>
                 <span className="kb-admin-dashboard__card-icon">
                   <item.icon size={20} aria-hidden />
                 </span>
@@ -717,7 +774,7 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
                   {item.cta}
                   <ArrowRight size={15} aria-hidden />
                 </strong>
-              </a>
+              </DashboardLink>
             ))}
           </div>
         </div>

@@ -138,6 +138,7 @@ export type SeoReportResponse = {
   status: "ready" | "not_configured" | "error";
   requestedDays: SeoReportPeriod;
   coverageDays: number;
+  lastCollectedAt?: string | null;
   dateRange: {
     start: string;
     end: string;

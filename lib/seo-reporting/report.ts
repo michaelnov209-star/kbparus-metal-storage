@@ -24,6 +24,8 @@ export type SeoProviderExecution =
   | {
       state: "ok";
       dataset: SeoSourceDataset;
+      coverageDates?: string[];
+      lastCollectedAt?: string | null;
     }
   | {
       state: "not_configured";
@@ -198,10 +200,24 @@ export function buildSeoReportResponse({
   execution
 }: ProviderResponseOptions): SeoReportResponse {
   const window = providerWindow(input, generatedAt);
+  const historyCoverageDates =
+    execution.state === "ok" ? execution.coverageDates : undefined;
+  const currentCoverageDates = (historyCoverageDates ?? []).filter(
+    (date) => date >= window.currentStart && date <= window.currentEnd
+  );
+  const previousCoverageDates = (historyCoverageDates ?? []).filter(
+    (date) => date >= window.previousStart && date <= window.previousEnd
+  );
+  const hasPersistedYandexHistory =
+    input.provider === "yandex" && historyCoverageDates !== undefined;
   const includeComparison =
-    input.provider === "google" && input.period !== 365;
-  const supportedCurrentStart =
-    input.provider === "yandex"
+    input.provider === "google"
+      ? input.period !== 365
+      : currentCoverageDates.length === input.period &&
+        previousCoverageDates.length === input.period;
+  const supportedCurrentStart = hasPersistedYandexHistory
+    ? window.currentStart
+    : input.provider === "yandex"
       ? clampYandexStart(window.currentStart, generatedAt)
       : window.currentStart;
   const supportedCoverageDays = countInclusiveDays(
@@ -215,6 +231,11 @@ export function buildSeoReportResponse({
     provider: input.provider,
     requestedDays: input.period,
     coverageDays: supportedCoverageDays,
+    ...(execution.state === "ok" && execution.lastCollectedAt !== undefined
+      ? {
+          lastCollectedAt: execution.lastCollectedAt
+        }
+      : {}),
     dateRange: {
       start: supportedCurrentStart,
       end: window.currentEnd
@@ -265,13 +286,15 @@ export function buildSeoReportResponse({
 
   const currentDates = Array.from(
     new Set(
-      execution.dataset.summaryRows
-        .filter(
-          (row) =>
-            row.date >= supportedCurrentStart &&
-            row.date <= window.currentEnd
-        )
-        .map((row) => row.date)
+      historyCoverageDates !== undefined
+        ? currentCoverageDates
+        : execution.dataset.summaryRows
+            .filter(
+              (row) =>
+                row.date >= supportedCurrentStart &&
+                row.date <= window.currentEnd
+            )
+            .map((row) => row.date)
     )
   ).sort();
   const readyBase = {
