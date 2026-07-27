@@ -8,6 +8,14 @@ import {
 } from "./helpers";
 
 test.describe("публичные маршруты", () => {
+  test("/catalog перенаправляет к каталогу на главной", async ({ page }) => {
+    const response = await page.goto("/catalog", { waitUntil: "domcontentloaded" });
+
+    expect(response?.status()).toBeLessThan(400);
+    expect(page.url()).toContain("/#catalog");
+    await expect(page.locator("#catalog")).toBeVisible();
+  });
+
   test("главная, категория и товар открываются без горизонтального overflow", async ({
     page
   }) => {
