@@ -13,7 +13,7 @@ test("быстрый вход корректен на mobile, tablet и desktop"
   ).toBeVisible();
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.locator("#admin-password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Войти" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Войти" })).toBeEnabled();
 
   const viewportWidth = testInfo.project.use.viewport?.width ?? 1280;
   const layout = await page.evaluate(() => {

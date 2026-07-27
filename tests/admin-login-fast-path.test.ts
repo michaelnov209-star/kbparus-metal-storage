@@ -32,6 +32,8 @@ describe("admin login fast path", () => {
     expect(client).toContain('fetch("/api/users/login"');
     expect(client).toContain('credentials: "include"');
     expect(client).toContain('"Content-Type": "application/json"');
+    expect(client).toContain("new FormData(event.currentTarget)");
+    expect(client).not.toContain("noValidate");
   });
 
   it("only redirects to safe paths inside the admin", () => {

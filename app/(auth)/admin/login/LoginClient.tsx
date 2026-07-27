@@ -73,6 +73,10 @@ export function LoginClient() {
     event.preventDefault();
     if (isSubmitting) return;
 
+    const formData = new FormData(event.currentTarget);
+    const submittedEmail = String(formData.get("email") ?? email).trim();
+    const submittedPassword = String(formData.get("password") ?? password);
+
     setError("");
     setIsSubmitting(true);
 
@@ -86,8 +90,8 @@ export function LoginClient() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          email: email.trim(),
-          password
+          email: submittedEmail,
+          password: submittedPassword
         })
       });
 
@@ -153,7 +157,7 @@ export function LoginClient() {
             <p>Введите рабочие данные для доступа к сайту.</p>
           </div>
 
-          <form className="kb-auth-form" onSubmit={handleSubmit} noValidate>
+          <form className="kb-auth-form" onSubmit={handleSubmit}>
             <div className="kb-auth-field">
               <label htmlFor="admin-email">Email</label>
               <input
@@ -213,7 +217,7 @@ export function LoginClient() {
             <button
               className="kb-auth-submit"
               type="submit"
-              disabled={isSubmitting || !email.trim() || !password}
+              disabled={isSubmitting}
               aria-busy={isSubmitting}
             >
               {isSubmitting ? (
