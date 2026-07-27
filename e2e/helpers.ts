@@ -61,6 +61,27 @@ export async function expectNoHorizontalOverflow(page: Page) {
   ).toBeLessThanOrEqual(overflow.clientWidth + 1);
 }
 
+export async function expectTextFits(page: Page, selector: string) {
+  const metrics = await page.locator(selector).evaluate((element: HTMLElement) => {
+    const style = getComputedStyle(element);
+
+    return {
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      fontSize: style.fontSize,
+      hyphens: style.hyphens,
+      overflowWrap: style.overflowWrap,
+      whiteSpace: style.whiteSpace,
+      wordBreak: style.wordBreak
+    };
+  });
+
+  expect(
+    metrics.scrollWidth,
+    `Text overflow in ${selector}: ${JSON.stringify(metrics)}`
+  ).toBeLessThanOrEqual(metrics.clientWidth + 1);
+}
+
 export async function expectNoSeriousA11yViolations(
   page: Page,
   include: string

@@ -511,9 +511,9 @@ html{scrollbar-width:thin;scrollbar-color:#fc5413 #111923;-webkit-text-size-adju
         .catalog-detail-page .product-chip-row button,
         .catalog-detail-page .catalog-filter-row button{min-height:44px!important}
         .catalog-detail-page :is(.catalog-detail-hero h1,.product-title-strip h1){
-          overflow-wrap:normal!important;
+          overflow-wrap:anywhere!important;
           word-break:normal!important;
-          hyphens:none!important;
+          hyphens:auto!important;
           font-size:clamp(27px,8.8vw,38px)!important;
           line-height:1.04!important
         }

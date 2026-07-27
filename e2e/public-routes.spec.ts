@@ -3,6 +3,7 @@ import {
   CATEGORY_PATH,
   PRODUCT_PATH,
   expectNoHorizontalOverflow,
+  expectTextFits,
   openPublicPage
 } from "./helpers";
 
@@ -32,11 +33,13 @@ test.describe("публичные маршруты", () => {
     await openPublicPage(page, CATEGORY_PATH);
     await expect(page.locator(".catalog-detail-hero h1")).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    await expectTextFits(page, ".catalog-detail-hero h1");
 
     await openPublicPage(page, PRODUCT_PATH);
     await expect(page.locator(".product-title-strip h1")).toBeVisible();
     await expect(page.locator(".product-hero")).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    await expectTextFits(page, ".product-title-strip h1");
   });
 
   test("адаптивная навигация доступна с клавиатуры и касания", async ({
