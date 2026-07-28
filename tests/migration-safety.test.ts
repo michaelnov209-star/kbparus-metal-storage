@@ -41,6 +41,11 @@ describe("Payload production migration safety", () => {
     expect(releaseGuard).toContain(
       "reconcile-legacy-migration-marker.mjs"
     );
+    expect(releaseGuard).toContain("pg_try_advisory_lock");
+    expect(releaseGuard).toContain("pg_advisory_unlock");
+    expect(releaseGuard).toContain(
+      "Another controlled production migration is already running."
+    );
   });
 
   it("reclassifies only the exact reviewed Payload dev marker", () => {

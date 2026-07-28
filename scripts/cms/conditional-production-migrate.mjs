@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { Client } from "pg";
 
 const enabled = process.env.RUN_PAYLOAD_MIGRATIONS === "true";
 
@@ -38,59 +39,100 @@ if (!latestMigration || requestedRelease !== latestMigration) {
   );
 }
 
-const hasDirectDatabaseUrl = Boolean(
+const directDatabaseUrl =
   process.env.DATABASE_URL_UNPOOLED?.trim() ||
-    process.env.DATABASE_POSTGRES_URL_NON_POOLING?.trim() ||
-    process.env.POSTGRES_URL_NON_POOLING?.trim()
-);
+  process.env.DATABASE_POSTGRES_URL_NON_POOLING?.trim() ||
+  process.env.POSTGRES_URL_NON_POOLING?.trim();
 
-if (!hasDirectDatabaseUrl) {
+if (!directDatabaseUrl) {
   throw new Error(
     "A direct PostgreSQL URL is required for the controlled production migration."
   );
 }
 
-console.log("[cms-migrate] Applying pending production migrations.");
-// The legacy database was created by Payload's development schema push.
-// Reclassify only its exact marker as the reviewed, DDL-free baseline so the
-// non-interactive production build never accepts Payload's generic data-loss
-// prompt. The reconciliation is transactional, locked, and idempotent.
-const reconcileResult = spawnSync(
-  process.execPath,
-  [resolve("scripts/cms/reconcile-legacy-migration-marker.mjs")],
-  {
-    env: process.env,
-    shell: false,
-    stdio: "inherit"
-  }
-);
+const migrationLockClient = new Client({
+  application_name: "kbparus-production-migration-lock",
+  connectionString: directDatabaseUrl,
+  connectionTimeoutMillis: 10_000,
+  query_timeout: 15_000,
+  statement_timeout: 15_000
+});
+const migrationLockKeys = ["kbparus", "payload-production-migration"];
+let migrationLockHeld = false;
 
-if (reconcileResult.error) throw reconcileResult.error;
-if (reconcileResult.status !== 0) {
-  throw new Error(
-    `Legacy migration reconciliation failed with exit code ${reconcileResult.status ?? "unknown"}.`
+try {
+  await migrationLockClient.connect();
+  const lockResult = await migrationLockClient.query(
+    "SELECT pg_try_advisory_lock(hashtext($1), hashtext($2)) AS acquired",
+    migrationLockKeys
   );
-}
+  migrationLockHeld = lockResult.rows[0]?.acquired === true;
 
-// nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- fixed executable and fixed argv, shell is disabled.
-const result = spawnSync(
-  process.execPath,
-  [resolve("scripts/cms/run-payload-migration.mjs"), "migrate"],
-  {
-    env: {
-      ...process.env,
-      PAYLOAD_MIGRATING: "true"
-    },
-    shell: false,
-    stdio: "inherit"
+  if (!migrationLockHeld) {
+    throw new Error(
+      "Another controlled production migration is already running."
+    );
   }
-);
 
-if (result.error) throw result.error;
-if (result.status !== 0) {
-  throw new Error(
-    `Production migration failed with exit code ${result.status ?? "unknown"}.`
+  console.log("[cms-migrate] Applying pending production migrations.");
+  // The legacy database was created by Payload's development schema push.
+  // Reclassify only its exact marker as the reviewed, DDL-free baseline so the
+  // non-interactive production build never accepts Payload's generic data-loss
+  // prompt. The reconciliation is transactional, locked, and idempotent.
+  const reconcileResult = spawnSync(
+    process.execPath,
+    [resolve("scripts/cms/reconcile-legacy-migration-marker.mjs")],
+    {
+      env: process.env,
+      shell: false,
+      stdio: "inherit"
+    }
   );
-}
 
-console.log("[cms-migrate] Production migrations completed.");
+  if (reconcileResult.error) throw reconcileResult.error;
+  if (reconcileResult.status !== 0) {
+    throw new Error(
+      `Legacy migration reconciliation failed with exit code ${reconcileResult.status ?? "unknown"}.`
+    );
+  }
+
+  // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- fixed executable and fixed argv, shell is disabled.
+  const result = spawnSync(
+    process.execPath,
+    [resolve("scripts/cms/run-payload-migration.mjs"), "migrate"],
+    {
+      env: {
+        ...process.env,
+        PAYLOAD_MIGRATING: "true"
+      },
+      shell: false,
+      stdio: "inherit"
+    }
+  );
+
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(
+      `Production migration failed with exit code ${result.status ?? "unknown"}.`
+    );
+  }
+
+  console.log("[cms-migrate] Production migrations completed.");
+} finally {
+  try {
+    if (migrationLockHeld) {
+      const unlockResult = await migrationLockClient.query(
+        "SELECT pg_advisory_unlock(hashtext($1), hashtext($2)) AS released",
+        migrationLockKeys
+      );
+
+      if (unlockResult.rows[0]?.released !== true) {
+        throw new Error(
+          "The production migration lock could not be released cleanly."
+        );
+      }
+    }
+  } finally {
+    await migrationLockClient.end();
+  }
+}

@@ -24,6 +24,8 @@
 5. Доступен direct URL:
    `DATABASE_URL_UNPOOLED`, `DATABASE_POSTGRES_URL_NON_POOLING` или
    `POSTGRES_URL_NON_POOLING`.
+6. Session advisory lock свободен; он удерживается до завершения всех
+   миграций и исключает два параллельных Production apply.
 
 Эти значения передаются только конкретному Production deployment через
 `--build-env`. Хранить `RUN_PAYLOAD_MIGRATIONS=true` как постоянную переменную
