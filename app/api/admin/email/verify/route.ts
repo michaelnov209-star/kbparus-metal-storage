@@ -21,7 +21,7 @@ const privateHeaders = {
   "x-content-type-options": "nosniff"
 };
 
-export async function POST(request: Request) {
+async function verifySmtp(request: Request) {
   const cms = await getCmsClient();
   if (!cms) {
     return NextResponse.json(
@@ -77,3 +77,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+export const GET = verifySmtp;
+export const POST = verifySmtp;
