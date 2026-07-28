@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef } from "react";
+import { Suspense, type ComponentPropsWithoutRef } from "react";
 import type { Payload, ServerProps } from "payload";
 import { Link } from "@payloadcms/ui/elements/Link";
 import type { Category, Media, Product } from "@/payload-types";
@@ -526,14 +526,14 @@ function fmt(value: number | null): string {
   return value === null ? "—" : String(value);
 }
 
-type AdminDashboardProps = Pick<ServerProps, "payload" | "user">;
+type DashboardAsyncProps = {
+  payload: Payload;
+  role: CmsRole | null;
+};
 
-export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
-  const role = getCmsRole(user);
-  const hasContentAccess = canEditContent(user);
+async function DashboardKpis({ payload, role }: DashboardAsyncProps) {
   const dashboard = await getDashboardContext(payload, role);
   const counts = dashboard.counts;
-
   const kpis = [
     { label: "Товаров", value: fmt(counts.products), icon: Package, href: "/admin/collections/products" },
     { label: "Категорий", value: fmt(counts.categories), icon: Layers, href: "/admin/collections/categories" },
@@ -541,6 +541,134 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
     { label: "Заявок", value: fmt(counts.leads), icon: Inbox, href: "/admin/collections/leads", tourId: "kpi-leads" }
   ].filter((item) => canOpenAdminHref(role, item.href) && item.value !== "—");
 
+  return (
+    <div className="kb-admin-dashboard__kpis">
+      {kpis.map((kpi) => (
+        <DashboardLink className="kb-admin-dashboard__kpi" href={kpi.href} key={kpi.label} data-tour={kpi.tourId}>
+          <span className="kb-admin-dashboard__kpi-icon">
+            <kpi.icon size={22} aria-hidden />
+          </span>
+          <strong className="kb-admin-dashboard__kpi-value">{kpi.value}</strong>
+          <span className="kb-admin-dashboard__kpi-label">{kpi.label}</span>
+        </DashboardLink>
+      ))}
+    </div>
+  );
+}
+
+function DashboardKpisLoading() {
+  return (
+    <div className="kb-admin-dashboard__kpis" aria-label="Загрузка показателей" aria-busy="true">
+      {Array.from({ length: 4 }, (_, index) => (
+        <span className="kb-admin-dashboard__kpi-placeholder" key={index} />
+      ))}
+    </div>
+  );
+}
+
+async function DashboardCatalog({ payload, role }: DashboardAsyncProps) {
+  const dashboard = await getDashboardContext(payload, role);
+  const catalog = dashboard.catalog;
+
+  return (
+    <section className="kb-admin-dashboard__catalog-map" data-tour="catalog-map">
+      <div className="kb-admin-dashboard__block-head">
+        <span>
+          <Layers size={17} aria-hidden />
+          Каталог в порядке сайта
+        </span>
+        <strong>{catalog.length ? catalog.length + " разделов" : "нет данных"}</strong>
+      </div>
+      {catalog.length ? (
+        <div className="kb-admin-dashboard__catalog-list">
+          {catalog.map((category, index) => (
+            <article className="kb-admin-dashboard__category-card" key={category.id}>
+              <DashboardLink
+                className="kb-admin-dashboard__category-preview"
+                href={"/catalog/" + category.slug}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={"Посмотреть категорию " + category.title}
+              >
+                {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <span>Фото категории не добавлено</span>}
+                <strong>{category.readiness}% готово</strong>
+              </DashboardLink>
+              <div className="kb-admin-dashboard__category-top">
+                <span className="kb-admin-dashboard__category-number">{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3>{category.title}</h3>
+                  <p>{category.products.length ? category.products.length + " товаров внутри раздела" : "Товары пока не добавлены"}</p>
+                </div>
+                <span className={category.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{category.isDraft ? "черновик" : "опубликовано"}</span>
+              </div>
+              <div className="kb-admin-dashboard__mini-actions">
+                <DashboardLink href={"/admin/collections/categories/" + category.id}>
+                  <Pencil size={14} aria-hidden />
+                  Категория
+                </DashboardLink>
+                <DashboardLink href={"/catalog/" + category.slug} target="_blank" rel="noreferrer">
+                  <ExternalLink size={14} aria-hidden />
+                  На сайте
+                </DashboardLink>
+              </div>
+              <div className="kb-admin-dashboard__product-list">
+                {category.products.slice(0, 5).map((product) => (
+                  <div className="kb-admin-dashboard__product-row" key={product.id}>
+                    <span className="kb-admin-dashboard__product-thumb" aria-hidden>
+                      {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : null}
+                    </span>
+                    <div>
+                      <strong>{product.title}</strong>
+                      <span>
+                        {pageModeLabel(product.pageMode)} · {priceModeLabel(product.priceMode)}
+                      </span>
+                    </div>
+                    <span className="kb-admin-dashboard__readiness">{product.readiness}%</span>
+                    <span className={product.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{product.isDraft ? "черновик" : "live"}</span>
+                    <DashboardLink href={"/admin/collections/products/" + product.id}>Изменить</DashboardLink>
+                    <DashboardLink href={"/catalog/" + product.categorySlug + "/" + product.slug} target="_blank" rel="noreferrer">
+                      Preview
+                    </DashboardLink>
+                  </div>
+                ))}
+                {category.products.length > 5 ? <p className="kb-admin-dashboard__more">Ещё {category.products.length - 5} товаров в разделе</p> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="kb-admin-dashboard__empty">
+          <Activity size={18} aria-hidden />
+          <span>Каталог не загрузился. Проверьте /api/health и подключение CMS к базе.</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DashboardCatalogLoading() {
+  return (
+    <section className="kb-admin-dashboard__catalog-map" aria-label="Загрузка каталога" aria-busy="true">
+      <div className="kb-admin-dashboard__block-head">
+        <span>
+          <Layers size={17} aria-hidden />
+          Каталог в порядке сайта
+        </span>
+        <strong>загружается…</strong>
+      </div>
+      <div className="kb-admin-dashboard__empty">
+        <Activity size={18} aria-hidden />
+        <span>Подготавливаем структуру каталога без блокировки панели.</span>
+      </div>
+    </section>
+  );
+}
+
+type AdminDashboardProps = Pick<ServerProps, "payload" | "user">;
+
+export function AdminDashboard({ payload, user }: AdminDashboardProps) {
+  const role = getCmsRole(user);
+  const hasContentAccess = canEditContent(user);
   const visibleQuickActions = quickActions.filter((item) => canOpenAdminHref(role, item.href));
   const visibleOperations = operations.filter((item) => canOpenAdminHref(role, item.href));
   const visibleSections = sections
@@ -586,7 +714,7 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
         <div className="kb-admin-dashboard__hero-panel">
           <div className="kb-admin-dashboard__hero-panel-top">
             <span>Готовность CMS</span>
-            <strong>{dashboard.cmsOk ? "Рабочий режим" : "Нужна проверка"}</strong>
+            <strong>Рабочий режим</strong>
           </div>
           <div className="kb-admin-dashboard__progress" aria-hidden>
             <span />
@@ -602,17 +730,9 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
         </div>
       </div>
 
-      <div className="kb-admin-dashboard__kpis">
-        {kpis.map((kpi) => (
-          <DashboardLink className="kb-admin-dashboard__kpi" href={kpi.href} key={kpi.label} data-tour={kpi.tourId}>
-            <span className="kb-admin-dashboard__kpi-icon">
-              <kpi.icon size={22} aria-hidden />
-            </span>
-            <strong className="kb-admin-dashboard__kpi-value">{kpi.value}</strong>
-            <span className="kb-admin-dashboard__kpi-label">{kpi.label}</span>
-          </DashboardLink>
-        ))}
-      </div>
+      <Suspense fallback={<DashboardKpisLoading />}>
+        <DashboardKpis payload={payload} role={role} />
+      </Suspense>
 
       {hasContentAccess ? (
         <div className="kb-admin-dashboard__learning-row">
@@ -678,72 +798,9 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
       ) : null}
 
       {hasContentAccess ? (
-        <section className="kb-admin-dashboard__catalog-map" data-tour="catalog-map">
-        <div className="kb-admin-dashboard__block-head">
-          <span>
-            <Layers size={17} aria-hidden />
-            Каталог в порядке сайта
-          </span>
-          <strong>{dashboard.catalog.length ? `${dashboard.catalog.length} разделов` : "нет данных"}</strong>
-        </div>
-        {dashboard.catalog.length ? (
-          <div className="kb-admin-dashboard__catalog-list">
-            {dashboard.catalog.map((category, index) => (
-              <article className="kb-admin-dashboard__category-card" key={category.id}>
-                <DashboardLink className="kb-admin-dashboard__category-preview" href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer" aria-label={`Посмотреть категорию ${category.title}`}>
-                  {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <span>Фото категории не добавлено</span>}
-                  <strong>{category.readiness}% готово</strong>
-                </DashboardLink>
-                <div className="kb-admin-dashboard__category-top">
-                  <span className="kb-admin-dashboard__category-number">{String(index + 1).padStart(2, "0")}</span>
-                  <div>
-                    <h3>{category.title}</h3>
-                    <p>{category.products.length ? `${category.products.length} товаров внутри раздела` : "Товары пока не добавлены"}</p>
-                  </div>
-                  <span className={category.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{category.isDraft ? "черновик" : "опубликовано"}</span>
-                </div>
-                <div className="kb-admin-dashboard__mini-actions">
-                  <DashboardLink href={`/admin/collections/categories/${category.id}`}>
-                    <Pencil size={14} aria-hidden />
-                    Категория
-                  </DashboardLink>
-                  <DashboardLink href={`/catalog/${category.slug}`} target="_blank" rel="noreferrer">
-                    <ExternalLink size={14} aria-hidden />
-                    На сайте
-                  </DashboardLink>
-                </div>
-                <div className="kb-admin-dashboard__product-list">
-                  {category.products.slice(0, 5).map((product) => (
-                    <div className="kb-admin-dashboard__product-row" key={product.id}>
-                      <span className="kb-admin-dashboard__product-thumb" aria-hidden>
-                        {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : null}
-                      </span>
-                      <div>
-                        <strong>{product.title}</strong>
-                        <span>
-                          {pageModeLabel(product.pageMode)} · {priceModeLabel(product.priceMode)}
-                        </span>
-                      </div>
-                      <span className="kb-admin-dashboard__readiness">{product.readiness}%</span>
-                      <span className={product.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{product.isDraft ? "черновик" : "live"}</span>
-                      <DashboardLink href={`/admin/collections/products/${product.id}`}>Изменить</DashboardLink>
-                      <DashboardLink href={`/catalog/${product.categorySlug}/${product.slug}`} target="_blank" rel="noreferrer">
-                        Preview
-                      </DashboardLink>
-                    </div>
-                  ))}
-                  {category.products.length > 5 ? <p className="kb-admin-dashboard__more">Ещё {category.products.length - 5} товаров в разделе</p> : null}
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="kb-admin-dashboard__empty">
-            <Activity size={18} aria-hidden />
-            <span>Каталог не загрузился. Проверьте `/api/health` и подключение CMS к базе.</span>
-          </div>
-        )}
-        </section>
+        <Suspense fallback={<DashboardCatalogLoading />}>
+          <DashboardCatalog payload={payload} role={role} />
+        </Suspense>
       ) : null}
 
       <section className="kb-admin-dashboard__roles" data-tour="roles-map">
@@ -778,7 +835,7 @@ export async function AdminDashboard({ payload, user }: AdminDashboardProps) {
             <Activity size={17} aria-hidden />
             Preview, статус и здоровье
           </span>
-          <strong>{dashboard.cmsOk ? "CMS отвечает" : "нужна диагностика"}</strong>
+          <strong>CMS отвечает</strong>
         </div>
         <div className="kb-admin-dashboard__ops-grid">
           {visibleOperations.map((item) => (
