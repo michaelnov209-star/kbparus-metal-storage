@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getSafeAdminRedirect } from "../app/(auth)/admin/login/redirect";
+import { shouldRedirectAnonymousAdmin } from "@/lib/admin/routes";
 
 const projectRoot = process.cwd();
 
@@ -35,6 +36,26 @@ describe("admin login fast path", () => {
     expect(client).toContain('"Content-Type": "application/json"');
     expect(client).toContain("new FormData(event.currentTarget)");
     expect(client).not.toContain("noValidate");
+  });
+
+  it("redirects anonymous admin traffic before the heavy Payload catch-all loads", () => {
+    const proxy = source("proxy.ts");
+
+    expect(proxy).toContain('const PAYLOAD_AUTH_COOKIE = "payload-token"');
+    expect(proxy).toContain('matcher: ["/admin/:path*"]');
+    expect(proxy).toContain("NextResponse.redirect(loginUrl, 307)");
+    expect(proxy).toContain('"Cache-Control", "private, no-store, max-age=0"');
+
+    expect(shouldRedirectAnonymousAdmin("/admin", false)).toBe(true);
+    expect(shouldRedirectAnonymousAdmin("/admin/seo?period=30", false)).toBe(
+      true
+    );
+    expect(shouldRedirectAnonymousAdmin("/admin/login", false)).toBe(false);
+    expect(
+      shouldRedirectAnonymousAdmin("/admin/create-first-user", false)
+    ).toBe(false);
+    expect(shouldRedirectAnonymousAdmin("/admin", true)).toBe(false);
+    expect(shouldRedirectAnonymousAdmin("/catalog", false)).toBe(false);
   });
 
   it("only redirects to safe paths inside the admin", () => {

@@ -1,19 +1,8 @@
-const ADMIN_HOME = "/admin";
-const AUTH_ONLY_PATHS = [
-  "/admin/login",
-  "/admin/logout",
-  "/admin/forgot",
-  "/admin/reset",
-  "/admin/create-first-user",
-  "/admin/unauthorized",
-  "/admin/inactivity"
-] as const;
-
-function isAuthOnlyPath(pathname: string): boolean {
-  return AUTH_ONLY_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
-}
+import {
+  ADMIN_HOME,
+  isAdminAuthOnlyPath,
+  isAdminPath
+} from "@/lib/admin/routes";
 
 export function getSafeAdminRedirect(
   requestedPath: string | null,
@@ -30,14 +19,10 @@ export function getSafeAdminRedirect(
   try {
     const safeOrigin = new URL(origin).origin;
     const target = new URL(requestedPath, safeOrigin);
-    const isAdminPath =
-      target.pathname === ADMIN_HOME ||
-      target.pathname.startsWith(`${ADMIN_HOME}/`);
-
     if (
       target.origin !== safeOrigin ||
-      !isAdminPath ||
-      isAuthOnlyPath(target.pathname)
+      !isAdminPath(target.pathname) ||
+      isAdminAuthOnlyPath(target.pathname)
     ) {
       return ADMIN_HOME;
     }
