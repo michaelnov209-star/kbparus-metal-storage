@@ -30,12 +30,14 @@ export const DEFAULT_CONTACTS: SiteContacts = {
   worktime: "Пн–Пт 9:00–18:00",
   legalName: "ООО «Технокам»",
   socials: {
-    telegram: "mailto:info@kbparus.ru",
-    whatsapp: "tel:+74994033962",
-    max: "tel:+74994033962",
     vk: "https://www.kbparus.ru/"
   }
 };
+
+export interface SiteSocialLinkInput {
+  platform?: string | null;
+  url?: string | null;
+}
 
 interface ContactsGlobal {
   phones?: Array<{ number?: string | null }> | null;
@@ -44,7 +46,7 @@ interface ContactsGlobal {
   address?: string | null;
   legalName?: string | null;
   inn?: string | null;
-  socials?: Array<{ platform?: string | null; url?: string | null }> | null;
+  socials?: SiteSocialLinkInput[] | null;
 }
 
 function phoneHref(value: string): string {
@@ -56,7 +58,7 @@ function emailHref(value: string): string {
   return `mailto:${value}`;
 }
 
-function mapSocials(items: ContactsGlobal["socials"]): SiteContacts["socials"] {
+export function mapContactSocials(items: ContactsGlobal["socials"]): SiteContacts["socials"] {
   const socials: SiteContacts["socials"] = { ...DEFAULT_CONTACTS.socials };
   for (const item of items || []) {
     if (!item?.platform || !item.url) continue;
@@ -91,7 +93,7 @@ export async function getSiteContacts(): Promise<SiteContacts> {
       worktime: contacts.workingHours?.trim() || DEFAULT_CONTACTS.worktime,
       legalName: contacts.legalName?.trim() || DEFAULT_CONTACTS.legalName,
       inn: contacts.inn?.trim() || undefined,
-      socials: mapSocials(contacts.socials)
+      socials: mapContactSocials(contacts.socials)
     };
   } catch (error) {
     console.warn("[cms] getSiteContacts failed:", error);

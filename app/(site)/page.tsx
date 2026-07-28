@@ -720,19 +720,19 @@ export default async function Home() {
             <div className="social-row">
               <a
                 aria-label={contacts.socials.telegram ? "Написать в Telegram" : "Написать по электронной почте"}
-                className="telegram"
+                className={contacts.socials.telegram ? "telegram" : "contact-fallback"}
                 href={contacts.socials.telegram || contacts.email.href}
-                data-metrika-goal="messenger_click"
+                data-metrika-goal={contacts.socials.telegram ? "messenger_click" : "email_click"}
               >
-                <Send size={30} />
+                {contacts.socials.telegram ? <Send size={30} /> : <Mail size={30} />}
               </a>
               <a
                 aria-label={contacts.socials.whatsapp ? "Написать в WhatsApp" : "Позвонить в отдел продаж"}
-                className="whatsapp"
+                className={contacts.socials.whatsapp ? "whatsapp" : "contact-fallback"}
                 href={contacts.socials.whatsapp || contacts.phones[0].href}
-                data-metrika-goal="messenger_click"
+                data-metrika-goal={contacts.socials.whatsapp ? "messenger_click" : "phone_click"}
               >
-                <MessageCircle size={30} />
+                {contacts.socials.whatsapp ? <MessageCircle size={30} /> : <PhoneCall size={30} />}
               </a>
               <a className="vk" href={contacts.socials.vk || "https://www.kbparus.ru/"} target="_blank" rel="noreferrer">VK</a>
             </div>
