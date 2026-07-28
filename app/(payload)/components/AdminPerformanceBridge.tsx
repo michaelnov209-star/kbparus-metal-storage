@@ -1,0 +1,155 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+const IDLE_ADMIN_ROUTES = [
+  "/admin",
+  "/admin/collections/products",
+  "/admin/seo"
+] as const;
+
+type NavigatorWithConnection = Navigator & {
+  connection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+};
+
+type WindowWithIdleCallback = Window & {
+  cancelIdleCallback?: (handle: number) => void;
+  requestIdleCallback?: (
+    callback: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void,
+    options?: { timeout: number }
+  ) => number;
+};
+
+function canPrefetch(): boolean {
+  const connection = (navigator as NavigatorWithConnection).connection;
+  return (
+    !connection?.saveData &&
+    connection?.effectiveType !== "slow-2g" &&
+    connection?.effectiveType !== "2g"
+  );
+}
+
+function getAdminHref(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) return null;
+
+  const anchor = target.closest<HTMLAnchorElement>("a[href]");
+  if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return null;
+
+  const url = new URL(anchor.href, window.location.origin);
+  if (url.origin !== window.location.origin || !url.pathname.startsWith("/admin")) return null;
+  if (url.pathname === "/admin/logout" || url.pathname === window.location.pathname) return null;
+
+  return url.pathname + url.search;
+}
+
+export function AdminPerformanceBridge() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const prefetchedRoutes = useRef(new Set<string>());
+  const clearTimer = useRef<number | null>(null);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    document.documentElement.removeAttribute("data-kb-admin-navigating");
+    setStatus("");
+
+    if (clearTimer.current !== null) {
+      window.clearTimeout(clearTimer.current);
+      clearTimer.current = null;
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    function prefetchRoute(href: string | null) {
+      if (!href || !canPrefetch() || prefetchedRoutes.current.has(href)) return;
+      prefetchedRoutes.current.add(href);
+      router.prefetch(href);
+    }
+
+    function handleIntent(event: Event) {
+      prefetchRoute(getAdminHref(event.target));
+    }
+
+    function handleNavigation(event: MouseEvent) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const href = getAdminHref(event.target);
+      if (!href) return;
+
+      document.documentElement.setAttribute("data-kb-admin-navigating", "true");
+      setStatus("Открываем раздел…");
+
+      if (clearTimer.current !== null) window.clearTimeout(clearTimer.current);
+      clearTimer.current = window.setTimeout(() => {
+        document.documentElement.removeAttribute("data-kb-admin-navigating");
+        setStatus("");
+      }, 12_000);
+    }
+
+    document.addEventListener("pointerover", handleIntent, true);
+    document.addEventListener("focusin", handleIntent, true);
+    document.addEventListener("touchstart", handleIntent, {
+      capture: true,
+      passive: true
+    });
+    document.addEventListener("click", handleNavigation, true);
+
+    const idleWindow = window as WindowWithIdleCallback;
+    const idleHandles: number[] = [];
+    const timeoutHandles: number[] = [];
+
+    if (canPrefetch()) {
+      IDLE_ADMIN_ROUTES.filter((route) => route !== pathname).forEach((route, index) => {
+        const schedule = () => {
+          if (idleWindow.requestIdleCallback) {
+            idleHandles.push(
+              idleWindow.requestIdleCallback(() => prefetchRoute(route), {
+                timeout: 5_000 + index * 1_000
+              })
+            );
+          } else {
+            timeoutHandles.push(
+              window.setTimeout(() => prefetchRoute(route), 3_000 + index * 1_200)
+            );
+          }
+        };
+
+        timeoutHandles.push(window.setTimeout(schedule, 2_000 + index * 1_200));
+      });
+    }
+
+    return () => {
+      document.removeEventListener("pointerover", handleIntent, true);
+      document.removeEventListener("focusin", handleIntent, true);
+      document.removeEventListener("touchstart", handleIntent, true);
+      document.removeEventListener("click", handleNavigation, true);
+      idleHandles.forEach((handle) => idleWindow.cancelIdleCallback?.(handle));
+      timeoutHandles.forEach((handle) => window.clearTimeout(handle));
+      if (clearTimer.current !== null) window.clearTimeout(clearTimer.current);
+    };
+  }, [pathname, router]);
+
+  return (
+    <>
+      <div className="kb-admin-route-progress" aria-hidden="true">
+        <span />
+      </div>
+      <div className="kb-admin-route-status" aria-live="polite" aria-atomic="true">
+        {status}
+      </div>
+    </>
+  );
+}

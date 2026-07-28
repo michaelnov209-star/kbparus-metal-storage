@@ -4,6 +4,7 @@ import {
   smtpSettingsFromEnv,
   smtpTransportOptions
 } from "@/lib/email/smtp";
+import { normalizeSmtpFailure, smtpErrorLogDetails } from "@/lib/email/smtp-error";
 
 describe("SMTP runtime configuration", () => {
   it("uses implicit TLS by default on port 465", () => {
@@ -63,5 +64,35 @@ describe("SMTP runtime configuration", () => {
     });
 
     expect(isSmtpConfigured(settings)).toBe(false);
+  });
+});
+
+
+describe("SMTP error safety", () => {
+  it("maps authentication and network failures to safe public codes", () => {
+    expect(normalizeSmtpFailure({ code: "EAUTH", response: "private provider response" })).toBe(
+      "smtp-auth-failed"
+    );
+    expect(normalizeSmtpFailure({ code: "ESOCKET", address: "private-host" })).toBe(
+      "smtp-connection-failed"
+    );
+    expect(normalizeSmtpFailure(new Error("credential details"))).toBe(
+      "smtp-send-failed"
+    );
+  });
+
+  it("logs only bounded technical metadata", () => {
+    expect(
+      smtpErrorLogDetails({
+        code: "EAUTH",
+        command: "AUTH PLAIN",
+        responseCode: 535,
+        response: "must-not-leak"
+      })
+    ).toEqual({
+      code: "EAUTH",
+      command: "AUTH PLAIN",
+      responseCode: 535
+    });
   });
 });

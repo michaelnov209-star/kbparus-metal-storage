@@ -318,10 +318,9 @@ function categoryReadiness(category: Category, productCount: number): number {
 }
 
 function productReadiness(product: Product): number {
-  let score = 15;
-  if (product.title) score += 15;
-  if (product.summary) score += 15;
-  if (product.description) score += 15;
+  let score = 20;
+  if (product.title) score += 20;
+  if (product.summary) score += 20;
   if (resolveImageUrl(product.image, product.legacyImagePath)) score += 20;
   if (product.priceMode) score += 10;
   if (product._status !== "draft") score += 10;
@@ -344,7 +343,7 @@ function roleLabel(role: CmsRole | null): string {
   return "Доступ ограничен";
 }
 
-async function getDashboardContext(payload: Payload, role: CmsRole | null): Promise<DashboardContext> {
+async function readDashboardContext(payload: Payload, role: CmsRole | null): Promise<DashboardContext> {
   try {
     const hasContentAccess = canEditContent({ role });
     const hasMediaAccess = canManageMedia({ role });
@@ -414,7 +413,6 @@ async function getDashboardContext(payload: Payload, role: CmsRole | null): Prom
               shortTitle: true,
               category: true,
               summary: true,
-              description: true,
               image: true,
               legacyImagePath: true,
               priceMode: true,
@@ -485,6 +483,43 @@ async function getDashboardContext(payload: Payload, role: CmsRole | null): Prom
     console.error("Admin dashboard failed to read Payload context", error);
     return { cmsOk: false, counts: emptyCounts, catalog: [] };
   }
+}
+
+const DASHBOARD_CACHE_TTL_MS = 60_000;
+
+type DashboardCacheEntry = {
+  data?: DashboardContext;
+  expiresAt: number;
+  pending?: Promise<DashboardContext>;
+};
+
+const dashboardContextCache = new Map<string, DashboardCacheEntry>();
+
+async function getDashboardContext(
+  payload: Payload,
+  role: CmsRole | null
+): Promise<DashboardContext> {
+  const key = role || "restricted";
+  const now = Date.now();
+  const cached = dashboardContextCache.get(key);
+
+  if (cached?.data && cached.expiresAt > now) return cached.data;
+  if (cached?.pending) return cached.pending;
+
+  const pending = readDashboardContext(payload, role);
+  dashboardContextCache.set(key, {
+    data: cached?.data,
+    expiresAt: cached?.expiresAt ?? 0,
+    pending
+  });
+
+  const data = await pending;
+  dashboardContextCache.set(key, {
+    data,
+    expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS
+  });
+
+  return data;
 }
 
 function fmt(value: number | null): string {

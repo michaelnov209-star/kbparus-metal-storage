@@ -3,8 +3,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { getSafeAdminRedirect } from "./redirect";
 
-const ADMIN_HOME = "/admin";
-
 function currentAdminRedirect(): string {
   const requestedPath = new URLSearchParams(window.location.search).get("redirect");
   return getSafeAdminRedirect(requestedPath, window.location.origin);
@@ -32,26 +30,18 @@ export function LoginClient() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function warmAdminAndCheckSession() {
+    async function checkSession() {
       try {
-        const [sessionResult] = await Promise.allSettled([
-          fetch("/api/users/me?depth=0", {
-            cache: "no-store",
-            credentials: "include",
-            headers: { "Accept-Language": "ru" },
-            signal: controller.signal
-          }),
-          fetch(`${ADMIN_HOME}?warmup=1`, {
-            cache: "no-store",
-            credentials: "include",
-            redirect: "follow",
-            signal: controller.signal
-          })
-        ]);
+        const response = await fetch("/api/users/me?depth=0", {
+          cache: "no-store",
+          credentials: "include",
+          headers: { "Accept-Language": "ru" },
+          signal: controller.signal
+        });
 
-        if (sessionResult.status !== "fulfilled" || !sessionResult.value.ok) return;
+        if (!response.ok) return;
 
-        const data = (await sessionResult.value.json()) as { user?: unknown };
+        const data = (await response.json()) as { user?: unknown };
         if (data.user) {
           window.location.replace(currentAdminRedirect());
         }
@@ -65,7 +55,7 @@ export function LoginClient() {
       }
     }
 
-    void warmAdminAndCheckSession();
+    void checkSession();
     return () => controller.abort();
   }, []);
 

@@ -78,8 +78,8 @@ export default buildConfig({
       ],
       beforeNavLinks: [
         {
-          path: "@/app/(payload)/components/SeoNavLink",
-          exportName: "SeoNavLink"
+          path: "@/app/(payload)/components/AdminWorkspaceNav",
+          exportName: "AdminWorkspaceNav"
         }
       ],
       beforeDashboard: [

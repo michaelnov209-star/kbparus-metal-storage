@@ -24,11 +24,12 @@ describe("admin login fast path", () => {
     expect(layout).not.toContain("getSiteContacts");
   });
 
-  it("keeps Payload authentication and warms it in the background", () => {
+  it("keeps Payload authentication without rendering the dashboard in the background", () => {
     const client = source("app/(auth)/admin/login/LoginClient.tsx");
 
     expect(client).toContain('fetch("/api/users/me?depth=0"');
-    expect(client).toContain('fetch(`${ADMIN_HOME}?warmup=1`');
+    expect(client).not.toContain("warmup=1");
+    expect(client).not.toContain('fetch("/admin"');
     expect(client).toContain('fetch("/api/users/login"');
     expect(client).toContain('credentials: "include"');
     expect(client).toContain('"Content-Type": "application/json"');

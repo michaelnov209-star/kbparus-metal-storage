@@ -5,6 +5,7 @@ import {
   smtpSettingsFromEnv,
   type SmtpSettings
 } from "@/lib/email/smtp";
+import { normalizeSmtpFailure, smtpErrorLogDetails } from "@/lib/email/smtp-error";
 import type { CmsLeadInput } from "@/lib/leads/cms-record";
 
 export interface LeadEmailConfig extends SmtpSettings {
@@ -138,9 +139,10 @@ export async function sendLeadEmail(lead: CmsLeadInput, config: LeadEmailConfig)
 
     return { ok: true };
   } catch (error) {
+    console.error("[lead-email] SMTP delivery failed", smtpErrorLogDetails(error));
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "email-send-failed"
+      error: normalizeSmtpFailure(error)
     };
   }
 }
