@@ -5,6 +5,7 @@ import { LoginBranding as LoginBranding_879efb5d1a08beb2c3805a22276489dc } from 
 import { AdminWorkspaceNav as AdminWorkspaceNav_cc95807f4ffc6fedc9d072d4bfb24d93 } from '@/app/(payload)/components/AdminWorkspaceNav'
 import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { SeoReportingViewLoader as SeoReportingViewLoader_e64b89486b8fd2dec7e89eb6fe26b551 } from '@/app/(payload)/components/SeoReportingViewLoader'
+import { AdminIntegrationsViewLoader as AdminIntegrationsViewLoader_41e3e4ba4786e115228fd57d180c423c } from '@/app/(payload)/components/AdminIntegrationsViewLoader'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -16,5 +17,6 @@ export const importMap = {
   "@/app/(payload)/components/AdminWorkspaceNav#AdminWorkspaceNav": AdminWorkspaceNav_cc95807f4ffc6fedc9d072d4bfb24d93,
   "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "@/app/(payload)/components/SeoReportingViewLoader#SeoReportingViewLoader": SeoReportingViewLoader_e64b89486b8fd2dec7e89eb6fe26b551,
+  "@/app/(payload)/components/AdminIntegrationsViewLoader#AdminIntegrationsViewLoader": AdminIntegrationsViewLoader_41e3e4ba4786e115228fd57d180c423c,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

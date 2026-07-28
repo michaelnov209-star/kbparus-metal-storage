@@ -99,6 +99,17 @@ export default buildConfig({
           meta: {
             title: "SEO и позиции — КБ Парус"
           }
+        },
+        integrations: {
+          Component: {
+            path: "@/app/(payload)/components/AdminIntegrationsViewLoader",
+            exportName: "AdminIntegrationsViewLoader"
+          },
+          path: "/integrations",
+          exact: true,
+          meta: {
+            title: "Интеграции — КБ Парус"
+          }
         }
       }
     },
