@@ -31,4 +31,17 @@ describe("site contact links", () => {
       vk: "https://www.kbparus.ru/"
     });
   });
+
+  it("rejects unsafe, malformed and non-web URLs from editable CMS content", () => {
+    expect(
+      mapContactSocials([
+        { platform: "telegram", url: "javascript:alert(1)" },
+        { platform: "whatsapp", url: "tel:+74994033962" },
+        { platform: "max", url: "not a url" },
+        { platform: "vk", url: "http://vk.com/kbparus" }
+      ])
+    ).toEqual({
+      vk: "https://www.kbparus.ru/"
+    });
+  });
 });

@@ -39,6 +39,8 @@ export interface SiteSocialLinkInput {
   url?: string | null;
 }
 
+const SAFE_SOCIAL_PROTOCOLS = new Set(["https:"]);
+
 interface ContactsGlobal {
   phones?: Array<{ number?: string | null }> | null;
   email?: string | null;
@@ -62,10 +64,19 @@ export function mapContactSocials(items: ContactsGlobal["socials"]): SiteContact
   const socials: SiteContacts["socials"] = { ...DEFAULT_CONTACTS.socials };
   for (const item of items || []) {
     if (!item?.platform || !item.url) continue;
-    if (item.platform === "telegram") socials.telegram = item.url;
-    if (item.platform === "whatsapp") socials.whatsapp = item.url;
-    if (item.platform === "max") socials.max = item.url;
-    if (item.platform === "vk") socials.vk = item.url;
+    let safeUrl: string;
+    try {
+      const parsed = new URL(item.url.trim());
+      if (!SAFE_SOCIAL_PROTOCOLS.has(parsed.protocol)) continue;
+      safeUrl = parsed.toString();
+    } catch {
+      continue;
+    }
+
+    if (item.platform === "telegram") socials.telegram = safeUrl;
+    if (item.platform === "whatsapp") socials.whatsapp = safeUrl;
+    if (item.platform === "max") socials.max = safeUrl;
+    if (item.platform === "vk") socials.vk = safeUrl;
   }
   return socials;
 }
