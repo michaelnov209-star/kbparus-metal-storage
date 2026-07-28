@@ -48,4 +48,30 @@ describe("admin layout isolation", () => {
     expect(training).toContain("@payloadcms/ui/elements/Link");
     expect(training).not.toContain('<a className="kb-admin-training__link"');
   });
+
+  it("renders the SEO root view inside Payload's default navigation template", () => {
+    const loader = source(
+      "app/(payload)/components/SeoReportingViewLoader.tsx"
+    );
+    const view = source("app/(payload)/components/SeoReportingView.tsx");
+
+    expect(loader).toContain("props: AdminViewServerProps");
+    expect(loader).not.toContain("Pick<");
+    expect(view).toContain("@payloadcms/next/templates");
+    expect(view).toContain("<DefaultTemplate");
+    expect(view).toContain("params={params}");
+    expect(view).toContain("req={initPageResult.req}");
+    expect(view).toContain("viewType={viewType}");
+    expect(view).toContain("searchParams={searchParams}");
+    expect(view).not.toContain(
+      "visibleEntities={initPageResult.visibleEntities}"
+    );
+    expect(view).toContain(
+      "collections: initPageResult.visibleEntities?.collections"
+    );
+    expect(view).toContain(
+      "globals: initPageResult.visibleEntities?.globals"
+    );
+    expect(view).toContain("{content}");
+  });
 });

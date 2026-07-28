@@ -1,12 +1,7 @@
 import type { AdminViewServerProps } from "payload";
 
-type SeoReportingViewLoaderProps = Pick<
-  AdminViewServerProps,
-  "initPageResult" | "user"
->;
-
 export async function SeoReportingViewLoader(
-  props: SeoReportingViewLoaderProps
+  props: AdminViewServerProps
 ) {
   const { SeoReportingView } = await import("./SeoReportingView");
   return <SeoReportingView {...props} />;

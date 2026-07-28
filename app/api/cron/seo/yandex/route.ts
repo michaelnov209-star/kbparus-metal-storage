@@ -54,8 +54,8 @@ export async function GET(request: Request) {
 
   if (!isYandexHistoryEnabled()) {
     return NextResponse.json(
-      { error: "SEO history is disabled until the database migration is approved" },
-      { status: 503, headers: privateHeaders }
+      { status: "skipped", reason: "disabled" },
+      { status: 200, headers: privateHeaders }
     );
   }
 

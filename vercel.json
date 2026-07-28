@@ -2,6 +2,12 @@
   "framework": "nextjs",
   "fluid": true,
   "buildCommand": "npm run vercel-build",
+  "crons": [
+    {
+      "path": "/api/cron/seo/yandex",
+      "schedule": "15 3 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",

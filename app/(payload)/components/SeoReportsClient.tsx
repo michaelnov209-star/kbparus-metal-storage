@@ -14,13 +14,16 @@ import {
   RefreshCw,
   Search,
   Settings2,
+  Target,
   TrendingUp
 } from "lucide-react";
 import type {
   SeoProvider,
   SeoReportDevice,
+  SeoReportPeriod,
   SeoReportResponse
 } from "@/lib/seo-reporting/types";
+import { SeoGoalsClient } from "./SeoGoalsClient";
 
 const PERIODS = [
   { days: 30, label: "1 месяц" },
@@ -248,8 +251,12 @@ function exportCsv(report: SeoReportResponse) {
   URL.revokeObjectURL(url);
 }
 
+type SeoReportView = "visibility" | "goals";
+
 export function SeoReportsClient() {
-  const [period, setPeriod] = useState<number>(30);
+  const [filtersReady, setFiltersReady] = useState(false);
+  const [activeView, setActiveView] = useState<SeoReportView>("visibility");
+  const [period, setPeriod] = useState<SeoReportPeriod>(30);
   const [provider, setProvider] = useState<SeoProvider>("yandex");
   const [device, setDevice] = useState<SeoReportDevice>("all");
   const [queryDraft, setQueryDraft] = useState("");
@@ -257,6 +264,30 @@ export function SeoReportsClient() {
   const [report, setReport] = useState<SeoReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [goalsLoading, setGoalsLoading] = useState(false);
+  const [goalsRefreshKey, setGoalsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedPeriod = Number(params.get("period"));
+    const requestedProvider = params.get("provider");
+    const requestedDevice = params.get("device");
+    const requestedQuery = params.get("query")?.trim() ?? "";
+
+    setActiveView(params.get("view") === "goals" ? "goals" : "visibility");
+    if (PERIODS.some((item) => item.days === requestedPeriod)) {
+      setPeriod(requestedPeriod as SeoReportPeriod);
+    }
+    if (PROVIDERS.some((item) => item.value === requestedProvider)) {
+      setProvider(requestedProvider as SeoProvider);
+    }
+    if (DEVICES.some((item) => item.value === requestedDevice)) {
+      setDevice(requestedDevice as SeoReportDevice);
+    }
+    setQueryDraft(requestedQuery);
+    setQuery(requestedQuery);
+    setFiltersReady(true);
+  }, []);
 
   const loadReport = useCallback(
     async (signal?: AbortSignal) => {
@@ -302,20 +333,50 @@ export function SeoReportsClient() {
   );
 
   useEffect(() => {
+    if (!filtersReady || activeView !== "visibility") return;
+
     const controller = new AbortController();
     void loadReport(controller.signal);
     return () => controller.abort();
-  }, [loadReport]);
+  }, [activeView, filtersReady, loadReport]);
 
   useEffect(() => {
+    if (!filtersReady) return;
+
     const params = new URLSearchParams(window.location.search);
+    params.set("view", activeView);
     params.set("period", String(period));
-    params.set("provider", provider);
-    params.set("device", device);
-    if (query) params.set("query", query);
-    else params.delete("query");
-    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
-  }, [device, period, provider, query]);
+
+    if (activeView === "visibility") {
+      params.set("provider", provider);
+      params.set("device", device);
+      if (query) params.set("query", query);
+      else params.delete("query");
+    } else {
+      params.delete("provider");
+      params.delete("device");
+      params.delete("query");
+    }
+
+    const search = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      search ? `${window.location.pathname}?${search}` : window.location.pathname
+    );
+  }, [activeView, device, filtersReady, period, provider, query]);
+
+  const handleGoalsLoadingChange = useCallback((value: boolean) => {
+    setGoalsLoading(value);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    if (activeView === "goals") {
+      setGoalsRefreshKey((value) => value + 1);
+      return;
+    }
+    void loadReport();
+  }, [activeView, loadReport]);
 
   const queryStats = useMemo(() => {
     const rows = report?.queries || [];
@@ -336,33 +397,108 @@ export function SeoReportsClient() {
 
   const summary = report?.summary;
   const providerLabel = PROVIDERS.find((item) => item.value === provider)?.label ?? provider;
+  const activeLoading = activeView === "goals" ? goalsLoading : loading;
+
+  if (!filtersReady) {
+    return (
+      <section
+        className="kb-seo-view"
+        aria-label="Загрузка раздела аналитики"
+        aria-busy="true"
+      >
+        <div className="kb-seo-initializing" role="status" aria-live="polite">
+          <LoaderCircle className="is-spinning" size={22} aria-hidden />
+          <div>
+            <strong>Открываю аналитику</strong>
+            <span>Восстанавливаю выбранный раздел и период.</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="kb-seo-view" aria-label="SEO-отчёты и позиции">
+    <section
+      className="kb-seo-view"
+      aria-label={
+        activeView === "goals"
+          ? "Цели и конверсии"
+          : "SEO-отчёты и позиции"
+      }
+    >
       <header className="kb-seo-view__header">
         <div>
           <span className="kb-seo-view__eyebrow">
-            <TrendingUp size={16} aria-hidden />
+            {activeView === "goals" ? (
+              <Target size={16} aria-hidden />
+            ) : (
+              <TrendingUp size={16} aria-hidden />
+            )}
             SEO Reporting Center
           </span>
-          <h1>Поисковая видимость и позиции</h1>
+          <h1>
+            {activeView === "goals"
+              ? "Цели и конверсии"
+              : "Поисковая видимость и позиции"}
+          </h1>
           <p>
-            Реальные показы, клики, CTR и средняя позиция по данным поисковых систем.
-            Позиция считается только там, где сайт участвовал в выдаче.
+            {activeView === "goals"
+              ? "Звонки, заявки, переходы в мессенджеры и другие полезные действия по всем каналам. Видно и количество событий, и реальные целевые визиты."
+              : "Реальные показы, клики, CTR и средняя позиция по данным поисковых систем. Позиция считается только там, где сайт участвовал в выдаче."}
           </p>
         </div>
         <button
           className="kb-seo-refresh"
           type="button"
-          onClick={() => void loadReport()}
-          disabled={loading}
+          onClick={handleRefresh}
+          disabled={activeLoading || !filtersReady}
         >
-          <RefreshCw size={16} aria-hidden className={loading ? "is-spinning" : ""} />
+          <RefreshCw
+            size={16}
+            aria-hidden
+            className={activeLoading ? "is-spinning" : ""}
+          />
           Обновить
         </button>
       </header>
 
-      <div className="kb-seo-controls" aria-label="Фильтры отчёта">
+      <div
+        className="kb-seo-tabs"
+        role="tablist"
+        aria-label="Разделы аналитики"
+      >
+        <button
+          id="kb-seo-tab-visibility"
+          type="button"
+          role="tab"
+          aria-selected={activeView === "visibility"}
+          aria-controls="kb-seo-panel-visibility"
+          className={activeView === "visibility" ? "is-active" : undefined}
+          onClick={() => setActiveView("visibility")}
+        >
+          <BarChart3 size={17} aria-hidden />
+          Поисковая видимость
+        </button>
+        <button
+          id="kb-seo-tab-goals"
+          type="button"
+          role="tab"
+          aria-selected={activeView === "goals"}
+          aria-controls="kb-seo-panel-goals"
+          className={activeView === "goals" ? "is-active" : undefined}
+          onClick={() => setActiveView("goals")}
+        >
+          <Target size={17} aria-hidden />
+          Цели и конверсии
+        </button>
+      </div>
+
+      <div
+        className={`kb-seo-controls ${
+          activeView === "goals" ? "kb-seo-controls--period-only" : ""
+        }`}
+        aria-label="Фильтры отчёта"
+      >
         <div className="kb-seo-control-group">
           <span>Период</span>
           <div className="kb-seo-segmented">
@@ -379,8 +515,10 @@ export function SeoReportsClient() {
           </div>
         </div>
 
-        <div className="kb-seo-control-group">
-          <span>Поисковик</span>
+        {activeView === "visibility" ? (
+          <>
+            <div className="kb-seo-control-group">
+              <span>Поисковик</span>
           <div className="kb-seo-segmented">
             {PROVIDERS.map((item) => (
               <button
@@ -429,9 +567,18 @@ export function SeoReportsClient() {
             />
             <button type="submit">Показать</button>
           </div>
-        </form>
+            </form>
+          </>
+        ) : null}
       </div>
 
+      <div
+        id="kb-seo-panel-visibility"
+        role="tabpanel"
+        aria-labelledby="kb-seo-tab-visibility"
+        aria-busy={activeView === "visibility" && loading}
+        hidden={activeView !== "visibility"}
+      >
       {loading && !report ? (
         <div className="kb-seo-state">
           <LoaderCircle className="is-spinning" size={28} aria-hidden />
@@ -670,6 +817,23 @@ export function SeoReportsClient() {
           ) : null}
         </>
       ) : null}
+      </div>
+
+      <div
+        id="kb-seo-panel-goals"
+        role="tabpanel"
+        aria-labelledby="kb-seo-tab-goals"
+        aria-busy={activeView === "goals" && goalsLoading}
+        hidden={activeView !== "goals"}
+      >
+        {activeView === "goals" ? (
+          <SeoGoalsClient
+            period={period}
+            refreshKey={goalsRefreshKey}
+            onLoadingChange={handleGoalsLoadingChange}
+          />
+        ) : null}
+      </div>
     </section>
   );
 }
