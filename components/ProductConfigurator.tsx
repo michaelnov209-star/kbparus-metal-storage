@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, ClipboardCheck, Info, Ruler, Send, ShieldCheck } from "lucide-react";
-import { getCalculatorProfile, type CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
+import { getCalculatorProfile, type CalculatorProfile, type CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem } from "@/lib/calculator/pricing";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import type { CalculatorInput } from "@/lib/calculator/types";
@@ -10,8 +10,11 @@ import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
 import { createLeadConsent } from "@/lib/leads/contract";
 
-function buildInput(profileId: CalculatorProfileId): CalculatorInput {
-  const profile = getCalculatorProfile(profileId);
+function buildInput(
+  profileId: CalculatorProfileId,
+  profileOverride?: CalculatorProfile
+): CalculatorInput {
+  const profile = profileOverride ?? getCalculatorProfile(profileId);
   const defaults = profile.defaultValues;
 
   return {
@@ -47,14 +50,15 @@ function buildInput(profileId: CalculatorProfileId): CalculatorInput {
 
 interface ProductConfiguratorProps {
   profileId: CalculatorProfileId;
+  profileData?: CalculatorProfile;
   productTitle?: string;
   productUrl?: string;
   productImage?: string;
 }
 
-export function ProductConfigurator({ profileId, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
-  const profile = getCalculatorProfile(profileId);
-  const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId));
+export function ProductConfigurator({ profileId, profileData, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
+  const profile = profileData ?? getCalculatorProfile(profileId);
+  const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId, profile));
   const [contact, setContact] = useState({ name: "", phone: "" });
   const [status, setStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
@@ -62,7 +66,7 @@ export function ProductConfigurator({ profileId, productTitle, productUrl, produ
   const [submittingLead, setSubmittingLead] = useState(false);
   const formStartedAt = useRef<number>(Date.now());
   const calculatorStarted = useRef(false);
-  const result = useMemo(() => calculateStorageSystem(input), [input]);
+  const result = useMemo(() => calculateStorageSystem(input, profile), [input, profile]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
 
   useEffect(() => {

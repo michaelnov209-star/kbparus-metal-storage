@@ -1,884 +1,414 @@
-import { Suspense, type ComponentPropsWithoutRef } from "react";
-import type { Payload, ServerProps } from "payload";
+import { Suspense } from "react";
+import type { AdminViewServerProps, Payload } from "payload";
+import { DefaultTemplate } from "@payloadcms/next/templates";
 import { Link } from "@payloadcms/ui/elements/Link";
-import type { Category, Media, Product } from "@/payload-types";
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Calculator,
+  CircleGauge,
+  Contact,
+  FileClock,
+  Image as ImageIcon,
+  Inbox,
+  LayoutDashboard,
+  Package,
+  Plus,
+  Settings2,
+  ShieldCheck,
+  UploadCloud
+} from "lucide-react";
+
 import {
   canEditContent,
   canManageMedia,
   getCmsRole,
   type CmsRole
 } from "@/payload/access/rbac";
-import {
-  Activity,
-  ArrowRight,
-  BarChart3,
-  BookOpen,
-  Boxes,
-  Calculator as CalculatorIcon,
-  CheckCircle2,
-  Clock3,
-  ExternalLink,
-  Eye,
-  FileText,
-  Image as ImageIcon,
-  Inbox,
-  Layers,
-  LayoutDashboard,
-  ListChecks,
-  MapPin,
-  Package,
-  Pencil,
-  Phone,
-  Plus,
-  Rocket,
-  ShieldCheck,
-  Sparkles,
-  UploadCloud,
-  Users
-} from "lucide-react";
 
-import { AdminTraining } from "./AdminTraining";
-
-type Counts = {
+type DashboardCounts = {
   products: number | null;
-  categories: number | null;
+  calculatorProfiles: number | null;
   media: number | null;
   leads: number | null;
 };
 
-type AdminCatalogProduct = {
-  id: string;
+type WorkspaceItem = {
   title: string;
-  slug: string;
-  sortOrder: number;
-  isDraft: boolean;
-  priceMode: Product["priceMode"];
-  pageMode: Product["pageMode"];
-  categorySlug: string;
-  imageUrl: string | null;
-  readiness: number;
+  description: string;
+  href: string;
+  icon: typeof Package;
+  access: "admin" | "content" | "media";
+  accent?: boolean;
 };
 
-type AdminCatalogCategory = {
-  id: string;
-  title: string;
-  slug: string;
-  sortOrder: number;
-  isDraft: boolean;
-  imageUrl: string | null;
-  readiness: number;
-  products: AdminCatalogProduct[];
-};
-
-type DashboardContext = {
-  cmsOk: boolean;
-  counts: Counts;
-  catalog: AdminCatalogCategory[];
-};
-
-const sections = [
+const workspaceItems: WorkspaceItem[] = [
   {
-    group: "Контент сайта",
-    items: [
-      {
-        title: "Главная страница",
-        text: "Hero, метрики, преимущества, кейсы, отзывы, FAQ, партнёры и CTA-блоки.",
-        href: "/admin/globals/home-content",
-        cta: "Редактировать главную",
-        icon: LayoutDashboard,
-        tourId: "card-home"
-      },
-      {
-        title: "Контакты компании",
-        text: "Телефоны, адрес, мессенджеры, часы работы и сквозные данные в шапке и футере.",
-        href: "/admin/globals/contacts",
-        cta: "Проверить контакты",
-        icon: Phone
-      }
-    ]
+    title: "Главная страница",
+    description: "Первый экран, преимущества, кейсы, FAQ и призывы к действию.",
+    href: "/admin/globals/home-content",
+    icon: LayoutDashboard,
+    access: "content"
   },
   {
-    group: "Каталог и калькулятор",
-    items: [
-      {
-        title: "Товары каталога",
-        text: "Карточки оборудования, фото, галереи, описание, режим цены и привязка к калькулятору.",
-        href: "/admin/collections/products",
-        cta: "Открыть товары",
-        icon: Package,
-        tourId: "card-products"
-      },
-      {
-        title: "Профили калькулятора",
-        text: "Размеры, нагрузки, базовые цены, коэффициенты и опции расчёта из админки.",
-        href: "/admin/collections/calculator-profiles",
-        cta: "Настроить расчёты",
-        icon: CalculatorIcon,
-        tourId: "card-calculator"
-      },
-      {
-        title: "Медиа-библиотека",
-        text: "Фото, видео, баннеры и документы для главной, каталога и карточек товаров.",
-        href: "/admin/collections/media",
-        cta: "Загрузить медиа",
-        icon: ImageIcon,
-        tourId: "card-media"
-      }
-    ]
+    title: "Товары каталога",
+    description: "Карточки оборудования, цены, изображения и публикация.",
+    href: "/admin/collections/products",
+    icon: Package,
+    access: "content",
+    accent: true
   },
   {
-    group: "SEO и аналитика",
-    items: [
-      {
-        title: "Позиции в поиске",
-        text: "Запросы, страницы, клики, показы, CTR и средняя позиция за месяц, квартал, полгода или год.",
-        href: "/admin/seo",
-        cta: "Открыть SEO-отчёты",
-        icon: BarChart3
-      }
-    ]
-  },
-  {
-    group: "Продажи",
-    items: [
-      {
-        title: "Заявки с сайта",
-        text: "Контакты клиента, источник, UTM, параметры калькулятора и статус передачи.",
-        href: "/admin/collections/leads",
-        cta: "Посмотреть заявки",
-        icon: Inbox
-      }
-    ]
-  }
-];
-
-const quickActions = [
-  { label: "Новый товар", href: "/admin/collections/products/create", icon: Plus, tourId: "quick-products" },
-  { label: "Загрузить фото", href: "/admin/collections/media/create", icon: UploadCloud },
-  { label: "Заявки", href: "/admin/collections/leads", icon: Inbox },
-  { label: "Главная", href: "/admin/globals/home-content", icon: LayoutDashboard }
-];
-
-const workflow = [
-  {
-    title: "1. Добавить фото",
-    text: "Сначала загрузите изображения в медиа-библиотеку и заполните alt-текст.",
-    icon: UploadCloud
-  },
-  {
-    title: "2. Создать товар",
-    text: "Выберите категорию, добавьте описание, галерею и режим цены.",
-    icon: Package
-  },
-  {
-    title: "3. Проверить расчёт",
-    text: "Если товар с конфигуратором, проверьте профиль калькулятора и коэффициенты.",
-    icon: CalculatorIcon
-  },
-  {
-    title: "4. Опубликовать",
-    text: "Нажмите «Опубликовать», проверьте страницу на сайте и передайте ссылку ответственному.",
-    icon: Rocket
-  }
-];
-
-const siteFlow = [
-  {
-    title: "Hero и первый экран",
-    text: "Заголовок, метрики, видеофон и главные CTA.",
-    editHref: "/admin/globals/home-content",
-    previewHref: "/",
-    icon: LayoutDashboard
-  },
-  {
-    title: "Каталог оборудования",
-    text: "17 разделов в порядке публичной витрины.",
-    editHref: "/admin/collections/categories",
-    previewHref: "/#catalog",
-    icon: Layers
-  },
-  {
-    title: "Калькулятор стоимости",
-    text: "Профили, размеры, нагрузки, опции и цена «от».",
-    editHref: "/admin/collections/calculator-profiles",
-    previewHref: "/#calculator",
-    icon: CalculatorIcon
-  },
-  {
-    title: "Кейсы, отзывы, партнёры",
-    text: "Доверие, примеры работ и социальное доказательство.",
-    editHref: "/admin/globals/home-content",
-    previewHref: "/#cases",
-    icon: Users
-  },
-  {
-    title: "FAQ и контакты",
-    text: "Ответы на вопросы, форма связи, адрес и карта.",
-    editHref: "/admin/globals/contacts",
-    previewHref: "/#contacts",
-    icon: Phone
-  }
-];
-
-const roleWorkflows = [
-  {
-    title: "Администратор",
-    text: "Управляет сотрудниками, заявками, всем контентом, медиа и настройками сайта.",
-    checks: ["Права сотрудников", "Обработка заявок", "Контроль публикаций"],
-    icon: ShieldCheck
-  },
-  {
-    title: "Редактор контента",
-    text: "Меняет главную, категории, товары, калькуляторы, FAQ и контакты без доступа к заявкам и сотрудникам.",
-    checks: ["Порядок блоков как на сайте", "Preview после правки", "Черновик перед публикацией"],
-    icon: Pencil
-  },
-  {
-    title: "Медиа-менеджер",
-    text: "Загружает и обновляет изображения, видео и документы без доступа к контенту, заявкам и сотрудникам.",
-    checks: ["Понятное название файла", "Alt-текст", "Правильная область использования"],
-    icon: ImageIcon
-  }
-];
-
-const operations = [
-  {
-    title: "Открыть сайт",
-    text: "Проверить публичную витрину после изменений.",
-    href: "/",
-    icon: Eye
-  },
-  {
-    title: "Health check",
-    text: "Проверить API, базу, CMS и готовность к работе.",
-    href: "/api/health",
-    icon: Activity
+    title: "Калькулятор",
+    description: "Размеры, нагрузки, коэффициенты, цены и дополнительные опции.",
+    href: "/admin/collections/calculator-profiles",
+    icon: Calculator,
+    access: "content"
   },
   {
     title: "Заявки",
-    text: "Контроль обращений и параметров калькулятора.",
+    description: "Обращения с сайта и параметры расчёта клиента.",
     href: "/admin/collections/leads",
-    icon: Inbox
+    icon: Inbox,
+    access: "admin",
+    accent: true
   },
   {
-    title: "Документация",
-    text: "README, handoff и правила передачи проекта.",
+    title: "Медиа",
+    description: "Фотографии, видео, документы и alt-тексты.",
     href: "/admin/collections/media",
-    icon: FileText
+    icon: ImageIcon,
+    access: "media"
+  },
+  {
+    title: "Контакты",
+    description: "Телефон, почта, адрес, график и мессенджеры.",
+    href: "/admin/globals/contacts",
+    icon: Contact,
+    access: "content"
   }
 ];
 
-const emptyCounts: Counts = { products: null, categories: null, media: null, leads: null };
-type DashboardLinkProps = Omit<ComponentPropsWithoutRef<"a">, "href"> & {
-  href: string;
-};
-
-function DashboardLink({ href, ...props }: DashboardLinkProps) {
-  return href.startsWith("/admin") ? (
-    <Link href={href} {...props} />
-  ) : (
-    <a href={href} {...props} />
-  );
-}
-
-function relationId(value: number | { id: number } | null | undefined): string | null {
-  if (typeof value === "number") return String(value);
-  if (value && typeof value === "object") return String(value.id);
-  return null;
-}
-
-function sortNumber(value: number | null | undefined, fallback: number): number {
-  return typeof value === "number" ? value : fallback;
-}
-
-function priceModeLabel(mode: Product["priceMode"]): string {
-  return mode === "fixed" ? "фиксированная цена" : "цена по запросу";
-}
-
-function pageModeLabel(mode: Product["pageMode"]): string {
-  return mode === "configurator" ? "с калькулятором" : "обычная карточка";
-}
-
-function resolveImageUrl(image: (number | null) | Media | undefined, legacyPath?: string | null): string | null {
-  if (image && typeof image === "object") {
-    return image.sizes?.thumb?.url || image.thumbnailURL || image.url || legacyPath || null;
+const systemItems: WorkspaceItem[] = [
+  {
+    title: "SEO и конверсии",
+    description: "Позиции, поисковые запросы, цели и динамика.",
+    href: "/admin/seo",
+    icon: BarChart3,
+    access: "content"
+  },
+  {
+    title: "Здоровье и изменения",
+    description: "Сервисы сайта, последние изменения и контроль рисков.",
+    href: "/admin/system",
+    icon: CircleGauge,
+    access: "admin",
+    accent: true
+  },
+  {
+    title: "Интеграции",
+    description: "Telegram, Яндекс Почта, Метрика и Bitrix24.",
+    href: "/admin/integrations",
+    icon: Settings2,
+    access: "admin"
   }
+];
 
-  return legacyPath || null;
-}
+const dashboardCache = new Map<
+  CmsRole | "restricted",
+  { expiresAt: number; pending?: Promise<DashboardCounts>; value?: DashboardCounts }
+>();
 
-function categoryReadiness(category: Category, productCount: number): number {
-  let score = 20;
-  if (category.title) score += 15;
-  if (category.summary) score += 15;
-  if (resolveImageUrl(category.image, category.legacyImagePath)) score += 25;
-  if (productCount > 0) score += 15;
-  if (category._status !== "draft") score += 10;
-  return Math.min(score, 100);
-}
-
-function productReadiness(product: Product): number {
-  let score = 20;
-  if (product.title) score += 20;
-  if (product.summary) score += 20;
-  if (resolveImageUrl(product.image, product.legacyImagePath)) score += 20;
-  if (product.priceMode) score += 10;
-  if (product._status !== "draft") score += 10;
-  return Math.min(score, 100);
-}
-
-function canOpenAdminHref(role: CmsRole | null, href: string): boolean {
-  if (!href.startsWith("/admin")) return true;
-  if (role === "admin") return true;
-  if (role === "photographer") return href.startsWith("/admin/collections/media");
-  if (role !== "editor") return false;
-
-  return !href.startsWith("/admin/collections/leads") && !href.startsWith("/admin/collections/users");
+function canOpen(item: WorkspaceItem, role: CmsRole | null): boolean {
+  if (item.access === "admin") return role === "admin";
+  if (item.access === "content") return role === "admin" || role === "editor";
+  return role === "admin" || role === "editor" || role === "photographer";
 }
 
 function roleLabel(role: CmsRole | null): string {
   if (role === "admin") return "Администратор";
   if (role === "editor") return "Редактор контента";
   if (role === "photographer") return "Медиа-менеджер";
-  return "Доступ ограничен";
+  return "Ограниченный доступ";
 }
 
-async function readDashboardContext(payload: Payload, role: CmsRole | null): Promise<DashboardContext> {
+async function readDashboardCounts(
+  payload: Payload,
+  role: CmsRole | null
+): Promise<DashboardCounts> {
   try {
-    const hasContentAccess = canEditContent({ role });
+    const hasContentAccess = role === "admin" || role === "editor";
     const hasMediaAccess = canManageMedia({ role });
     const hasLeadAccess = role === "admin";
-
-    const [media, leads, categoryList, productList] = await Promise.all([
-
-      hasMediaAccess ? payload.count({ collection: "media", overrideAccess: true }) : null,
-      hasLeadAccess ? payload.count({ collection: "leads", overrideAccess: true }) : null,
+    const [products, calculatorProfiles, media, leads] = await Promise.all([
       hasContentAccess
-        ? payload.find({
-            collection: "categories",
-            depth: 1,
-            draft: true,
-            limit: 100,
-            overrideAccess: true,
-            pagination: true,
-            populate: {
-              media: {
-                url: true,
-                thumbnailURL: true,
-                sizes: {
-                  thumb: {
-                    url: true
-                  }
-                }
-              }
-            },
-            select: {
-              slug: true,
-              sortOrder: true,
-              title: true,
-              summary: true,
-              image: true,
-              legacyImagePath: true,
-              _status: true
-            },
-            sort: "sortOrder"
-          })
+        ? payload.count({ collection: "products", overrideAccess: true })
         : null,
       hasContentAccess
-        ? payload.find({
-            collection: "products",
-            depth: 1,
-            draft: true,
-            limit: 300,
-            overrideAccess: true,
-            pagination: true,
-            populate: {
-              categories: {
-                slug: true
-              },
-              media: {
-                url: true,
-                thumbnailURL: true,
-                sizes: {
-                  thumb: {
-                    url: true
-                  }
-                }
-              }
-            },
-            select: {
-              slug: true,
-              sortOrder: true,
-              title: true,
-              shortTitle: true,
-              category: true,
-              summary: true,
-              image: true,
-              legacyImagePath: true,
-              priceMode: true,
-              pageMode: true,
-              _status: true
-            },
-            sort: "sortOrder"
-          })
+        ? payload.count({ collection: "calculator-profiles", overrideAccess: true })
+        : null,
+      hasMediaAccess
+        ? payload.count({ collection: "media", overrideAccess: true })
+        : null,
+      hasLeadAccess
+        ? payload.count({ collection: "leads", overrideAccess: true })
         : null
     ]);
 
-    const categoryDocs = (categoryList?.docs ?? []) as Category[];
-    const productDocs = (productList?.docs ?? []) as Product[];
-    const categoryById = new Map(categoryDocs.map((category) => [String(category.id), category]));
-    const catalog = categoryDocs
-      .map<AdminCatalogCategory>((category, index) => ({
-        id: String(category.id),
-        title: category.title,
-        slug: category.slug,
-        sortOrder: sortNumber(category.sortOrder, index + 1),
-        isDraft: category._status === "draft",
-        imageUrl: resolveImageUrl(category.image, category.legacyImagePath),
-        readiness: 0,
-        products: []
-      }))
-      .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, "ru"));
-
-    const categoryBuckets = new Map(catalog.map((category) => [category.id, category]));
-
-    productDocs.forEach((product, index) => {
-      const categoryId = relationId(product.category);
-      if (!categoryId) return;
-
-      const category = categoryById.get(categoryId);
-      const bucket = categoryBuckets.get(categoryId);
-      if (!category || !bucket) return;
-
-      bucket.products.push({
-        id: String(product.id),
-        title: product.shortTitle || product.title,
-        slug: product.slug,
-        sortOrder: sortNumber(product.sortOrder, index + 1),
-        isDraft: product._status === "draft",
-        priceMode: product.priceMode,
-        pageMode: product.pageMode,
-        categorySlug: category.slug,
-        imageUrl: resolveImageUrl(product.image, product.legacyImagePath),
-        readiness: productReadiness(product)
-      });
-    });
-
-    catalog.forEach((category) => {
-      category.products.sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, "ru"));
-      category.readiness = categoryReadiness(categoryDocs.find((item) => String(item.id) === category.id)!, category.products.length);
-    });
-
     return {
-      cmsOk: true,
-      counts: {
-        products: productList?.totalDocs ?? null,
-        categories: categoryList?.totalDocs ?? null,
-        media: media?.totalDocs ?? null,
-        leads: leads?.totalDocs ?? null
-      },
-      catalog
+      products: products?.totalDocs ?? null,
+      calculatorProfiles: calculatorProfiles?.totalDocs ?? null,
+      media: media?.totalDocs ?? null,
+      leads: leads?.totalDocs ?? null
     };
   } catch (error) {
-    console.error("Admin dashboard failed to read Payload context", error);
-    return { cmsOk: false, counts: emptyCounts, catalog: [] };
+    console.error("[admin-dashboard] Counters are unavailable", error);
+    return {
+      products: null,
+      calculatorProfiles: null,
+      media: null,
+      leads: null
+    };
   }
 }
 
-const DASHBOARD_CACHE_TTL_MS = 60_000;
-
-type DashboardCacheEntry = {
-  data?: DashboardContext;
-  expiresAt: number;
-  pending?: Promise<DashboardContext>;
-};
-
-const dashboardContextCache = new Map<string, DashboardCacheEntry>();
-
-async function getDashboardContext(
+async function getDashboardCounts(
   payload: Payload,
   role: CmsRole | null
-): Promise<DashboardContext> {
-  const key = role || "restricted";
+): Promise<DashboardCounts> {
+  const key = role ?? "restricted";
   const now = Date.now();
-  const cached = dashboardContextCache.get(key);
-
-  if (cached?.data && cached.expiresAt > now) return cached.data;
+  const cached = dashboardCache.get(key);
+  if (cached?.value && cached.expiresAt > now) return cached.value;
   if (cached?.pending) return cached.pending;
 
-  const pending = readDashboardContext(payload, role);
-  dashboardContextCache.set(key, {
-    data: cached?.data,
+  const pending = readDashboardCounts(payload, role);
+  dashboardCache.set(key, {
     expiresAt: cached?.expiresAt ?? 0,
-    pending
+    pending,
+    value: cached?.value
   });
-
-  const data = await pending;
-  dashboardContextCache.set(key, {
-    data,
-    expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS
-  });
-
-  return data;
+  const value = await pending;
+  dashboardCache.set(key, { expiresAt: Date.now() + 45_000, value });
+  return value;
 }
 
-function fmt(value: number | null): string {
-  return value === null ? "—" : String(value);
+function CountSkeleton() {
+  return (
+    <div className="kb-control-center__metrics" aria-busy="true">
+      {Array.from({ length: 4 }, (_, index) => (
+        <span className="kb-control-center__metric-skeleton" key={index} />
+      ))}
+    </div>
+  );
 }
 
-type DashboardAsyncProps = {
+async function DashboardMetrics({
+  payload,
+  role
+}: {
   payload: Payload;
   role: CmsRole | null;
-};
-
-async function DashboardKpis({ payload, role }: DashboardAsyncProps) {
-  const dashboard = await getDashboardContext(payload, role);
-  const counts = dashboard.counts;
-  const kpis = [
-    { label: "Товаров", value: fmt(counts.products), icon: Package, href: "/admin/collections/products" },
-    { label: "Категорий", value: fmt(counts.categories), icon: Layers, href: "/admin/collections/categories" },
-    { label: "Медиа", value: fmt(counts.media), icon: Boxes, href: "/admin/collections/media" },
-    { label: "Заявок", value: fmt(counts.leads), icon: Inbox, href: "/admin/collections/leads", tourId: "kpi-leads" }
-  ].filter((item) => canOpenAdminHref(role, item.href) && item.value !== "—");
+}) {
+  const counts = await getDashboardCounts(payload, role);
+  const metrics = [
+    {
+      label: "Товаров",
+      value: counts.products,
+      href: "/admin/collections/products",
+      icon: Package
+    },
+    {
+      label: "Профилей расчёта",
+      value: counts.calculatorProfiles,
+      href: "/admin/collections/calculator-profiles",
+      icon: Calculator
+    },
+    {
+      label: "Медиафайлов",
+      value: counts.media,
+      href: "/admin/collections/media",
+      icon: ImageIcon
+    },
+    {
+      label: "Заявок",
+      value: counts.leads,
+      href: "/admin/collections/leads",
+      icon: Inbox
+    }
+  ].filter((item) => item.value !== null);
 
   return (
-    <div className="kb-admin-dashboard__kpis">
-      {kpis.map((kpi) => (
-        <DashboardLink className="kb-admin-dashboard__kpi" href={kpi.href} key={kpi.label} data-tour={kpi.tourId}>
-          <span className="kb-admin-dashboard__kpi-icon">
-            <kpi.icon size={22} aria-hidden />
+    <div className="kb-control-center__metrics">
+      {metrics.map((metric) => (
+        <Link className="kb-control-center__metric" href={metric.href} key={metric.label}>
+          <span>
+            <metric.icon size={17} aria-hidden />
+            {metric.label}
           </span>
-          <strong className="kb-admin-dashboard__kpi-value">{kpi.value}</strong>
-          <span className="kb-admin-dashboard__kpi-label">{kpi.label}</span>
-        </DashboardLink>
+          <strong>{metric.value}</strong>
+        </Link>
       ))}
     </div>
   );
 }
 
-function DashboardKpisLoading() {
+function WorkspaceCard({ item }: { item: WorkspaceItem }) {
   return (
-    <div className="kb-admin-dashboard__kpis" aria-label="Загрузка показателей" aria-busy="true">
-      {Array.from({ length: 4 }, (_, index) => (
-        <span className="kb-admin-dashboard__kpi-placeholder" key={index} />
-      ))}
-    </div>
+    <Link
+      className="kb-control-center__card"
+      data-accent={item.accent ? "true" : "false"}
+      href={item.href}
+    >
+      <span className="kb-control-center__card-icon">
+        <item.icon size={19} aria-hidden />
+      </span>
+      <div>
+        <h2>{item.title}</h2>
+        <p>{item.description}</p>
+      </div>
+      <ArrowRight size={17} aria-hidden />
+    </Link>
   );
 }
 
-async function DashboardCatalog({ payload, role }: DashboardAsyncProps) {
-  const dashboard = await getDashboardContext(payload, role);
-  const catalog = dashboard.catalog;
+export async function AdminDashboard({
+  initPageResult,
+  params,
+  searchParams,
+  user,
+  viewType
+}: AdminViewServerProps) {
+  const authenticatedUser = user ?? initPageResult.req.user;
+  const role = getCmsRole(authenticatedUser);
+  const canEdit = canEditContent(authenticatedUser);
+  const visibleWorkspace = workspaceItems.filter((item) => canOpen(item, role));
+  const visibleSystem = systemItems.filter((item) => canOpen(item, role));
+  const integrationsConfigured = [
+    Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+    Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
+    Boolean(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID)
+  ].filter(Boolean).length;
 
-  return (
-    <section className="kb-admin-dashboard__catalog-map" data-tour="catalog-map">
-      <div className="kb-admin-dashboard__block-head">
-        <span>
-          <Layers size={17} aria-hidden />
-          Каталог в порядке сайта
-        </span>
-        <strong>{catalog.length ? catalog.length + " разделов" : "нет данных"}</strong>
-      </div>
-      {catalog.length ? (
-        <div className="kb-admin-dashboard__catalog-list">
-          {catalog.map((category, index) => (
-            <article className="kb-admin-dashboard__category-card" key={category.id}>
-              <DashboardLink
-                className="kb-admin-dashboard__category-preview"
-                href={"/catalog/" + category.slug}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={"Посмотреть категорию " + category.title}
-              >
-                {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <span>Фото категории не добавлено</span>}
-                <strong>{category.readiness}% готово</strong>
-              </DashboardLink>
-              <div className="kb-admin-dashboard__category-top">
-                <span className="kb-admin-dashboard__category-number">{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <h3>{category.title}</h3>
-                  <p>{category.products.length ? category.products.length + " товаров внутри раздела" : "Товары пока не добавлены"}</p>
-                </div>
-                <span className={category.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{category.isDraft ? "черновик" : "опубликовано"}</span>
-              </div>
-              <div className="kb-admin-dashboard__mini-actions">
-                <DashboardLink href={"/admin/collections/categories/" + category.id}>
-                  <Pencil size={14} aria-hidden />
-                  Категория
-                </DashboardLink>
-                <DashboardLink href={"/catalog/" + category.slug} target="_blank" rel="noreferrer">
-                  <ExternalLink size={14} aria-hidden />
-                  На сайте
-                </DashboardLink>
-              </div>
-              <div className="kb-admin-dashboard__product-list">
-                {category.products.slice(0, 5).map((product) => (
-                  <div className="kb-admin-dashboard__product-row" key={product.id}>
-                    <span className="kb-admin-dashboard__product-thumb" aria-hidden>
-                      {product.imageUrl ? <img src={product.imageUrl} alt="" loading="lazy" /> : null}
-                    </span>
-                    <div>
-                      <strong>{product.title}</strong>
-                      <span>
-                        {pageModeLabel(product.pageMode)} · {priceModeLabel(product.priceMode)}
-                      </span>
-                    </div>
-                    <span className="kb-admin-dashboard__readiness">{product.readiness}%</span>
-                    <span className={product.isDraft ? "kb-admin-dashboard__badge is-warning" : "kb-admin-dashboard__badge"}>{product.isDraft ? "черновик" : "live"}</span>
-                    <DashboardLink href={"/admin/collections/products/" + product.id}>Изменить</DashboardLink>
-                    <DashboardLink href={"/catalog/" + product.categorySlug + "/" + product.slug} target="_blank" rel="noreferrer">
-                      Preview
-                    </DashboardLink>
-                  </div>
-                ))}
-                {category.products.length > 5 ? <p className="kb-admin-dashboard__more">Ещё {category.products.length - 5} товаров в разделе</p> : null}
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="kb-admin-dashboard__empty">
-          <Activity size={18} aria-hidden />
-          <span>Каталог не загрузился. Проверьте /api/health и подключение CMS к базе.</span>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function DashboardCatalogLoading() {
-  return (
-    <section className="kb-admin-dashboard__catalog-map" aria-label="Загрузка каталога" aria-busy="true">
-      <div className="kb-admin-dashboard__block-head">
-        <span>
-          <Layers size={17} aria-hidden />
-          Каталог в порядке сайта
-        </span>
-        <strong>загружается…</strong>
-      </div>
-      <div className="kb-admin-dashboard__empty">
-        <Activity size={18} aria-hidden />
-        <span>Подготавливаем структуру каталога без блокировки панели.</span>
-      </div>
-    </section>
-  );
-}
-
-type AdminDashboardProps = Pick<ServerProps, "payload" | "user">;
-
-export function AdminDashboard({ payload, user }: AdminDashboardProps) {
-  const role = getCmsRole(user);
-  const hasContentAccess = canEditContent(user);
-  const visibleQuickActions = quickActions.filter((item) => canOpenAdminHref(role, item.href));
-  const visibleOperations = operations.filter((item) => canOpenAdminHref(role, item.href));
-  const visibleSections = sections
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((item) => canOpenAdminHref(role, item.href))
-    }))
-    .filter((section) => section.items.length > 0);
-  const dashboardIntro =
-    role === "photographer"
-      ? "Ваша рабочая зона — медиа-библиотека. Загружайте изображения, видео и документы, заполняйте alt-тексты и проверяйте результат на публичном сайте."
-      : role === "editor"
-        ? "Главная, каталог, товары, калькуляторы и медиа собраны в один рабочий центр. После каждой правки проверяйте результат на публичном сайте."
-        : "Главная, каталог, товары, калькуляторы, медиа, сотрудники и заявки собраны в один рабочий центр с контролем публикаций и доступов.";
-  const dashboardChecks =
-    role === "photographer"
-      ? ["Медиа загружаются в единую библиотеку", "Alt-текст обязателен для изображений", "Публичный сайт доступен для проверки"]
-      : role === "editor"
-        ? ["Каталог и товары редактируются по порядку сайта", "Черновики не видны посетителям", "Заявки и сотрудники закрыты от редактора"]
-        : ["Каталог и товары редактируются по порядку сайта", "Заявки доступны только администратору", "Права сотрудников ограничены ролями"];
-
-  return (
-    <section className="kb-admin-dashboard" aria-label="Центр управления сайтом">
-      <div className="kb-admin-dashboard__hero">
-        <div className="kb-admin-dashboard__hero-copy">
-          <span className="kb-admin-dashboard__status">
-            <Sparkles size={15} aria-hidden />
+  const content = (
+    <section className="kb-control-center" aria-label="Обзор и быстрые действия">
+      <header className="kb-control-center__hero">
+        <div>
+          <span className="kb-control-center__eyebrow">
+            <ShieldCheck size={15} aria-hidden />
             {roleLabel(role)}
           </span>
-          <p className="kb-admin-dashboard__eyebrow">КБ Парус CMS</p>
-          <h2>Управляйте сайтом в той же логике, как он выглядит для клиента</h2>
-          <p>{dashboardIntro}</p>
-          <div className="kb-admin-dashboard__quick">
-            {visibleQuickActions.map((action) => (
-              <DashboardLink className="kb-admin-dashboard__quick-link" href={action.href} key={action.href} data-tour={action.tourId}>
-                <action.icon size={16} aria-hidden />
-                {action.label}
-              </DashboardLink>
-            ))}
+          <h1>Центр управления сайтом</h1>
+          <p>Главное на одном экране: контент, заявки, расчёты и состояние сервисов.</p>
+          <div className="kb-control-center__quick-actions">
+            {canEdit ? (
+              <Link
+                className="kb-control-center__action kb-control-center__action--primary"
+                href="/admin/collections/products/create"
+              >
+                <Plus size={16} aria-hidden />
+                Новый товар
+              </Link>
+            ) : null}
+            {canManageMedia(authenticatedUser) ? (
+              <Link className="kb-control-center__action" href="/admin/collections/media/create">
+                <UploadCloud size={16} aria-hidden />
+                Загрузить файл
+              </Link>
+            ) : null}
+            {role === "admin" ? (
+              <Link className="kb-control-center__action" href="/admin/collections/leads">
+                <Inbox size={16} aria-hidden />
+                Открыть заявки
+              </Link>
+            ) : null}
           </div>
         </div>
 
-        <div className="kb-admin-dashboard__hero-panel">
-          <div className="kb-admin-dashboard__hero-panel-top">
-            <span>Готовность CMS</span>
-            <strong>Рабочий режим</strong>
+        <aside className="kb-control-center__status">
+          <div className="kb-control-center__status-head">
+            <span>Системный контур</span>
+            <strong>{integrationsConfigured}/3</strong>
           </div>
-          <div className="kb-admin-dashboard__progress" aria-hidden>
-            <span />
+          <div className="kb-control-center__status-bar" aria-hidden>
+            <span style={{ width: `${(integrationsConfigured / 3) * 100}%` }} />
           </div>
-          <ul>
-            {dashboardChecks.map((check, index) => (
-              <li key={check}>
-                {index === dashboardChecks.length - 1 ? <Clock3 size={16} aria-hidden /> : <CheckCircle2 size={16} aria-hidden />}
-                {check}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+          <p>Telegram, почта и аналитика подключены через защищённые настройки.</p>
+          {role === "admin" ? (
+            <Link href="/admin/system">
+              Проверить здоровье
+              <ArrowRight size={14} aria-hidden />
+            </Link>
+          ) : null}
+        </aside>
+      </header>
 
-      <Suspense fallback={<DashboardKpisLoading />}>
-        <DashboardKpis payload={payload} role={role} />
+      <Suspense fallback={<CountSkeleton />}>
+        <DashboardMetrics payload={initPageResult.req.payload} role={role} />
       </Suspense>
 
-      {hasContentAccess ? (
-        <div className="kb-admin-dashboard__learning-row">
-          <AdminTraining />
-
-          <div className="kb-admin-dashboard__workflow" data-tour="workflow">
-          <div className="kb-admin-dashboard__block-head">
-            <span>
-              <ShieldCheck size={17} aria-hidden />
-              Безопасный порядок работы
-            </span>
-            <strong>4 шага публикации</strong>
+      <div className="kb-control-center__layout">
+        <section className="kb-control-center__panel">
+          <div className="kb-control-center__section-head">
+            <div>
+              <span>Рабочие разделы</span>
+              <h2>Ежедневная работа</h2>
+            </div>
+            <Activity size={19} aria-hidden />
           </div>
-          <div className="kb-admin-dashboard__workflow-grid">
-            {workflow.map((item) => (
-              <article className="kb-admin-dashboard__workflow-item" key={item.title}>
-                <span>
-                  <item.icon size={18} aria-hidden />
-                </span>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
+          <div className="kb-control-center__grid">
+            {visibleWorkspace.map((item) => (
+              <WorkspaceCard item={item} key={item.href} />
             ))}
           </div>
-          </div>
-        </div>
-      ) : null}
-
-      {hasContentAccess ? (
-        <section className="kb-admin-dashboard__site-map" data-tour="site-map">
-        <div className="kb-admin-dashboard__block-head">
-          <span>
-            <ListChecks size={17} aria-hidden />
-            Структура сайта
-          </span>
-          <strong>как на публичной странице</strong>
-        </div>
-        <div className="kb-admin-dashboard__site-flow">
-          {siteFlow.map((item, index) => (
-            <article className="kb-admin-dashboard__site-flow-item" key={item.title}>
-              <span className="kb-admin-dashboard__site-flow-number">{String(index + 1).padStart(2, "0")}</span>
-              <span className="kb-admin-dashboard__site-flow-icon">
-                <item.icon size={18} aria-hidden />
-              </span>
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </div>
-              <div className="kb-admin-dashboard__mini-actions">
-                <DashboardLink href={item.editHref}>
-                  <Pencil size={14} aria-hidden />
-                  Редактировать
-                </DashboardLink>
-                <DashboardLink href={item.previewHref} target="_blank" rel="noreferrer">
-                  <ExternalLink size={14} aria-hidden />
-                  Посмотреть
-                </DashboardLink>
-              </div>
-            </article>
-          ))}
-        </div>
         </section>
-      ) : null}
 
-      {hasContentAccess ? (
-        <Suspense fallback={<DashboardCatalogLoading />}>
-          <DashboardCatalog payload={payload} role={role} />
-        </Suspense>
-      ) : null}
-
-      <section className="kb-admin-dashboard__roles" data-tour="roles-map">
-        <div className="kb-admin-dashboard__block-head">
-          <span>
-            <Users size={17} aria-hidden />
-            Роли сотрудников
-          </span>
-          <strong>что важно каждому</strong>
-        </div>
-        <div className="kb-admin-dashboard__roles-grid">
-          {roleWorkflows.map((role) => (
-            <article className="kb-admin-dashboard__role-card" key={role.title}>
-              <span>
-                <role.icon size={18} aria-hidden />
-              </span>
-              <h3>{role.title}</h3>
-              <p>{role.text}</p>
-              <ul>
-                {role.checks.map((check) => (
-                  <li key={check}>{check}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="kb-admin-dashboard__ops" data-tour="ops-health">
-        <div className="kb-admin-dashboard__block-head">
-          <span>
-            <Activity size={17} aria-hidden />
-            Preview, статус и здоровье
-          </span>
-          <strong>CMS отвечает</strong>
-        </div>
-        <div className="kb-admin-dashboard__ops-grid">
-          {visibleOperations.map((item) => (
-            <DashboardLink className="kb-admin-dashboard__ops-card" href={item.href} key={item.title} target={item.href.startsWith("/admin") ? undefined : "_blank"} rel="noreferrer">
-              <span>
-                <item.icon size={18} aria-hidden />
-              </span>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-              <ArrowRight size={15} aria-hidden />
-            </DashboardLink>
-          ))}
-        </div>
-      </section>
-
-      {visibleSections.map((section) => (
-        <div className="kb-admin-dashboard__section" key={section.group}>
-          <p className="kb-admin-dashboard__section-title">{section.group}</p>
-          <div className="kb-admin-dashboard__grid">
-            {section.items.map((item) => (
-              <DashboardLink className="kb-admin-dashboard__card" href={item.href} key={item.href} data-tour={item.tourId}>
-                <span className="kb-admin-dashboard__card-icon">
-                  <item.icon size={20} aria-hidden />
-                </span>
-                <span className="kb-admin-dashboard__card-title">{item.title}</span>
-                <p>{item.text}</p>
-                <strong>
-                  {item.cta}
-                  <ArrowRight size={15} aria-hidden />
-                </strong>
-              </DashboardLink>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      <div className="kb-admin-dashboard__footer-note">
-        <BookOpen size={18} aria-hidden />
-        <span>
-          Правило работы: сначала медиа, потом карточка, затем проверка страницы на сайте. Системные поля, ключи интеграций и расчётные коэффициенты менять только после согласования с
-          ответственным инженером.
-        </span>
+        {visibleSystem.length ? (
+          <aside className="kb-control-center__panel kb-control-center__panel--system">
+            <div className="kb-control-center__section-head">
+              <div>
+                <span>Контроль</span>
+                <h2>Система и аналитика</h2>
+              </div>
+              <FileClock size={19} aria-hidden />
+            </div>
+            <div className="kb-control-center__system-list">
+              {visibleSystem.map((item) => (
+                <WorkspaceCard item={item} key={item.href} />
+              ))}
+            </div>
+          </aside>
+        ) : null}
       </div>
+
+      <footer className="kb-control-center__footer">
+        <ShieldCheck size={16} aria-hidden />
+        <span>
+          Изменения сохраняются в CMS. Перед публикацией проверьте карточку на сайте;
+          цены и коэффициенты меняйте только по согласованному расчёту.
+        </span>
+      </footer>
     </section>
+  );
+
+  return (
+    <DefaultTemplate
+      i18n={initPageResult.req.i18n}
+      locale={initPageResult.locale}
+      params={params}
+      payload={initPageResult.req.payload}
+      permissions={initPageResult.permissions}
+      req={initPageResult.req}
+      searchParams={searchParams}
+      user={authenticatedUser || undefined}
+      viewType={viewType}
+      visibleEntities={{
+        collections: initPageResult.visibleEntities?.collections,
+        globals: initPageResult.visibleEntities?.globals
+      }}
+    >
+      {content}
+    </DefaultTemplate>
   );
 }

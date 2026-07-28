@@ -417,8 +417,8 @@ html[data-theme] .global-edit .rs__control:focus-within {
   box-shadow: 0 0 0 3px rgba(252, 84, 19, 0.13);
 }
 
-html[data-theme] .collection-edit .tabs-field__tabs-wrap,
-html[data-theme] .global-edit .tabs-field__tabs-wrap {
+html[data-theme] .collection-edit .document-fields__fields > .tabs-field > .tabs-field__tabs-wrap,
+html[data-theme] .global-edit .document-fields__fields > .tabs-field > .tabs-field__tabs-wrap {
   position: sticky;
   z-index: 10;
   top: 70px;
@@ -636,8 +636,8 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
     border-radius: 14px;
   }
 
-  html[data-theme] .collection-edit .tabs-field__tabs-wrap,
-  html[data-theme] .global-edit .tabs-field__tabs-wrap {
+  html[data-theme] .collection-edit .document-fields__fields > .tabs-field > .tabs-field__tabs-wrap,
+  html[data-theme] .global-edit .document-fields__fields > .tabs-field > .tabs-field__tabs-wrap {
     top: 60px;
     margin-inline: -4px;
     border-radius: 11px;
@@ -940,5 +940,68 @@ html[data-theme] .kb-integrations--denied {
 
   html[data-theme] .kb-integrations__note {
     align-items: flex-start;
+  }
+}
+
+/* Integration checks run only on demand and never block page rendering. */
+html[data-theme] .kb-integration-probe {
+  margin: 15px 0 4px;
+}
+
+html[data-theme] .kb-integration-probe button {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 11px;
+  color: #26313b;
+  font-size: 10px;
+  font-weight: 800;
+  background: #ffffff;
+  border: 1px solid #dbe2e7;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+html[data-theme] .kb-integration-probe button:hover {
+  border-color: #bfc9d1;
+  box-shadow: 0 7px 18px rgba(23, 31, 39, 0.08);
+}
+
+html[data-theme] .kb-integration-probe button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+html[data-theme] .kb-integration-probe p {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 9px 0 0;
+  color: #b53535;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+html[data-theme] .kb-integration-probe p[data-state="success"] {
+  color: #147747;
+}
+
+html[data-theme] .kb-integrations__card[data-state="disabled"]::before {
+  background: #a5afb7;
+}
+
+html[data-theme] .kb-integrations__card[data-state="configured"] .kb-integrations__state {
+  color: #90600c;
+  background: #fff8e8;
+  border-color: #f0dfb4;
+}
+
+@media (max-width: 700px) {
+  html[data-theme] .kb-integration-probe button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
   }
 }

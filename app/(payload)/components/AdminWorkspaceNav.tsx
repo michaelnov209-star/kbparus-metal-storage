@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Settings2 } from "lucide-react";
+import { BarChart3, CircleGauge, LayoutDashboard, Settings2 } from "lucide-react";
 import { Link } from "@payloadcms/ui/elements/Link";
 import type { ServerProps } from "payload";
 import { canEditContent, getCmsRole } from "@/payload/access/rbac";
@@ -23,6 +23,12 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           <Link className="kb-admin-workspace-nav__link" href="/admin/seo">
             <BarChart3 size={17} aria-hidden />
             <span>SEO, цели и конверсии</span>
+          </Link>
+        ) : null}
+        {isAdmin ? (
+          <Link className="kb-admin-workspace-nav__link" href="/admin/system">
+            <CircleGauge size={17} aria-hidden />
+            <span>Здоровье и история</span>
           </Link>
         ) : null}
         {isAdmin ? (

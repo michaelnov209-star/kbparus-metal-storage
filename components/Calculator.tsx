@@ -18,8 +18,8 @@ import {
   Warehouse,
   X
 } from "lucide-react";
-import { calculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
-import type { CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
+import { calculatorProfiles as fallbackCalculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
+import type { CalculatorProfile, CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
@@ -137,8 +137,11 @@ const citySuggestions = [
   "Минск"
 ];
 
-function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
-  const profile = getCalculatorProfile(profileId);
+function buildInputForProfile(
+  profileId: CalculatorProfileId,
+  profiles: readonly CalculatorProfile[]
+): CalculatorInput {
+  const profile = getCalculatorProfile(profileId, profiles);
   const defaults = profile.defaultValues;
 
   return normalizeCalculatorInput({
@@ -161,12 +164,16 @@ function buildInputForProfile(profileId: CalculatorProfileId): CalculatorInput {
     needsRolloutCassettes: profile.productType === "rollout" || profile.productType === "hybrid",
     city: "",
     comment: ""
-  });
+  }, profile);
 }
 
-export function Calculator() {
+export function Calculator({
+  profiles = fallbackCalculatorProfiles
+}: {
+  profiles?: readonly CalculatorProfile[];
+}) {
   const [step, setStep] = useState(0);
-  const [input, setInput] = useState<CalculatorInput>(() => buildInputForProfile("auto-sheet-metal"));
+  const [input, setInput] = useState<CalculatorInput>(() => buildInputForProfile("auto-sheet-metal", profiles));
   const [contact, setContact] = useState({ name: "", phone: "", email: "", address: "" });
   const [leadStatus, setLeadStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");
@@ -176,8 +183,8 @@ export function Calculator() {
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const formStartedAt = useRef<number>(Date.now());
   const calculatorStarted = useRef(false);
-  const profile = useMemo(() => getCalculatorProfile(input.systemId), [input.systemId]);
-  const result = useMemo(() => calculateStorageSystem(input), [input]);
+  const profile = useMemo(() => getCalculatorProfile(input.systemId, profiles), [input.systemId, profiles]);
+  const result = useMemo(() => calculateStorageSystem(input, profile), [input, profile]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
   const progress = ((step + 1) / steps.length) * 100;
   const display = profileCopy[profile.id];
@@ -298,7 +305,7 @@ export function Calculator() {
   function selectProfile(profileId: CalculatorProfileId) {
     markCalculatorStarted("select_profile");
     trackYandexGoal("calculator_parameter_change", { field: "systemId", value: profileId });
-    setInput(buildInputForProfile(profileId));
+    setInput(buildInputForProfile(profileId, profiles));
     setLeadStatus("");
   }
 
@@ -306,7 +313,7 @@ export function Calculator() {
     markCalculatorStarted("guided_choice");
     trackYandexGoal("calculator_parameter_change", { field: "guidedChoice", value: profileId });
     setInput({
-      ...buildInputForProfile(profileId),
+      ...buildInputForProfile(profileId, profiles),
       city: "",
       comment: ""
     });
@@ -454,7 +461,7 @@ export function Calculator() {
               </div>
 
               <div className="system-showcase" aria-label="Системы хранения">
-                {calculatorProfiles.map((item, index) => {
+                {profiles.map((item, index) => {
                   const card = profileCopy[item.id];
                   const isActive = item.id === input.systemId;
                   const isRecommended = index < 2;

@@ -8,6 +8,7 @@ import { HeaderScroll } from "@/components/HeaderScroll";
 import { SliderControls } from "@/components/SliderControls";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
+import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
@@ -219,11 +220,14 @@ const faq = [
 ];
 
 export default async function Home() {
-  const home = await getHomePageContent();
+  const [home, contacts, navigation, catalogCategories, calculatorProfiles] = await Promise.all([
+    getHomePageContent(),
+    getSiteContacts(),
+    getSiteNavigation(),
+    getCatalogCategories(),
+    getCalculatorProfiles()
+  ]);
   const hero = home.hero;
-  const contacts = await getSiteContacts();
-  const navigation = await getSiteNavigation();
-  const catalogCategories = await getCatalogCategories();
   const visiblePartners = home.partners.filter((partner) => Boolean(partner.logoUrl));
   const visibleReviews = home.reviews.filter((review) => Boolean(review.imageUrl));
   const hasVerifiedCases = home.cases.some(
@@ -366,7 +370,7 @@ export default async function Home() {
         <CatalogGrid items={catalogCategories} />
       </section>
 
-      <Calculator />
+      <Calculator profiles={calculatorProfiles} />
 
       <Banner
         title="Получите бесплатный расчет стоимости оборудования"

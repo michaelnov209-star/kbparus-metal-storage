@@ -5,7 +5,9 @@ import { LeadForm } from "@/components/LeadForm";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery, type ProductGalleryImage } from "@/components/ProductGallery";
 import { getSeoForItem, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
+import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { getCatalogCategory } from "@/lib/cms/catalog";
 import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
 import { getCatalogProducts, getCatalogProductView } from "@/lib/cms/products";
@@ -87,10 +89,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function CatalogProductPage({ params }: { params: Promise<{ id: string; productId: string }> }) {
   const { id, productId } = await params;
-  const category = await getCatalogCategory(id);
-  const product = await getCatalogProductView(id, productId);
+  const [category, product, navigation, calculatorProfiles] = await Promise.all([
+    getCatalogCategory(id),
+    getCatalogProductView(id, productId),
+    getSiteNavigation(),
+    getCalculatorProfiles()
+  ]);
   if (!category || !product) notFound();
-  const navigation = await getSiteNavigation();
+  const calculatorProfile = product.calculatorProfileId
+    ? getCalculatorProfile(product.calculatorProfileId, calculatorProfiles)
+    : undefined;
   const productGallery = (product.gallery.length > 0 ? product.gallery : [product.image]).map((source, index) =>
     toProductGalleryImage(source, product, index)
   );
@@ -195,6 +203,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         <div id="product-configurator">
           <ProductConfigurator
             profileId={product.calculatorProfileId}
+            profileData={calculatorProfile}
             productTitle={product.title}
             productUrl={productUrl}
             productImage={product.image}

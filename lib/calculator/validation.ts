@@ -1,8 +1,11 @@
 import type { CalculatorInput } from "./types";
-import { defaultCalculatorProfileId, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
+import { defaultCalculatorProfileId, getCalculatorProfile, type CalculatorProfile } from "@/data/storageSystems/excelCalculator";
 
-export function normalizeCalculatorInput(input: Partial<CalculatorInput>): CalculatorInput {
-  const profile = getCalculatorProfile(input.systemId ?? defaultCalculatorProfileId);
+export function normalizeCalculatorInput(
+  input: Partial<CalculatorInput>,
+  profileOverride?: CalculatorProfile
+): CalculatorInput {
+  const profile = profileOverride ?? getCalculatorProfile(input.systemId ?? defaultCalculatorProfileId);
   const defaults = profile.defaultValues;
   const optionIds = input.optionIds ?? profile.options.filter((option) => option.defaultSelected).map((option) => option.id);
 

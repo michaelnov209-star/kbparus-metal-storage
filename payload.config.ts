@@ -82,13 +82,16 @@ export default buildConfig({
           exportName: "AdminWorkspaceNav"
         }
       ],
-      beforeDashboard: [
-        {
-          path: "@/app/(payload)/components/AdminDashboardLoader",
-          exportName: "AdminDashboardLoader"
-        }
-      ],
       views: {
+        dashboard: {
+          Component: {
+            path: "@/app/(payload)/components/AdminDashboardLoader",
+            exportName: "AdminDashboardLoader"
+          },
+          meta: {
+            title: "Обзор — КБ Парус"
+          }
+        },
         seo: {
           Component: {
             path: "@/app/(payload)/components/SeoReportingViewLoader",
@@ -98,6 +101,17 @@ export default buildConfig({
           exact: true,
           meta: {
             title: "SEO и позиции — КБ Парус"
+          }
+        },
+        system: {
+          Component: {
+            path: "@/app/(payload)/components/AdminSystemViewLoader",
+            exportName: "AdminSystemViewLoader"
+          },
+          path: "/system",
+          exact: true,
+          meta: {
+            title: "Здоровье сайта — КБ Парус"
           }
         },
         integrations: {

@@ -29,6 +29,18 @@ export const CalculatorProfiles: CollectionConfig = {
   versions: { drafts: true },
   fields: [
     {
+      name: "calculatorGuide",
+      type: "ui",
+      admin: {
+        components: {
+          Field: {
+            path: "@/app/(payload)/components/CalculatorProfileGuide",
+            exportName: "CalculatorProfileGuide"
+          }
+        }
+      }
+    },
+    {
       type: "row",
       fields: [
         {

@@ -3,11 +3,34 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const IDLE_ADMIN_ROUTES = [
-  "/admin",
-  "/admin/collections/products",
-  "/admin/seo"
-] as const;
+const ROUTE_GROUPS = {
+  dashboard: [
+    "/admin/collections/products",
+    "/admin/collections/leads",
+    "/admin/collections/calculator-profiles",
+    "/admin/globals/home-content"
+  ],
+  content: [
+    "/admin",
+    "/admin/collections/products",
+    "/admin/collections/media",
+    "/admin/collections/calculator-profiles"
+  ],
+  system: [
+    "/admin",
+    "/admin/system",
+    "/admin/integrations",
+    "/admin/seo"
+  ]
+} as const;
+
+function getIdleRoutes(pathname: string): readonly string[] {
+  if (pathname === "/admin") return ROUTE_GROUPS.dashboard;
+  if (pathname === "/admin/system" || pathname === "/admin/integrations" || pathname === "/admin/seo") {
+    return ROUTE_GROUPS.system;
+  }
+  return ROUTE_GROUPS.content;
+}
 
 type NavigatorWithConnection = Navigator & {
   connection?: {
@@ -112,22 +135,22 @@ export function AdminPerformanceBridge() {
     const timeoutHandles: number[] = [];
 
     if (canPrefetch()) {
-      IDLE_ADMIN_ROUTES.filter((route) => route !== pathname).forEach((route, index) => {
+      getIdleRoutes(pathname).filter((route) => route !== pathname).forEach((route, index) => {
         const schedule = () => {
           if (idleWindow.requestIdleCallback) {
             idleHandles.push(
               idleWindow.requestIdleCallback(() => prefetchRoute(route), {
-                timeout: 5_000 + index * 1_000
+                timeout: 3_000 + index * 700
               })
             );
           } else {
             timeoutHandles.push(
-              window.setTimeout(() => prefetchRoute(route), 3_000 + index * 1_200)
+              window.setTimeout(() => prefetchRoute(route), 1_600 + index * 800)
             );
           }
         };
 
-        timeoutHandles.push(window.setTimeout(schedule, 2_000 + index * 1_200));
+        timeoutHandles.push(window.setTimeout(schedule, 1_000 + index * 800));
       });
     }
 

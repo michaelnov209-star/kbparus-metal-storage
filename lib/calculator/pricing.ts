@@ -1,5 +1,5 @@
 import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
-import type { FactorOption, PriceOption } from "@/data/storageSystems/excelCalculator";
+import type { CalculatorProfile, FactorOption, PriceOption } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorInput, CalculatorResult, RecommendedConfig } from "./types";
 
 function findFactor(options: readonly FactorOption[], value: number) {
@@ -22,8 +22,11 @@ function nearestAllowed(value: number, allowed: readonly number[]) {
   return allowed.includes(value) ? value : allowed[0];
 }
 
-export function calculateStorageSystem(input: CalculatorInput): CalculatorResult {
-  const profile = getCalculatorProfile(input.systemId);
+export function calculateStorageSystem(
+  input: CalculatorInput,
+  profileOverride?: CalculatorProfile
+): CalculatorResult {
+  const profile = profileOverride ?? getCalculatorProfile(input.systemId);
   const heightMm = nearestAllowed(input.heightMm, profile.heightOptions.map((option) => option.value));
   const widthMm = nearestAllowed(input.widthMm, profile.widthOptions.map((option) => option.value));
   const lengthMm = nearestAllowed(input.lengthMm, profile.lengthOptions.map((option) => option.value));

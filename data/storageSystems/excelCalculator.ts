@@ -353,6 +353,9 @@ export const calculatorProfiles: CalculatorProfile[] = [
 
 export const defaultCalculatorProfileId: CalculatorProfileId = "auto-sheet-metal";
 
-export function getCalculatorProfile(id?: string) {
-  return calculatorProfiles.find((profile) => profile.id === id) ?? calculatorProfiles[0];
+export function getCalculatorProfile(
+  id?: string,
+  profiles: readonly CalculatorProfile[] = calculatorProfiles
+) {
+  return profiles.find((profile) => profile.id === id) ?? profiles[0] ?? calculatorProfiles[0];
 }

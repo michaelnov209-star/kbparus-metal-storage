@@ -4,7 +4,9 @@ import {
   normalizeCalculatorInput,
   type CalculatorInput
 } from "@/lib/calculator";
+import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
+import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import {
   LEAD_CONSENT_POLICY_PATH,
   LEAD_CONSENT_VERSION
@@ -196,16 +198,28 @@ export async function POST(request: Request) {
   const hasCalculatorInput = Object.keys(rawCalculatorInput).length > 0;
   const isConfiguratorLead = payload.leadType === "configurator" || hasCalculatorInput;
 
-  const calculatorInput = isConfiguratorLead
-    ? normalizeCalculatorInput({
-        ...(rawCalculatorInput as Partial<CalculatorInput>),
-        city: city || String(rawCalculatorInput.city ?? ""),
-        comment
-      })
+  const calculatorProfiles = isConfiguratorLead ? await getCalculatorProfiles() : [];
+  const calculatorProfile = isConfiguratorLead
+    ? getCalculatorProfile(
+        typeof rawCalculatorInput.systemId === "string" ? rawCalculatorInput.systemId : undefined,
+        calculatorProfiles
+      )
     : undefined;
-  const result = calculatorInput ? calculateStorageSystem(calculatorInput) : undefined;
+  const calculatorInput = isConfiguratorLead
+    ? normalizeCalculatorInput(
+        {
+          ...(rawCalculatorInput as Partial<CalculatorInput>),
+          city: city || String(rawCalculatorInput.city ?? ""),
+          comment
+        },
+        calculatorProfile
+      )
+    : undefined;
+  const result = calculatorInput
+    ? calculateStorageSystem(calculatorInput, calculatorProfile)
+    : undefined;
   const fromPrice = result?.fromPrice ?? payload.preliminaryPriceFrom;
-  const selectedOptions = payload.recommendedConfig?.options?.filter(Boolean);
+  const selectedOptions = payload.recommendedConfig?.options?.filter(Boolean) ?? result?.selectedOptions;
   const acceptedAt = new Date().toISOString();
   const requestOrigin = new URL(request.url).origin;
   const utm = {
