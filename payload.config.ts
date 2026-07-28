@@ -54,6 +54,7 @@ const payloadEmail = await createPayloadEmailAdapter();
 export default buildConfig({
   admin: {
     user: Users.slug,
+    avatar: "default",
     importMap: {
       baseDir: dirname,
       importMapFile: path.resolve(dirname, "app/(payload)/admin/importMap.ts")
