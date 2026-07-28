@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
+import {
+  authenticateCmsRequest,
+  isTrustedAdminMutationRequest
+} from "@/lib/admin/request-auth";
 import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
-import { getCmsClient } from "@/lib/cms/client";
-import { getCmsRole } from "@/payload/access/rbac";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,24 +16,27 @@ const privateHeaders = {
 };
 
 export async function POST(request: Request) {
-  const cms = await getCmsClient();
-  if (!cms) {
-    return NextResponse.json({ error: "CMS временно недоступна" }, { status: 503, headers: privateHeaders });
+  if (!isTrustedAdminMutationRequest(request)) {
+    return NextResponse.json(
+      { error: "Источник запроса не разрешён" },
+      { status: 403, headers: privateHeaders }
+    );
   }
 
-  let user: unknown;
-  try {
-    user = (await cms.auth({ headers: request.headers })).user;
-  } catch {
-    return NextResponse.json({ error: "Требуется авторизация" }, { status: 401, headers: privateHeaders });
+  const auth = await authenticateCmsRequest(request, ["admin"]);
+  if (!auth.ok) {
+    const error =
+      auth.status === 503
+        ? "CMS временно недоступна"
+        : auth.status === 403
+          ? "Недостаточно прав"
+          : "Требуется авторизация";
+    return NextResponse.json(
+      { error },
+      { status: auth.status, headers: privateHeaders }
+    );
   }
-
-  if (!user) {
-    return NextResponse.json({ error: "Требуется авторизация" }, { status: 401, headers: privateHeaders });
-  }
-  if (getCmsRole(user) !== "admin") {
-    return NextResponse.json({ error: "Недостаточно прав" }, { status: 403, headers: privateHeaders });
-  }
+  const cms = auth.cms;
 
   let body: { mode?: string } = {};
   try {
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
 
   let created = 0;
   let existing = 0;
+  let published = 0;
 
   try {
     const [publishedProfiles, latestProfiles] = await Promise.all([
@@ -65,15 +71,45 @@ export async function POST(request: Request) {
         pagination: false
       })
     ]);
-    const existingSlugs = new Set(
-      [...publishedProfiles.docs, ...latestProfiles.docs]
-        .map((profile) => profile.slug)
-        .filter((slug) => typeof slug === "string")
+    const publishedSlugs = new Set<string>();
+    for (const profile of publishedProfiles.docs) {
+      if (typeof profile.slug === "string") {
+        publishedSlugs.add(profile.slug);
+      }
+    }
+    const latestProfilesBySlug = new Map(
+      latestProfiles.docs
+        .filter((profile) => typeof profile.slug === "string")
+        .map((profile) => [profile.slug, profile] as const)
     );
 
     for (const seed of calculatorProfileSeeds) {
-      if (existingSlugs.has(seed.slug)) {
+      if (publishedSlugs.has(seed.slug)) {
         existing += 1;
+        continue;
+      }
+
+      const draftOnlyProfile = latestProfilesBySlug.get(seed.slug);
+      if (draftOnlyProfile) {
+        const {
+          createdAt: _createdAt,
+          id,
+          updatedAt: _updatedAt,
+          ...draftData
+        } = draftOnlyProfile;
+
+        await cms.update({
+          collection: "calculator-profiles",
+          id,
+          data: {
+            ...draftData,
+            _status: "published"
+          },
+          draft: false,
+          overrideAccess: true
+        });
+        published += 1;
+        publishedSlugs.add(seed.slug);
         continue;
       }
 
@@ -84,7 +120,7 @@ export async function POST(request: Request) {
         overrideAccess: true
       });
       created += 1;
-      existingSlugs.add(seed.slug);
+      publishedSlugs.add(seed.slug);
     }
   } catch (error) {
     console.error(
@@ -101,7 +137,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, created, existing, total: calculatorProfileSeeds.length },
+    { ok: true, created, existing, published, total: calculatorProfileSeeds.length },
     { headers: privateHeaders }
   );
 }

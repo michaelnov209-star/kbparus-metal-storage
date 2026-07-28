@@ -1,14 +1,12 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "КБ Парус — системы хранения металла";
-export const size = {
+export const siteOpenGraphAlt = "КБ Парус — системы хранения металла";
+export const siteOpenGraphSize = {
   width: 1200,
   height: 630
 };
 
-export const contentType = "image/png";
-
-export default function Image() {
+export function renderSiteOpenGraphImage() {
   return new ImageResponse(
     (
       <div
@@ -108,6 +106,6 @@ export default function Image() {
         </div>
       </div>
     ),
-    size
+    siteOpenGraphSize
   );
 }

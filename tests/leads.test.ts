@@ -254,4 +254,21 @@ describe("Email lead delivery", () => {
     expect(config.from).toBe("robot@example.com");
     expect(config.secure).toBe(true);
   });
+
+  it("removes line breaks from the email subject", () => {
+    const message = buildLeadEmailMessage({
+      leadType: "contact",
+      name: "",
+      phone: "+7 999 111-22-33",
+      sourceTitle: "Контакты\r\nBcc: attacker@example.com",
+      emailDelivered: false,
+      telegramDelivered: false,
+      bitrix24Delivered: false
+    });
+
+    expect(message.subject).toBe(
+      "Заявка с сайта: Контакты Bcc: attacker@example.com"
+    );
+    expect(message.subject).not.toMatch(/[\r\n]/);
+  });
 });

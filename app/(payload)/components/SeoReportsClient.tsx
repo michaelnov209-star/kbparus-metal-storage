@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 import {
   AlertCircle,
   ArrowDownRight,
@@ -23,7 +30,12 @@ import type {
   SeoReportPeriod,
   SeoReportResponse
 } from "@/lib/seo-reporting/types";
-import { SeoGoalsClient } from "./SeoGoalsClient";
+
+const SeoGoalsClient = lazy(() =>
+  import("./SeoGoalsClient").then((module) => ({
+    default: module.SeoGoalsClient
+  }))
+);
 
 const PERIODS = [
   { days: 30, label: "1 месяц" },
@@ -827,11 +839,23 @@ export function SeoReportsClient() {
         hidden={activeView !== "goals"}
       >
         {activeView === "goals" ? (
-          <SeoGoalsClient
-            period={period}
-            refreshKey={goalsRefreshKey}
-            onLoadingChange={handleGoalsLoadingChange}
-          />
+          <Suspense
+            fallback={(
+              <div className="kb-seo-initializing" role="status" aria-live="polite">
+                <LoaderCircle className="is-spinning" size={22} aria-hidden />
+                <div>
+                  <strong>Открываю цели и конверсии</strong>
+                  <span>Загружаю только данные и интерфейс выбранной вкладки.</span>
+                </div>
+              </div>
+            )}
+          >
+            <SeoGoalsClient
+              period={period}
+              refreshKey={goalsRefreshKey}
+              onLoadingChange={handleGoalsLoadingChange}
+            />
+          </Suspense>
         ) : null}
       </div>
     </section>

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getCmsClient } from "@/lib/cms/client";
-import { getCmsRole } from "@/payload/access/rbac";
+import {
+  authenticateCmsRequest,
+  isTrustedAdminMutationRequest
+} from "@/lib/admin/request-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,20 +17,6 @@ const privateHeaders = {
 type TelegramResponse = {
   ok?: boolean;
 };
-
-async function authenticateAdmin(request: Request) {
-  const cms = await getCmsClient();
-  if (!cms) return { error: "cms-unavailable" as const, status: 503 };
-
-  try {
-    const auth = await cms.auth({ headers: request.headers });
-    if (!auth.user) return { error: "authentication-required" as const, status: 401 };
-    if (getCmsRole(auth.user) !== "admin") return { error: "admin-required" as const, status: 403 };
-    return { cms };
-  } catch {
-    return { error: "authentication-required" as const, status: 401 };
-  }
-}
 
 async function telegramRequest(token: string, method: string, search = "") {
   const controller = new AbortController();
@@ -46,10 +34,17 @@ async function telegramRequest(token: string, method: string, search = "") {
 }
 
 async function verifyTelegram(request: Request) {
-  const auth = await authenticateAdmin(request);
-  if ("error" in auth) {
+  if (!isTrustedAdminMutationRequest(request)) {
     return NextResponse.json(
-      { ok: false, error: auth.error },
+      { ok: false, error: "origin-forbidden" },
+      { status: 403, headers: privateHeaders }
+    );
+  }
+
+  const auth = await authenticateCmsRequest(request, ["admin"]);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { ok: false, error: auth.code },
       { status: auth.status, headers: privateHeaders }
     );
   }
@@ -100,5 +95,4 @@ async function verifyTelegram(request: Request) {
   }
 }
 
-export const GET = verifyTelegram;
 export const POST = verifyTelegram;

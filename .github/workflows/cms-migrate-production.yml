@@ -26,15 +26,17 @@ jobs:
     steps:
       - name: Validate manual confirmation
         shell: bash
+        env:
+          PRODUCTION_AUDIT_CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          if [ "${{ inputs.confirmation }}" != "AUDIT_PRODUCTION" ]; then
+          if [ "$PRODUCTION_AUDIT_CONFIRMATION" != "AUDIT_PRODUCTION" ]; then
             echo "Incorrect production audit confirmation."
             exit 1
           fi
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: npm

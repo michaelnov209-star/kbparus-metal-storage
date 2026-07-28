@@ -26,7 +26,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const ENV_KEYS = [
   "CMS_ADMIN_EMAIL",
@@ -40,6 +40,29 @@ const ENV_KEYS = [
   "VERCEL_AUTOMATION_BYPASS_SECRET",
   "CMS_ADMIN_SMOKE_TRANSPORT"
 ];
+
+function getNpxInvocation(args) {
+  if (process.platform !== "win32") {
+    return { command: "npx", args };
+  }
+
+  const npmExecPath = process.env.npm_execpath;
+  const candidates = [
+    npmExecPath ? resolve(dirname(npmExecPath), "npx-cli.js") : undefined,
+    resolve(dirname(process.execPath), "node_modules", "npm", "bin", "npx-cli.js")
+  ].filter(Boolean);
+  const npxCliPath = candidates.find((candidate) => existsSync(candidate));
+  if (!npxCliPath) {
+    throw new Error(
+      "Не найден безопасный npx-cli.js. Запустите команду через npm или установите Node.js с npm."
+    );
+  }
+
+  return {
+    command: process.execPath,
+    args: [npxCliPath, ...args]
+  };
+}
 
 const ADMIN_COLLECTIONS = [
   { name: "users", label: "Администраторы и редакторы", path: "/api/users?limit=1" },
@@ -233,11 +256,12 @@ async function vercelCurlWithTiming(path, init = {}) {
       args.push("--data-binary", `@${bodyFile}`);
     }
 
-    const command = process.platform === "win32" ? "npx.cmd" : "npx";
-    const result = spawnSync(command, args, {
+    const npx = getNpxInvocation(args);
+    // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- shell is disabled and every value is passed as a separate argv item.
+    const result = spawnSync(npx.command, npx.args, {
       encoding: "utf8",
       maxBuffer: 20 * 1024 * 1024,
-      shell: process.platform === "win32",
+      shell: false,
       windowsHide: true
     });
 

@@ -51,6 +51,7 @@ export function toCalculatorProfileSeed(profile: RuntimeCalculatorProfile) {
     towerBasePrice,
     baseShelfCount,
     extraShelfFactor,
+    maxCombinedShelfCount: profile.maxCombinedShelfCount,
     consoleBasePrice: pricing.kind === "automatic" ? pricing.consoleBasePrice : undefined,
     consoleLongFactor: pricing.kind === "automatic" ? pricing.consoleLongFactor : undefined,
     gateBasePrice: pricing.kind === "rollout" || pricing.kind === "hybrid" ? pricing.gateBasePrice : undefined,

@@ -68,9 +68,11 @@ function formatCalculator(lead: CmsLeadInput): string {
 
 export function buildLeadEmailMessage(lead: CmsLeadInput): LeadEmailMessage {
   const selectedTitle = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "заявка с сайта";
-  const subject = lead.leadType === "configurator"
+  const subject = (lead.leadType === "configurator"
     ? `Заявка с конфигуратора: ${selectedTitle}`
-    : `Заявка с сайта: ${lead.sourceTitle || lead.phone}`;
+    : `Заявка с сайта: ${lead.sourceTitle || lead.phone}`)
+    .replace(/[\r\n]+/g, " ")
+    .slice(0, 240);
   const price = lead.fromPrice ?? lead.result?.fromPrice;
   const contactRows: Array<[string, string | undefined]> = [
     ["Тип", lead.leadType === "configurator" ? "Конфигуратор" : "Контактная форма"],

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
-import { Link } from "@payloadcms/ui/elements/Link";
 import { redirect } from "next/navigation";
 import {
   Activity,
@@ -24,8 +23,10 @@ import {
 
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
+import { getCachedAdminValue } from "@/lib/admin/server-cache";
 import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
+import { AdminIntentLink } from "./AdminIntentLink";
 import { CalculatorProfileSyncButton } from "./CalculatorProfileSyncButton";
 
 type HealthState = "healthy" | "configured" | "disabled" | "attention";
@@ -119,7 +120,11 @@ async function readVersionHistory(payload: Payload): Promise<HistoryItem[]> {
           } satisfies HistoryItem;
         });
       } catch (error) {
-        console.warn(`[admin-system] Version history unavailable for ${slug}`, error instanceof Error ? error.name : "UnknownError");
+        console.warn(
+          "[admin-system] Version history unavailable for %s: %s",
+          slug,
+          error instanceof Error ? error.name : "UnknownError"
+        );
         return [];
       }
     })
@@ -158,17 +163,19 @@ async function readLeadDelivery(payload: Payload) {
 }
 
 async function readSystemData(payload: Payload): Promise<SystemData> {
-  const [history, profileResult, leadDelivery] = await Promise.all([
-    readVersionHistory(payload),
-    payload.count({ collection: "calculator-profiles", overrideAccess: true }).catch(() => ({ totalDocs: 0 })),
-    readLeadDelivery(payload)
-  ]);
+  return getCachedAdminValue("system-summary", 30_000, async () => {
+    const [history, profileResult, leadDelivery] = await Promise.all([
+      readVersionHistory(payload),
+      payload.count({ collection: "calculator-profiles", overrideAccess: true }).catch(() => ({ totalDocs: 0 })),
+      readLeadDelivery(payload)
+    ]);
 
-  return {
-    history,
-    leadDelivery,
-    profileCount: profileResult.totalDocs
-  };
+    return {
+      history,
+      leadDelivery,
+      profileCount: profileResult.totalDocs
+    };
+  });
 }
 
 function HealthCard({ item }: { item: HealthItem }) {
@@ -193,7 +200,7 @@ function HealthCard({ item }: { item: HealthItem }) {
     </article>
   );
 
-  return item.href ? <Link href={item.href} prefetch={false}>{card}</Link> : card;
+  return item.href ? <AdminIntentLink href={item.href}>{card}</AdminIntentLink> : card;
 }
 
 function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
@@ -249,7 +256,7 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       status: metrikaConfigured ? "Сбор включён" : "Не настроена",
       state: metrikaConfigured ? "healthy" : "disabled",
       icon: SearchCheck,
-      href: "/admin/seo?view=conversions&period=30&provider=yandex&device=all"
+      href: "/admin/seo?view=goals&period=30&provider=yandex&device=all"
     },
     {
       label: "Bitrix24",
@@ -375,14 +382,14 @@ async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> 
           {history.length ? (
             <div className="kb-system__timeline">
               {history.map((item) => (
-                <Link href={item.href} className="kb-system__timeline-row" key={item.id} prefetch={false}>
+                <AdminIntentLink href={item.href} className="kb-system__timeline-row" key={item.id}>
                   <span className="kb-system__timeline-dot" data-state={item.state} />
                   <div><strong>{item.title}</strong><small>{item.entity}</small></div>
                   <div className="kb-system__timeline-meta">
                     <span data-state={item.state}>{item.state === "draft" ? "Черновик" : "Опубликовано"}</span>
                     <time>{formatDate(item.date)}</time>
                   </div>
-                </Link>
+                </AdminIntentLink>
               ))}
             </div>
           ) : (
@@ -401,9 +408,9 @@ async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> 
           </div>
           <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>
           <CalculatorProfileSyncButton existingCount={profileCount} />
-          <Link className="kb-system__secondary-link" href="/admin/collections/calculator-profiles" prefetch={false}>
+          <AdminIntentLink className="kb-system__secondary-link" href="/admin/collections/calculator-profiles">
             Открыть настройки расчётов <ArrowRight size={14} aria-hidden />
-          </Link>
+          </AdminIntentLink>
           <div className="kb-system__warning">
             <CircleAlert size={16} aria-hidden />
             <span>Цены предварительные. Инженерная проверка перед коммерческим предложением обязательна.</span>

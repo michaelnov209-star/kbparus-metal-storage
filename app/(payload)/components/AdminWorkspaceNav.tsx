@@ -1,7 +1,7 @@
 import { BarChart3, CircleGauge, LayoutDashboard, Settings2 } from "lucide-react";
-import { Link } from "@payloadcms/ui/elements/Link";
 import type { ServerProps } from "payload";
 import { canEditContent, getCmsRole } from "@/payload/access/rbac";
+import { AdminIntentLink } from "./AdminIntentLink";
 
 type AdminWorkspaceNavProps = Pick<ServerProps, "user">;
 
@@ -16,27 +16,27 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
   return (
     <div className="kb-admin-workspace-nav" aria-label="Основные разделы">
       <span className="kb-admin-workspace-nav__label">Рабочее пространство</span>
-      <Link className="kb-admin-workspace-nav__link" href="/admin" prefetch={false}>
+      <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin">
         <LayoutDashboard size={17} aria-hidden />
         <span>Обзор и быстрые действия</span>
-      </Link>
+      </AdminIntentLink>
       {canViewSeo ? (
-        <Link className="kb-admin-workspace-nav__link" href="/admin/seo" prefetch={false}>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/seo">
           <BarChart3 size={17} aria-hidden />
           <span>SEO, цели и конверсии</span>
-        </Link>
+        </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <Link className="kb-admin-workspace-nav__link" href="/admin/system" prefetch={false}>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/system">
           <CircleGauge size={17} aria-hidden />
           <span>Здоровье и история</span>
-        </Link>
+        </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <Link className="kb-admin-workspace-nav__link" href="/admin/integrations" prefetch={false}>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/integrations">
           <Settings2 size={17} aria-hidden />
           <span>Интеграции и статусы</span>
-        </Link>
+        </AdminIntentLink>
       ) : null}
     </div>
   );

@@ -1,5 +1,6 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { getPostgresConnectionString } from "@/lib/config/postgres";
 
 /**
  * Безопасный singleton-доступ к Payload Local API.
@@ -10,14 +11,20 @@ import config from "@payload-config";
  * Все вызовы оборачивайте в try/catch — БД может быть временно недоступна.
  */
 export async function getCmsClient() {
-  if (!process.env.DATABASE_URL || !process.env.PAYLOAD_SECRET) {
+  if (
+    !getPostgresConnectionString(process.env) ||
+    !process.env.PAYLOAD_SECRET
+  ) {
     return null;
   }
 
   try {
     return await getPayload({ config });
   } catch (error) {
-    console.warn("[cms] Payload init failed, falling back to defaults:", error);
+    console.warn(
+      "[cms] Payload init failed, falling back to defaults:",
+      error instanceof Error ? error.name : "UnknownError"
+    );
     return null;
   }
 }

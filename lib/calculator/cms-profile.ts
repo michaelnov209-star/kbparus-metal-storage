@@ -131,26 +131,20 @@ export function mergeCmsCalculatorProfile(
     };
   }
 
-  const hasCompleteHybridPricing =
-    typeof doc.towerBasePrice === "number" &&
-    doc.towerBasePrice > 0 &&
-    typeof doc.gateBasePrice === "number" &&
-    doc.gateBasePrice > 0 &&
-    typeof doc.baseShelfCount === "number" &&
-    doc.baseShelfCount > 0 &&
-    typeof doc.extraShelfFactor === "number" &&
-    doc.extraShelfFactor >= 0;
-
   return {
     ...common,
+    maxCombinedShelfCount: positiveNumber(
+      doc.maxCombinedShelfCount,
+      fallback.maxCombinedShelfCount ?? 25
+    ),
     pricing: {
       kind: "hybrid",
       forkliftLoadOptions: priceOptions(doc.loadOptions, fallback.pricing.forkliftLoadOptions),
       rolloutLoadOptions: fallback.pricing.rolloutLoadOptions.map((item) => ({ ...item })),
-      towerBasePrice: hasCompleteHybridPricing ? doc.towerBasePrice! : fallback.pricing.towerBasePrice,
-      gateBasePrice: hasCompleteHybridPricing ? doc.gateBasePrice! : fallback.pricing.gateBasePrice,
-      baseShelfCount: hasCompleteHybridPricing ? doc.baseShelfCount! : fallback.pricing.baseShelfCount,
-      extraShelfFactor: hasCompleteHybridPricing ? doc.extraShelfFactor! : fallback.pricing.extraShelfFactor
+      towerBasePrice: positiveNumber(doc.towerBasePrice, fallback.pricing.towerBasePrice),
+      gateBasePrice: positiveNumber(doc.gateBasePrice, fallback.pricing.gateBasePrice),
+      baseShelfCount: positiveNumber(doc.baseShelfCount, fallback.pricing.baseShelfCount),
+      extraShelfFactor: nonNegativeNumber(doc.extraShelfFactor, fallback.pricing.extraShelfFactor)
     }
   };
 }

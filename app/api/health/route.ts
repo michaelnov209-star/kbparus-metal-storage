@@ -11,8 +11,8 @@ import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
  * by monitoring; provider names, recipients, table names and raw errors stay
  * in server logs.
  */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const dynamic = "force-static";
+export const revalidate = 30;
 
 const REQUIRED_GLOBALS = ["contacts", "home-content", "site-navigation"] as const satisfies readonly GlobalSlug[];
 
@@ -115,6 +115,9 @@ export async function GET() {
   const httpStatus = result.status === "ok" ? 200 : result.status === "degraded" ? 200 : 503;
   return NextResponse.json(result, {
     status: httpStatus,
-    headers: { "Cache-Control": "no-store, max-age=0" }
+    headers: {
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      "X-Content-Type-Options": "nosniff"
+    }
   });
 }

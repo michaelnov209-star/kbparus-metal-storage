@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { Pool } from "pg";
 import { createLeadConsent, LEAD_CONSENT_VERSION } from "@/lib/leads/contract";
 import {
   checkLeadRateLimit,
+  getLeadClientIdentity,
   rateLimitHeaders
 } from "@/lib/leads/rate-limit";
 import {
@@ -147,6 +149,24 @@ describe("lead request body limits", () => {
 });
 
 describe("lead rate limiting", () => {
+  it("cannot be bypassed by rotating User-Agent for the same Vercel IP", () => {
+    const first = new Request("https://example.test/api/leads", {
+      headers: {
+        "user-agent": "browser-a",
+        "x-vercel-forwarded-for": "203.0.113.42"
+      }
+    });
+    const second = new Request("https://example.test/api/leads", {
+      headers: {
+        "user-agent": "browser-b",
+        "x-vercel-forwarded-for": "203.0.113.42"
+      }
+    });
+
+    expect(getLeadClientIdentity(first)).toBe("203.0.113.42");
+    expect(getLeadClientIdentity(second)).toBe("203.0.113.42");
+  });
+
   it("enforces a bounded in-memory fallback and exposes retry metadata", async () => {
     const env = {
       NODE_ENV: "test",
@@ -167,6 +187,54 @@ describe("lead rate limiting", () => {
       "Retry-After": "10",
       "X-RateLimit-Limit": "2",
       "X-RateLimit-Remaining": "0"
+    });
+  });
+
+  it("uses the shared PostgreSQL limiter when the CMS database is available", async () => {
+    const pool = {
+      query: async (_query: string, values?: unknown[]) => ({
+        rows: [
+          {
+            count: 1,
+            reset_at_ms: Number(values?.[1] ?? 11_000)
+          }
+        ]
+      })
+    } as unknown as Pool;
+
+    const result = await checkLeadRateLimit(
+      "database-client",
+      {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://configured",
+        LEAD_RATE_LIMIT_SALT: "test-salt"
+      } as NodeJS.ProcessEnv,
+      1_000,
+      pool
+    );
+
+    expect(result).toMatchObject({
+      allowed: true,
+      backend: "database",
+      remaining: 4
+    });
+  });
+
+  it("fails closed in production when every durable limiter is unavailable", async () => {
+    const result = await checkLeadRateLimit(
+      "unavailable-client",
+      {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://configured",
+        LEAD_RATE_LIMIT_SALT: "test-salt"
+      } as NodeJS.ProcessEnv,
+      1_000
+    );
+
+    expect(result).toMatchObject({
+      allowed: false,
+      backend: "unavailable",
+      retryAfterSeconds: 30
     });
   });
 });

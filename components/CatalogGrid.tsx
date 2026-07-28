@@ -115,7 +115,14 @@ export function CatalogGrid({ items }: { items: ExcelHomeCatalogItem[] }) {
               <X size={22} />
             </button>
             <div className="catalog-lightbox-visual">
-              <img src={activeItem.imageLarge ?? activeItem.image} alt={activeItem.imageAlt ?? activeItem.title} loading="eager" decoding="async" />
+              <img
+                src={activeItem.imageLarge ?? activeItem.image}
+                alt={activeItem.imageAlt ?? activeItem.title}
+                loading="eager"
+                decoding="async"
+                width={960}
+                height={720}
+              />
             </div>
             <div className="catalog-lightbox-copy">
               <span>{getCatalogBadge(activeItem.id)}</span>

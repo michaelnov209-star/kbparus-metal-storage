@@ -265,10 +265,10 @@ export default async function Home() {
         </nav>
         <div className="line-header-contact">
           {navigation.header.contacts.showTelegram && (
-            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram" data-metrika-goal="messenger_click"><img src="/assets/icons/telegram.svg" alt="" /></a>
+            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram" data-metrika-goal="messenger_click"><img src="/assets/icons/telegram.svg" alt="" width={24} height={24} /></a>
           )}
           {navigation.header.contacts.showMax && (
-            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX" data-metrika-goal="messenger_click"><img src="/assets/icons/max.svg" alt="" /></a>
+            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX" data-metrika-goal="messenger_click"><img src="/assets/icons/max.svg" alt="" width={24} height={24} /></a>
           )}
           {navigation.header.contacts.showPhones && (
             <div className="phone-stack">
@@ -312,6 +312,8 @@ export default async function Home() {
               loading="eager"
               fetchPriority="high"
               decoding="async"
+              width={1280}
+              height={716}
             />
           )}
         </div>
@@ -396,6 +398,8 @@ export default async function Home() {
                   alt={item.imageAlt}
                   loading="lazy"
                   decoding="async"
+                  width={1200}
+                  height={900}
                 />
                 <strong>{item.label}</strong>
               </div>
@@ -423,6 +427,8 @@ export default async function Home() {
               loading="lazy"
               decoding="async"
               fetchPriority="low"
+              width={1536}
+              height={1024}
             />
             <div><span>До</span><h3>{home.beforeAfter.before.title}</h3><p>{home.beforeAfter.before.text}</p></div>
           </article>
@@ -433,6 +439,8 @@ export default async function Home() {
               loading="lazy"
               decoding="async"
               fetchPriority="low"
+              width={1536}
+              height={1024}
             />
             <div><span>После</span><h3>{home.beforeAfter.after.title}</h3><p>{home.beforeAfter.after.text}</p></div>
           </article>
@@ -474,6 +482,8 @@ export default async function Home() {
                 loading="lazy"
                 decoding="async"
                 fetchPriority="low"
+                width={1536}
+                height={1024}
               />
               <a href="#contacts" aria-label={`Обсудить кейс: ${item.title}`}><ArrowRight size={24} /></a>
               <h3>{hasVerifiedCases ? item.customer : "Типовой сценарий"}</h3>
@@ -522,7 +532,7 @@ export default async function Home() {
             {visibleReviews.map((review) => (
               <article className="review-card reveal" key={review.name}>
                 <div className="review-avatar">
-                  <img src={review.imageUrl} alt={review.imageAlt ?? review.name} loading="lazy" decoding="async" />
+                  <img src={review.imageUrl} alt={review.imageAlt ?? review.name} loading="lazy" decoding="async" width={96} height={96} />
                 </div>
                 <div>
                   <strong>{review.name}</strong>
@@ -566,6 +576,8 @@ export default async function Home() {
           loading="lazy"
           decoding="async"
           fetchPriority="low"
+          width={1774}
+          height={887}
         />
         <a className="line-primary" href={home.banners.kbparus.url} target="_blank" rel="noreferrer">{home.banners.kbparus.ctaLabel}</a>
       </section>
@@ -577,6 +589,8 @@ export default async function Home() {
           loading="lazy"
           decoding="async"
           fetchPriority="low"
+          width={1536}
+          height={1024}
         />
         <a className="line-primary" href={home.banners.coating.url} target="_blank" rel="noreferrer">{home.banners.coating.ctaLabel}</a>
       </section>
@@ -613,7 +627,7 @@ export default async function Home() {
           <div className="line-partners" id="partners-slider">
             {visiblePartners.map((partner) => (
               <article className="partner-logo reveal" key={partner.name}>
-                <img src={partner.logoUrl} alt={partner.logoAlt ?? partner.name} loading="lazy" decoding="async" />
+                <img src={partner.logoUrl} alt={partner.logoAlt ?? partner.name} loading="lazy" decoding="async" width={240} height={100} />
                 <strong>{partner.name}</strong>
               </article>
             ))}

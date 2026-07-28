@@ -29,6 +29,18 @@ describe("admin layout isolation", () => {
     expect(payloadLayout).not.toContain("CookieConsent");
   });
 
+  it("keeps social preview generation inside the public route group", () => {
+    const publicLayout = source("app/(site)/layout.tsx");
+
+    expect(
+      existsSync(resolve(projectRoot, "app/(site)/opengraph-image/route.ts"))
+    ).toBe(true);
+    expect(existsSync(resolve(projectRoot, "app/opengraph-image.tsx"))).toBe(
+      false
+    );
+    expect(publicLayout).toContain('url: "/opengraph-image"');
+  });
+
   it("uses exactly one document root per route group", () => {
     const publicLayout = source("app/(site)/layout.tsx");
     const payloadLayout = source("app/(payload)/layout.tsx");
@@ -47,6 +59,49 @@ describe("admin layout isolation", () => {
     expect(seoNav).not.toContain('<a className="kb-admin-seo-nav"');
     expect(training).toContain("@payloadcms/ui/elements/Link");
     expect(training).not.toContain('<a className="kb-admin-training__link"');
+  });
+
+  it("prefetches primary admin destinations only after user intent", () => {
+    const intentLink = source(
+      "app/(payload)/components/AdminIntentLink.tsx"
+    );
+    const workspaceNav = source(
+      "app/(payload)/components/AdminWorkspaceNav.tsx"
+    );
+
+    expect(intentLink).toContain("router.prefetch(href)");
+    expect(intentLink).toContain("@payloadcms/ui/elements/Link");
+    expect(intentLink).toContain("usePathname");
+    expect(intentLink).toContain('aria-current={props["aria-current"]');
+    expect(intentLink).toContain("onMouseEnter={handleMouseEnter}");
+    expect(intentLink).toContain("onFocus={handleFocus}");
+    expect(intentLink).toContain("prefetch={false}");
+    expect(workspaceNav).toContain("<AdminIntentLink");
+    expect(workspaceNav).not.toContain("prefetch={false}");
+  });
+
+  it("routes conversion shortcuts to the goals and conversions workspace", () => {
+    const integrations = source(
+      "app/(payload)/components/AdminIntegrationsView.tsx"
+    );
+    const system = source(
+      "app/(payload)/components/AdminSystemView.tsx"
+    );
+
+    expect(integrations).toContain("/admin/seo?view=goals");
+    expect(system).toContain("/admin/seo?view=goals");
+    expect(integrations).not.toContain("view=conversions");
+    expect(system).not.toContain("view=conversions");
+  });
+
+  it("loads the goals workspace only when its SEO tab is opened", () => {
+    const seoClient = source(
+      "app/(payload)/components/SeoReportsClient.tsx"
+    );
+
+    expect(seoClient).toContain("const SeoGoalsClient = lazy(");
+    expect(seoClient).toContain('import("./SeoGoalsClient")');
+    expect(seoClient).toContain("<Suspense");
   });
 
   it("renders the SEO root view inside Payload's default navigation template", () => {

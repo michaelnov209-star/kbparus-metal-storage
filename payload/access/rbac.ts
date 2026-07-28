@@ -1,4 +1,4 @@
-import type { Access, PayloadRequest, Where } from "payload";
+import type { Access, FieldAccess, PayloadRequest, Where } from "payload";
 
 export const cmsRoles = ["admin", "editor", "photographer"] as const;
 
@@ -45,8 +45,20 @@ const publishedOnly: Where = {
   }
 };
 
+const publiclyAvailableMediaOnly: Where = {
+  publiclyAvailable: {
+    equals: true
+  }
+};
+
 export const publicReadPublished: Access = ({ req }) =>
   canEditContent(req.user) ? true : publishedOnly;
+
+export const publicReadAvailableMedia: Access = ({ req }) =>
+  canManageMedia(req.user) ? true : publiclyAvailableMediaOnly;
+
+export const mediaInternalFieldRead: FieldAccess = ({ req }) =>
+  canManageMedia(req.user);
 
 export function adminUiOnly({ req }: { req: PayloadRequest }): boolean {
   return isAdminUser(req.user);

@@ -70,6 +70,8 @@ export function ProductGallery({
               loading={activeIndex === 0 ? "eager" : "lazy"}
               decoding="async"
               fetchPriority={activeIndex === 0 ? "high" : "auto"}
+              width={960}
+              height={720}
             />
             <span className="product-gallery-zoom">
               <Maximize2 size={16} />
@@ -98,7 +100,14 @@ export function ProductGallery({
               onClick={() => setActiveIndex(index)}
               aria-label={`Открыть фото ${index + 1}`}
             >
-              <img src={image.thumbSrc ?? image.src} alt="" loading="lazy" decoding="async" />
+              <img
+                src={image.thumbSrc ?? image.src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                width={320}
+                height={240}
+              />
             </button>
           ))}
         </div>
@@ -124,6 +133,8 @@ export function ProductGallery({
               src={activeImage.largeSrc ?? activeImage.src}
               alt={activeImage.alt ?? `${title} — крупное фото ${activeIndex + 1}`}
               decoding="async"
+              width={1440}
+              height={1080}
             />
           </div>
         </div>

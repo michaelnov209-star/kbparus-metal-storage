@@ -7,6 +7,7 @@ import {
 import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
+import { getCmsClient } from "@/lib/cms/client";
 import {
   LEAD_CONSENT_POLICY_PATH,
   LEAD_CONSENT_VERSION
@@ -145,15 +146,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimit = await checkLeadRateLimit(getLeadClientIdentity(request));
+  const cmsForRateLimit = await getCmsClient();
+  const rateLimit = await checkLeadRateLimit(
+    getLeadClientIdentity(request),
+    process.env,
+    Date.now(),
+    cmsForRateLimit?.db.pool
+  );
   if (!rateLimit.allowed) {
+    const limiterUnavailable = rateLimit.backend === "unavailable";
     return NextResponse.json(
       {
         ok: false,
-        code: "rate_limited",
-        error: "Слишком много запросов. Подождите минуту и попробуйте снова."
+        code: limiterUnavailable ? "security_unavailable" : "rate_limited",
+        error: limiterUnavailable
+          ? "Защита формы временно недоступна. Попробуйте через полминуты или позвоните нам."
+          : "Слишком много запросов. Подождите минуту и попробуйте снова."
       },
-      { status: 429, headers: rateLimitHeaders(rateLimit) }
+      {
+        status: limiterUnavailable ? 503 : 429,
+        headers: rateLimitHeaders(rateLimit)
+      }
     );
   }
 
@@ -341,7 +354,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, channels },
+    { ok: true },
     { headers: rateLimitHeaders(rateLimit) }
   );
 }

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
-import { Link } from "@payloadcms/ui/elements/Link";
 import { redirect } from "next/navigation";
 import {
   Activity,
@@ -26,6 +25,7 @@ import {
   getCmsRole,
   type CmsRole
 } from "@/payload/access/rbac";
+import { AdminIntentLink } from "./AdminIntentLink";
 
 type DashboardCounts = {
   products: number | null;
@@ -242,13 +242,13 @@ async function DashboardMetrics({
   return (
     <div className="kb-control-center__metrics">
       {metrics.map((metric) => (
-        <Link className="kb-control-center__metric" href={metric.href} key={metric.label} prefetch={false}>
+        <AdminIntentLink className="kb-control-center__metric" href={metric.href} key={metric.label}>
           <span>
             <metric.icon size={17} aria-hidden />
             {metric.label}
           </span>
           <strong>{metric.value}</strong>
-        </Link>
+        </AdminIntentLink>
       ))}
     </div>
   );
@@ -256,11 +256,10 @@ async function DashboardMetrics({
 
 function WorkspaceCard({ item }: { item: WorkspaceItem }) {
   return (
-    <Link
+    <AdminIntentLink
       className="kb-control-center__card"
       data-accent={item.accent ? "true" : "false"}
       href={item.href}
-      prefetch={false}
     >
       <span className="kb-control-center__card-icon">
         <item.icon size={19} aria-hidden />
@@ -270,7 +269,7 @@ function WorkspaceCard({ item }: { item: WorkspaceItem }) {
         <p>{item.description}</p>
       </div>
       <ArrowRight size={17} aria-hidden />
-    </Link>
+    </AdminIntentLink>
   );
 }
 
@@ -305,26 +304,25 @@ export async function AdminDashboard({
           <p>Главное на одном экране: контент, заявки, расчёты и состояние сервисов.</p>
           <div className="kb-control-center__quick-actions">
             {canEdit ? (
-              <Link
+              <AdminIntentLink
                 className="kb-control-center__action kb-control-center__action--primary"
                 href="/admin/collections/products/create"
-                prefetch={false}
               >
                 <Plus size={16} aria-hidden />
                 Новый товар
-              </Link>
+              </AdminIntentLink>
             ) : null}
             {canManageMedia(authenticatedUser) ? (
-              <Link className="kb-control-center__action" href="/admin/collections/media/create" prefetch={false}>
+              <AdminIntentLink className="kb-control-center__action" href="/admin/collections/media/create">
                 <UploadCloud size={16} aria-hidden />
                 Загрузить файл
-              </Link>
+              </AdminIntentLink>
             ) : null}
             {role === "admin" ? (
-              <Link className="kb-control-center__action" href="/admin/collections/leads" prefetch={false}>
+              <AdminIntentLink className="kb-control-center__action" href="/admin/collections/leads">
                 <Inbox size={16} aria-hidden />
                 Открыть заявки
-              </Link>
+              </AdminIntentLink>
             ) : null}
           </div>
         </div>
@@ -339,10 +337,10 @@ export async function AdminDashboard({
           </div>
           <p>Telegram, почта и аналитика подключены через защищённые настройки.</p>
           {role === "admin" ? (
-            <Link href="/admin/system" prefetch={false}>
+            <AdminIntentLink href="/admin/system">
               Проверить здоровье
               <ArrowRight size={14} aria-hidden />
-            </Link>
+            </AdminIntentLink>
           ) : null}
         </aside>
       </header>

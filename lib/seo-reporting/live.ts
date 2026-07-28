@@ -125,7 +125,7 @@ async function loadLiveSeoReport(
       };
     }
   } catch (error) {
-    console.error(`[seo-reporting] ${input.provider} request failed`, error);
+    console.error("[seo-reporting] %s request failed", input.provider, error);
     execution = {
       state: "error",
       message: publicSeoProviderError(

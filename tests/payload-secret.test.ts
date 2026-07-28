@@ -31,6 +31,23 @@ describe("Payload secret configuration", () => {
     ).toBe(secret);
   });
 
+  it("rejects the development fallback on non-Vercel production runtimes with a database", () => {
+    expect(() =>
+      getPayloadSecret({
+        NODE_ENV: "production",
+        DATABASE_URL: "postgres://database.example.invalid/app"
+      })
+    ).toThrow(/PAYLOAD_SECRET/);
+
+    expect(() =>
+      getPayloadSecret({
+        NODE_ENV: "production",
+        DATABASE_URL: "postgres://database.example.invalid/app",
+        PAYLOAD_SECRET: "weak"
+      })
+    ).toThrow(/at least 32 characters/);
+  });
+
   it("keeps local, preview and CI production builds operational", () => {
     expect(getPayloadSecret({ NODE_ENV: "development" })).toContain(
       "local-development-only"

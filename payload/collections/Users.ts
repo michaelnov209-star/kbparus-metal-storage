@@ -28,6 +28,8 @@ export const Users: CollectionConfig = {
     update: adminOnly
   },
   auth: {
+    lockTime: 10 * 60 * 1000,
+    maxLoginAttempts: 5,
     cookies: {
       sameSite: "Lax",
       secure: true

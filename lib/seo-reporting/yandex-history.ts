@@ -768,10 +768,7 @@ export async function collectYandexHistory({
       rowCount += result.rowCount;
       truncated ||= result.truncated;
     } catch (error) {
-      console.error(
-        `[seo-reporting] Yandex history sync failed for ${device}`,
-        error
-      );
+      console.error("[seo-reporting] Yandex history sync failed for %s", device, error);
       errors.push({
         device,
         message: publicSeoProviderError("Яндекс Вебмастер", error)

@@ -90,9 +90,13 @@ function waitForProcessExit(child, timeoutMs = 5_000) {
   });
 }
 
-function runProcess(command, args, timeoutMs = 10_000) {
+function stopWindowsProcessTree(pid, timeoutMs = 10_000) {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { stdio: "ignore" });
+    const child = spawn(
+      "taskkill",
+      ["/pid", String(pid), "/T", "/F"],
+      { shell: false, stdio: "ignore", windowsHide: true }
+    );
     const timeout = setTimeout(() => {
       child.kill();
       resolve(1);
@@ -126,12 +130,7 @@ async function stopOwnedServer() {
     }
 
     if (process.platform === "win32") {
-      await runProcess("taskkill", [
-        "/pid",
-        String(ownedServer.pid),
-        "/T",
-        "/F"
-      ]);
+      await stopWindowsProcessTree(ownedServer.pid);
       await waitForProcessExit(ownedServer);
       return;
     }

@@ -32,7 +32,7 @@ export function SolutionsShowcase() {
 
       <div className="solution-stage">
         <div className="solution-photo">
-          <img src={image} alt={active.title} />
+          <img src={image} alt={active.title} width={1536} height={1024} />
         </div>
         <div className="solution-copy">
           <span className="eyebrow">Активное решение</span>

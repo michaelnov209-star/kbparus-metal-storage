@@ -49,6 +49,8 @@ export function ImageLightbox({
           loading="eager"
           decoding="async"
           fetchPriority="high"
+          width={960}
+          height={720}
         />
         <button className="image-lightbox-open" type="button" onClick={() => setIsOpen(true)} aria-label={`Увеличить изображение: ${alt}`}>
           <Maximize2 size={16} />
@@ -63,7 +65,13 @@ export function ImageLightbox({
               <X size={22} />
             </button>
             <div className="catalog-lightbox-visual">
-              <img src={largeSrc ?? src} alt={alt} decoding="async" />
+              <img
+                src={largeSrc ?? src}
+                alt={alt}
+                decoding="async"
+                width={1440}
+                height={1080}
+              />
             </div>
           </div>
         </div>

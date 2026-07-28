@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { getCmsClient } from "@/lib/cms/client";
+import { authenticateCmsRequest } from "@/lib/admin/request-auth";
 import {
   getYandexMetrikaConversionReport,
   parseYandexMetrikaPeriod
 } from "@/lib/seo-reporting/yandex-metrika";
-import { canEditContent } from "@/payload/access/rbac";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,36 +16,17 @@ const privateHeaders = {
 };
 
 export async function GET(request: Request) {
-  const cms = await getCmsClient();
-  if (!cms) {
+  const auth = await authenticateCmsRequest(request, ["admin", "editor"]);
+  if (!auth.ok) {
+    const error =
+      auth.status === 503
+        ? "CMS временно недоступна"
+        : auth.status === 403
+          ? "Недостаточно прав"
+          : "Требуется авторизация";
     return NextResponse.json(
-      { error: "CMS временно недоступна" },
-      { status: 503, headers: privateHeaders }
-    );
-  }
-
-  let user: unknown;
-  try {
-    const auth = await cms.auth({ headers: request.headers });
-    user = auth.user;
-  } catch {
-    return NextResponse.json(
-      { error: "Требуется авторизация" },
-      { status: 401, headers: privateHeaders }
-    );
-  }
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Требуется авторизация" },
-      { status: 401, headers: privateHeaders }
-    );
-  }
-
-  if (!canEditContent(user)) {
-    return NextResponse.json(
-      { error: "Недостаточно прав" },
-      { status: 403, headers: privateHeaders }
+      { error },
+      { status: auth.status, headers: privateHeaders }
     );
   }
 

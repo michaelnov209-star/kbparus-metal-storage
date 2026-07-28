@@ -31,8 +31,23 @@ if (!baseUrlArg) {
 
 const baseUrl = normalizeBaseUrl(baseUrlArg);
 const baseOrigin = new URL(baseUrl).origin;
+const baseHostname = new URL(baseUrl).hostname.toLowerCase();
 const checks = [];
 let protectedResponses = 0;
+
+const trustedBypassHost =
+  baseHostname === "kbparus-metal-storage.vercel.app" ||
+  (
+    baseHostname.startsWith("kbparus-metal-storage-") &&
+    baseHostname.endsWith(".vercel.app")
+  );
+
+if (protectionBypassSecret && !trustedBypassHost) {
+  console.error(
+    "Refusing to send the Vercel protection bypass secret to an untrusted deployment host."
+  );
+  process.exit(1);
+}
 
 function normalizeBaseUrl(value) {
   const withProtocol = /^https?:\/\//i.test(value)
@@ -111,10 +126,13 @@ async function fetchText(pathOrUrl, options = {}) {
 }
 
 function extractAttribute(tag, attribute) {
-  const pattern = new RegExp(
-    `${attribute}\\s*=\\s*(?:"([^"]+)"|'([^']+)')`,
-    "i"
-  );
+  const patterns = {
+    media: /\bmedia\s*=\s*(?:"([^"]+)"|'([^']+)')/i,
+    poster: /\bposter\s*=\s*(?:"([^"]+)"|'([^']+)')/i,
+    src: /\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)')/i
+  };
+  const pattern = patterns[attribute];
+  if (!pattern) return "";
   const match = tag.match(pattern);
   return match?.[1] || match?.[2] || "";
 }
@@ -153,16 +171,12 @@ function extractHeroAssets(html) {
 }
 
 function extractOptimizedAsset(html, segment) {
-  const escaped = segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = html.match(
-    new RegExp(
-      `(?:src|srcset)\\s*=\\s*(?:"|')[^"']*(${escaped}[^"'\\s,]+)`,
-      "i"
-    )
-  );
-  if (!match) return "";
-
-  const value = match[1]
+  const start = html.indexOf(segment);
+  if (start === -1) return "";
+  const candidate = html.slice(start);
+  const end = candidate.search(/["'\s,<>]/);
+  const value = candidate
+    .slice(0, end === -1 ? undefined : end)
     .replaceAll("&amp;", "&")
     .replaceAll("\\u0026", "&");
   return value.startsWith("/") ? value : `/${value}`;

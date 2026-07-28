@@ -6,6 +6,8 @@ import {
   contentManagersOnly,
   getCmsRole,
   mediaManagersOnly,
+  mediaInternalFieldRead,
+  publicReadAvailableMedia,
   publicReadPublished
 } from "@/payload/access/rbac";
 
@@ -45,5 +47,16 @@ describe("Payload RBAC", () => {
     expect(await publicReadPublished(accessArgs("photographer"))).toEqual(publishedFilter);
     expect(await publicReadPublished(accessArgs("editor"))).toBe(true);
     expect(await publicReadPublished(accessArgs("admin"))).toBe(true);
+  });
+
+  it("hides private media and internal notes from anonymous API readers", async () => {
+    expect(await publicReadAvailableMedia(accessArgs())).toEqual({
+      publiclyAvailable: {
+        equals: true
+      }
+    });
+    expect(await publicReadAvailableMedia(accessArgs("photographer"))).toBe(true);
+    expect(await mediaInternalFieldRead(accessArgs())).toBe(false);
+    expect(await mediaInternalFieldRead(accessArgs("editor"))).toBe(true);
   });
 });

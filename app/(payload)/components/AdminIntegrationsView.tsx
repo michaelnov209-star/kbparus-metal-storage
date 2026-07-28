@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
-import { Link } from "@payloadcms/ui/elements/Link";
 import { redirect } from "next/navigation";
 import {
   BarChart3,
@@ -17,8 +16,10 @@ import {
 
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
+import { getCachedAdminValue } from "@/lib/admin/server-cache";
 import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
+import { AdminIntentLink } from "./AdminIntentLink";
 import { IntegrationProbeButton } from "./IntegrationProbeButton";
 
 type IntegrationState = "connected" | "configured" | "disabled" | "error";
@@ -49,29 +50,34 @@ function formatDate(value?: string | null) {
 }
 
 async function readLatestDeliveries(payload: Payload) {
-  try {
-    const response = await payload.find({
-      collection: "leads",
-      depth: 0,
-      limit: 30,
-      overrideAccess: true,
-      pagination: false,
-      select: {
-        createdAt: true,
-        emailDelivered: true,
-        telegramDelivered: true
-      },
-      sort: "-createdAt"
-    });
+  return getCachedAdminValue("integration-delivery-summary", 30_000, async () => {
+    try {
+      const response = await payload.find({
+        collection: "leads",
+        depth: 0,
+        limit: 30,
+        overrideAccess: true,
+        pagination: false,
+        select: {
+          createdAt: true,
+          emailDelivered: true,
+          telegramDelivered: true
+        },
+        sort: "-createdAt"
+      });
 
-    return {
-      email: response.docs.find((lead) => lead.emailDelivered)?.createdAt ?? null,
-      telegram: response.docs.find((lead) => lead.telegramDelivered)?.createdAt ?? null
-    };
-  } catch (error) {
-    console.warn("[admin-integrations] Delivery history unavailable", error instanceof Error ? error.name : "UnknownError");
-    return { email: null, telegram: null };
-  }
+      return {
+        email: response.docs.find((lead) => lead.emailDelivered)?.createdAt ?? null,
+        telegram: response.docs.find((lead) => lead.telegramDelivered)?.createdAt ?? null
+      };
+    } catch (error) {
+      console.warn(
+        "[admin-integrations] Delivery history unavailable",
+        error instanceof Error ? error.name : "UnknownError"
+      );
+      return { email: null, telegram: null };
+    }
+  });
 }
 
 function IntegrationCardView({ card }: { card: IntegrationCard }) {
@@ -93,10 +99,10 @@ function IntegrationCardView({ card }: { card: IntegrationCard }) {
       <h2>{card.title}</h2>
       <p>{card.description}</p>
       {card.probeKind ? <IntegrationProbeButton kind={card.probeKind} /> : null}
-      <Link href={card.actionHref} prefetch={false}>
+      <AdminIntentLink href={card.actionHref}>
         {card.actionLabel}
         <ExternalLink size={14} aria-hidden />
-      </Link>
+      </AdminIntentLink>
     </article>
   );
 }
@@ -150,7 +156,7 @@ async function IntegrationGrid({
       icon: BarChart3,
       state: process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID ? "connected" : "disabled",
       status: process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID ? "Сбор данных включён" : "Не настроена",
-      actionHref: "/admin/seo?view=conversions&period=30&provider=yandex&device=all",
+      actionHref: "/admin/seo?view=goals&period=30&provider=yandex&device=all",
       actionLabel: "Открыть конверсии"
     },
     {
@@ -221,10 +227,10 @@ export async function AdminIntegrationsView({
           <h1>Интеграции и доставка заявок</h1>
           <p>Страница открывается быстро: внешние сервисы не проверяются во время загрузки. Живые проверки запускаются вручную и не отправляют тестовые заявки.</p>
         </div>
-        <Link className="kb-integrations__refresh" href="/admin/system" prefetch={false}>
+        <AdminIntentLink className="kb-integrations__refresh" href="/admin/system">
           <CheckCircle2 size={16} aria-hidden />
           Здоровье сайта
-        </Link>
+        </AdminIntentLink>
       </header>
 
       <Suspense fallback={<IntegrationGridSkeleton />}>

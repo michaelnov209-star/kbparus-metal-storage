@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { Pool } from "pg";
 
 interface MemoryEntry {
   count: number;
@@ -11,7 +12,7 @@ interface RateLimitResult {
   remaining: number;
   resetAt: number;
   retryAfterSeconds: number;
-  backend: "redis" | "memory";
+  backend: "database" | "redis" | "memory" | "unavailable";
 }
 
 type RateLimitGlobal = typeof globalThis & {
@@ -36,10 +37,22 @@ function getSettings(env: NodeJS.ProcessEnv) {
 }
 
 export function getLeadClientIdentity(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const vercelForwarded = request.headers
+    .get("x-vercel-forwarded-for")
+    ?.split(",")[0]
+    ?.trim();
+  const forwarded = request.headers
+    .get("x-forwarded-for")
+    ?.split(",")[0]
+    ?.trim();
   const realIp = request.headers.get("x-real-ip")?.trim();
   const userAgent = request.headers.get("user-agent")?.slice(0, 200) || "unknown-agent";
-  return `${forwarded || realIp || "unknown-ip"}|${userAgent}`;
+  const clientIp = vercelForwarded || forwarded || realIp;
+
+  // Vercel overwrites its forwarding header, so one IP must share one bucket.
+  // User-Agent stays only as a local/dev fallback and cannot reset a real
+  // visitor's production limit.
+  return clientIp || `unknown-ip|${userAgent}`;
 }
 
 function hashIdentity(identity: string, env: NodeJS.ProcessEnv) {
@@ -127,22 +140,119 @@ async function redisRateLimit(
   }
 }
 
+async function databaseRateLimit(
+  pool: Pool,
+  key: string,
+  limit: number,
+  windowMs: number,
+  now: number
+): Promise<RateLimitResult | undefined> {
+  try {
+    const resetAt = now + windowMs;
+    const response = await pool.query<{
+      count: number | string;
+      reset_at_ms: number | string;
+    }>(
+      `
+        INSERT INTO "lead_rate_limits"
+          ("rate_limit_key", "count", "reset_at", "updated_at")
+        VALUES ($1, 1, to_timestamp($2 / 1000.0), now())
+        ON CONFLICT ("rate_limit_key") DO UPDATE
+        SET
+          "count" = CASE
+            WHEN "lead_rate_limits"."reset_at" <= now() THEN 1
+            ELSE "lead_rate_limits"."count" + 1
+          END,
+          "reset_at" = CASE
+            WHEN "lead_rate_limits"."reset_at" <= now()
+              THEN EXCLUDED."reset_at"
+            ELSE "lead_rate_limits"."reset_at"
+          END,
+          "updated_at" = now()
+        RETURNING
+          "count",
+          (extract(epoch FROM "reset_at") * 1000)::bigint AS "reset_at_ms"
+      `,
+      [key, resetAt]
+    );
+    const count = Number(response.rows[0]?.count);
+    const persistedResetAt = Number(response.rows[0]?.reset_at_ms);
+    if (!Number.isFinite(count) || !Number.isFinite(persistedResetAt)) {
+      return undefined;
+    }
+
+    // Opportunistic bounded cleanup without adding a cron job. A deterministic
+    // 1/256 sample keeps the table compact while avoiding work on every lead.
+    if (key.endsWith("00")) {
+      await pool
+        .query(
+          `DELETE FROM "lead_rate_limits"
+           WHERE "updated_at" < now() - interval '1 day'`
+        )
+        .catch(() => undefined);
+    }
+
+    return {
+      allowed: count <= limit,
+      limit,
+      remaining: Math.max(0, limit - count),
+      resetAt: persistedResetAt,
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil((persistedResetAt - now) / 1000)
+      ),
+      backend: "database"
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export async function checkLeadRateLimit(
   identity: string,
   env: NodeJS.ProcessEnv = process.env,
-  now = Date.now()
+  now = Date.now(),
+  pool?: Pool
 ): Promise<RateLimitResult> {
   const { limit, windowMs } = getSettings(env);
   const key = `kbparus:lead:${hashIdentity(identity, env)}`;
-  return (
-    (await redisRateLimit(key, limit, windowMs, now, env)) ??
-    memoryRateLimit(key, limit, windowMs, now)
-  );
+  const durableResult =
+    (pool
+      ? await databaseRateLimit(pool, key, limit, windowMs, now)
+      : undefined) ??
+    (await redisRateLimit(key, limit, windowMs, now, env));
+  if (durableResult) return durableResult;
+
+  const durableBackendExpected =
+    env.NODE_ENV === "production" &&
+    Boolean(
+      env.DATABASE_URL ||
+        env.DATABASE_POSTGRES_URL ||
+        env.POSTGRES_URL ||
+        env.DATABASE_URL_UNPOOLED ||
+        env.DATABASE_POSTGRES_URL_NON_POOLING ||
+        env.POSTGRES_URL_NON_POOLING ||
+        env.UPSTASH_REDIS_REST_URL
+    );
+  if (durableBackendExpected) {
+    return {
+      allowed: false,
+      limit,
+      remaining: 0,
+      resetAt: now + 30_000,
+      retryAfterSeconds: 30,
+      backend: "unavailable"
+    };
+  }
+
+  return memoryRateLimit(key, limit, windowMs, now);
 }
 
 export function rateLimitHeaders(result: RateLimitResult): HeadersInit {
   return {
-    "Retry-After": String(result.retryAfterSeconds),
+    "Cache-Control": "private, no-store, max-age=0",
+    "X-Content-Type-Options": "nosniff",
+    ...(result.allowed ? {} : { "Retry-After": String(result.retryAfterSeconds) }),
     "X-RateLimit-Limit": String(result.limit),
     "X-RateLimit-Remaining": String(result.remaining),
     "X-RateLimit-Reset": String(Math.ceil(result.resetAt / 1000))

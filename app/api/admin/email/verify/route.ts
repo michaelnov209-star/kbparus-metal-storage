@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getCmsClient } from "@/lib/cms/client";
+import {
+  authenticateCmsRequest,
+  isTrustedAdminMutationRequest
+} from "@/lib/admin/request-auth";
 import {
   getSmtpTransport,
   isSmtpConfigured,
@@ -10,7 +13,6 @@ import {
   normalizeSmtpFailure,
   smtpErrorLogDetails
 } from "@/lib/email/smtp-error";
-import { getCmsRole } from "@/payload/access/rbac";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,36 +24,18 @@ const privateHeaders = {
 };
 
 async function verifySmtp(request: Request) {
-  const cms = await getCmsClient();
-  if (!cms) {
+  if (!isTrustedAdminMutationRequest(request)) {
     return NextResponse.json(
-      { ok: false, error: "cms-unavailable" },
-      { status: 503, headers: privateHeaders }
-    );
-  }
-
-  let user: unknown;
-  try {
-    const auth = await cms.auth({ headers: request.headers });
-    user = auth.user;
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: "authentication-required" },
-      { status: 401, headers: privateHeaders }
-    );
-  }
-
-  if (!user) {
-    return NextResponse.json(
-      { ok: false, error: "authentication-required" },
-      { status: 401, headers: privateHeaders }
-    );
-  }
-
-  if (getCmsRole(user) !== "admin") {
-    return NextResponse.json(
-      { ok: false, error: "admin-required" },
+      { ok: false, error: "origin-forbidden" },
       { status: 403, headers: privateHeaders }
+    );
+  }
+
+  const auth = await authenticateCmsRequest(request, ["admin"]);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { ok: false, error: auth.code },
+      { status: auth.status, headers: privateHeaders }
     );
   }
 
@@ -79,5 +63,4 @@ async function verifySmtp(request: Request) {
 }
 
 
-export const GET = verifySmtp;
 export const POST = verifySmtp;

@@ -13,6 +13,7 @@ import { basename, extname, join } from "node:path";
 import { excelHomeCatalog } from "../../data/storageSystems/excelCatalog";
 import { catalogProducts, catalogSubcategories } from "../../data/storageSystems/catalogDepth";
 import { DEFAULT_HOME_CONTENT } from "../../lib/cms/home-content";
+import { getNpxInvocation } from "./lib/npx-command";
 
 const ENV_KEYS = [
   "CMS_ADMIN_EMAIL",
@@ -500,14 +501,24 @@ function requestViaVercelCurlMultipart(path: string, asset: MediaAsset, data: An
 }
 
 function runVercelCurl(path: string, configPath: string): JsonResponse {
-  const npxBin = process.platform === "win32" ? "npx.cmd" : "npx";
   let lastOutput = "";
 
   for (let attempt = 1; attempt <= 3; attempt++) {
+    const npx = getNpxInvocation([
+      "vercel@latest",
+      "curl",
+      path,
+      "--deployment",
+      baseUrl,
+      "--",
+      "--config",
+      configPath
+    ]);
+    // Security: shell is disabled and all paths remain opaque argv items.
     const child = spawnSync(
-      npxBin,
-      ["vercel@latest", "curl", path, "--deployment", baseUrl, "--", "--config", configPath],
-      { encoding: "utf8", shell: process.platform === "win32" }
+      npx.command,
+      npx.args,
+      { encoding: "utf8", shell: false }
     );
 
     const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;

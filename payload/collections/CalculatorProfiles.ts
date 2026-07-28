@@ -1,6 +1,23 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionConfig, NumberFieldSingleValidation } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
 import { contentAdminUi, contentManagersOnly } from "../access/rbac";
+
+function requiredHybridNumber(label: string, allowZero = false): NumberFieldSingleValidation {
+  return (value, { siblingData }) => {
+    if ((siblingData as { kind?: unknown }).kind !== "hybrid") return true;
+
+    const valid =
+      typeof value === "number" &&
+      Number.isFinite(value) &&
+      (allowZero ? value >= 0 : value > 0);
+
+    return valid
+      ? true
+      : `Для гибридного профиля поле «${label}» обязательно и должно быть ${
+          allowZero ? "неотрицательным" : "больше нуля"
+        }.`;
+  };
+}
 
 /**
  * Профиль калькулятора. Структура 1-в-1 повторяет лист «Админка»
@@ -175,9 +192,48 @@ export const CalculatorProfiles: CollectionConfig = {
                 ]}
               ]
             },
-            { name: "towerBasePrice", label: { ru: "Базовая цена башни (для выкатных/погрузчиковых)", en: "Base tower price" }, type: "number" },
-            { name: "baseShelfCount", label: { ru: "Базовое число полок (для коэф-та сверх него)", en: "Base shelf count" }, type: "number" },
-            { name: "extraShelfFactor", label: { ru: "Коэффициент за каждую полку сверх базы", en: "Extra shelf factor" }, type: "number", admin: { description: { ru: "В Excel: «коэффициент если полок больше 5 — 0.1»", en: "" } } }
+            {
+              name: "towerBasePrice",
+              label: { ru: "Базовая цена башни, ₽", en: "Base tower price" },
+              type: "number",
+              min: 0,
+              validate: requiredHybridNumber("Базовая цена башни")
+            },
+            {
+              name: "baseShelfCount",
+              label: { ru: "Базовое число полок", en: "Base shelf count" },
+              type: "number",
+              min: 0,
+              validate: requiredHybridNumber("Базовое число полок")
+            },
+            {
+              name: "extraShelfFactor",
+              label: { ru: "Коэффициент за каждую полку сверх базы", en: "Extra shelf factor" },
+              type: "number",
+              min: 0,
+              validate: requiredHybridNumber("Коэффициент за каждую полку сверх базы", true),
+              admin: {
+                description: {
+                  ru: "В Excel: коэффициент при количестве полок больше базового — 0,1.",
+                  en: ""
+                }
+              }
+            },
+            {
+              name: "maxCombinedShelfCount",
+              label: { ru: "Максимум полок в гибридной системе", en: "Maximum combined shelf count" },
+              type: "number",
+              min: 1,
+              defaultValue: 25,
+              validate: requiredHybridNumber("Максимум полок в гибридной системе"),
+              admin: {
+                condition: (_, siblingData) => siblingData.kind === "hybrid",
+                description: {
+                  ru: "Общий предел полок под погрузчик и выкатных кассет на одну башню. Текущее значение из Excel — 25.",
+                  en: "Combined forklift and rollout shelf limit per tower."
+                }
+              }
+            }
           ]
         },
         {
@@ -185,7 +241,13 @@ export const CalculatorProfiles: CollectionConfig = {
           fields: [
             { name: "consoleBasePrice", label: { ru: "Базовая цена консоли, ₽", en: "Console base price" }, type: "number" },
             { name: "consoleLongFactor", label: { ru: "Коэффициент длинной полки (>3100 мм)", en: "Long shelf factor" }, type: "number", defaultValue: 1.2 },
-            { name: "gateBasePrice", label: { ru: "Цена распашных ворот, ₽", en: "Gate base price" }, type: "number" }
+            {
+              name: "gateBasePrice",
+              label: { ru: "Цена распашных ворот, ₽", en: "Gate base price" },
+              type: "number",
+              min: 0,
+              validate: requiredHybridNumber("Цена распашных ворот")
+            }
           ]
         },
         {

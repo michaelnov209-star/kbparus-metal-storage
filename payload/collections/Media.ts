@@ -1,6 +1,11 @@
 import type { CollectionConfig } from "payload";
 import { adminGroups, adminHints } from "../admin/structure";
-import { mediaAdminUi, mediaManagersOnly, publicRead } from "../access/rbac";
+import {
+  mediaAdminUi,
+  mediaInternalFieldRead,
+  mediaManagersOnly,
+  publicReadAvailableMedia
+} from "../access/rbac";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -54,6 +59,22 @@ export const Media: CollectionConfig = {
   },
   fields: [
     {
+      name: "publiclyAvailable",
+      label: {
+        ru: "Показывать в публичном API сайта",
+        en: "List in the public website API"
+      },
+      type: "checkbox",
+      defaultValue: true,
+      admin: {
+        description: {
+          ru: "Отключение убирает запись из публичного API и подборщиков, но не закрывает прямую ссылку Vercel Blob. Загружайте сюда только материалы, которые допустимо публиковать; конфиденциальные документы храните вне этой библиотеки.",
+          en: "This hides the API record but does not make the underlying public Blob private."
+        },
+        position: "sidebar"
+      }
+    },
+    {
       type: "tabs",
       tabs: [
         {
@@ -66,6 +87,9 @@ export const Media: CollectionConfig = {
                   name: "internalTitle",
                   label: { ru: "Рабочее название", en: "Internal title" },
                   type: "text",
+                  access: {
+                    read: mediaInternalFieldRead
+                  },
                   admin: {
                     width: "50%",
                     placeholder: "Фото автоматического склада листового металла",
@@ -130,6 +154,9 @@ export const Media: CollectionConfig = {
               name: "managerNote",
               label: { ru: "Комментарий для редакторов", en: "Manager note" },
               type: "textarea",
+              access: {
+                read: mediaInternalFieldRead
+              },
               admin: {
                 placeholder: "Например: использовать только для карточек первой категории; не ставить в hero"
               }
@@ -143,7 +170,7 @@ export const Media: CollectionConfig = {
     admin: mediaAdminUi,
     create: mediaManagersOnly,
     delete: mediaManagersOnly,
-    read: publicRead,
+    read: publicReadAvailableMedia,
     update: mediaManagersOnly
   }
 };

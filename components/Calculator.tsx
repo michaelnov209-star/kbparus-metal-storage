@@ -498,6 +498,8 @@ export function Calculator({
                         loading="lazy"
                         decoding="async"
                         fetchPriority="low"
+                        width={1536}
+                        height={1024}
                       />
                       <strong>{card.shortTitle}</strong>
                       <small>{card.description}</small>
@@ -919,6 +921,8 @@ export function Calculator({
             loading="lazy"
             decoding="async"
             fetchPriority="low"
+            width={1536}
+            height={1024}
           />
           <div className="summary-price price-live">
             <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>

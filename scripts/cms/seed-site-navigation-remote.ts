@@ -11,6 +11,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_SITE_NAVIGATION } from "../../lib/cms/site-navigation";
+import { getNpxInvocation } from "./lib/npx-command";
 
 const ENV_KEYS = [
   "CMS_ADMIN_EMAIL",
@@ -269,11 +270,21 @@ function requestViaVercelCurl(
 
     writeFileSync(configPath, configLines.join("\n"), "utf8");
 
-    const npxBin = process.platform === "win32" ? "npx.cmd" : "npx";
+    const npx = getNpxInvocation([
+      "vercel@latest",
+      "curl",
+      path,
+      "--deployment",
+      baseUrl,
+      "--",
+      "--config",
+      configPath
+    ]);
+    // Security: shell is disabled and the API path remains an opaque argv item.
     const child = spawnSync(
-      npxBin,
-      ["vercel@latest", "curl", path, "--deployment", baseUrl, "--", "--config", configPath],
-      { encoding: "utf8", shell: process.platform === "win32" }
+      npx.command,
+      npx.args,
+      { encoding: "utf8", shell: false }
     );
 
     const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;
