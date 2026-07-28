@@ -233,6 +233,36 @@ export default async function Home() {
   const hasVerifiedCases = home.cases.some(
     (item) => item.customer.trim() && item.customer !== "Компания-заказчик"
   );
+  const telegramHeaderLink = contacts.socials.telegram
+    ? {
+        className: "telegram",
+        goal: "messenger_click",
+        href: contacts.socials.telegram,
+        label: "Написать в Telegram",
+        icon: <img src="/assets/icons/telegram.svg" alt="" width={24} height={24} />
+      }
+    : {
+        className: "contact-fallback",
+        goal: "email_click",
+        href: contacts.email.href,
+        label: "Написать по электронной почте",
+        icon: <Mail aria-hidden="true" size={21} />
+      };
+  const maxHeaderLink = contacts.socials.max
+    ? {
+        className: "max",
+        goal: "messenger_click",
+        href: contacts.socials.max,
+        label: "Связаться в MAX",
+        icon: <img src="/assets/icons/max.svg" alt="" width={24} height={24} />
+      }
+    : {
+        className: "contact-fallback",
+        goal: "phone_click",
+        href: contacts.phones[0].href,
+        label: "Позвонить в отдел продаж",
+        icon: <PhoneCall aria-hidden="true" size={21} />
+      };
 
   return (
     <main className="line-page" id="top">
@@ -265,10 +295,24 @@ export default async function Home() {
         </nav>
         <div className="line-header-contact">
           {navigation.header.contacts.showTelegram && (
-            <a className="social-btn telegram" href={contacts.socials.telegram || contacts.email.href} aria-label="Написать в Telegram" data-metrika-goal="messenger_click"><img src="/assets/icons/telegram.svg" alt="" width={24} height={24} /></a>
+            <a
+              className={`social-btn ${telegramHeaderLink.className}`}
+              href={telegramHeaderLink.href}
+              aria-label={telegramHeaderLink.label}
+              data-metrika-goal={telegramHeaderLink.goal}
+            >
+              {telegramHeaderLink.icon}
+            </a>
           )}
           {navigation.header.contacts.showMax && (
-            <a className="social-btn max" href={contacts.socials.max || contacts.phones[0].href} aria-label="Связаться в MAX" data-metrika-goal="messenger_click"><img src="/assets/icons/max.svg" alt="" width={24} height={24} /></a>
+            <a
+              className={`social-btn ${maxHeaderLink.className}`}
+              href={maxHeaderLink.href}
+              aria-label={maxHeaderLink.label}
+              data-metrika-goal={maxHeaderLink.goal}
+            >
+              {maxHeaderLink.icon}
+            </a>
           )}
           {navigation.header.contacts.showPhones && (
             <div className="phone-stack">

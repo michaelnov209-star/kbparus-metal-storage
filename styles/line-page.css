@@ -542,3 +542,12 @@ html{scrollbar-width:thin;scrollbar-color:#fc5413 #111923;-webkit-text-size-adju
       .catalog-detail-page .brand small {
         color:#46515c!important;
       }
+
+      .social-btn.contact-fallback {
+        background:linear-gradient(135deg,#fc5413,#d63b00);
+        box-shadow:0 16px 34px rgba(252,84,19,.3);
+      }
+
+      .social-btn.contact-fallback:hover {
+        box-shadow:0 20px 42px rgba(252,84,19,.4);
+      }
