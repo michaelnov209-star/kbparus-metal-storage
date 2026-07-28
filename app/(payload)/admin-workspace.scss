@@ -566,7 +566,12 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
   }
 
   html[data-theme] .collection-list--products .table {
-    min-width: 460px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-theme] .collection-list--products .table table {
+    table-layout: fixed;
   }
 
   html[data-theme] .collection-list--products #heading-pageMode,
@@ -574,6 +579,20 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
   html[data-theme] .collection-list--products .cell-pageMode,
   html[data-theme] .collection-list--products .cell-priceMode {
     display: none;
+  }
+
+  html[data-theme] .collection-list--products #heading-_select,
+  html[data-theme] .collection-list--products .cell-_select {
+    width: 40px;
+  }
+
+  html[data-theme] .collection-list--products #heading-_status,
+  html[data-theme] .collection-list--products .cell-_status {
+    width: 118px;
+  }
+
+  html[data-theme] .collection-list--products .cell-title {
+    overflow-wrap: anywhere;
   }
 
   html[data-theme] .collection-list .table th,
@@ -621,6 +640,24 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
   html[data-theme] .collection-edit .upload__dropzoneContent__buttons .btn,
   html[data-theme] .global-edit .upload__dropzoneContent__buttons .btn {
     width: 100%;
+  }
+
+  html[data-theme] .nav-group__toggle {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  html[data-theme] .nav__mobile-close,
+  html[data-theme] .app-header__mobile-nav-toggler,
+  html[data-theme] .step-nav__home,
+  html[data-theme] .app-header__account,
+  html[data-theme] .sort-column__button {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
   }
 
   html[data-theme] .kb-admin-route-status {

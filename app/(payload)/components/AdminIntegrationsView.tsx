@@ -1,6 +1,7 @@
 import type { AdminViewServerProps } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
 import { Link } from "@payloadcms/ui/elements/Link";
+import { Suspense } from "react";
 import {
   BarChart3,
   CheckCircle2,
@@ -56,6 +57,61 @@ async function readEmailState(): Promise<Pick<IntegrationCard, "state" | "status
   }
 }
 
+function getEmailCard(
+  emailState: Pick<IntegrationCard, "state" | "status">
+): IntegrationCard {
+  return {
+    title: "Яндекс Почта",
+    description: "Заявки с сайта приходят на info@kbparus.ru через защищённый SMTP.",
+    icon: MailCheck,
+    state: emailState.state,
+    status: emailState.status,
+    actionHref: "/admin/collections/leads",
+    actionLabel: "Открыть заявки"
+  };
+}
+
+function IntegrationCardView({ card }: { card: IntegrationCard }) {
+  return (
+    <article className="kb-integrations__card" data-state={card.state}>
+      <div className="kb-integrations__card-top">
+        <span className="kb-integrations__icon">
+          <card.icon size={22} aria-hidden />
+        </span>
+        <span className="kb-integrations__state">
+          {card.state === "connected" ? (
+            <CheckCircle2 size={14} aria-hidden />
+          ) : (
+            <CircleAlert size={14} aria-hidden />
+          )}
+          {card.status}
+        </span>
+      </div>
+      <h2>{card.title}</h2>
+      <p>{card.description}</p>
+      <Link href={card.actionHref}>
+        {card.actionLabel}
+        <ExternalLink size={14} aria-hidden />
+      </Link>
+    </article>
+  );
+}
+
+async function EmailIntegrationCard() {
+  return <IntegrationCardView card={getEmailCard(await readEmailState())} />;
+}
+
+function EmailIntegrationCardLoading() {
+  return (
+    <IntegrationCardView
+      card={getEmailCard({
+        state: "configured",
+        status: "Проверяем соединение…"
+      })}
+    />
+  );
+}
+
 export async function AdminIntegrationsView({
   initPageResult,
   params,
@@ -65,21 +121,9 @@ export async function AdminIntegrationsView({
 }: AdminViewServerProps) {
   const authenticatedUser = user ?? initPageResult.req.user;
   const isAdmin = getCmsRole(authenticatedUser) === "admin";
-  const emailState = isAdmin
-    ? await readEmailState()
-    : { state: "disabled" as const, status: "Недостаточно прав" };
   const bitrix = getBitrix24RuntimeConfig(process.env);
 
   const cards: IntegrationCard[] = [
-    {
-      title: "Яндекс Почта",
-      description: "Заявки с сайта приходят на info@kbparus.ru через защищённый SMTP.",
-      icon: MailCheck,
-      state: emailState.state,
-      status: emailState.status,
-      actionHref: "/admin/collections/leads",
-      actionLabel: "Открыть заявки"
-    },
     {
       title: "Telegram",
       description: "Оперативные уведомления о новых обращениях клиентов.",
@@ -154,24 +198,11 @@ export async function AdminIntegrationsView({
       </header>
 
       <div className="kb-integrations__grid">
+        <Suspense fallback={<EmailIntegrationCardLoading />}>
+          <EmailIntegrationCard />
+        </Suspense>
         {cards.map((card) => (
-          <article className="kb-integrations__card" data-state={card.state} key={card.title}>
-            <div className="kb-integrations__card-top">
-              <span className="kb-integrations__icon">
-                <card.icon size={22} aria-hidden />
-              </span>
-              <span className="kb-integrations__state">
-                {card.state === "connected" ? <CheckCircle2 size={14} aria-hidden /> : <CircleAlert size={14} aria-hidden />}
-                {card.status}
-              </span>
-            </div>
-            <h2>{card.title}</h2>
-            <p>{card.description}</p>
-            <Link href={card.actionHref}>
-              {card.actionLabel}
-              <ExternalLink size={14} aria-hidden />
-            </Link>
-          </article>
+          <IntegrationCardView card={card} key={card.title} />
         ))}
       </div>
 
