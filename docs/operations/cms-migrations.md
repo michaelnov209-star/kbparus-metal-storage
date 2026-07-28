@@ -1,68 +1,83 @@
 # Контролируемые миграции Payload CMS
 
-## Текущее безопасное состояние
+## Безопасная модель
 
-- Payload работает с `push: false`: Vercel build не меняет схему БД.
-- В репозитории есть DDL-free baseline
-  `20260727_135515_legacy_baseline` и JSON-снимок схемы.
-- Production baseline пока не подтверждён: не завершены сверка физической схемы,
-  проверка `payload_migrations` и тест восстановления Neon.
-- GitHub workflow `CMS schema audit — production` работает только из `main` и
-  выполняет только read-only аудит. Пути применения миграций в нём нет.
-- Production-миграции остаются заблокированными до отдельного подтверждённого
-  этапа принятия baseline.
+- Payload работает с `push: false`: обычные Production и Preview build не
+  меняют схему БД.
+- Миграции разрешены только в явно подтверждённом Vercel Production build.
+- GitHub workflow `CMS schema audit — production` остаётся read-only и не
+  содержит пути применения миграций.
+- Runtime использует pooled URL, миграции — только direct URL.
+- Каждая миграция должна быть идемпотентной или транзакционной, проверенной
+  тестами и зарегистрированной в `migrations/index.ts`.
 
-## Direct connection без fallback
+## Защита production release
 
-Runtime использует pooled URL. Любая Payload-команда миграций с
-`PAYLOAD_MIGRATING=true` обязана получить один из direct URL:
+`scripts/cms/conditional-production-migrate.mjs` применяет миграции только при
+одновременном выполнении всех условий:
 
-1. `DATABASE_URL_UNPOOLED`
-2. `DATABASE_POSTGRES_URL_NON_POOLING`
-3. `POSTGRES_URL_NON_POOLING`
+1. `RUN_PAYLOAD_MIGRATIONS=true`.
+2. `VERCEL_ENV=production`.
+3. `PAYLOAD_MIGRATION_CONFIRMATION=APPLY_PRODUCTION_MIGRATIONS`.
+4. `PAYLOAD_MIGRATION_RELEASE` точно равен последней миграции из
+   `migrations/index.ts`.
+5. Доступен direct URL:
+   `DATABASE_URL_UNPOOLED`, `DATABASE_POSTGRES_URL_NON_POOLING` или
+   `POSTGRES_URL_NON_POOLING`.
 
-Если direct URL отсутствует, команда завершается до подключения к БД. Fallback
-на `DATABASE_URL`, `DATABASE_POSTGRES_URL` или `POSTGRES_URL` для миграций
-запрещён.
+Эти значения передаются только конкретному Production deployment через
+`--build-env`. Хранить `RUN_PAYLOAD_MIGRATIONS=true` как постоянную переменную
+проекта запрещено.
 
-## Разрешённый production-аудит
+Пример контролируемого выпуска:
 
-1. Запускать GitHub workflow только из ветки `main`.
-2. Ввести подтверждение `AUDIT_PRODUCTION`.
-3. Пройти approval защищённого GitHub environment `production`.
-4. Workflow установит `DATABASE_URL_UNPOOLED` только для шага read-only аудита и
-   выполнит:
+```bash
+vercel --prod --yes \
+  --build-env RUN_PAYLOAD_MIGRATIONS=true \
+  --build-env PAYLOAD_MIGRATION_CONFIRMATION=APPLY_PRODUCTION_MIGRATIONS \
+  --build-env PAYLOAD_MIGRATION_RELEASE=<latest-migration-name>
+```
 
-   ```bash
-   npm run cms:migrate:audit
-   ```
+Если release-name устарел, окружение не Production или direct URL отсутствует,
+build завершается до изменения БД.
 
-Скрипт открывает транзакцию `BEGIN READ ONLY`, читает историю миграций и список
-таблиц, затем выполняет `ROLLBACK`. `npm ci` и остальные шаги не получают
-production credentials.
+## Однократный переход legacy schema
 
-## Что нужно подтвердить до разблокировки apply
+Старая production-схема была создана Payload development push и содержит
+служебный marker `name=dev, batch=-1`. Стандартный Payload CLI в таком состоянии
+показывает интерактивное предупреждение, непригодное для Production build.
 
-Отдельный production apply workflow можно проектировать только после выполнения
-всех условий:
+`scripts/cms/reconcile-legacy-migration-marker.mjs` не принимает это
+предупреждение автоматически. Вместо этого он:
 
-1. Создан Neon branch или restore point, восстановление реально проверено.
-2. Read-only аудит показал ожидаемую единственную legacy-запись и не выявил
-   неизвестных миграций.
-3. Физические таблицы и критичные поля сверены с
-   `migrations/20260727_135515_legacy_baseline.json`.
-4. Принятие baseline оформлено отдельным изменением, проверено повторным
-   read-only аудитом и зафиксировано в change log.
-5. Миграция протестирована на отдельной Neon branch вместе с lint, unit, build,
-   E2E и smoke.
-6. Для будущего apply создан отдельный manual workflow: только `main`,
-   защищённый environment с обязательным reviewer, concurrency lock и secrets
-   только на шаге миграции.
+- берёт transaction-level advisory lock;
+- требует ровно один marker `dev/-1`;
+- проверяет отсутствие конфликтующей baseline-записи;
+- только при
+  `PAYLOAD_LEGACY_BASELINE_CONFIRMATION=RECLASSIFY_REVIEWED_DEV_SCHEMA`
+  переименовывает marker в DDL-free baseline
+  `20260727_135515_legacy_baseline` с `batch=0`;
+- не изменяет контентные таблицы;
+- при любом отклонении делает `ROLLBACK` и останавливает release.
 
-До выполнения этого списка нельзя добавлять `cms:migrate:apply` в текущий
-production workflow или запускать его против production вручную.
+Подтверждение legacy-перехода передаётся только первому проверенному
+Production deployment. После успешного перехода скрипт становится безопасным
+идемпотентным no-op.
 
-## Разработка миграций вне production
+## Read-only аудит
+
+GitHub workflow запускается только из `main`, после подтверждения
+`AUDIT_PRODUCTION`, и выполняет:
+
+```bash
+npm run cms:migrate:audit
+```
+
+Скрипт использует `BEGIN READ ONLY`, читает `payload_migrations` и перечень
+таблиц, затем выполняет `ROLLBACK`. Production credentials не передаются
+остальным шагам workflow.
+
+## Разработка миграций
 
 После изменения Payload config:
 
@@ -70,27 +85,27 @@ production workflow или запускать его против production в�
 npm run cms:migrate:create -- add_feature_name
 ```
 
-Проверить `up`, `down` и JSON snapshot. Для удаления или переименования
-использовать expand-contract: добавить новую структуру, перенести и проверить
-данные, а удаление выпустить отдельным релизом. Применение и status допустимы
-только на явно выбранной non-production Neon branch с direct URL.
+Обязательно проверить `up`, `down`, JSON snapshot, lint, unit-тесты и
+production build. Для удаления или переименования использовать
+expand-contract: сначала добавить новую структуру и перенести данные, удаление
+выпускать отдельно.
 
 ## Запрещено
 
-- `migrate:fresh`, `migrate:reset`, `migrate:refresh` на production.
-- Любые миграции из Vercel build, Preview deploy или feature/PR workflow.
+- `migrate:fresh`, `migrate:reset`, `migrate:refresh` на Production.
+- Миграции из Preview deployment или feature/PR workflow.
+- Постоянные Vercel env-флаги, автоматически включающие миграции.
 - Fallback на pooled Postgres URL для schema operations.
-- Принятие baseline без read-only аудита и проверенного восстановления.
-- Добавление production apply до отдельного security review и подтверждения
-  baseline.
+- Автоматический ответ `yes` на Payload data-loss prompt.
+- Изменение неизвестного или неоднозначного legacy marker.
+- Destructive migration без проверенного restore point и rehearsal.
 
-## Rollback
+## Откат
 
-- Основной способ после будущего разблокирования миграций — forward-fix.
+- Для приложения используется предыдущий подтверждённый Vercel deployment.
+- Для схемы основной путь — forward-fix.
 - `migrate:down` допустим только для заранее проверенной обратимой последней
   миграции.
 - Baseline не откатывается.
-- Для destructive-инцидента используется проверенный Neon restore point или
-  branch restore.
-- Blob-файлы и внешние интеграции не входят в транзакцию DDL и проверяются
-  отдельно.
+- Для destructive-инцидента нужен проверенный Neon restore point или branch
+  restore; откат приложения сам по себе не откатывает БД и Blob-файлы.

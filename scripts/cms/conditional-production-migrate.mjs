@@ -51,6 +51,27 @@ if (!hasDirectDatabaseUrl) {
 }
 
 console.log("[cms-migrate] Applying pending production migrations.");
+// The legacy database was created by Payload's development schema push.
+// Reclassify only its exact marker as the reviewed, DDL-free baseline so the
+// non-interactive production build never accepts Payload's generic data-loss
+// prompt. The reconciliation is transactional, locked, and idempotent.
+const reconcileResult = spawnSync(
+  process.execPath,
+  [resolve("scripts/cms/reconcile-legacy-migration-marker.mjs")],
+  {
+    env: process.env,
+    shell: false,
+    stdio: "inherit"
+  }
+);
+
+if (reconcileResult.error) throw reconcileResult.error;
+if (reconcileResult.status !== 0) {
+  throw new Error(
+    `Legacy migration reconciliation failed with exit code ${reconcileResult.status ?? "unknown"}.`
+  );
+}
+
 // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process -- fixed executable and fixed argv, shell is disabled.
 const result = spawnSync(
   process.execPath,

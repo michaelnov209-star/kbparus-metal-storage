@@ -88,15 +88,17 @@ Smoke выполняет только безопасные `GET`/`HEAD`: health,
 
 ## Миграции CMS
 
-Production migration apply сейчас намеренно заблокирован. Доступен только
-read-only workflow `CMS schema audit — production` из ветки `main`.
+Production migration apply доступен только внутри явно подтверждённого
+Production deployment. Обычные и Preview build не меняют БД. Release требует
+точного имени последней миграции, direct URL и одноразовых `--build-env`
+подтверждений. GitHub workflow `CMS schema audit — production` остаётся
+read-only.
 
-Порядок разблокировки, требования к Neon restore point и baseline описаны в
+Полный порядок и защита legacy baseline описаны в
 [`cms-migrations.md`](cms-migrations.md).
 
 ## Откат
 
 При ошибке приложения вернуть предыдущий подтверждённый Vercel deployment.
-Откат приложения не откатывает базу и Blob-файлы. Изменения схемы после
-будущей разблокировки миграций выполняются через forward-fix либо проверенный
-Neon restore point.
+Откат приложения не откатывает базу и Blob-файлы. Изменения схемы выполняются
+через forward-fix либо проверенный Neon restore point.

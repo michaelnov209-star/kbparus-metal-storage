@@ -38,6 +38,35 @@ describe("Payload production migration safety", () => {
     expect(releaseGuard).toContain("PAYLOAD_MIGRATION_RELEASE");
     expect(releaseGuard).toContain("latest registered migration");
     expect(releaseGuard).toContain("DATABASE_URL_UNPOOLED");
+    expect(releaseGuard).toContain(
+      "reconcile-legacy-migration-marker.mjs"
+    );
+  });
+
+  it("reclassifies only the exact reviewed Payload dev marker", () => {
+    const reconciliation = read(
+      "scripts/cms/reconcile-legacy-migration-marker.mjs"
+    );
+
+    expect(reconciliation).toContain(
+      'const LEGACY_MARKER_NAME = "dev"'
+    );
+    expect(reconciliation).toContain(
+      'const BASELINE_MIGRATION_NAME = "20260727_135515_legacy_baseline"'
+    );
+    expect(reconciliation).toContain(
+      '"RECLASSIFY_REVIEWED_DEV_SCHEMA"'
+    );
+    expect(reconciliation).toContain("pg_advisory_xact_lock");
+    expect(reconciliation).toContain("FOR UPDATE");
+    expect(reconciliation).toContain("legacyMarkers.rowCount !== 1");
+    expect(reconciliation).toContain(
+      "legacyMarkers.rows[0]?.name !== LEGACY_MARKER_NAME"
+    );
+    expect(reconciliation).toContain("updated.rowCount !== 1");
+    expect(reconciliation).toContain('await client.query("ROLLBACK")');
+    expect(reconciliation).not.toContain("DROP TABLE");
+    expect(reconciliation).not.toContain("DELETE FROM");
   });
 
   it("uses the guarded wrapper for every supported migration command", () => {

@@ -116,11 +116,13 @@ Payload admin доступен по `/admin`. Сейчас это не толь�
 Auto-deploy на Vercel из ветки `main` (1–3 минуты). Build pipeline — `npm run vercel-build`:
 
 ```
-cms:check → cms:generate-importmap → cms:check → next build
+conditional-production-migrate → images:optimize → cms:check →
+cms:generate-types → cms:generate-importmap → cms:check → next build
 ```
 
-Build не изменяет production-БД. Payload migrations запускаются отдельно,
-после Neon branch/restore point и проверки schema status. Подробности —
+Обычный build не изменяет production-БД. Миграции включаются только для одного
+явно подтверждённого Production deployment: с точным release-name, direct URL
+и одноразовыми `--build-env` флагами. Подробности —
 [`docs/operations/cms-migrations.md`](docs/operations/cms-migrations.md),
 [`docs/operations/deployment-guide.md`](docs/operations/deployment-guide.md) и
 [`docs/operations/deployment-checklist.md`](docs/operations/deployment-checklist.md).
@@ -133,7 +135,7 @@ Build не изменяет production-БД. Payload migrations запускаю
 
 1. Перед изменением `lib/calculator/pricing.ts` или `data/storageSystems/excelCalculator.ts` — прогон `npm run test`.
 2. После изменения `payload.config.ts` или коллекций — пересборка importMap (`npm run cms:generate-importmap` на Linux/Mac/WSL).
-3. Изменение Payload schema — новая проверенная миграция; Vercel build никогда не выполняет DDL.
+3. Изменение Payload schema — новая проверенная миграция; обычный Vercel build не выполняет DDL, контролируемый Production release требует точного имени миграции и одноразового подтверждения.
 4. Любой non-trivial фикс — отразить в `CHANGELOG.md` или соответствующем `docs/**/*.md`.
 5. Production не ломать: эксперименты — на feature-ветках, cutover в `main` — после smoke на preview.
 
