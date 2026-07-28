@@ -196,7 +196,7 @@ export function AdminTraining() {
             <MousePointerClick size={16} aria-hidden />
             {completed ? "Повторить обучение" : "Начать обучение"}
           </button>
-          <Link className="kb-admin-training__link" href="/admin/collections/products">
+          <Link className="kb-admin-training__link" href="/admin/collections/products" prefetch={false}>
             Открыть каталог
             <ArrowRight size={15} aria-hidden />
           </Link>

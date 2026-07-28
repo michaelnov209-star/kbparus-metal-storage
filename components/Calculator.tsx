@@ -184,6 +184,14 @@ export function Calculator({
   const formStartedAt = useRef<number>(Date.now());
   const calculatorStarted = useRef(false);
   const profile = useMemo(() => getCalculatorProfile(input.systemId, profiles), [input.systemId, profiles]);
+  const shelfCountOptions =
+    profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount
+      ? profile.shelfCountOptions.filter((value) => value + input.rolloutShelfCount <= profile.maxCombinedShelfCount!)
+      : profile.shelfCountOptions;
+  const rolloutShelfCountOptions =
+    profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount && profile.rolloutShelfCountOptions
+      ? profile.rolloutShelfCountOptions.filter((value) => value + input.shelfCount <= profile.maxCombinedShelfCount!)
+      : profile.rolloutShelfCountOptions ?? [];
   const result = useMemo(() => calculateStorageSystem(input, profile), [input, profile]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
   const progress = ((step + 1) / steps.length) * 100;
@@ -602,7 +610,7 @@ export function Calculator({
                       title={profile.pricing.kind === "hybrid" ? "Полки под погрузчик" : "Количество полок"}
                       hint={dimensionHints.shelfCount}
                       unit="шт."
-                      values={profile.shelfCountOptions}
+                      values={shelfCountOptions}
                       active={input.shelfCount}
                       onSelect={(value) => setNumberField("shelfCount", value)}
                     />
@@ -619,7 +627,7 @@ export function Calculator({
                         title="Выкатные кассеты"
                         hint={dimensionHints.rolloutShelfCount}
                         unit="шт."
-                        values={profile.rolloutShelfCountOptions}
+                        values={rolloutShelfCountOptions}
                         active={input.rolloutShelfCount}
                         onSelect={(value) => setNumberField("rolloutShelfCount", value)}
                       />

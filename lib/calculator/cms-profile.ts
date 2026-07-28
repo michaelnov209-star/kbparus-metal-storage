@@ -33,9 +33,9 @@ function priceOptions(value: CmsCalculatorProfile["loadOptions"], fallback: read
 function calculatorOptions(value: CmsCalculatorProfile["options"], fallback: readonly CalculatorOption[]): CalculatorOption[] {
   if (!Array.isArray(value) || value.length === 0) return fallback.map((item) => ({ ...item }));
   const normalized = value
-    .filter((item) => Boolean(item.id && item.title) && Number.isFinite(item.price) && item.price >= 0)
+    .filter((item) => Boolean((item.optionId || item.id) && item.title) && Number.isFinite(item.price) && item.price >= 0)
     .map((item) => ({
-      id: String(item.id),
+      id: String(item.optionId || item.id),
       title: item.title,
       price: item.price,
       defaultSelected: Boolean(item.defaultSelected)
@@ -131,13 +131,26 @@ export function mergeCmsCalculatorProfile(
     };
   }
 
+  const hasCompleteHybridPricing =
+    typeof doc.towerBasePrice === "number" &&
+    doc.towerBasePrice > 0 &&
+    typeof doc.gateBasePrice === "number" &&
+    doc.gateBasePrice > 0 &&
+    typeof doc.baseShelfCount === "number" &&
+    doc.baseShelfCount > 0 &&
+    typeof doc.extraShelfFactor === "number" &&
+    doc.extraShelfFactor >= 0;
+
   return {
     ...common,
     pricing: {
       kind: "hybrid",
       forkliftLoadOptions: priceOptions(doc.loadOptions, fallback.pricing.forkliftLoadOptions),
       rolloutLoadOptions: fallback.pricing.rolloutLoadOptions.map((item) => ({ ...item })),
-      fixedTowerAndGatePrice: positiveNumber(doc.towerBasePrice, fallback.pricing.fixedTowerAndGatePrice)
+      towerBasePrice: hasCompleteHybridPricing ? doc.towerBasePrice! : fallback.pricing.towerBasePrice,
+      gateBasePrice: hasCompleteHybridPricing ? doc.gateBasePrice! : fallback.pricing.gateBasePrice,
+      baseShelfCount: hasCompleteHybridPricing ? doc.baseShelfCount! : fallback.pricing.baseShelfCount,
+      extraShelfFactor: hasCompleteHybridPricing ? doc.extraShelfFactor! : fallback.pricing.extraShelfFactor
     }
   };
 }

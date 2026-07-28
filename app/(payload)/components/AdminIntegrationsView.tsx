@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
 import { Link } from "@payloadcms/ui/elements/Link";
+import { redirect } from "next/navigation";
 import {
   BarChart3,
   CheckCircle2,
@@ -16,6 +18,7 @@ import {
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { getCmsRole } from "@/payload/access/rbac";
+import { AdminAccessDenied } from "./AdminAccessDenied";
 import { IntegrationProbeButton } from "./IntegrationProbeButton";
 
 type IntegrationState = "connected" | "configured" | "disabled" | "error";
@@ -90,7 +93,7 @@ function IntegrationCardView({ card }: { card: IntegrationCard }) {
       <h2>{card.title}</h2>
       <p>{card.description}</p>
       {card.probeKind ? <IntegrationProbeButton kind={card.probeKind} /> : null}
-      <Link href={card.actionHref}>
+      <Link href={card.actionHref} prefetch={false}>
         {card.actionLabel}
         <ExternalLink size={14} aria-hidden />
       </Link>
@@ -98,21 +101,17 @@ function IntegrationCardView({ card }: { card: IntegrationCard }) {
   );
 }
 
-export async function AdminIntegrationsView({
-  initPageResult,
-  params,
-  searchParams,
-  user,
-  viewType
-}: AdminViewServerProps) {
-  const authenticatedUser = user ?? initPageResult.req.user;
-  const isAdmin = getCmsRole(authenticatedUser) === "admin";
+async function IntegrationGrid({
+  dataPromise,
+  smtpConfigured,
+  telegramConfigured
+}: {
+  dataPromise: ReturnType<typeof readLatestDeliveries>;
+  smtpConfigured: boolean;
+  telegramConfigured: boolean;
+}) {
+  const deliveries = await dataPromise;
   const bitrix = getBitrix24RuntimeConfig(process.env);
-  const smtpConfigured = isSmtpConfigured(smtpSettingsFromEnv(process.env));
-  const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
-  const deliveries = isAdmin
-    ? await readLatestDeliveries(initPageResult.req.payload)
-    : { email: null, telegram: null };
   const emailDeliveryDate = formatDate(deliveries.email);
   const telegramDeliveryDate = formatDate(deliveries.telegram);
 
@@ -165,12 +164,55 @@ export async function AdminIntegrationsView({
     }
   ];
 
+  return (
+    <div className="kb-integrations__grid">
+      {cards.map((card) => <IntegrationCardView card={card} key={card.title} />)}
+    </div>
+  );
+}
+
+function IntegrationGridSkeleton() {
+  return (
+    <div
+      aria-label="Загрузка статусов интеграций"
+      aria-live="polite"
+      className="kb-integrations__grid"
+      role="status"
+    >
+      {Array.from({ length: 4 }, (_, index) => (
+        <div className="kb-integrations__card kb-integrations__card--skeleton" key={index}>
+          <span className="kb-integrations__skeleton-line kb-integrations__skeleton-line--short" />
+          <span className="kb-integrations__skeleton-line kb-integrations__skeleton-line--medium" />
+          <span className="kb-integrations__skeleton-line" />
+          <span className="kb-integrations__skeleton-line kb-integrations__skeleton-line--action" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export async function AdminIntegrationsView({
+  initPageResult,
+  params,
+  searchParams,
+  user,
+  viewType
+}: AdminViewServerProps) {
+  const authenticatedUser = user ?? initPageResult.req.user;
+  if (!authenticatedUser) {
+    redirect("/admin/login?redirect=%2Fadmin%2Fintegrations");
+  }
+
+  const isAdmin = getCmsRole(authenticatedUser) === "admin";
+  const smtpConfigured = isSmtpConfigured(smtpSettingsFromEnv(process.env));
+  const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
+
   const content = !isAdmin ? (
-    <section className="kb-integrations kb-integrations--denied">
-      <CircleMinus size={26} aria-hidden />
-      <h1>Интеграции доступны администратору</h1>
-      <p>У этого аккаунта нет прав на просмотр служебных подключений.</p>
-    </section>
+    <AdminAccessDenied
+      description="У этого аккаунта нет прав на просмотр служебных подключений."
+      icon={CircleMinus}
+      title="Интеграции доступны администратору"
+    />
   ) : (
     <section className="kb-integrations" aria-label="Интеграции сайта">
       <header className="kb-integrations__hero">
@@ -179,15 +221,19 @@ export async function AdminIntegrationsView({
           <h1>Интеграции и доставка заявок</h1>
           <p>Страница открывается быстро: внешние сервисы не проверяются во время загрузки. Живые проверки запускаются вручную и не отправляют тестовые заявки.</p>
         </div>
-        <Link className="kb-integrations__refresh" href="/admin/system">
+        <Link className="kb-integrations__refresh" href="/admin/system" prefetch={false}>
           <CheckCircle2 size={16} aria-hidden />
           Здоровье сайта
         </Link>
       </header>
 
-      <div className="kb-integrations__grid">
-        {cards.map((card) => <IntegrationCardView card={card} key={card.title} />)}
-      </div>
+      <Suspense fallback={<IntegrationGridSkeleton />}>
+        <IntegrationGrid
+          dataPromise={readLatestDeliveries(initPageResult.req.payload)}
+          smtpConfigured={smtpConfigured}
+          telegramConfigured={telegramConfigured}
+        />
+      </Suspense>
 
       <div className="kb-integrations__note">
         <CheckCircle2 size={17} aria-hidden />

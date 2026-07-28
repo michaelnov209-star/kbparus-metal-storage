@@ -110,6 +110,45 @@ describe("Excel-based storage calculator", () => {
     expect(result.fromPrice).toBe(1516679);
   });
 
+  it("uses the Excel progressive tower and gate formula for non-default hybrid shelf counts", () => {
+    const result = calculateStorageSystem(
+      normalizeCalculatorInput({
+        systemId: "hybrid-rollout-rack",
+        heightMm: 150,
+        widthMm: 1600,
+        lengthMm: 3100,
+        loadKg: 2500,
+        shelfCount: 5,
+        rolloutShelfCount: 5,
+        towerCount: 1,
+        optionIds: []
+      })
+    );
+
+    expect(result.fromPrice).toBe(906611);
+    expect(result.lineItems[2]?.amount).toBe(270000);
+    expect(result.factors.shelvesPerTowerFactor).toBeCloseTo(1.5);
+  });
+
+  it("limits a hybrid rack to 25 combined shelves before pricing", () => {
+    const input = normalizeCalculatorInput({
+      systemId: "hybrid-rollout-rack",
+      heightMm: 150,
+      widthMm: 1600,
+      lengthMm: 3100,
+      loadKg: 2500,
+      shelfCount: 20,
+      rolloutShelfCount: 10,
+      towerCount: 1,
+      optionIds: []
+    });
+    const result = calculateStorageSystem(input);
+
+    expect(input.rolloutShelfCount).toBe(5);
+    expect(result.engineeringSummary.totalStoredWeightKg).toBe(62500);
+    expect(result.lineItems[2]?.amount).toBe(420000);
+    expect(result.fromPrice).toBe(1839330);
+  });
   it("rounds public price display to thousands", () => {
     expect(formatRoundedRub(34_428_563)).toBe("34 429 000 ₽");
   });

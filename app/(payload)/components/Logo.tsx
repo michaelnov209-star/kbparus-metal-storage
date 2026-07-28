@@ -5,7 +5,7 @@
 export function Logo() {
   return (
     <div className="kb-admin-logo">
-      <img src="/brand/logo-g.png" alt="КБ Парус" />
+      <img src="/brand/logo-g.png" alt="КБ Парус" width={226} height={75} />
       <span className="kb-admin-logo__text">
         <strong>КБ Парус CMS</strong>
         <small>Системы хранения металла</small>

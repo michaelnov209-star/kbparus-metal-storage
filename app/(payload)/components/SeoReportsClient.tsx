@@ -562,7 +562,7 @@ export function SeoReportsClient() {
             <input
               value={queryDraft}
               onChange={(event) => setQueryDraft(event.target.value)}
-              placeholder="Например: склад листового металла"
+              placeholder="Например: склад листового металла…"
               maxLength={160}
             />
             <button type="submit">Показать</button>

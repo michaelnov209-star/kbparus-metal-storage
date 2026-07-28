@@ -40,6 +40,7 @@ export interface CalculatorProfile {
   loadOptions: readonly PriceOption[];
   shelfCountOptions: readonly number[];
   rolloutShelfCountOptions?: readonly number[];
+  maxCombinedShelfCount?: number;
   towerCountOptions: readonly number[];
   defaultValues: {
     heightMm: number;
@@ -76,7 +77,10 @@ export interface CalculatorProfile {
         kind: "hybrid";
         forkliftLoadOptions: readonly PriceOption[];
         rolloutLoadOptions: readonly PriceOption[];
-        fixedTowerAndGatePrice: number;
+        towerBasePrice: number;
+        gateBasePrice: number;
+        baseShelfCount: number;
+        extraShelfFactor: number;
       };
   options: readonly CalculatorOption[];
 }
@@ -329,8 +333,9 @@ export const calculatorProfiles: CalculatorProfile[] = [
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
     ...sheetGeometry,
     loadOptions: forkliftLoadOptions,
-    shelfCountOptions: [1, 3, 5, 7, 10, 15, 20],
+    shelfCountOptions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     rolloutShelfCountOptions: [5, 6, 7, 8, 9, 10],
+    maxCombinedShelfCount: 25,
     towerCountOptions: [1, 2, 3, 4, 5, 6],
     defaultValues: {
       heightMm: 150,
@@ -345,7 +350,10 @@ export const calculatorProfiles: CalculatorProfile[] = [
       kind: "hybrid",
       forkliftLoadOptions,
       rolloutLoadOptions,
-      fixedTowerAndGatePrice: 400000
+      towerBasePrice: 100000,
+      gateBasePrice: 120000,
+      baseShelfCount: 5,
+      extraShelfFactor: 0.1
     },
     options: rolloutOptions
   }

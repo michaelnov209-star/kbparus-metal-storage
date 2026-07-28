@@ -74,4 +74,12 @@ describe("admin layout isolation", () => {
     );
     expect(view).toContain("{content}");
   });
+
+  it("does not nest the dashboard inside a second Payload navigation shell", () => {
+    const dashboard = source("app/(payload)/components/AdminDashboard.tsx");
+
+    expect(dashboard).not.toContain("@payloadcms/next/templates");
+    expect(dashboard).not.toContain("<DefaultTemplate");
+    expect(dashboard).toContain("return content;");
+  });
 });

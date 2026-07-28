@@ -198,7 +198,7 @@ export const CalculatorProfiles: CollectionConfig = {
               admin: { description: { ru: "Например: весы 90 000 ₽, ИК-ограждения 80 000 ₽, вакуумный захват 450 000 ₽…", en: "" } },
               fields: [
                 { type: "row", fields: [
-                  { name: "id", label: { ru: "Системный ключ опции", en: "Option key" }, type: "text", required: true, admin: { width: "30%" } },
+                  { name: "optionId", label: { ru: "Системный ключ опции", en: "Option key" }, type: "text", required: true, admin: { width: "30%" } },
                   { name: "title", label: { ru: "Название", en: "Title" }, type: "text", required: true, admin: { width: "40%" } },
                   { name: "price", label: { ru: "Цена, ₽", en: "Price" }, type: "number", required: true, admin: { width: "30%" } }
                 ]},

@@ -19,19 +19,17 @@ export function toCalculatorProfileSeed(profile: RuntimeCalculatorProfile) {
       }))
     : [];
 
-  const towerBasePrice = pricing.kind === "forkliftCassette" || pricing.kind === "rollout"
+  const towerBasePrice = pricing.kind === "forkliftCassette" || pricing.kind === "rollout" || pricing.kind === "hybrid"
     ? pricing.towerBasePrice
-    : pricing.kind === "hybrid"
-      ? pricing.fixedTowerAndGatePrice
-      : undefined;
+    : undefined;
   const baseShelfCount = pricing.kind === "forkliftCassette"
     ? pricing.towerBaseShelfCount
-    : pricing.kind === "rollout"
+    : pricing.kind === "rollout" || pricing.kind === "hybrid"
       ? pricing.baseShelfCount
       : undefined;
   const extraShelfFactor = pricing.kind === "forkliftCassette"
     ? pricing.towerExtraShelfFactor
-    : pricing.kind === "rollout"
+    : pricing.kind === "rollout" || pricing.kind === "hybrid"
       ? pricing.extraShelfFactor
       : undefined;
 
@@ -55,9 +53,9 @@ export function toCalculatorProfileSeed(profile: RuntimeCalculatorProfile) {
     extraShelfFactor,
     consoleBasePrice: pricing.kind === "automatic" ? pricing.consoleBasePrice : undefined,
     consoleLongFactor: pricing.kind === "automatic" ? pricing.consoleLongFactor : undefined,
-    gateBasePrice: pricing.kind === "rollout" ? pricing.gateBasePrice : undefined,
+    gateBasePrice: pricing.kind === "rollout" || pricing.kind === "hybrid" ? pricing.gateBasePrice : undefined,
     options: profile.options.map(({ id, title, price, defaultSelected }) => ({
-      id,
+      optionId: id,
       title,
       price,
       defaultSelected: Boolean(defaultSelected)

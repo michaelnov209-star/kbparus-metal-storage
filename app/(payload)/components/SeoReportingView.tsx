@@ -1,7 +1,9 @@
 import type { AdminViewServerProps } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
 import { LockKeyhole } from "lucide-react";
+import { redirect } from "next/navigation";
 import { canEditContent } from "@/payload/access/rbac";
+import { AdminAccessDenied } from "./AdminAccessDenied";
 import { SeoReportsClient } from "./SeoReportsClient";
 
 export function SeoReportingView({
@@ -12,13 +14,16 @@ export function SeoReportingView({
   viewType
 }: AdminViewServerProps) {
   const authenticatedUser = user ?? initPageResult.req.user;
+  if (!authenticatedUser) {
+    redirect("/admin/login?redirect=%2Fadmin%2Fseo");
+  }
 
   const content = !canEditContent(authenticatedUser) ? (
-    <section className="kb-seo-view kb-seo-view--denied">
-      <LockKeyhole size={24} aria-hidden />
-      <h1>SEO-отчёты недоступны</h1>
-      <p>Раздел открыт администраторам и редакторам контента.</p>
-    </section>
+    <AdminAccessDenied
+      description="Раздел открыт администраторам и редакторам контента."
+      icon={LockKeyhole}
+      title="SEO-отчёты недоступны"
+    />
   ) : (
     <SeoReportsClient />
   );

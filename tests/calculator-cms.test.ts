@@ -74,4 +74,35 @@ describe("CMS calculator profile parity", () => {
       );
     }
   );
+  it("stores the hybrid Excel tower and gate inputs separately in CMS", () => {
+    const profile = calculatorProfiles.find((item) => item.id === "hybrid-rollout-rack");
+    expect(profile).toBeDefined();
+
+    const seed = toCalculatorProfileSeed(profile!);
+    expect(seed).toMatchObject({
+      towerBasePrice: 100000,
+      gateBasePrice: 120000,
+      baseShelfCount: 5,
+      extraShelfFactor: 0.1
+    });
+
+    const merged = mergeCmsCalculatorProfile(
+      {
+        ...cmsDocFromRuntime(profile!, 5),
+        towerBasePrice: 110000,
+        gateBasePrice: 130000,
+        baseShelfCount: 5,
+        extraShelfFactor: 0.2
+      },
+      profile!
+    );
+
+    expect(merged.pricing).toMatchObject({
+      kind: "hybrid",
+      towerBasePrice: 110000,
+      gateBasePrice: 130000,
+      baseShelfCount: 5,
+      extraShelfFactor: 0.2
+    });
+  });
 });

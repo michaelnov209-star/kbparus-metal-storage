@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
-import { DefaultTemplate } from "@payloadcms/next/templates";
 import { Link } from "@payloadcms/ui/elements/Link";
+import { redirect } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -242,7 +242,7 @@ async function DashboardMetrics({
   return (
     <div className="kb-control-center__metrics">
       {metrics.map((metric) => (
-        <Link className="kb-control-center__metric" href={metric.href} key={metric.label}>
+        <Link className="kb-control-center__metric" href={metric.href} key={metric.label} prefetch={false}>
           <span>
             <metric.icon size={17} aria-hidden />
             {metric.label}
@@ -260,6 +260,7 @@ function WorkspaceCard({ item }: { item: WorkspaceItem }) {
       className="kb-control-center__card"
       data-accent={item.accent ? "true" : "false"}
       href={item.href}
+      prefetch={false}
     >
       <span className="kb-control-center__card-icon">
         <item.icon size={19} aria-hidden />
@@ -275,12 +276,13 @@ function WorkspaceCard({ item }: { item: WorkspaceItem }) {
 
 export async function AdminDashboard({
   initPageResult,
-  params,
-  searchParams,
-  user,
-  viewType
+  user
 }: AdminViewServerProps) {
   const authenticatedUser = user ?? initPageResult.req.user;
+  if (!authenticatedUser) {
+    redirect("/admin/login");
+  }
+
   const role = getCmsRole(authenticatedUser);
   const canEdit = canEditContent(authenticatedUser);
   const visibleWorkspace = workspaceItems.filter((item) => canOpen(item, role));
@@ -306,19 +308,20 @@ export async function AdminDashboard({
               <Link
                 className="kb-control-center__action kb-control-center__action--primary"
                 href="/admin/collections/products/create"
+                prefetch={false}
               >
                 <Plus size={16} aria-hidden />
                 Новый товар
               </Link>
             ) : null}
             {canManageMedia(authenticatedUser) ? (
-              <Link className="kb-control-center__action" href="/admin/collections/media/create">
+              <Link className="kb-control-center__action" href="/admin/collections/media/create" prefetch={false}>
                 <UploadCloud size={16} aria-hidden />
                 Загрузить файл
               </Link>
             ) : null}
             {role === "admin" ? (
-              <Link className="kb-control-center__action" href="/admin/collections/leads">
+              <Link className="kb-control-center__action" href="/admin/collections/leads" prefetch={false}>
                 <Inbox size={16} aria-hidden />
                 Открыть заявки
               </Link>
@@ -336,7 +339,7 @@ export async function AdminDashboard({
           </div>
           <p>Telegram, почта и аналитика подключены через защищённые настройки.</p>
           {role === "admin" ? (
-            <Link href="/admin/system">
+            <Link href="/admin/system" prefetch={false}>
               Проверить здоровье
               <ArrowRight size={14} aria-hidden />
             </Link>
@@ -392,23 +395,5 @@ export async function AdminDashboard({
     </section>
   );
 
-  return (
-    <DefaultTemplate
-      i18n={initPageResult.req.i18n}
-      locale={initPageResult.locale}
-      params={params}
-      payload={initPageResult.req.payload}
-      permissions={initPageResult.permissions}
-      req={initPageResult.req}
-      searchParams={searchParams}
-      user={authenticatedUser || undefined}
-      viewType={viewType}
-      visibleEntities={{
-        collections: initPageResult.visibleEntities?.collections,
-        globals: initPageResult.visibleEntities?.globals
-      }}
-    >
-      {content}
-    </DefaultTemplate>
-  );
+  return content;
 }

@@ -32,8 +32,19 @@ export function calculateStorageSystem(
   const lengthMm = nearestAllowed(input.lengthMm, profile.lengthOptions.map((option) => option.value));
   const loadKg = nearestAllowed(input.loadKg, profile.loadOptions.map((option) => option.value));
   const shelfCount = nearestAllowed(input.shelfCount, profile.shelfCountOptions);
-  const rolloutShelfCount = nearestAllowed(input.rolloutShelfCount, profile.rolloutShelfCountOptions ?? profile.shelfCountOptions);
+  let rolloutShelfCount = nearestAllowed(input.rolloutShelfCount, profile.rolloutShelfCountOptions ?? profile.shelfCountOptions);
   const towerCount = nearestAllowed(input.towerCount, profile.towerCountOptions);
+
+  if (
+    profile.pricing.kind === "hybrid" &&
+    profile.maxCombinedShelfCount &&
+    shelfCount + rolloutShelfCount > profile.maxCombinedShelfCount
+  ) {
+    const rolloutOptions = profile.rolloutShelfCountOptions ?? profile.shelfCountOptions;
+    rolloutShelfCount =
+      [...rolloutOptions].reverse().find((value) => value + shelfCount <= profile.maxCombinedShelfCount!) ??
+      rolloutOptions[0];
+  }
 
   const heightFactor = findFactor(profile.heightOptions, heightMm);
   const widthFactor = findFactor(profile.widthOptions, widthMm);
@@ -103,10 +114,17 @@ export function calculateStorageSystem(
     const rolloutShelfPrice = findPrice(profile.pricing.rolloutLoadOptions, loadKg);
     const forkliftShelvesPrice = forkliftShelfPrice * dimensionFactor * shelfCount * towerCount;
     const rolloutShelvesPrice = rolloutShelfPrice * dimensionFactor * rolloutShelfCount * towerCount;
-    const towerPrice = profile.pricing.fixedTowerAndGatePrice * towerCount;
+    const totalShelfCount = shelfCount + rolloutShelfCount;
+    const towerFactor = progressiveFactor(totalShelfCount, profile.pricing.baseShelfCount, profile.pricing.extraShelfFactor);
+    const gateFactor = progressiveFactor(rolloutShelfCount, profile.pricing.baseShelfCount, profile.pricing.extraShelfFactor);
+    const towerPrice =
+      (
+        profile.pricing.towerBasePrice * towerFactor +
+        profile.pricing.gateBasePrice * gateFactor
+      ) * towerCount;
 
     loadFactor = forkliftShelfPrice / profile.pricing.forkliftLoadOptions[0].price;
-    shelvesPerTowerFactor = 1;
+    shelvesPerTowerFactor = towerFactor;
 
     lineItems.push(
       { label: "Полки под погрузчик в гибридной системе", amount: forkliftShelvesPrice },

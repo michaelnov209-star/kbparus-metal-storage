@@ -46,29 +46,58 @@ export async function POST(request: Request) {
   let created = 0;
   let existing = 0;
 
-  for (const seed of calculatorProfileSeeds) {
-    const found = await cms.find({
-      collection: "calculator-profiles",
-      depth: 0,
-      draft: true,
-      limit: 1,
-      overrideAccess: true,
-      pagination: false,
-      where: { slug: { equals: seed.slug } }
-    });
+  try {
+    const [publishedProfiles, latestProfiles] = await Promise.all([
+      cms.find({
+        collection: "calculator-profiles",
+        depth: 0,
+        draft: false,
+        limit: calculatorProfileSeeds.length * 2,
+        overrideAccess: true,
+        pagination: false
+      }),
+      cms.find({
+        collection: "calculator-profiles",
+        depth: 0,
+        draft: true,
+        limit: calculatorProfileSeeds.length * 2,
+        overrideAccess: true,
+        pagination: false
+      })
+    ]);
+    const existingSlugs = new Set(
+      [...publishedProfiles.docs, ...latestProfiles.docs]
+        .map((profile) => profile.slug)
+        .filter((slug) => typeof slug === "string")
+    );
 
-    if (found.docs.length > 0) {
-      existing += 1;
-      continue;
+    for (const seed of calculatorProfileSeeds) {
+      if (existingSlugs.has(seed.slug)) {
+        existing += 1;
+        continue;
+      }
+
+      await cms.create({
+        collection: "calculator-profiles",
+        data: seed,
+        draft: false,
+        overrideAccess: true
+      });
+      created += 1;
+      existingSlugs.add(seed.slug);
     }
-
-    await cms.create({
-      collection: "calculator-profiles",
-      data: seed,
-      draft: false,
-      overrideAccess: true
-    });
-    created += 1;
+  } catch (error) {
+    console.error(
+      "[calculator-profile-sync] Failed to install base profiles",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      {
+        error:
+          "Не удалось завершить установку профилей. Уже созданные записи сохранены; повторный запуск безопасно добавит только недостающие."
+      },
+      { status: 500, headers: privateHeaders }
+    );
   }
 
   return NextResponse.json(

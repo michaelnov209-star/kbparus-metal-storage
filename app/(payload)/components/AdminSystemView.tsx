@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { AdminViewServerProps, Payload } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
 import { Link } from "@payloadcms/ui/elements/Link";
+import { redirect } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -23,6 +25,7 @@ import {
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getCmsRole } from "@/payload/access/rbac";
+import { AdminAccessDenied } from "./AdminAccessDenied";
 import { CalculatorProfileSyncButton } from "./CalculatorProfileSyncButton";
 
 type HealthState = "healthy" | "configured" | "disabled" | "attention";
@@ -43,6 +46,17 @@ type HistoryItem = {
   id: string;
   state: "draft" | "published";
   title: string;
+};
+
+type LeadDelivery = {
+  email: string | null;
+  telegram: string | null;
+};
+
+type SystemData = {
+  history: HistoryItem[];
+  leadDelivery: LeadDelivery;
+  profileCount: number;
 };
 
 type VersionLike = {
@@ -143,6 +157,20 @@ async function readLeadDelivery(payload: Payload) {
   }
 }
 
+async function readSystemData(payload: Payload): Promise<SystemData> {
+  const [history, profileResult, leadDelivery] = await Promise.all([
+    readVersionHistory(payload),
+    payload.count({ collection: "calculator-profiles", overrideAccess: true }).catch(() => ({ totalDocs: 0 })),
+    readLeadDelivery(payload)
+  ]);
+
+  return {
+    history,
+    leadDelivery,
+    profileCount: profileResult.totalDocs
+  };
+}
+
 function HealthCard({ item }: { item: HealthItem }) {
   const Icon = item.icon;
   const StatusIcon = item.state === "healthy"
@@ -165,42 +193,17 @@ function HealthCard({ item }: { item: HealthItem }) {
     </article>
   );
 
-  return item.href ? <Link href={item.href}>{card}</Link> : card;
+  return item.href ? <Link href={item.href} prefetch={false}>{card}</Link> : card;
 }
 
-export async function AdminSystemView({
-  initPageResult,
-  params,
-  searchParams,
-  user,
-  viewType
-}: AdminViewServerProps) {
-  const authenticatedUser = user ?? initPageResult.req.user;
-  const isAdmin = getCmsRole(authenticatedUser) === "admin";
-  const payload = initPageResult.req.payload;
-
-  let history: HistoryItem[] = [];
-  let profileCount = 0;
-  let leadDelivery: { email: string | null; telegram: string | null } = { email: null, telegram: null };
-
-  if (isAdmin) {
-    const [historyResult, profileResult, deliveryResult] = await Promise.all([
-      readVersionHistory(payload),
-      payload.count({ collection: "calculator-profiles", overrideAccess: true }).catch(() => ({ totalDocs: 0 })),
-      readLeadDelivery(payload)
-    ]);
-    history = historyResult;
-    profileCount = profileResult.totalDocs;
-    leadDelivery = deliveryResult;
-  }
-
+function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
   const smtpConfigured = isSmtpConfigured(smtpSettingsFromEnv(process.env));
   const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
   const storageConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const metrikaConfigured = Boolean(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID);
   const bitrix = getBitrix24RuntimeConfig(process.env);
 
-  const healthItems: HealthItem[] = [
+  return [
     {
       label: "Сайт и CMS",
       description: "Админка открыта, авторизация и база данных ответили на текущий запрос.",
@@ -261,32 +264,98 @@ export async function AdminSystemView({
       href: "/admin/integrations"
     }
   ];
+}
 
+function SystemScoreSkeleton({ deploySha }: { deploySha: string }) {
+  return (
+    <div
+      aria-label="Загрузка статуса систем"
+      aria-live="polite"
+      className="kb-system__score kb-system__score--skeleton"
+      role="status"
+    >
+      <span className="kb-system__skeleton-line kb-system__skeleton-line--score" />
+      <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
+      <small>Сборка {deploySha}</small>
+    </div>
+  );
+}
+
+function SystemPanelsSkeleton() {
+  return (
+    <div
+      aria-label="Загрузка системных данных"
+      aria-live="polite"
+      className="kb-system__data-skeleton"
+      role="status"
+    >
+      <section className="kb-system__section">
+        <div className="kb-system__section-head">
+          <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
+          <Activity size={20} aria-hidden />
+        </div>
+        <div className="kb-system__health-grid">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div className="kb-system__health-card kb-system__health-card--skeleton" key={index}>
+              <span className="kb-system__skeleton-line kb-system__skeleton-line--short" />
+              <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
+              <span className="kb-system__skeleton-line" />
+            </div>
+          ))}
+        </div>
+      </section>
+      <div className="kb-system__columns">
+        <section className="kb-system__section kb-system__history">
+          <div className="kb-system__section-head">
+            <div><span>История CMS</span><h2>Последние изменения</h2></div>
+            <FileClock size={20} aria-hidden />
+          </div>
+          <div className="kb-system__timeline kb-system__timeline--skeleton">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div className="kb-system__timeline-row" key={index}>
+                <span className="kb-system__timeline-dot" />
+                <span className="kb-system__skeleton-line" />
+              </div>
+            ))}
+          </div>
+        </section>
+        <aside className="kb-system__section kb-system__calculator kb-system__calculator--skeleton">
+          <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
+          <span className="kb-system__skeleton-line kb-system__skeleton-line--score" />
+          <span className="kb-system__skeleton-line" />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+async function SystemScore({
+  dataPromise,
+  deploySha
+}: {
+  dataPromise: Promise<SystemData>;
+  deploySha: string;
+}) {
+  const { leadDelivery } = await dataPromise;
+  const healthItems = buildHealthItems(leadDelivery);
   const healthyCount = healthItems.filter((item) => item.state === "healthy").length;
   const attentionCount = healthItems.filter((item) => item.state === "attention").length;
-  const deploySha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "локальная сборка";
 
-  const content = !isAdmin ? (
-    <section className="kb-system kb-system--denied">
-      <ShieldCheck size={26} aria-hidden />
-      <h1>Системный контроль доступен администратору</h1>
-      <p>У этого аккаунта нет прав на статусы сервисов и историю изменений.</p>
-    </section>
-  ) : (
-    <section className="kb-system" aria-label="Здоровье сайта и история изменений">
-      <header className="kb-system__hero">
-        <div>
-          <span className="kb-system__eyebrow"><Gauge size={15} aria-hidden />Системный контроль</span>
-          <h1>Здоровье сайта и история изменений</h1>
-          <p>Быстрый снимок ключевых сервисов, доставок заявок, профилей калькулятора и последних правок контента.</p>
-        </div>
-        <div className="kb-system__score" data-state={attentionCount ? "attention" : "healthy"}>
-          <strong>{healthyCount}/{healthItems.length}</strong>
-          <span>{attentionCount ? "Есть критичный сигнал" : "Критичных сбоев нет"}</span>
-          <small>Сборка {deploySha}</small>
-        </div>
-      </header>
+  return (
+    <div className="kb-system__score" data-state={attentionCount ? "attention" : "healthy"}>
+      <strong>{healthyCount}/{healthItems.length}</strong>
+      <span>{attentionCount ? "Есть критичный сигнал" : "Критичных сбоев нет"}</span>
+      <small>Сборка {deploySha}</small>
+    </div>
+  );
+}
 
+async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> }) {
+  const { history, leadDelivery, profileCount } = await dataPromise;
+  const healthItems = buildHealthItems(leadDelivery);
+
+  return (
+    <>
       <section className="kb-system__section">
         <div className="kb-system__section-head">
           <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
@@ -306,7 +375,7 @@ export async function AdminSystemView({
           {history.length ? (
             <div className="kb-system__timeline">
               {history.map((item) => (
-                <Link href={item.href} className="kb-system__timeline-row" key={item.id}>
+                <Link href={item.href} className="kb-system__timeline-row" key={item.id} prefetch={false}>
                   <span className="kb-system__timeline-dot" data-state={item.state} />
                   <div><strong>{item.title}</strong><small>{item.entity}</small></div>
                   <div className="kb-system__timeline-meta">
@@ -332,7 +401,7 @@ export async function AdminSystemView({
           </div>
           <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>
           <CalculatorProfileSyncButton existingCount={profileCount} />
-          <Link className="kb-system__secondary-link" href="/admin/collections/calculator-profiles">
+          <Link className="kb-system__secondary-link" href="/admin/collections/calculator-profiles" prefetch={false}>
             Открыть настройки расчётов <ArrowRight size={14} aria-hidden />
           </Link>
           <div className="kb-system__warning">
@@ -341,7 +410,61 @@ export async function AdminSystemView({
           </div>
         </aside>
       </div>
+    </>
+  );
+}
+
+function SystemContent({
+  dataPromise,
+  deploySha
+}: {
+  dataPromise: Promise<SystemData>;
+  deploySha: string;
+}) {
+  return (
+    <section className="kb-system" aria-label="Здоровье сайта и история изменений">
+      <header className="kb-system__hero">
+        <div>
+          <span className="kb-system__eyebrow"><Gauge size={15} aria-hidden />Системный контроль</span>
+          <h1>Здоровье сайта и история изменений</h1>
+          <p>Быстрый снимок ключевых сервисов, доставок заявок, профилей калькулятора и последних правок контента.</p>
+        </div>
+        <Suspense fallback={<SystemScoreSkeleton deploySha={deploySha} />}>
+          <SystemScore dataPromise={dataPromise} deploySha={deploySha} />
+        </Suspense>
+      </header>
+      <Suspense fallback={<SystemPanelsSkeleton />}>
+        <SystemPanels dataPromise={dataPromise} />
+      </Suspense>
     </section>
+  );
+}
+
+export async function AdminSystemView({
+  initPageResult,
+  params,
+  searchParams,
+  user,
+  viewType
+}: AdminViewServerProps) {
+  const authenticatedUser = user ?? initPageResult.req.user;
+  if (!authenticatedUser) {
+    redirect("/admin/login?redirect=%2Fadmin%2Fsystem");
+  }
+
+  const isAdmin = getCmsRole(authenticatedUser) === "admin";
+  const payload = initPageResult.req.payload;
+  const deploySha =
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+    (process.env.VERCEL_ENV === "production" ? "production" : "локальная сборка");
+  const content = isAdmin ? (
+    <SystemContent dataPromise={readSystemData(payload)} deploySha={deploySha} />
+  ) : (
+    <AdminAccessDenied
+      description="У этого аккаунта нет прав на статусы сервисов и историю изменений."
+      icon={ShieldCheck}
+      title="Системный контроль доступен администратору"
+    />
   );
 
   return (

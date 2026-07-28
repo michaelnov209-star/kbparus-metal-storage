@@ -58,6 +58,12 @@ interface ProductConfiguratorProps {
 
 export function ProductConfigurator({ profileId, profileData, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
   const profile = profileData ?? getCalculatorProfile(profileId);
+  const shelfCountOptions =
+    profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount
+      ? profile.shelfCountOptions.filter(
+          (value) => value + (profile.defaultValues.rolloutShelfCount ?? 0) <= profile.maxCombinedShelfCount!
+        )
+      : profile.shelfCountOptions;
   const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId, profile));
   const [contact, setContact] = useState({ name: "", phone: "" });
   const [status, setStatus] = useState("");
@@ -221,7 +227,7 @@ export function ProductConfigurator({ profileId, profileData, productTitle, prod
           hint="Параметры влияют на металлоемкость, количество уровней и итоговую стоимость."
         >
           <ChipRow title="Нагрузка на уровень" unit="кг" values={profile.loadOptions.map((item) => item.value)} active={input.loadKg} onSelect={(value) => setNumberField("loadKg", value)} />
-          <ChipRow title="Количество полок" unit="шт." values={profile.shelfCountOptions} active={input.shelfCount} onSelect={(value) => setNumberField("shelfCount", value)} />
+          <ChipRow title="Количество полок" unit="шт." values={shelfCountOptions} active={input.shelfCount} onSelect={(value) => setNumberField("shelfCount", value)} />
           <ChipRow title="Количество башен" unit="шт." values={profile.towerCountOptions} active={input.towerCount} onSelect={(value) => setNumberField("towerCount", value)} />
         </ConfiguratorGroup>
 

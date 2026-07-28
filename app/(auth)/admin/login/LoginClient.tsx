@@ -157,6 +157,7 @@ export function LoginClient() {
                 inputMode="email"
                 autoComplete="username"
                 placeholder="name@company.ru"
+                spellCheck={false}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 aria-invalid={Boolean(error)}
@@ -174,7 +175,7 @@ export function LoginClient() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  placeholder="Введите пароль"
+                  placeholder="Введите пароль…"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   aria-invalid={Boolean(error)}

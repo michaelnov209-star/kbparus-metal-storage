@@ -9,7 +9,7 @@ export function SeoNavLink({ user }: SeoNavLinkProps) {
   if (!canEditContent(user)) return null;
 
   return (
-    <Link className="kb-admin-seo-nav" href="/admin/seo">
+    <Link className="kb-admin-seo-nav" href="/admin/seo" prefetch={false}>
       <BarChart3 size={17} aria-hidden />
       <span>SEO и позиции</span>
     </Link>

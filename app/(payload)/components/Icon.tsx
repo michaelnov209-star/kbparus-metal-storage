@@ -3,5 +3,5 @@
  * (admin.components.graphics.Icon).
  */
 export function Icon() {
-  return <img className="kb-admin-icon" src="/brand/logo-g.png" alt="КБ Парус" />;
+  return <img className="kb-admin-icon" src="/brand/logo-g.png" alt="КБ Парус" width={226} height={75} />;
 }
