@@ -78,7 +78,7 @@ function IntegrationCardView({ card }: { card: IntegrationCard }) {
         <span className="kb-integrations__icon">
           <card.icon size={22} aria-hidden />
         </span>
-        <span className="kb-integrations__state">
+        <span className="kb-integrations__state" role="status" aria-live="polite">
           {card.state === "connected" ? (
             <CheckCircle2 size={14} aria-hidden />
           ) : (

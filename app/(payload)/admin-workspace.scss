@@ -528,6 +528,25 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
     width: 100%;
     margin-top: 16px;
   }
+
+
+  html[data-theme] .nav-group__toggle {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  html[data-theme] .nav__mobile-close,
+  html[data-theme] .app-header__mobile-nav-toggler,
+  html[data-theme] .step-nav__home,
+  html[data-theme] .app-header__account,
+  html[data-theme] .sort-column__button {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 767px) {
@@ -640,24 +659,6 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
   html[data-theme] .collection-edit .upload__dropzoneContent__buttons .btn,
   html[data-theme] .global-edit .upload__dropzoneContent__buttons .btn {
     width: 100%;
-  }
-
-  html[data-theme] .nav-group__toggle {
-    display: flex;
-    min-height: 44px;
-    align-items: center;
-  }
-
-  html[data-theme] .nav__mobile-close,
-  html[data-theme] .app-header__mobile-nav-toggler,
-  html[data-theme] .step-nav__home,
-  html[data-theme] .app-header__account,
-  html[data-theme] .sort-column__button {
-    display: inline-flex;
-    min-width: 44px;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
   }
 
   html[data-theme] .kb-admin-route-status {
@@ -863,7 +864,7 @@ html[data-theme] .kb-integrations__card p {
 html[data-theme] .kb-integrations__card > a,
 html[data-theme] .kb-integrations__card > a:visited {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   gap: 8px;
   align-items: center;
   padding: 0 13px;
