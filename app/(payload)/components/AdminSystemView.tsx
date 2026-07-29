@@ -57,8 +57,7 @@ type LeadDelivery = {
   telegram: string | null;
 };
 
-type SystemData = {
-  history: HistoryItem[];
+type SystemSummaryData = {
   leadDelivery: LeadDelivery;
   profileCount: number;
 };
@@ -169,10 +168,9 @@ async function readLeadDelivery(payload: Payload) {
   }
 }
 
-async function readSystemData(payload: Payload): Promise<SystemData> {
-  return getCachedAdminValue("system-summary", 30_000, async () => {
-    const [history, profileResult, leadDelivery] = await Promise.all([
-      readVersionHistory(payload),
+async function readSystemSummary(payload: Payload): Promise<SystemSummaryData> {
+  return getCachedAdminValue("system-summary", 45_000, async () => {
+    const [profileResult, leadDelivery] = await Promise.all([
       payload
         .find({
           collection: "calculator-profiles",
@@ -195,11 +193,16 @@ async function readSystemData(payload: Payload): Promise<SystemData> {
     ]);
 
     return {
-      history,
       leadDelivery,
       profileCount: profileResult.totalDocs
     };
   });
+}
+
+async function readSystemHistory(payload: Payload): Promise<HistoryItem[]> {
+  return getCachedAdminValue("system-history", 60_000, () =>
+    readVersionHistory(payload)
+  );
 }
 
 function HealthCard({ item }: { item: HealthItem }) {
@@ -312,62 +315,104 @@ function SystemScoreSkeleton({ deploySha }: { deploySha: string }) {
   );
 }
 
-function SystemPanelsSkeleton() {
+function SystemHealthSkeleton() {
   return (
-    <div
+    <section
       aria-label="Загрузка системных данных"
       aria-live="polite"
-      className="kb-system__data-skeleton"
+      className="kb-system__section kb-system__data-skeleton"
       role="status"
     >
-      <section className="kb-system__section">
-        <div className="kb-system__section-head">
-          <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
-          <Activity size={20} aria-hidden />
-        </div>
-        <div className="kb-system__health-grid">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div className="kb-system__health-card kb-system__health-card--skeleton" key={index}>
-              <span className="kb-system__skeleton-line kb-system__skeleton-line--short" />
-              <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
-              <span className="kb-system__skeleton-line" />
-            </div>
-          ))}
-        </div>
-      </section>
-      <div className="kb-system__columns">
-        <section className="kb-system__section kb-system__history">
-          <div className="kb-system__section-head">
-            <div><span>История CMS</span><h2>Последние изменения</h2></div>
-            <FileClock size={20} aria-hidden />
-          </div>
-          <div className="kb-system__timeline kb-system__timeline--skeleton">
-            {Array.from({ length: 3 }, (_, index) => (
-              <div className="kb-system__timeline-row" key={index}>
-                <span className="kb-system__timeline-dot" />
-                <span className="kb-system__skeleton-line" />
-              </div>
-            ))}
-          </div>
-        </section>
-        <aside className="kb-system__section kb-system__calculator kb-system__calculator--skeleton">
-          <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
-          <span className="kb-system__skeleton-line kb-system__skeleton-line--score" />
-          <span className="kb-system__skeleton-line" />
-        </aside>
+      <div className="kb-system__section-head">
+        <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
+        <Activity size={20} aria-hidden />
       </div>
-    </div>
+      <div className="kb-system__health-grid">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div className="kb-system__health-card kb-system__health-card--skeleton" key={index}>
+            <span className="kb-system__skeleton-line kb-system__skeleton-line--short" />
+            <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
+            <span className="kb-system__skeleton-line" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SystemHistorySkeleton() {
+  return (
+    <section
+      aria-label="Загрузка истории изменений"
+      aria-live="polite"
+      className="kb-system__section kb-system__history"
+      role="status"
+    >
+      <div className="kb-system__section-head">
+        <div><span>История CMS</span><h2>Последние изменения</h2></div>
+        <FileClock size={20} aria-hidden />
+      </div>
+      <div className="kb-system__timeline kb-system__timeline--skeleton">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div className="kb-system__timeline-row" key={index}>
+            <span className="kb-system__timeline-dot" />
+            <span className="kb-system__skeleton-line" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SystemCalculatorSkeleton() {
+  return (
+    <aside
+      aria-label="Загрузка профилей калькулятора"
+      aria-live="polite"
+      className="kb-system__section kb-system__calculator kb-system__calculator--skeleton"
+      role="status"
+    >
+      <span className="kb-system__skeleton-line kb-system__skeleton-line--medium" />
+      <span className="kb-system__skeleton-line kb-system__skeleton-line--score" />
+      <span className="kb-system__skeleton-line" />
+    </aside>
+  );
+}
+
+function SystemContentSync() {
+  return (
+    <section className="kb-system__section kb-system__content-sync">
+      <div className="kb-system__section-head">
+        <div>
+          <span>Единая проверка CMS</span>
+          <h2>Все данные сайта собраны в редакторе</h2>
+        </div>
+        <WandSparkles size={20} aria-hidden />
+      </div>
+      <div className="kb-system__content-sync-body">
+        <div>
+          <strong>Проверить и заполнить все разделы CMS</strong>
+          <p>
+            Одна проверка охватывает профили калькулятора, каталог, медиатеку
+            и настройки сайта. Она добавит отсутствующие записи, изображения
+            и видео, а также заполнит пустые поля текущими значениями.
+            Существующие правки не перезаписываются.
+          </p>
+        </div>
+        <CmsCurrentStateSyncButton />
+      </div>
+    </section>
   );
 }
 
 async function SystemScore({
-  dataPromise,
+  summaryPromise,
   deploySha
 }: {
-  dataPromise: Promise<SystemData>;
+  summaryPromise: Promise<SystemSummaryData>;
   deploySha: string;
 }) {
-  const { leadDelivery } = await dataPromise;
+  const { leadDelivery } = await summaryPromise;
   const healthItems = buildHealthItems(leadDelivery);
   const healthyCount = healthItems.filter((item) => item.state === "healthy").length;
   const attentionCount = healthItems.filter((item) => item.state === "attention").length;
@@ -381,97 +426,97 @@ async function SystemScore({
   );
 }
 
-async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> }) {
-  const { history, leadDelivery, profileCount } = await dataPromise;
+async function SystemHealth({
+  summaryPromise
+}: {
+  summaryPromise: Promise<SystemSummaryData>;
+}) {
+  const { leadDelivery } = await summaryPromise;
   const healthItems = buildHealthItems(leadDelivery);
 
   return (
-    <>
-      <section className="kb-system__section">
-        <div className="kb-system__section-head">
-          <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
-          <Activity size={20} aria-hidden />
-        </div>
-        <div className="kb-system__health-grid">
-          {healthItems.map((item) => <HealthCard item={item} key={item.label} />)}
-        </div>
-      </section>
-
-      <section className="kb-system__section kb-system__content-sync">
-        <div className="kb-system__section-head">
-          <div>
-            <span>Единая проверка CMS</span>
-            <h2>Все данные сайта собраны в редакторе</h2>
-          </div>
-          <WandSparkles size={20} aria-hidden />
-        </div>
-        <div className="kb-system__content-sync-body">
-          <div>
-            <strong>Проверить и заполнить все разделы CMS</strong>
-            <p>
-              Одна проверка охватывает профили калькулятора, каталог, медиатеку
-              и настройки сайта. Она добавит отсутствующие записи, изображения
-              и видео, а также заполнит пустые поля текущими значениями.
-              Существующие правки не перезаписываются.
-            </p>
-          </div>
-          <CmsCurrentStateSyncButton />
-        </div>
-      </section>
-
-      <div className="kb-system__columns">
-        <section className="kb-system__section kb-system__history">
-          <div className="kb-system__section-head">
-            <div><span>История CMS</span><h2>Последние изменения</h2></div>
-            <FileClock size={20} aria-hidden />
-          </div>
-          {history.length ? (
-            <div className="kb-system__timeline">
-              {history.map((item) => (
-                <AdminIntentLink href={item.href} className="kb-system__timeline-row" key={item.id}>
-                  <span className="kb-system__timeline-dot" data-state={item.state} />
-                  <div><strong>{item.title}</strong><small>{item.entity}</small></div>
-                  <div className="kb-system__timeline-meta">
-                    <span data-state={item.state}>{item.state === "draft" ? "Черновик" : "Опубликовано"}</span>
-                    <time>{formatDate(item.date)}</time>
-                  </div>
-                </AdminIntentLink>
-              ))}
-            </div>
-          ) : (
-            <div className="kb-system__empty"><Clock3 size={20} aria-hidden /><p>История появится после сохранения товаров, разделов или профилей калькулятора.</p></div>
-          )}
-        </section>
-
-        <aside className="kb-system__section kb-system__calculator">
-          <div className="kb-system__section-head">
-            <div><span>Контроль расчётов</span><h2>Профили калькулятора</h2></div>
-            <Database size={20} aria-hidden />
-          </div>
-          <div className="kb-system__calculator-count">
-            <strong>{profileCount}/{calculatorProfileSeeds.length}</strong>
-            <span>базовых профилей установлено</span>
-          </div>
-          <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>
-          <CalculatorProfileSyncButton existingCount={profileCount} />
-          <AdminIntentLink className="kb-system__secondary-link" href="/admin/collections/calculator-profiles">
-            Открыть настройки расчётов <ArrowRight size={14} aria-hidden />
-          </AdminIntentLink>
-          <div className="kb-system__warning">
-            <CircleAlert size={16} aria-hidden />
-            <span>Цены предварительные. Инженерная проверка перед коммерческим предложением обязательна.</span>
-          </div>
-        </aside>
+    <section className="kb-system__section">
+      <div className="kb-system__section-head">
+        <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
+        <Activity size={20} aria-hidden />
       </div>
-    </>
+      <div className="kb-system__health-grid">
+        {healthItems.map((item) => <HealthCard item={item} key={item.label} />)}
+      </div>
+    </section>
+  );
+}
+
+async function SystemHistory({
+  historyPromise
+}: {
+  historyPromise: Promise<HistoryItem[]>;
+}) {
+  const history = await historyPromise;
+
+  return (
+    <section className="kb-system__section kb-system__history">
+      <div className="kb-system__section-head">
+        <div><span>История CMS</span><h2>Последние изменения</h2></div>
+        <FileClock size={20} aria-hidden />
+      </div>
+      {history.length ? (
+        <div className="kb-system__timeline">
+          {history.map((item) => (
+            <AdminIntentLink href={item.href} className="kb-system__timeline-row" key={item.id}>
+              <span className="kb-system__timeline-dot" data-state={item.state} />
+              <div><strong>{item.title}</strong><small>{item.entity}</small></div>
+              <div className="kb-system__timeline-meta">
+                <span data-state={item.state}>{item.state === "draft" ? "Черновик" : "Опубликовано"}</span>
+                <time>{formatDate(item.date)}</time>
+              </div>
+            </AdminIntentLink>
+          ))}
+        </div>
+      ) : (
+        <div className="kb-system__empty"><Clock3 size={20} aria-hidden /><p>История появится после сохранения товаров, разделов или профилей калькулятора.</p></div>
+      )}
+    </section>
+  );
+}
+
+async function SystemCalculator({
+  summaryPromise
+}: {
+  summaryPromise: Promise<SystemSummaryData>;
+}) {
+  const { profileCount } = await summaryPromise;
+
+  return (
+    <aside className="kb-system__section kb-system__calculator">
+      <div className="kb-system__section-head">
+        <div><span>Контроль расчётов</span><h2>Профили калькулятора</h2></div>
+        <Database size={20} aria-hidden />
+      </div>
+      <div className="kb-system__calculator-count">
+        <strong>{profileCount}/{calculatorProfileSeeds.length}</strong>
+        <span>базовых профилей установлено</span>
+      </div>
+      <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>
+      <CalculatorProfileSyncButton existingCount={profileCount} />
+      <AdminIntentLink className="kb-system__secondary-link" href="/admin/collections/calculator-profiles">
+        Открыть настройки расчётов <ArrowRight size={14} aria-hidden />
+      </AdminIntentLink>
+      <div className="kb-system__warning">
+        <CircleAlert size={16} aria-hidden />
+        <span>Цены предварительные. Инженерная проверка перед коммерческим предложением обязательна.</span>
+      </div>
+    </aside>
   );
 }
 
 function SystemContent({
-  dataPromise,
+  historyPromise,
+  summaryPromise,
   deploySha
 }: {
-  dataPromise: Promise<SystemData>;
+  historyPromise: Promise<HistoryItem[]>;
+  summaryPromise: Promise<SystemSummaryData>;
   deploySha: string;
 }) {
   return (
@@ -483,12 +528,21 @@ function SystemContent({
           <p>Быстрый снимок ключевых сервисов, доставок заявок, профилей калькулятора и последних правок контента.</p>
         </div>
         <Suspense fallback={<SystemScoreSkeleton deploySha={deploySha} />}>
-          <SystemScore dataPromise={dataPromise} deploySha={deploySha} />
+          <SystemScore summaryPromise={summaryPromise} deploySha={deploySha} />
         </Suspense>
       </header>
-      <Suspense fallback={<SystemPanelsSkeleton />}>
-        <SystemPanels dataPromise={dataPromise} />
+      <Suspense fallback={<SystemHealthSkeleton />}>
+        <SystemHealth summaryPromise={summaryPromise} />
       </Suspense>
+      <SystemContentSync />
+      <div className="kb-system__columns">
+        <Suspense fallback={<SystemHistorySkeleton />}>
+          <SystemHistory historyPromise={historyPromise} />
+        </Suspense>
+        <Suspense fallback={<SystemCalculatorSkeleton />}>
+          <SystemCalculator summaryPromise={summaryPromise} />
+        </Suspense>
+      </div>
     </section>
   );
 }
@@ -510,15 +564,25 @@ export async function AdminSystemView({
   const deploySha =
     process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
     (process.env.VERCEL_ENV === "production" ? "production" : "локальная сборка");
-  const content = isAdmin ? (
-    <SystemContent dataPromise={readSystemData(payload)} deploySha={deploySha} />
-  ) : (
-    <AdminAccessDenied
-      description="У этого аккаунта нет прав на статусы сервисов и историю изменений."
-      icon={ShieldCheck}
-      title="Системный контроль доступен администратору"
-    />
-  );
+  const content = (() => {
+    if (!isAdmin) {
+      return (
+        <AdminAccessDenied
+          description="У этого аккаунта нет прав на статусы сервисов и историю изменений."
+          icon={ShieldCheck}
+          title="Системный контроль доступен администратору"
+        />
+      );
+    }
+
+    return (
+      <SystemContent
+        deploySha={deploySha}
+        historyPromise={readSystemHistory(payload)}
+        summaryPromise={readSystemSummary(payload)}
+      />
+    );
+  })();
 
   return (
     <DefaultTemplate

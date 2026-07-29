@@ -61,7 +61,7 @@ describe("admin layout isolation", () => {
     expect(training).not.toContain('<a className="kb-admin-training__link"');
   });
 
-  it("prefetches primary admin destinations only after user intent", () => {
+  it("eagerly prefetches only the permanent admin navigation and supports touch intent", () => {
     const intentLink = source(
       "app/(payload)/components/AdminIntentLink.tsx"
     );
@@ -75,9 +75,28 @@ describe("admin layout isolation", () => {
     expect(intentLink).toContain('aria-current={props["aria-current"]');
     expect(intentLink).toContain("onMouseEnter={handleMouseEnter}");
     expect(intentLink).toContain("onFocus={handleFocus}");
-    expect(intentLink).toContain("prefetch={false}");
+    expect(intentLink).toContain("onPointerDown={handlePointerDown}");
+    expect(intentLink).toContain("prefetch={eagerPrefetch}");
     expect(workspaceNav).toContain("<AdminIntentLink");
-    expect(workspaceNav).not.toContain("prefetch={false}");
+    expect(workspaceNav.match(/\sprefetch(?:\s|>)/g)).toHaveLength(4);
+  });
+
+  it("warms Payload sidebar routes on hover, keyboard focus, and touch without auth side effects", () => {
+    const bridge = source(
+      "app/(payload)/components/AdminNavPrefetchBridge.tsx"
+    );
+    const workspaceNav = source(
+      "app/(payload)/components/AdminWorkspaceNav.tsx"
+    );
+
+    expect(bridge).toContain('anchor.closest(".nav")');
+    expect(bridge).toContain("isAdminAuthOnlyPath(url.pathname)");
+    expect(bridge).toContain('document.addEventListener("pointerover"');
+    expect(bridge).toContain('document.addEventListener("pointerdown"');
+    expect(bridge).toContain('document.addEventListener("focusin"');
+    expect(bridge).toContain("router.prefetch(destination)");
+    expect(bridge).not.toContain("querySelectorAll");
+    expect(workspaceNav).toContain("<AdminNavPrefetchBridge />");
   });
 
   it("routes conversion shortcuts to the goals and conversions workspace", () => {

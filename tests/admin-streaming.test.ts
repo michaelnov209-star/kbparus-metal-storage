@@ -9,18 +9,24 @@ function source(relativePath: string): string {
 }
 
 describe("admin streaming boundaries", () => {
-  it("streams system health data behind Suspense without awaiting it in the root view", () => {
+  it("streams the fast system summary independently from slower version history", () => {
     const view = source("app/(payload)/components/AdminSystemView.tsx");
     const rootView = view.slice(view.indexOf("export async function AdminSystemView"));
 
     expect(view).toContain('import { Suspense } from "react"');
-    expect(view).toContain("async function readSystemData");
-    expect(view).toContain("const [history, profileResult, leadDelivery] = await Promise.all");
-    expect(view).toContain("<SystemScore dataPromise={dataPromise}");
-    expect(view).toContain("<SystemPanels dataPromise={dataPromise}");
+    expect(view).toContain("async function readSystemSummary");
+    expect(view).toContain("async function readSystemHistory");
+    expect(view).toContain("const [profileResult, leadDelivery] = await Promise.all");
+    expect(view).toContain("<SystemScore summaryPromise={summaryPromise}");
+    expect(view).toContain("<SystemHealth summaryPromise={summaryPromise}");
+    expect(view).toContain("<SystemHistory historyPromise={historyPromise}");
+    expect(view).toContain("<SystemCalculator summaryPromise={summaryPromise}");
     expect(view).toContain("<SystemScoreSkeleton");
-    expect(view).toContain("<SystemPanelsSkeleton");
-    expect(rootView).not.toContain("await readSystemData");
+    expect(view).toContain("<SystemHealthSkeleton");
+    expect(view).toContain("<SystemHistorySkeleton");
+    expect(view).toContain("<SystemCalculatorSkeleton");
+    expect(rootView).not.toContain("await readSystemSummary");
+    expect(rootView).not.toContain("await readSystemHistory");
     expect(rootView).not.toContain("await readVersionHistory");
     expect(rootView).not.toContain("await readLeadDelivery");
   });
