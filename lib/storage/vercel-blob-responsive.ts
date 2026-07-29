@@ -20,6 +20,7 @@ import {
   type UploadCollectionSlug
 } from "payload";
 import { getRangeRequestInfo } from "payload/internal";
+import { consumeRawClientBlobUpload } from "./normalize-upload-buffers";
 
 type ResponsiveVercelBlobStorageOptions = {
   cacheControlMaxAge?: number;
@@ -170,7 +171,7 @@ function createAdapter({
         { token }
       );
     },
-    handleUpload: async ({ data, file }) => {
+    handleUpload: async ({ data, file, req }) => {
       const { fileKey } = getFileKey({
         collectionPrefix: prefix,
         docPrefix: data.prefix,
@@ -190,6 +191,27 @@ function createAdapter({
       });
 
       if (!isOriginal) return {};
+
+      const rawClientUpload = consumeRawClientBlobUpload(req);
+      if (rawClientUpload) {
+        try {
+          await del(
+            generateURL({
+              baseUrl,
+              collectionPrefix: prefix,
+              filename: rawClientUpload.filename,
+              prefix: rawClientUpload.prefix,
+              useCompositePrefixes
+            }),
+            { token }
+          );
+        } catch (error) {
+          req.payload.logger.warn({
+            err: error,
+            msg: "Optimized image is ready, but its raw client-upload copy could not be removed"
+          });
+        }
+      }
 
       return {
         filename: decodeURIComponent(

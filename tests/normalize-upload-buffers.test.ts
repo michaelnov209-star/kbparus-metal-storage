@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  consumeRawClientBlobUpload,
   copyToRegularBuffer,
-  normalizeUploadBuffers
+  normalizeUploadBuffers,
+  prepareDirectClientImageForCloudStorage
 } from "@/lib/storage/normalize-upload-buffers";
 import { Media } from "@/payload/collections/Media";
 
@@ -47,6 +49,51 @@ describe("normalize upload buffers", () => {
     expect(request.payloadUploadSizes.thumb).not.toBe(originalThumb);
     expect(request.file.data.buffer).toBeInstanceOf(ArrayBuffer);
     expect(request.payloadUploadSizes.thumb.buffer).toBeInstanceOf(ArrayBuffer);
+  });
+
+  it("server-uploads a transformed direct image and remembers the raw Blob for cleanup", () => {
+    const request = {
+      context: {},
+      file: {
+        clientUploadContext: { prefix: "catalog" },
+        data: Buffer.from("optimized-webp"),
+        mimetype: "image/png",
+        name: "product-random.png",
+        size: 14
+      },
+      payloadUploadSizes: {
+        thumb: Buffer.from("thumb")
+      }
+    };
+
+    prepareDirectClientImageForCloudStorage(request as never);
+
+    expect(request.file.clientUploadContext).toBeUndefined();
+    expect(consumeRawClientBlobUpload(request as never)).toEqual({
+      filename: "product-random.png",
+      prefix: "catalog"
+    });
+    expect(consumeRawClientBlobUpload(request as never)).toBeUndefined();
+  });
+
+  it("does not re-upload direct videos or documents", () => {
+    const request = {
+      context: {},
+      file: {
+        clientUploadContext: { prefix: "documents" },
+        data: Buffer.from("pdf"),
+        mimetype: "application/pdf",
+        name: "spec-random.pdf",
+        size: 3
+      }
+    };
+
+    prepareDirectClientImageForCloudStorage(request as never);
+
+    expect(request.file.clientUploadContext).toEqual({
+      prefix: "documents"
+    });
+    expect(consumeRawClientBlobUpload(request as never)).toBeUndefined();
   });
 
   it("serves versioned media with an immutable one-year cache", () => {
