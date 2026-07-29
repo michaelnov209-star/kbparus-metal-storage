@@ -1004,6 +1004,11 @@
     hyphens: none !important;
   }
 
+  .product-detail-v2 .product-title-strip h1 {
+    font-size: clamp(27px, 7.7vw, 34px) !important;
+    overflow-wrap: normal !important;
+  }
+
   .category-detail-v2 .catalog-detail-hero p,
   .product-detail-v2 .product-title-strip > p {
     font-size: 14px !important;
