@@ -8,6 +8,7 @@ vi.mock("@/lib/cms/client", () => ({
 
 import { catalogProducts, catalogSubcategories } from "@/data/storageSystems/catalogDepth";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
+import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
 import { DEFAULT_HERO_VIDEO } from "@/lib/media/hero";
 import {
   buildCategorySeeds,
@@ -17,7 +18,11 @@ import {
   CURRENT_STATE_ASSETS,
   mergeMissingState
 } from "@/lib/cms/current-state-sync";
-import { syncCurrentStateAsset } from "@/lib/cms/current-state-sync-runtime";
+import {
+  currentStateRuntimeLimits,
+  syncCurrentStateAsset,
+  syncCurrentStateContent
+} from "@/lib/cms/current-state-sync-runtime";
 
 describe("CMS current-state fallback model", () => {
   it("registers every fixed asset once, including both hero videos and poster", () => {
@@ -150,6 +155,109 @@ describe("CMS current-state fallback model", () => {
     expect(Buffer.isBuffer(file.data)).toBe(true);
     expect(file.data.buffer).toBeInstanceOf(ArrayBuffer);
     expect(file.data.buffer).not.toBeInstanceOf(SharedArrayBuffer);
+  });
+
+  it("reads every CMS page instead of truncating a large collection", async () => {
+    const asset = CURRENT_STATE_ASSETS[0];
+    const matchingDoc = {
+      id: "media-on-page-2",
+      filename: "existing.mp4",
+      internalTitle: `Legacy asset: ${asset.publicPath}`,
+      url: "/api/media/file/existing.mp4"
+    };
+    const cms = {
+      find: vi
+        .fn()
+        .mockResolvedValueOnce({
+          docs: [{ id: "unrelated-page-1", internalTitle: "Другое" }],
+          hasNextPage: true,
+          nextPage: 2
+        })
+        .mockResolvedValueOnce({
+          docs: [matchingDoc],
+          hasNextPage: false,
+          nextPage: null
+        }),
+      create: vi.fn()
+    };
+    const fetcher = vi.fn(async () => new Response(new Uint8Array([1])));
+
+    const result = await syncCurrentStateAsset(
+      cms as never,
+      asset.key,
+      "https://kbparus-metal-storage.vercel.app/api/admin/cms/current-state",
+      fetcher
+    );
+
+    expect(result).toEqual({ created: false, id: matchingDoc.id });
+    expect(cms.find).toHaveBeenCalledTimes(2);
+    expect(cms.find).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        limit: currentStateRuntimeLimits.collectionPageSize,
+        page: 1,
+        pagination: true,
+        sort: "id"
+      })
+    );
+    expect(cms.find).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ page: 2 })
+    );
+    expect(cms.create).not.toHaveBeenCalled();
+  });
+
+  it("installs profiles before products and uses their published IDs", async () => {
+    const cms = {
+      create: vi.fn(
+        async ({
+          collection,
+          data
+        }: {
+          collection: string;
+          data: Record<string, unknown>;
+        }) => ({
+          ...data,
+          id: `${collection}-${String(data.slug ?? "record")}`
+        })
+      ),
+      find: vi.fn(async () => ({
+        docs: [],
+        hasNextPage: false,
+        nextPage: null
+      })),
+      findGlobal: vi.fn(async () => ({})),
+      update: vi.fn(),
+      updateGlobal: vi.fn(async ({ data }: { data: Record<string, unknown> }) => data)
+    };
+
+    const result = await syncCurrentStateContent(
+      cms as never,
+      "https://kbparus-metal-storage.vercel.app/api/admin/cms/current-state"
+    );
+    const linkedProduct = catalogProducts.find(
+      (product) => product.calculatorProfileId
+    )!;
+    const productCreate = cms.create.mock.calls.find(
+      ([args]) =>
+        args.collection === "products" &&
+        args.data.slug === linkedProduct.id
+    )?.[0];
+
+    expect(
+      cms.create.mock.calls.filter(
+        ([args]) => args.collection === "calculator-profiles"
+      )
+    ).toHaveLength(calculatorProfileSeeds.length);
+    expect(productCreate?.data).toMatchObject({
+      calculatorProfile: `calculator-profiles-${linkedProduct.calculatorProfileId}`
+    });
+    expect(result.createdRecords).toBe(
+      calculatorProfileSeeds.length +
+        excelHomeCatalog.length +
+        catalogSubcategories.length +
+        catalogProducts.length
+    );
   });
 
   it("repairs a legacy media record when its Blob file is missing", async () => {

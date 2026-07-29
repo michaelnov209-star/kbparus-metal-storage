@@ -25,6 +25,7 @@ import {
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getCachedAdminValue } from "@/lib/admin/server-cache";
+import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
 import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
@@ -81,6 +82,10 @@ const historyCollections = [
   { slug: "subcategories", entity: "Подраздел" },
   { slug: "calculator-profiles", entity: "Профиль калькулятора" }
 ] as const;
+
+const canonicalCalculatorProfileSlugs = calculatorProfileSeeds.map(
+  (profile) => profile.slug
+);
 
 function formatDate(value?: string | null) {
   if (!value) return "Нет данных";
@@ -168,7 +173,24 @@ async function readSystemData(payload: Payload): Promise<SystemData> {
   return getCachedAdminValue("system-summary", 30_000, async () => {
     const [history, profileResult, leadDelivery] = await Promise.all([
       readVersionHistory(payload),
-      payload.count({ collection: "calculator-profiles", overrideAccess: true }).catch(() => ({ totalDocs: 0 })),
+      payload
+        .find({
+          collection: "calculator-profiles",
+          depth: 0,
+          draft: false,
+          overrideAccess: true,
+          pagination: false,
+          select: {
+            slug: true
+          },
+          where: {
+            slug: {
+              in: canonicalCalculatorProfileSlugs
+            }
+          }
+        })
+        .then((result) => ({ totalDocs: result.docs.length }))
+        .catch(() => ({ totalDocs: 0 })),
       readLeadDelivery(payload)
     ]);
 
@@ -378,18 +400,19 @@ async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> 
       <section className="kb-system__section kb-system__content-sync">
         <div className="kb-system__section-head">
           <div>
-            <span>Контроль содержимого</span>
-            <h2>Сайт и редактор показывают одно и то же</h2>
+            <span>Единая проверка CMS</span>
+            <h2>Все данные сайта собраны в редакторе</h2>
           </div>
           <WandSparkles size={20} aria-hidden />
         </div>
         <div className="kb-system__content-sync-body">
           <div>
-            <strong>Заполнить резервные значения в CMS</strong>
+            <strong>Проверить и заполнить все разделы CMS</strong>
             <p>
-              Проверка найдёт поля, которые сайт сейчас берёт из кода, добавит
-              действующие изображения и видео в медиатеку и заполнит редактор.
-              Уже сохранённые правки не перезаписываются.
+              Одна проверка охватывает профили калькулятора, каталог, медиатеку
+              и настройки сайта. Она добавит отсутствующие записи, изображения
+              и видео, а также заполнит пустые поля текущими значениями.
+              Существующие правки не перезаписываются.
             </p>
           </div>
           <CmsCurrentStateSyncButton />
@@ -426,7 +449,7 @@ async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> 
             <Database size={20} aria-hidden />
           </div>
           <div className="kb-system__calculator-count">
-            <strong>{profileCount}/6</strong>
+            <strong>{profileCount}/{calculatorProfileSeeds.length}</strong>
             <span>базовых профилей установлено</span>
           </div>
           <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>

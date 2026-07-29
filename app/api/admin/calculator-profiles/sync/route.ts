@@ -4,7 +4,10 @@ import {
   authenticateCmsRequest,
   isTrustedAdminMutationRequest
 } from "@/lib/admin/request-auth";
-import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
+import {
+  readCalculatorProfileSyncState,
+  syncCalculatorProfilesMissingOnly
+} from "@/lib/calculator/profile-sync-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,80 +51,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Поддерживается только безопасное добавление отсутствующих профилей" }, { status: 400, headers: privateHeaders });
   }
 
-  let created = 0;
-  let existing = 0;
-  let published = 0;
-
   try {
-    const [publishedProfiles, latestProfiles] = await Promise.all([
-      cms.find({
-        collection: "calculator-profiles",
-        depth: 0,
-        draft: false,
-        limit: calculatorProfileSeeds.length * 2,
-        overrideAccess: true,
-        pagination: false
-      }),
-      cms.find({
-        collection: "calculator-profiles",
-        depth: 0,
-        draft: true,
-        limit: calculatorProfileSeeds.length * 2,
-        overrideAccess: true,
-        pagination: false
-      })
-    ]);
-    const publishedSlugs = new Set<string>();
-    for (const profile of publishedProfiles.docs) {
-      if (typeof profile.slug === "string") {
-        publishedSlugs.add(profile.slug);
-      }
-    }
-    const latestProfilesBySlug = new Map(
-      latestProfiles.docs
-        .filter((profile) => typeof profile.slug === "string")
-        .map((profile) => [profile.slug, profile] as const)
+    const state = await readCalculatorProfileSyncState(cms);
+    const result = await syncCalculatorProfilesMissingOnly(cms, state);
+    return NextResponse.json(
+      {
+        ok: true,
+        created: result.created,
+        existing: result.existing,
+        published: result.published,
+        total: result.total
+      },
+      { headers: privateHeaders }
     );
-
-    for (const seed of calculatorProfileSeeds) {
-      if (publishedSlugs.has(seed.slug)) {
-        existing += 1;
-        continue;
-      }
-
-      const draftOnlyProfile = latestProfilesBySlug.get(seed.slug);
-      if (draftOnlyProfile) {
-        const {
-          createdAt: _createdAt,
-          id,
-          updatedAt: _updatedAt,
-          ...draftData
-        } = draftOnlyProfile;
-
-        await cms.update({
-          collection: "calculator-profiles",
-          id,
-          data: {
-            ...draftData,
-            _status: "published"
-          },
-          draft: false,
-          overrideAccess: true
-        });
-        published += 1;
-        publishedSlugs.add(seed.slug);
-        continue;
-      }
-
-      await cms.create({
-        collection: "calculator-profiles",
-        data: seed,
-        draft: false,
-        overrideAccess: true
-      });
-      created += 1;
-      publishedSlugs.add(seed.slug);
-    }
   } catch (error) {
     console.error(
       "[calculator-profile-sync] Failed to install base profiles",
@@ -135,9 +77,4 @@ export async function POST(request: Request) {
       { status: 500, headers: privateHeaders }
     );
   }
-
-  return NextResponse.json(
-    { ok: true, created, existing, published, total: calculatorProfileSeeds.length },
-    { headers: privateHeaders }
-  );
 }

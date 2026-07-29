@@ -135,7 +135,7 @@ export function CmsCurrentStateSyncButton() {
         ) : (
           <RefreshCw size={16} aria-hidden />
         )}
-        Проверить и заполнить текущее состояние
+        Проверить всю CMS
       </button>
 
       {state.kind === "loading" ? (

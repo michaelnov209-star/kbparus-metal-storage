@@ -89,6 +89,19 @@ describe("calculator profile sync route", () => {
     expect(updateData).not.toHaveProperty("id");
     expect(updateData).not.toHaveProperty("createdAt");
     expect(updateData).not.toHaveProperty("updatedAt");
+    expect(mocks.find).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        draft: false,
+        pagination: false,
+        where: {
+          slug: {
+            in: calculatorProfileSeeds.map((seed) => seed.slug)
+          }
+        }
+      })
+    );
+    expect(mocks.find.mock.calls[0]?.[0]).not.toHaveProperty("limit");
   });
 
   it("does not publish a newer draft when the base profile already has a published version", async () => {

@@ -4,6 +4,13 @@ import type { Payload } from "payload";
 import { catalogProducts, catalogSubcategories } from "@/data/storageSystems/catalogDepth";
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import {
+  countMissingPublishedCalculatorProfiles,
+  mapPublishedCalculatorProfileIds,
+  readCalculatorProfileSyncState,
+  syncCalculatorProfilesMissingOnly,
+  type CalculatorProfileSyncState
+} from "@/lib/calculator/profile-sync-service";
+import {
   buildCategorySeeds,
   buildContactsSeed,
   buildHomeContentSeed,
@@ -20,17 +27,16 @@ import {
 } from "@/lib/cms/current-state-sync";
 
 const MAX_ASSET_BYTES = 15 * 1024 * 1024;
-const COLLECTION_LIMIT = 500;
+const COLLECTION_PAGE_SIZE = 100;
 
 type SupportedCollection =
-  | "calculator-profiles"
   | "categories"
   | "media"
   | "products"
   | "subcategories";
 
 type CurrentStateSnapshot = {
-  calculatorProfiles: PlainRecord[];
+  calculatorProfiles: CalculatorProfileSyncState;
   categories: PlainRecord[];
   contacts: PlainRecord;
   home: PlainRecord;
@@ -64,15 +70,38 @@ async function findDocs(
   collection: SupportedCollection,
   draft = false
 ): Promise<PlainRecord[]> {
-  const response = await cms.find({
-    collection,
-    depth: 0,
-    draft,
-    limit: COLLECTION_LIMIT,
-    overrideAccess: true,
-    pagination: false
-  });
-  return asDocs(response);
+  const docs: PlainRecord[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await cms.find({
+      collection,
+      depth: 0,
+      draft,
+      limit: COLLECTION_PAGE_SIZE,
+      overrideAccess: true,
+      page,
+      pagination: true,
+      sort: "id"
+    });
+    docs.push(...asDocs(response));
+
+    const pagination = response as unknown as {
+      hasNextPage?: boolean;
+      nextPage?: number | null;
+    };
+    if (pagination.hasNextPage !== true) break;
+    if (
+      typeof pagination.nextPage !== "number" ||
+      !Number.isInteger(pagination.nextPage) ||
+      pagination.nextPage <= page
+    ) {
+      throw new Error("CMS вернула некорректную пагинацию");
+    }
+    page = pagination.nextPage;
+  }
+
+  return docs;
 }
 
 async function readSnapshot(cms: Payload): Promise<CurrentStateSnapshot> {
@@ -93,7 +122,7 @@ async function readSnapshot(cms: Payload): Promise<CurrentStateSnapshot> {
     findDocs(cms, "categories", true),
     findDocs(cms, "subcategories", true),
     findDocs(cms, "products", true),
-    findDocs(cms, "calculator-profiles", true)
+    readCalculatorProfileSyncState(cms)
   ]);
 
   return {
@@ -269,7 +298,9 @@ export async function auditCurrentState(
   );
   const categoryIds = mapIdsBySlug(snapshot.categories);
   const subcategoryIds = mapIdsBySlug(snapshot.subcategories);
-  const calculatorProfileIds = mapIdsBySlug(snapshot.calculatorProfiles);
+  const calculatorProfileIds = mapPublishedCalculatorProfileIds(
+    snapshot.calculatorProfiles.published
+  );
 
   let missingFields = 0;
   missingFields += mergeMissingState(
@@ -313,7 +344,8 @@ export async function auditCurrentState(
     catalogSubcategories.filter((item) => !subcategoryIds.has(item.id)).length +
     catalogProducts.filter(
       (item) => !mapIdsBySlug(snapshot.products).has(item.id)
-    ).length;
+    ).length +
+    countMissingPublishedCalculatorProfiles(snapshot.calculatorProfiles);
 
   return {
     assetTotal: CURRENT_STATE_ASSETS.length,
@@ -571,7 +603,13 @@ export async function syncCurrentStateContent(
     buildSubcategorySeeds(mediaIds, categoryIds)
   );
   const subcategoryIds = mapIdsBySlug(subcategories.docs);
-  const calculatorProfileIds = mapIdsBySlug(snapshot.calculatorProfiles);
+  const calculatorProfiles = await syncCalculatorProfilesMissingOnly(
+    cms,
+    snapshot.calculatorProfiles
+  );
+  const calculatorProfileIds = mapPublishedCalculatorProfileIds(
+    calculatorProfiles.publishedDocs
+  );
 
   const products = await syncCollectionMissingOnly(
     cms,
@@ -587,6 +625,7 @@ export async function syncCurrentStateContent(
 
   return {
     createdRecords:
+      calculatorProfiles.created +
       categories.createdRecords +
       subcategories.createdRecords +
       products.createdRecords,
@@ -596,6 +635,7 @@ export async function syncCurrentStateContent(
       subcategories.updatedFields +
       products.updatedFields,
     updatedRecords:
+      calculatorProfiles.published +
       globalResults.reduce((total, result) => total + result.updatedRecords, 0) +
       categories.updatedRecords +
       subcategories.updatedRecords +
@@ -604,5 +644,6 @@ export async function syncCurrentStateContent(
 }
 
 export const currentStateRuntimeLimits = {
+  collectionPageSize: COLLECTION_PAGE_SIZE,
   maxAssetBytes: MAX_ASSET_BYTES
 } as const;
