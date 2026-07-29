@@ -223,6 +223,94 @@ function PositionChart({ report }: { report: SeoReportResponse }) {
   );
 }
 
+function positionBand(position: number | null): {
+  className: string;
+  label: string;
+} {
+  if (position === null || !Number.isFinite(position)) {
+    return { className: "is-empty", label: "Нет данных" };
+  }
+  if (position <= 3) return { className: "is-top-3", label: "Топ-3" };
+  if (position <= 10) return { className: "is-top-10", label: "Топ-10" };
+  if (position <= 20) return { className: "is-top-20", label: "Топ-20" };
+  return { className: "is-below-20", label: "20+" };
+}
+
+function TopQueriesPanel({ report }: { report: SeoReportResponse }) {
+  const rows = [...report.queries]
+    .filter((row) => row.impressions > 0)
+    .sort(
+      (left, right) =>
+        right.impressions - left.impressions ||
+        (left.position ?? Number.POSITIVE_INFINITY) -
+          (right.position ?? Number.POSITIVE_INFINITY)
+    )
+    .slice(0, 10);
+  const totalImpressions = Math.max(report.summary.impressions, 1);
+
+  return (
+    <section className="kb-seo-panel kb-seo-top-queries">
+      <div className="kb-seo-panel__head">
+        <div>
+          <span>Главные точки входа</span>
+          <h2>Топ-10 поисковых запросов</h2>
+        </div>
+        <small>По числу показов за выбранный период</small>
+      </div>
+
+      {rows.length > 0 ? (
+        <ol className="kb-seo-top-queries__list">
+          {rows.map((row, index) => {
+            const share = row.impressions / totalImpressions;
+            const band = positionBand(row.position);
+
+            return (
+              <li key={`${row.query}-${row.page ?? ""}`}>
+                <span className="kb-seo-top-queries__rank">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="kb-seo-top-queries__query">
+                  <strong>{row.query}</strong>
+                  <div
+                    className="kb-seo-top-queries__rail"
+                    aria-label={`Доля показов: ${formatPercent(share)}`}
+                  >
+                    <span
+                      style={{
+                        width: `${Math.max(3, Math.min(100, share * 100))}%`
+                      }}
+                    />
+                  </div>
+                  <small>
+                    {formatPercent(share)} всех показов
+                  </small>
+                </div>
+                <div className="kb-seo-top-queries__metric">
+                  <span>Позиция</span>
+                  <strong>{formatPosition(row.position)}</strong>
+                  <em className={band.className}>{band.label}</em>
+                </div>
+                <div className="kb-seo-top-queries__metric">
+                  <span>Показы</span>
+                  <strong>{formatNumber(row.impressions)}</strong>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="kb-seo-chart-empty">
+          <Search size={22} aria-hidden />
+          <span>
+            Яндекс ещё не накопил показы для этого сайта. Топ запросов появится
+            здесь автоматически после первых показов в поиске.
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function exportCsv(report: SeoReportResponse) {
   const rows = [
     [
@@ -614,11 +702,18 @@ export function SeoReportsClient({
       {report?.status === "ready" && summary ? (
         <>
           <div className="kb-seo-coverage">
-            <span>
-              <CheckCircle2 size={16} aria-hidden />
-              {providerLabel}: данные с {formatDate(report.dateRange.start)} по{" "}
-              {formatDate(report.dateRange.end)}
-            </span>
+            <div className="kb-seo-coverage__context">
+              <span>
+                <CheckCircle2 size={16} aria-hidden />
+                {providerLabel}: данные с {formatDate(report.dateRange.start)} по{" "}
+                {formatDate(report.dateRange.end)}
+              </span>
+              {report.trackedProperty ? (
+                <small>
+                  Отслеживаемый сайт: <strong>{report.trackedProperty}</strong>
+                </small>
+              ) : null}
+            </div>
             <strong>
               {provider === "yandex"
                 ? `Накоплено ${report.coverageDays} из ${report.requestedDays} дней истории`
@@ -646,8 +741,15 @@ export function SeoReportsClient({
               />
             </article>
             <article>
-              <span>Средняя позиция</span>
+              <span>
+                {query ? "Позиция запроса" : "Средняя по всем показам"}
+              </span>
               <strong>{formatPosition(summary.position)}</strong>
+              <small className="kb-seo-kpi-note">
+                {query
+                  ? `По запросу «${query}»`
+                  : `Взвешено по ${formatNumber(summary.impressions)} показам`}
+              </small>
               <DeltaBadge
                 value={delta(summary.position, summary.previousPosition)}
                 inverse
@@ -678,11 +780,17 @@ export function SeoReportsClient({
             </article>
           </div>
 
+          {!query ? <TopQueriesPanel report={report} /> : null}
+
           <section className="kb-seo-panel">
             <div className="kb-seo-panel__head">
               <div>
                 <span>Динамика</span>
-                <h2>Средняя позиция по дням</h2>
+                <h2>
+                  {query
+                    ? "Позиция выбранного запроса по дням"
+                    : "Средняя позиция всех запросов по дням"}
+                </h2>
               </div>
               <small>Чем меньше число, тем выше сайт в выдаче</small>
             </div>

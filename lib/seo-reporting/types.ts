@@ -135,6 +135,7 @@ export type SeoReportingConfig = {
 
 export type SeoReportResponse = {
   provider: SeoProvider;
+  trackedProperty?: string | null;
   status: "ready" | "not_configured" | "error";
   requestedDays: SeoReportPeriod;
   coverageDays: number;

@@ -7,6 +7,7 @@ import {
   parseSeoReportInput,
   readSeoReportingConfig
 } from "@/lib/seo-reporting";
+import { getTrackedSeoProperty } from "@/lib/seo-reporting/property";
 import { buildSeoReportResponse } from "@/lib/seo-reporting/report";
 import { readYandexHistoryDataset } from "@/lib/seo-reporting/yandex-history";
 
@@ -71,7 +72,13 @@ export async function GET(request: Request) {
             lastCollectedAt: history.lastCollectedAt
           }
         });
-        return NextResponse.json(report, { headers: privateHeaders });
+        return NextResponse.json(
+          {
+            ...report,
+            trackedProperty: getTrackedSeoProperty(config, input.provider)
+          },
+          { headers: privateHeaders }
+        );
       } catch (error) {
         console.error(
           "[seo-reporting] Persisted Yandex history failed; using live fallback",
@@ -82,5 +89,14 @@ export async function GET(request: Request) {
   }
 
   const report = await getLiveSeoReport(input);
-  return NextResponse.json(report, { headers: privateHeaders });
+  return NextResponse.json(
+    {
+      ...report,
+      trackedProperty: getTrackedSeoProperty(
+        readSeoReportingConfig(),
+        input.provider
+      )
+    },
+    { headers: privateHeaders }
+  );
 }

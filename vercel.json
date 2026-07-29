@@ -1,6 +1,7 @@
 {
   "framework": "nextjs",
   "fluid": true,
+  "regions": ["fra1"],
   "buildCommand": "npm run vercel-build",
   "crons": [
     {

@@ -2,6 +2,7 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import { ru } from "@payloadcms/translations/languages/ru";
+import { attachDatabasePool } from "@vercel/functions";
 import sharp from "sharp";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -148,6 +149,14 @@ export default buildConfig({
   collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
   globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
   email: payloadEmail,
+  onInit: (payload) => {
+    if (
+      process.env.VERCEL === "1" &&
+      process.env.PAYLOAD_MIGRATING !== "true"
+    ) {
+      attachDatabasePool(payload.db.pool);
+    }
+  },
   sharp,
   secret: getPayloadSecret(process.env),
   typescript: {
@@ -159,7 +168,15 @@ export default buildConfig({
       connectionString:
         process.env.PAYLOAD_MIGRATING === "true"
           ? getDirectPostgresConnectionString(process.env)
-          : getPostgresConnectionString(process.env)
+          : getPostgresConnectionString(process.env),
+      ...(process.env.PAYLOAD_MIGRATING === "true"
+        ? {}
+        : {
+            allowExitOnIdle: true,
+            connectionTimeoutMillis: 10_000,
+            idleTimeoutMillis: 5_000,
+            max: 5
+          })
     },
     push: false,
     // Runtime сохраняет прежний serverless-режим без многооператорных

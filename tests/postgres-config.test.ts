@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ensureNeonPooledConnectionString,
   getDirectPostgresConnectionString,
   getPostgresConnectionString,
   normalizePostgresConnectionString
@@ -40,6 +41,35 @@ describe("Postgres runtime configuration", () => {
           "postgresql://direct/database?sslmode=verify-ca"
       })
     ).toBe("postgresql://pooled/database?sslmode=verify-full");
+  });
+
+  it("routes Neon runtime traffic through the pooler endpoint", () => {
+    expect(
+      ensureNeonPooledConnectionString(
+        "postgresql://user:password@ep-dark-bird.eu-central-1.aws.neon.tech/database?sslmode=verify-full"
+      )
+    ).toBe(
+      "postgresql://user:password@ep-dark-bird-pooler.eu-central-1.aws.neon.tech/database?sslmode=verify-full"
+    );
+
+    expect(
+      ensureNeonPooledConnectionString(
+        "postgresql://user:password@ep-dark-bird-pooler.eu-central-1.aws.neon.tech/database?sslmode=verify-full"
+      )
+    ).toBe(
+      "postgresql://user:password@ep-dark-bird-pooler.eu-central-1.aws.neon.tech/database?sslmode=verify-full"
+    );
+  });
+
+  it("does not rewrite the direct Neon URL used by migrations", () => {
+    expect(
+      getDirectPostgresConnectionString({
+        DATABASE_URL_UNPOOLED:
+          "postgresql://user:password@ep-dark-bird.eu-central-1.aws.neon.tech/database?sslmode=require"
+      })
+    ).toBe(
+      "postgresql://user:password@ep-dark-bird.eu-central-1.aws.neon.tech/database?sslmode=verify-full"
+    );
   });
 
   it("uses the direct URL for controlled migrations", () => {

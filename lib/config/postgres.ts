@@ -24,12 +24,44 @@ export function normalizePostgresConnectionString(value: string): string {
   );
 }
 
+/**
+ * Neon exposes its PgBouncer endpoint by adding `-pooler` to the compute
+ * hostname. Runtime traffic on Vercel must use that endpoint so concurrent
+ * function instances do not compete for direct Postgres connections.
+ * Controlled migrations continue to use the untouched direct URL below.
+ */
+export function ensureNeonPooledConnectionString(value: string): string {
+  try {
+    const url = new URL(value);
+    const labels = url.hostname.split(".");
+    const endpoint = labels[0];
+
+    if (
+      !endpoint ||
+      !url.hostname.endsWith(".neon.tech") ||
+      endpoint.endsWith("-pooler")
+    ) {
+      return value;
+    }
+
+    labels[0] = `${endpoint}-pooler`;
+    url.hostname = labels.join(".");
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 export function getPostgresConnectionString(
   env: PostgresEnvironment
 ): string {
   for (const key of [...POOLED_POSTGRES_URL_KEYS, ...DIRECT_POSTGRES_URL_KEYS]) {
     const value = env[key]?.trim();
-    if (value) return normalizePostgresConnectionString(value);
+    if (value) {
+      return ensureNeonPooledConnectionString(
+        normalizePostgresConnectionString(value)
+      );
+    }
   }
 
   return "";
