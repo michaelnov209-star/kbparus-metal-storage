@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
+  Copy,
   Download,
   ExternalLink,
   FileText,
@@ -508,6 +509,7 @@ export function SeoReportsClient({
   const [loading, setLoading] = useState(true);
   const [goalsLoading, setGoalsLoading] = useState(false);
   const [goalsRefreshKey, setGoalsRefreshKey] = useState(0);
+  const [copiedGoogleEmail, setCopiedGoogleEmail] = useState(false);
 
   const loadReport = useCallback(
     async (signal?: AbortSignal, forceRefresh = false) => {
@@ -585,6 +587,10 @@ export function SeoReportsClient({
     );
   }, [activeView, device, period, provider, query]);
 
+  useEffect(() => {
+    setCopiedGoogleEmail(false);
+  }, [report?.googleServiceAccountEmail]);
+
   const handleGoalsLoadingChange = useCallback((value: boolean) => {
     setGoalsLoading(value);
   }, []);
@@ -596,6 +602,17 @@ export function SeoReportsClient({
     }
     void loadReport(undefined, true);
   }, [activeView, loadReport]);
+
+  const handleCopyGoogleEmail = useCallback(async () => {
+    const email = report?.googleServiceAccountEmail;
+    if (!email) return;
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedGoogleEmail(true);
+    } catch {
+      setCopiedGoogleEmail(false);
+    }
+  }, [report?.googleServiceAccountEmail]);
 
   const queryStats = useMemo(() => {
     const rows = report?.queries || [];
@@ -780,6 +797,31 @@ export function SeoReportsClient({
         aria-busy={activeView === "visibility" && loading}
         hidden={activeView !== "visibility"}
       >
+        {provider === "google" && report?.googleServiceAccountEmail ? (
+          <aside
+            className="kb-seo-service-account"
+            aria-label="Доступ Google Search Console"
+          >
+            <div>
+              <span>Доступ Google Search Console</span>
+              <strong>
+                Добавьте служебный адрес пользователем ресурса с правом чтения
+              </strong>
+              <code>{report.googleServiceAccountEmail}</code>
+            </div>
+            <button type="button" onClick={() => void handleCopyGoogleEmail()}>
+              {copiedGoogleEmail ? (
+                <CheckCircle2 size={16} aria-hidden />
+              ) : (
+                <Copy size={16} aria-hidden />
+              )}
+              <span aria-live="polite">
+                {copiedGoogleEmail ? "Скопировано" : "Копировать email"}
+              </span>
+            </button>
+          </aside>
+        ) : null}
+
       {loading && !report ? (
         <div className="kb-seo-state">
           <LoaderCircle className="is-spinning" size={28} aria-hidden />

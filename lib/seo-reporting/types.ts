@@ -150,6 +150,8 @@ export type SeoReportingConfig = {
 
 export type SeoReportResponse = {
   provider: SeoProvider;
+  /** Visible only to an authenticated administrator; never contains a key. */
+  googleServiceAccountEmail?: string;
   trackedProperty?: string | null;
   status: "ready" | "empty" | "not_configured" | "error";
   requestedDays: SeoReportPeriod;

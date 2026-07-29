@@ -217,6 +217,63 @@ html[data-theme] .kb-seo-state {
   border-radius: 16px;
 }
 
+html[data-theme] .kb-seo-service-account {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 14px 16px;
+  color: #27313b;
+  background: #fff8f4;
+  border: 1px solid rgba(252, 84, 19, 0.24);
+  border-radius: 12px;
+}
+
+html[data-theme] .kb-seo-service-account > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+html[data-theme] .kb-seo-service-account span {
+  color: #b63a09;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+html[data-theme] .kb-seo-service-account strong {
+  font-size: 13px;
+}
+
+html[data-theme] .kb-seo-service-account code {
+  color: #5d6873;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+html[data-theme] .kb-seo-service-account button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 7px;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  color: #fff;
+  font-weight: 760;
+  background: #242d37;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+html[data-theme] .kb-seo-service-account button:focus-visible {
+  outline: 3px solid rgba(252, 84, 19, 0.32);
+  outline-offset: 2px;
+}
+
 html[data-theme] .kb-seo-state > svg {
   color: #fc5413;
 }
@@ -842,6 +899,16 @@ html[data-theme] .is-spinning {
   html[data-theme] .kb-seo-coverage {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  html[data-theme] .kb-seo-service-account {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  html[data-theme] .kb-seo-service-account button {
+    justify-content: center;
+    width: 100%;
   }
 
   html[data-theme] .kb-seo-position-strip {
