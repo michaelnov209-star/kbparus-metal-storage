@@ -57,5 +57,10 @@ if (
   final.missingRecords > 0 ||
   final.missingFields > 0
 ) {
-  process.exitCode = 1;
+  process.exit(1);
 }
+
+// Payload keeps database and mail transports alive for normal long-running
+// servers. This command is a bounded one-shot operation, so exit explicitly
+// after all writes and the final audit have completed.
+process.exit(0);
