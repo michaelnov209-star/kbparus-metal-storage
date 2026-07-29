@@ -25,24 +25,24 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
         <img src="/brand/logo-g.png" alt="КБ Парус" width={226} height={75} />
       </AdminIntentLink>
       <span className="kb-admin-workspace-nav__label">Рабочее пространство</span>
-      <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin" prefetch>
+      <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin">
         <LayoutDashboard size={17} aria-hidden />
         <span>Обзор и быстрые действия</span>
       </AdminIntentLink>
       {canViewSeo ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/seo" prefetch>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/seo">
           <BarChart3 size={17} aria-hidden />
           <span>SEO, цели и конверсии</span>
         </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/system" prefetch>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/system">
           <CircleGauge size={17} aria-hidden />
           <span>Здоровье и история</span>
         </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/integrations" prefetch>
+        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/integrations">
           <Settings2 size={17} aria-hidden />
           <span>Интеграции и статусы</span>
         </AdminIntentLink>

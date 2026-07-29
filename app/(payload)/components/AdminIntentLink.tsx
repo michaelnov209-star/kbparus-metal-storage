@@ -15,11 +15,6 @@ import {
 type AdminIntentLinkProps = PropsWithChildren<
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "prefetch"> & {
     href: string;
-    /**
-     * Enables Next.js viewport prefetching for a small set of permanent,
-     * high-frequency admin routes. Keep disabled for large tables and lists.
-     */
-    prefetch?: boolean;
   }
 >;
 
@@ -33,7 +28,6 @@ export function AdminIntentLink({
   onFocus,
   onMouseEnter,
   onPointerDown,
-  prefetch: eagerPrefetch = false,
   ...props
 }: AdminIntentLinkProps) {
   const pathname = usePathname();
@@ -74,7 +68,7 @@ export function AdminIntentLink({
       onFocus={handleFocus}
       onMouseEnter={handleMouseEnter}
       onPointerDown={handlePointerDown}
-      prefetch={eagerPrefetch}
+      prefetch={false}
     >
       {children}
     </Link>

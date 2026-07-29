@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, TriangleAlert } from "lucide-react";
 
-type ProbeKind = "email" | "telegram";
+export type ProbeKind = "email" | "telegram";
 type ProbeState = "idle" | "loading" | "success" | "error";
 
 const endpoints: Record<ProbeKind, string> = {

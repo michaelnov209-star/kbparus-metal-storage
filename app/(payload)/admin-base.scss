@@ -1,0 +1,335 @@
+html[data-theme="light"] {
+  --theme-bg: #f4f6f8;
+  --theme-text: #121820;
+  --theme-input-bg: #ffffff;
+  --theme-border-color: #ccd5df;
+  --theme-elevation-0: #ffffff;
+  --theme-elevation-50: #f8fafc;
+  --theme-elevation-100: #eef2f6;
+  --theme-elevation-150: #e2e8ef;
+  --theme-elevation-200: #d5dee8;
+  --theme-elevation-250: #c5d0dc;
+  --theme-elevation-300: #aebcca;
+  --theme-elevation-400: #778594;
+  --theme-elevation-500: #5e6b78;
+  --theme-elevation-600: #46525f;
+  --theme-elevation-700: #303a45;
+  --theme-elevation-800: #202832;
+  --theme-elevation-900: #141b24;
+  --theme-elevation-950: #0d131b;
+  --theme-elevation-1000: #080d13;
+  --theme-success-500: #178a4c;
+  --theme-warning-500: #b76a00;
+  --theme-error-500: #c53030;
+}
+
+html[data-theme] {
+  color: var(--theme-text);
+  background: var(--theme-bg);
+}
+
+html[data-theme] body {
+  color: var(--theme-text);
+  background: var(--theme-bg);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+html[data-theme] h1,
+html[data-theme] h2,
+html[data-theme] h3,
+html[data-theme] p {
+  max-width: none;
+  color: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+html[data-theme] h1 {
+  margin: 0 0 24px;
+  font-size: 42px;
+  line-height: 1.08;
+}
+
+html[data-theme] h2 {
+  margin: 0 0 18px;
+  font-size: 30px;
+  line-height: 1.18;
+}
+
+html[data-theme] h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  line-height: 1.22;
+}
+
+html[data-theme] p {
+  color: var(--theme-elevation-600);
+  line-height: 1.55;
+}
+
+html[data-theme] nav {
+  color: var(--theme-text);
+  font-size: inherit;
+}
+
+html[data-theme] a {
+  color: inherit;
+}
+
+html[data-theme] label,
+html[data-theme] legend,
+html[data-theme] .field-label,
+html[data-theme] .label,
+html[data-theme] .render-fields,
+html[data-theme] .template-minimal,
+html[data-theme] .collection-list,
+html[data-theme] .collection-edit,
+html[data-theme] .global-edit,
+html[data-theme] .upload,
+html[data-theme] .table,
+html[data-theme] .drawer,
+html[data-theme] .popup {
+  color: var(--theme-text);
+}
+
+html[data-theme] input,
+html[data-theme] textarea,
+html[data-theme] select {
+  color: var(--theme-text);
+  background: var(--theme-input-bg);
+}
+
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder {
+  color: var(--theme-elevation-500);
+}
+
+html[data-theme] .btn--style-primary,
+html[data-theme] .btn--style-pill {
+  color: #ffffff;
+  background: linear-gradient(135deg, #fc5413, #ff7e45);
+  border-color: transparent;
+  box-shadow: 0 12px 28px rgba(252, 84, 19, 0.24);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+html[data-theme] .btn--style-primary:hover,
+html[data-theme] .btn--style-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(252, 84, 19, 0.32);
+}
+
+// Оранжевый акцент на активной навигации и фокусе инпутов
+html[data-theme] .nav__link--active,
+html[data-theme] .nav__link.active {
+  color: #9b3a12;
+  background: rgba(252, 84, 19, 0.08);
+  box-shadow: inset 3px 0 0 #fc5413;
+}
+
+html[data-theme] input:focus,
+html[data-theme] textarea:focus,
+html[data-theme] select:focus {
+  border-color: #fc5413;
+  box-shadow: 0 0 0 2px rgba(252, 84, 19, 0.25);
+  outline: none;
+}
+
+html[data-theme] a:not(.btn):hover {
+  color: #c2440f;
+}
+
+html[data-theme] .btn--style-secondary,
+html[data-theme] .btn--style-none {
+  color: var(--theme-text);
+}
+
+html[data-theme] .template-minimal__wrap,
+html[data-theme] .auth-fields,
+html[data-theme] .card,
+html[data-theme] .upload-card,
+html[data-theme] .collapsible,
+html[data-theme] .popup,
+html[data-theme] .drawer__content {
+  background: var(--theme-elevation-0);
+  border-color: var(--theme-border-color);
+}
+
+html[data-theme] .nav__link,
+html[data-theme] .nav__link:visited,
+html[data-theme] .step-nav a,
+html[data-theme] .step-nav a:visited {
+  color: var(--theme-text);
+}
+
+html[data-theme] .nav__link:hover,
+html[data-theme] .step-nav a:hover {
+  color: #000000;
+  background: var(--theme-elevation-100);
+}
+
+html[data-theme] .pill,
+html[data-theme] .status,
+html[data-theme] .badge {
+  color: var(--theme-text);
+}
+
+html[data-theme] .thumbnail,
+html[data-theme] .upload-card__thumbnail {
+  background: var(--theme-elevation-100);
+}
+
+// Логотип в шапке админки
+html[data-theme] .kb-admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+html[data-theme] .kb-admin-logo img {
+  width: 132px;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+}
+
+html[data-theme] .kb-admin-logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+html[data-theme] .kb-admin-logo__text strong {
+  color: #121820;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+html[data-theme] .kb-admin-logo__text small {
+  color: #6b7682;
+  font-size: 12px;
+}
+
+html[data-theme] .kb-admin-icon {
+  display: block;
+  width: 96px;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+}
+
+// Payload renders graphics.Icon inside an 18 px breadcrumb slot by default.
+// The KB Parus asset is a horizontal wordmark, so the square slot made it
+// unreadable and distorted. Give the home link a compact branded plate that
+// remains legible without competing with the page title.
+html[data-theme] .step-nav__home {
+  display: inline-flex;
+  flex: 0 0 110px;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  min-width: 110px;
+  height: 38px;
+  padding: 5px 7px;
+  overflow: visible;
+  background: #ffffff;
+  border: 1px solid #dde3e8;
+  border-radius: 10px;
+  box-shadow: 0 7px 20px rgba(15, 24, 32, 0.08);
+}
+
+html[data-theme] .step-nav__home > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+@media (max-width: 820px) {
+  html[data-theme] .step-nav__home {
+    flex-basis: 98px;
+    width: 98px;
+    min-width: 98px;
+    height: 36px;
+  }
+
+  html[data-theme] .kb-admin-icon {
+    width: 84px;
+  }
+}
+
+@media (max-width: 520px) {
+  html[data-theme] .step-nav__home {
+    flex-basis: 84px;
+    width: 84px;
+    min-width: 84px;
+    height: 34px;
+    padding-inline: 5px;
+  }
+
+  html[data-theme] .kb-admin-icon {
+    width: 72px;
+  }
+}
+
+// ── Экран логина: единая премиум-карточка ───────────────────────────
+// Центрируем minimal-шаблон и оформляем как одну аккуратную карточку
+// с тонким оранжевым акцентом сверху. Лого (graphics.Logo) → заголовок
+// (beforeLogin) → форма читаются как один блок.
+html[data-theme] .template-minimal {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(252, 84, 19, 0.1), transparent 36%),
+    linear-gradient(180deg, #eef2f6, #e2e8ef);
+}
+
+html[data-theme] .template-minimal__wrap {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 34px 34px;
+  background: #ffffff;
+  border: 1px solid var(--theme-border-color);
+  border-top: 3px solid #fc5413;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(15, 24, 32, 0.16);
+}
+
+// Лого над формой — компактно по центру
+html[data-theme] .template-minimal .kb-admin-logo {
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+html[data-theme] .kb-login-branding {
+  margin: 0 0 22px;
+  padding: 0 0 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--theme-elevation-150);
+}
+
+html[data-theme] .kb-login-branding h2 {
+  margin: 0 0 6px;
+  color: #121820;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+html[data-theme] .kb-login-branding p {
+  max-width: 320px;
+  margin: 0 auto;
+  color: #56616c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+// Кнопка «Войти» на всю ширину
+html[data-theme] .login .btn,
+html[data-theme] .login form .btn {
+  width: 100%;
+}

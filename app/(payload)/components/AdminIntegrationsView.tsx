@@ -20,7 +20,8 @@ import { getCachedAdminValue } from "@/lib/admin/server-cache";
 import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
-import { IntegrationProbeButton } from "./IntegrationProbeButton";
+import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
+import { LazyIntegrationProbeButton } from "./LazyAdminActions";
 
 type IntegrationState = "connected" | "configured" | "disabled" | "error";
 type ProbeKind = "email" | "telegram";
@@ -98,7 +99,9 @@ function IntegrationCardView({ card }: { card: IntegrationCard }) {
       </div>
       <h2>{card.title}</h2>
       <p>{card.description}</p>
-      {card.probeKind ? <IntegrationProbeButton kind={card.probeKind} /> : null}
+      {card.probeKind ? (
+        <LazyIntegrationProbeButton kind={card.probeKind} />
+      ) : null}
       <AdminIntentLink href={card.actionHref}>
         {card.actionLabel}
         <ExternalLink size={14} aria-hidden />
@@ -264,6 +267,7 @@ export async function AdminIntegrationsView({
         globals: initPageResult.visibleEntities?.globals
       }}
     >
+      <AdminRouteStylesheet name="system-center" />
       {content}
     </DefaultTemplate>
   );

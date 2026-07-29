@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -9,29 +9,27 @@ function source(relativePath: string): string {
 }
 
 describe("admin route loading experience", () => {
-  it("renders a branded, accessible fallback for cold admin transitions", () => {
-    const loading = source(
-      "app/(payload)/admin/[[...segments]]/loading.tsx"
-    );
-
-    expect(loading).toContain('src="/brand/logo-g.png"');
-    expect(loading).toContain('role="status"');
-    expect(loading).toContain('aria-busy="true"');
-    expect(loading).toContain("kb-admin-route-loading__workspace");
+  it("keeps the current Payload shell visible instead of replacing the whole screen", () => {
+    expect(
+      existsSync(
+        resolve(
+          projectRoot,
+          "app/(payload)/admin/[[...segments]]/loading.tsx"
+        )
+      )
+    ).toBe(false);
   });
 
-  it("keeps the loading workspace responsive and motion-safe", () => {
-    const styles = source("app/(payload)/custom.scss");
+  it("does not ship the removed full-screen shimmer to every admin page", () => {
+    const globalStyles = source("app/(payload)/custom.scss");
+    const baseStyles = source("app/(payload)/admin-base.scss");
+    const seoStyles = source("app/(payload)/seo-goals.scss");
 
-    expect(styles).toContain(".kb-admin-route-loading");
-    expect(styles).toMatch(
-      /@media \(max-width:\s*820px\)[\s\S]*?\.kb-admin-route-loading__shell\s*\{[\s\S]*?grid-template-columns:\s*1fr;/
-    );
-    expect(styles).toMatch(
-      /@media \(max-width:\s*560px\)[\s\S]*?\.kb-admin-route-loading__workspace\s*\{[\s\S]*?grid-template-columns:\s*1fr;/
-    );
-    expect(styles).toMatch(
-      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?animation:\s*none;/
+    expect(globalStyles).not.toContain("kb-admin-route-loading");
+    expect(baseStyles).not.toContain("kb-admin-route-loading");
+    expect(seoStyles).not.toContain("kb-admin-route-loading");
+    expect(globalStyles).toContain(
+      '@use "./admin-base"'
     );
   });
 });

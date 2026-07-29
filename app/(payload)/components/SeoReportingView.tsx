@@ -9,10 +9,9 @@ import type {
   SeoReportPeriod
 } from "@/lib/seo-reporting/types";
 import { AdminAccessDenied } from "./AdminAccessDenied";
-import {
-  SeoReportsClient,
-  type SeoReportsInitialState
-} from "./SeoReportsClient";
+import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
+import { LazySeoReportsClient } from "./LazySeoReportsClient";
+import type { SeoReportsInitialState } from "./SeoReportsClient";
 
 const allowedPeriods = new Set<number>([30, 90, 180, 365]);
 const allowedProviders = new Set<SeoProvider>(["google", "yandex"]);
@@ -75,7 +74,9 @@ export function SeoReportingView({
       title="SEO-отчёты недоступны"
     />
   ) : (
-    <SeoReportsClient initialState={parseSeoReportsInitialState(searchParams)} />
+    <LazySeoReportsClient
+      initialState={parseSeoReportsInitialState(searchParams)}
+    />
   );
 
   return (
@@ -94,6 +95,7 @@ export function SeoReportingView({
         globals: initPageResult.visibleEntities?.globals
       }}
     >
+      <AdminRouteStylesheet name="seo-reports" />
       {content}
     </DefaultTemplate>
   );

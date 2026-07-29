@@ -41,7 +41,9 @@ export function CalculatorProfileSyncButton({ existingCount }: { existingCount: 
             ? `Добавлено профилей: ${payload.created}. Существующие настройки не перезаписывались.`
             : "Все 6 базовых профилей уже установлены."
       });
-      router.refresh();
+      if ((payload.created ?? 0) > 0) {
+        router.refresh();
+      }
     } catch (error) {
       setState({
         kind: "error",

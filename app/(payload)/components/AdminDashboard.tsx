@@ -26,6 +26,7 @@ import {
   type CmsRole
 } from "@/payload/access/rbac";
 import { AdminIntentLink } from "./AdminIntentLink";
+import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
 
 type DashboardCounts = {
   products: number | null;
@@ -393,5 +394,10 @@ export async function AdminDashboard({
     </section>
   );
 
-  return content;
+  return (
+    <>
+      <AdminRouteStylesheet name="control-center" />
+      {content}
+    </>
+  );
 }

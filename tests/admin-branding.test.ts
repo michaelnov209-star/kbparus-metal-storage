@@ -8,7 +8,7 @@ function readProjectFile(path: string) {
 
 describe("admin branding", () => {
   it("keeps the horizontal wordmark legible in the Payload header", () => {
-    const styles = readProjectFile("app/(payload)/custom.scss");
+    const styles = readProjectFile("app/(payload)/admin-base.scss");
 
     expect(styles).toMatch(/\.kb-admin-icon\s*\{[\s\S]*?width:\s*96px;[\s\S]*?height:\s*auto;/);
     expect(styles).toMatch(/\.step-nav__home\s*\{[\s\S]*?width:\s*110px;[\s\S]*?height:\s*38px;/);

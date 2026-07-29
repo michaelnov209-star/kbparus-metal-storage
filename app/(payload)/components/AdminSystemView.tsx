@@ -29,8 +29,11 @@ import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
 import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
-import { CalculatorProfileSyncButton } from "./CalculatorProfileSyncButton";
-import { CmsCurrentStateSyncButton } from "./CmsCurrentStateSyncButton";
+import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
+import {
+  LazyCalculatorProfileSyncButton,
+  LazyCmsCurrentStateSyncButton
+} from "./LazyAdminActions";
 
 type HealthState = "healthy" | "configured" | "disabled" | "attention";
 
@@ -399,7 +402,7 @@ function SystemContentSync() {
             Существующие правки не перезаписываются.
           </p>
         </div>
-        <CmsCurrentStateSyncButton />
+        <LazyCmsCurrentStateSyncButton />
       </div>
     </section>
   );
@@ -498,7 +501,7 @@ async function SystemCalculator({
         <span>базовых профилей установлено</span>
       </div>
       <p>Синхронизация добавляет только отсутствующие профили из проверенной модели Excel. Уже сохранённые правки не перезаписываются.</p>
-      <CalculatorProfileSyncButton existingCount={profileCount} />
+      <LazyCalculatorProfileSyncButton existingCount={profileCount} />
       <AdminIntentLink className="kb-system__secondary-link" href="/admin/collections/calculator-profiles">
         Открыть настройки расчётов <ArrowRight size={14} aria-hidden />
       </AdminIntentLink>
@@ -600,6 +603,7 @@ export async function AdminSystemView({
         globals: initPageResult.visibleEntities?.globals
       }}
     >
+      <AdminRouteStylesheet name="system-center" />
       {content}
     </DefaultTemplate>
   );

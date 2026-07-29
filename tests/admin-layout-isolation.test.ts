@@ -61,7 +61,7 @@ describe("admin layout isolation", () => {
     expect(training).not.toContain('<a className="kb-admin-training__link"');
   });
 
-  it("eagerly prefetches only the permanent admin navigation and supports touch intent", () => {
+  it("prefetches only after navigation intent and supports touch input", () => {
     const intentLink = source(
       "app/(payload)/components/AdminIntentLink.tsx"
     );
@@ -76,9 +76,9 @@ describe("admin layout isolation", () => {
     expect(intentLink).toContain("onMouseEnter={handleMouseEnter}");
     expect(intentLink).toContain("onFocus={handleFocus}");
     expect(intentLink).toContain("onPointerDown={handlePointerDown}");
-    expect(intentLink).toContain("prefetch={eagerPrefetch}");
+    expect(intentLink).toContain("prefetch={false}");
     expect(workspaceNav).toContain("<AdminIntentLink");
-    expect(workspaceNav.match(/\sprefetch(?:\s|>)/g)).toHaveLength(4);
+    expect(workspaceNav).not.toMatch(/\sprefetch(?:\s|>)/);
   });
 
   it("warms Payload sidebar routes on hover, keyboard focus, and touch without auth side effects", () => {
@@ -132,7 +132,7 @@ describe("admin layout isolation", () => {
     );
 
     expect(seoView).toContain("parseSeoReportsInitialState(searchParams)");
-    expect(seoView).toContain("<SeoReportsClient initialState=");
+    expect(seoView).toContain("<LazySeoReportsClient");
     expect(seoClient).toContain("initialState: SeoReportsInitialState");
     expect(seoClient).not.toContain("filtersReady");
     expect(seoClient).not.toContain("window.location.search);\n    const requestedPeriod");
@@ -169,6 +169,8 @@ describe("admin layout isolation", () => {
 
     expect(dashboard).not.toContain("@payloadcms/next/templates");
     expect(dashboard).not.toContain("<DefaultTemplate");
-    expect(dashboard).toContain("return content;");
+    expect(dashboard).toContain(
+      '<AdminRouteStylesheet name="control-center" />'
+    );
   });
 });
