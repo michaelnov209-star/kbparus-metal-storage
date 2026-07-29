@@ -128,21 +128,99 @@ function mapIdsBySlug(docs: PlainRecord[]): Map<string, number | string> {
   return ids;
 }
 
-function mapMediaIds(docs: PlainRecord[]): Map<string, number | string> {
-  const byLegacyTitle = new Map<string, number | string>();
+function mediaDocsByLegacyTitle(
+  docs: PlainRecord[]
+): Map<string, PlainRecord[]> {
+  const byLegacyTitle = new Map<string, PlainRecord[]>();
 
   for (const doc of docs) {
-    const id = documentId(doc);
-    if (id === undefined) continue;
     const title = stringValue(doc.internalTitle);
-    if (title) byLegacyTitle.set(title, id);
+    if (!title) continue;
+    const matching = byLegacyTitle.get(title) ?? [];
+    matching.push(doc);
+    byLegacyTitle.set(title, matching);
   }
 
-  const result = new Map<string, number | string>();
-  for (const asset of CURRENT_STATE_ASSETS) {
-    const id = byLegacyTitle.get(legacyMediaTitle(asset.publicPath));
-    if (id !== undefined) result.set(asset.publicPath, id);
+  return byLegacyTitle;
+}
+
+function trustedMediaUrl(value: unknown, requestOrigin: string): URL | undefined {
+  const url = stringValue(value);
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url, requestOrigin);
+    if (parsed.protocol !== "https:") return undefined;
+    if (
+      parsed.origin !== requestOrigin &&
+      !parsed.hostname.endsWith(".public.blob.vercel-storage.com")
+    ) {
+      return undefined;
+    }
+    return parsed;
+  } catch {
+    return undefined;
   }
+}
+
+async function mediaDocumentIsAvailable(
+  doc: PlainRecord,
+  requestOrigin: string,
+  fetcher: typeof fetch
+): Promise<boolean> {
+  if (documentId(doc) === undefined || !stringValue(doc.filename)) return false;
+  const url = trustedMediaUrl(doc.url, requestOrigin);
+  if (!url) return false;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7_000);
+  try {
+    const response = await fetcher(url, {
+      cache: "no-store",
+      headers: { range: "bytes=0-0" },
+      method: "GET",
+      redirect: "error",
+      signal: controller.signal
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function availableMediaId(
+  candidates: PlainRecord[],
+  requestOrigin: string,
+  fetcher: typeof fetch
+): Promise<number | string | undefined> {
+  for (const doc of candidates) {
+    if (!(await mediaDocumentIsAvailable(doc, requestOrigin, fetcher))) {
+      continue;
+    }
+    const id = documentId(doc);
+    if (id !== undefined) return id;
+  }
+  return undefined;
+}
+
+async function mapMediaIds(
+  docs: PlainRecord[],
+  requestOrigin: string,
+  fetcher: typeof fetch = fetch
+): Promise<Map<string, number | string>> {
+  const byLegacyTitle = mediaDocsByLegacyTitle(docs);
+  const result = new Map<string, number | string>();
+
+  await Promise.all(
+    CURRENT_STATE_ASSETS.map(async (asset) => {
+      const candidates =
+        byLegacyTitle.get(legacyMediaTitle(asset.publicPath)) ?? [];
+      const id = await availableMediaId(candidates, requestOrigin, fetcher);
+      if (id !== undefined) result.set(asset.publicPath, id);
+    })
+  );
+
   return result;
 }
 
@@ -178,10 +256,17 @@ function auditExistingRecords(
 }
 
 export async function auditCurrentState(
-  cms: Payload
+  cms: Payload,
+  requestUrl: string,
+  fetcher: typeof fetch = fetch
 ): Promise<CurrentStateAudit> {
   const snapshot = await readSnapshot(cms);
-  const mediaIds = mapMediaIds(snapshot.media);
+  const requestOrigin = new URL(requestUrl).origin;
+  const mediaIds = await mapMediaIds(
+    snapshot.media,
+    requestOrigin,
+    fetcher
+  );
   const categoryIds = mapIdsBySlug(snapshot.categories);
   const subcategoryIds = mapIdsBySlug(snapshot.subcategories);
   const calculatorProfileIds = mapIdsBySlug(snapshot.calculatorProfiles);
@@ -273,10 +358,19 @@ export async function syncCurrentStateAsset(
   if (!asset) throw new Error("Неизвестный ресурс текущего сайта");
 
   const currentMedia = await findDocs(cms, "media");
-  const existingId = mapMediaIds(currentMedia).get(asset.publicPath);
+  const requestOrigin = new URL(requestUrl).origin;
+  const matchingDocs =
+    mediaDocsByLegacyTitle(currentMedia).get(
+      legacyMediaTitle(asset.publicPath)
+    ) ?? [];
+  const existingId = await availableMediaId(
+    matchingDocs,
+    requestOrigin,
+    fetcher
+  );
   if (existingId !== undefined) return { created: false, id: existingId };
 
-  const requestOrigin = new URL(requestUrl).origin;
+  const orphan = matchingDocs.find((doc) => documentId(doc) !== undefined);
   const sourceUrl = new URL(asset.publicPath, requestOrigin);
   if (sourceUrl.origin !== requestOrigin) {
     throw new Error("Недопустимый источник файла");
@@ -316,28 +410,40 @@ export async function syncCurrentStateAsset(
     asset.mimeType
   );
 
-  const created = await cms.create({
-    collection: "media",
-    data: {
-      alt: asset.alt,
-      assetType: asset.assetType,
-      caption: asset.title,
-      internalTitle: legacyMediaTitle(asset.publicPath),
-      managerNote: `Импортировано из текущего состояния сайта: ${asset.publicPath}`,
-      publiclyAvailable: true,
-      usageArea: asset.usageArea
-    },
-    file: {
-      data: bytes,
-      mimetype,
-      name: posix.basename(asset.publicPath),
-      size: bytes.byteLength
-    },
-    overrideAccess: true
-  });
-  const id = documentId(created as unknown as PlainRecord);
+  const data = {
+    alt: asset.alt,
+    assetType: asset.assetType,
+    caption: asset.title,
+    internalTitle: legacyMediaTitle(asset.publicPath),
+    managerNote: `Импортировано из текущего состояния сайта: ${asset.publicPath}`,
+    publiclyAvailable: true,
+    usageArea: asset.usageArea
+  } as const;
+  const file = {
+    data: bytes,
+    mimetype,
+    name: posix.basename(asset.publicPath),
+    size: bytes.byteLength
+  };
+  const orphanId = orphan ? documentId(orphan) : undefined;
+  const saved =
+    orphanId !== undefined
+      ? await cms.update({
+          collection: "media",
+          id: orphanId,
+          data,
+          file,
+          overrideAccess: true
+        })
+      : await cms.create({
+          collection: "media",
+          data,
+          file,
+          overrideAccess: true
+        });
+  const id = documentId(saved as unknown as PlainRecord);
   if (id === undefined) throw new Error("CMS не вернула идентификатор файла");
-  return { created: true, id };
+  return { created: orphanId === undefined, id };
 }
 
 async function updateGlobalMissingOnly(
@@ -418,10 +524,17 @@ async function syncCollectionMissingOnly(
 }
 
 export async function syncCurrentStateContent(
-  cms: Payload
+  cms: Payload,
+  requestUrl: string,
+  fetcher: typeof fetch = fetch
 ): Promise<CurrentStateContentResult> {
   const snapshot = await readSnapshot(cms);
-  const mediaIds = mapMediaIds(snapshot.media);
+  const requestOrigin = new URL(requestUrl).origin;
+  const mediaIds = await mapMediaIds(
+    snapshot.media,
+    requestOrigin,
+    fetcher
+  );
   const globalResults = await Promise.all([
     updateGlobalMissingOnly(
       cms,

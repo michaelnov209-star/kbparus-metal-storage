@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
   try {
     if (body.action === "audit") {
-      const status = await auditCurrentState(auth.cms);
+      const status = await auditCurrentState(auth.cms, request.url);
       return NextResponse.json(
         { ok: true, status },
         { headers: privateHeaders }
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await syncCurrentStateContent(auth.cms);
+    const result = await syncCurrentStateContent(auth.cms, request.url);
     revalidatePath("/", "layout");
     revalidatePath("/catalog", "layout");
     return NextResponse.json(

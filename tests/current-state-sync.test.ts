@@ -151,4 +151,98 @@ describe("CMS current-state fallback model", () => {
     expect(file.data.buffer).toBeInstanceOf(ArrayBuffer);
     expect(file.data.buffer).not.toBeInstanceOf(SharedArrayBuffer);
   });
+
+  it("repairs a legacy media record when its Blob file is missing", async () => {
+    const asset = CURRENT_STATE_ASSETS.find(
+      (item) => item.publicPath.endsWith(".webp")
+    )!;
+    let upload: Record<string, unknown> | undefined;
+    const cms = {
+      find: vi.fn(async () => ({
+        docs: [
+          {
+            id: 44,
+            filename: "broken.webp",
+            internalTitle: `Legacy asset: ${asset.publicPath}`,
+            url: "/api/media/file/broken.webp"
+          }
+        ]
+      })),
+      create: vi.fn(),
+      update: vi.fn(async (args: Record<string, unknown>) => {
+        upload = args;
+        return { id: 44 };
+      })
+    };
+    const fetcher = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.headers && "range" in init.headers) {
+        expect(url).toBe(
+          "https://kbparus-metal-storage.vercel.app/api/media/file/broken.webp"
+        );
+        return new Response(null, { status: 404 });
+      }
+      return new Response(new Uint8Array([7, 8, 9]), {
+        headers: { "content-type": asset.mimeType }
+      });
+    });
+
+    const result = await syncCurrentStateAsset(
+      cms as never,
+      asset.key,
+      "https://kbparus-metal-storage.vercel.app/api/admin/cms/current-state",
+      fetcher as typeof fetch
+    );
+
+    expect(result).toEqual({ created: false, id: 44 });
+    expect(cms.create).not.toHaveBeenCalled();
+    expect(cms.update).toHaveBeenCalledTimes(1);
+    expect(upload).toMatchObject({
+      collection: "media",
+      id: 44,
+      file: {
+        name: expect.stringMatching(/\.webp$/),
+        size: 3
+      }
+    });
+  });
+
+  it("does not probe an untrusted media URL", async () => {
+    const asset = CURRENT_STATE_ASSETS[0];
+    const cms = {
+      find: vi.fn(async () => ({
+        docs: [
+          {
+            id: 77,
+            filename: "unsafe.mp4",
+            internalTitle: `Legacy asset: ${asset.publicPath}`,
+            url: "https://attacker.example/internal"
+          }
+        ]
+      })),
+      update: vi.fn(async () => ({ id: 77 }))
+    };
+    const fetcher = vi.fn(
+      async () =>
+        new Response(new Uint8Array([1, 2, 3]), {
+          headers: { "content-type": asset.mimeType }
+        })
+    );
+
+    await syncCurrentStateAsset(
+      cms as never,
+      asset.key,
+      "https://kbparus-metal-storage.vercel.app/api/admin/cms/current-state",
+      fetcher
+    );
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith(
+      new URL(
+        asset.publicPath,
+        "https://kbparus-metal-storage.vercel.app"
+      ),
+      expect.objectContaining({ redirect: "error" })
+    );
+  });
 });
