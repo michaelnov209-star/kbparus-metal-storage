@@ -33,7 +33,7 @@ export const Media: CollectionConfig = {
   admin: {
     group: adminGroups.media,
     description: {
-      ru: `${adminHints.media} Загружайте обычный JPG, PNG, WebP или AVIF: сайт сам ограничит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера.`,
+      ru: `${adminHints.media} Загружайте обычный JPG, PNG, WebP или AVIF: сайт сам ограничит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера. Максимальный размер файла — 64 МБ.`,
       en: "Business asset library with automatic responsive WebP processing."
     },
     useAsTitle: "filename",
