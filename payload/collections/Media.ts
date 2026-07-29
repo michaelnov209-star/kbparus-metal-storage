@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { normalizeUploadBuffersBeforeCloudStorage } from "../../lib/storage/normalize-upload-buffers";
 import { adminGroups, adminHints } from "../admin/structure";
 import {
   mediaAdminUi,
@@ -9,6 +10,9 @@ import {
 
 export const Media: CollectionConfig = {
   slug: "media",
+  hooks: {
+    beforeChange: [normalizeUploadBuffersBeforeCloudStorage]
+  },
   labels: {
     singular: { ru: "Медиа-файл", en: "Media file" },
     plural: { ru: "Медиа-библиотека", en: "Media library" }
