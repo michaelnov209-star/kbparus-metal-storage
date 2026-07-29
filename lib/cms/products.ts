@@ -2,7 +2,11 @@ import { cache } from "react";
 import { catalogProducts, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { getLocalProductImageVariants } from "./product-image-variants";
 import { getCmsClient } from "./client";
-import { resolveCmsMediaAlt, resolveCmsMediaUrl } from "./media-url";
+import {
+  resolveCmsMediaAlt,
+  resolveCmsMediaUrl,
+  type CmsMediaSize
+} from "./media-url";
 
 type CmsRelationLike = {
   slug?: unknown;
@@ -21,6 +25,7 @@ type CmsLegacyGalleryItem = {
 };
 
 type CmsDocumentItem = {
+  file?: unknown;
   title?: unknown;
   href?: unknown;
 };
@@ -59,6 +64,14 @@ type CmsProductLike = {
   priceLabel?: unknown;
   pageMode?: unknown;
   calculatorProfile?: unknown;
+  modelName?: unknown;
+  operationMode?: unknown;
+  storageMaterials?: unknown;
+  loadingMethods?: unknown;
+  maxLoadKg?: unknown;
+  warrantyMonths?: unknown;
+  overallDimensions?: unknown;
+  installationEnvironments?: unknown;
   applications?: unknown;
   specs?: unknown;
   includes?: unknown;
@@ -115,6 +128,11 @@ function getTextValues(value: unknown): string[] {
     .filter((item): item is string => Boolean(item));
 }
 
+function getSelectValues(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(asString).filter((item): item is string => Boolean(item));
+}
+
 function getSpecs(value: unknown): Array<{ label: string; value: string }> {
   if (!Array.isArray(value)) return [];
   return value
@@ -127,13 +145,31 @@ function getSpecs(value: unknown): Array<{ label: string; value: string }> {
     .filter((item): item is { label: string; value: string } => Boolean(item));
 }
 
+function safePublicDownloadHref(value: unknown): string | undefined {
+  const href = asString(value);
+  if (!href) return undefined;
+  if (href.startsWith("/") && !href.startsWith("//")) return href;
+
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? href
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function getDocuments(value: unknown): Array<{ title: string; href: string }> | undefined {
   if (!Array.isArray(value)) return undefined;
   const docs = value
     .map((item) => {
       if (!item || typeof item !== "object") return null;
       const title = asString((item as CmsDocumentItem).title);
-      const href = asString((item as CmsDocumentItem).href);
+      const href = safePublicDownloadHref(
+        resolveCmsMediaUrl((item as CmsDocumentItem).file) ??
+          (item as CmsDocumentItem).href
+      );
       return title && href ? { title, href } : null;
     })
     .filter((item): item is { title: string; href: string } => Boolean(item));
@@ -141,20 +177,143 @@ function getDocuments(value: unknown): Array<{ title: string; href: string }> | 
   return docs.length > 0 ? docs : undefined;
 }
 
-function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
+const operationModeLabels: Record<string, string> = {
+  manual: "ручной",
+  mechanized: "механизированный",
+  automated: "автоматизированный"
+};
+
+const storageMaterialLabels: Record<string, string> = {
+  "sheet-metal": "листовой металл",
+  pipes: "трубы",
+  profiles: "профиль и сортовой прокат",
+  pallets: "паллеты и тарные места",
+  tooling: "оснастка и штампы",
+  parts: "инструмент и комплектующие",
+  cable: "кабель и барабаны",
+  mixed: "смешанная номенклатура"
+};
+
+const loadingMethodLabels: Record<string, string> = {
+  manual: "вручную",
+  forklift: "погрузчиком",
+  stacker: "штабелером или ричтраком",
+  crane: "кран-балкой",
+  vacuum: "вакуумным захватом",
+  extractor: "автоматическим экстрактором"
+};
+
+const installationEnvironmentLabels: Record<string, string> = {
+  workshop: "производственный цех",
+  warehouse: "закрытый склад",
+  "covered-outdoor": "улица под навесом",
+  outdoor: "уличное исполнение"
+};
+
+function mappedList(value: unknown, labels: Record<string, string>) {
+  return getSelectValues(value).map((item) => labels[item] ?? item).join(", ");
+}
+
+function getStructuredSpecs(doc: CmsProductLike): Array<{ label: string; value: string }> {
+  const specs: Array<{ label: string; value: string }> = [];
+  const modelName = asString(doc.modelName);
+  const operationMode = asString(doc.operationMode);
+  const materials = mappedList(doc.storageMaterials, storageMaterialLabels);
+  const loading = mappedList(doc.loadingMethods, loadingMethodLabels);
+  const environments = mappedList(doc.installationEnvironments, installationEnvironmentLabels);
+  const maxLoadKg = asNumber(doc.maxLoadKg);
+  const warrantyMonths = asNumber(doc.warrantyMonths);
+  const dimensions =
+    doc.overallDimensions && typeof doc.overallDimensions === "object"
+      ? (doc.overallDimensions as {
+          lengthMm?: unknown;
+          widthMm?: unknown;
+          heightMm?: unknown;
+        })
+      : undefined;
+  const lengthMm = asNumber(dimensions?.lengthMm);
+  const widthMm = asNumber(dimensions?.widthMm);
+  const heightMm = asNumber(dimensions?.heightMm);
+
+  if (modelName) specs.push({ label: "Модель / серия", value: modelName });
+  if (materials) specs.push({ label: "Материал хранения", value: materials });
+  if (operationMode) {
+    specs.push({
+      label: "Принцип работы",
+      value: operationModeLabels[operationMode] ?? operationMode
+    });
+  }
+  if (loading) specs.push({ label: "Способ загрузки", value: loading });
+  if (maxLoadKg !== undefined) {
+    specs.push({
+      label: "Максимальная рабочая нагрузка",
+      value: `${new Intl.NumberFormat("ru-RU").format(maxLoadKg)} кг`
+    });
+  }
+  if (lengthMm || widthMm || heightMm) {
+    specs.push({
+      label: "Габарит системы",
+      value: `${lengthMm ?? "—"} × ${widthMm ?? "—"} × ${heightMm ?? "—"} мм (Д × Ш × В)`
+    });
+  }
+  if (environments) specs.push({ label: "Место установки", value: environments });
+  if (warrantyMonths !== undefined) {
+    specs.push({ label: "Гарантия", value: `${warrantyMonths} мес.` });
+  }
+
+  return specs;
+}
+
+function mergeSpecs(
+  structured: Array<{ label: string; value: string }>,
+  manual: Array<{ label: string; value: string }>
+) {
+  const merged = new Map<string, { label: string; value: string }>();
+  for (const spec of [...structured, ...manual]) merged.set(spec.label.toLowerCase(), spec);
+  return Array.from(merged.values());
+}
+
+function getGalleryFallback(
+  fallback: CatalogProduct | undefined,
+  index: number,
+  size: CmsMediaSize
+) {
+  const source = fallback?.gallery[index] ?? fallback?.image;
+  const variants = getLocalProductImageVariants(source);
+  if (!variants) return source;
+  if (size === "thumb") return variants.thumb.src;
+  if (size === "medium") return variants.medium.src;
+  return variants.large.src;
+}
+
+function getGalleryBySize(
+  doc: CmsProductLike,
+  fallback: CatalogProduct | undefined,
+  size: "thumb" | "medium" | "large"
+): string[] {
   const cmsGallery = Array.isArray(doc.gallery)
     ? doc.gallery
         .map((item, index) =>
           item && typeof item === "object"
             ? resolveCmsMediaUrl((item as CmsGalleryItem).image, {
-                size: "large",
-                fallback: fallback?.gallery[index] ?? fallback?.image
+                size,
+                fallback: getGalleryFallback(fallback, index, size)
               })
             : undefined
         )
         .filter((item): item is string => Boolean(item))
     : [];
 
+  if (cmsGallery.length > 0) return cmsGallery;
+  return (
+    fallback?.gallery
+      .map((_, index) => getGalleryFallback(fallback, index, size))
+      .filter((item): item is string => Boolean(item)) ?? []
+  );
+}
+
+function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
+  const cmsGallery = getGalleryBySize(doc, fallback, "medium");
   const legacyGallery = Array.isArray(doc.legacyGalleryPaths)
     ? doc.legacyGalleryPaths
         .map((item) => (item && typeof item === "object" ? asString((item as CmsLegacyGalleryItem).path) : undefined))
@@ -207,9 +366,30 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
   if (!image) return null;
 
   const applications = getTextValues(doc.applications);
-  const specs = getSpecs(doc.specs);
+  const specs = mergeSpecs(getStructuredSpecs(doc), getSpecs(doc.specs));
   const includes = getTextValues(doc.includes);
+  const storageMaterials = getSelectValues(
+    doc.storageMaterials
+  ) as CatalogProduct["storageMaterials"];
+  const loadingMethods = getSelectValues(
+    doc.loadingMethods
+  ) as CatalogProduct["loadingMethods"];
+  const installationEnvironments = getSelectValues(
+    doc.installationEnvironments
+  ) as CatalogProduct["installationEnvironments"];
+  const dimensions =
+    doc.overallDimensions && typeof doc.overallDimensions === "object"
+      ? (doc.overallDimensions as {
+          lengthMm?: unknown;
+          widthMm?: unknown;
+          heightMm?: unknown;
+        })
+      : undefined;
   const calculatorProfileId = getRelationSlug(doc.calculatorProfile as CmsCalculatorProfileLike) ?? fallback?.calculatorProfileId;
+  const gallery = getGallery(doc, fallback);
+  const galleryThumbs = getGalleryBySize(doc, fallback, "thumb");
+  const galleryMediums = getGalleryBySize(doc, fallback, "medium");
+  const galleryLarges = getGalleryBySize(doc, fallback, "large");
 
   return {
     id,
@@ -232,10 +412,38 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
       size: "large",
       fallback: localVariants?.large.src ?? localFallback
     }),
-    gallery: getGallery(doc, fallback),
+    gallery,
+    galleryThumbs:
+      galleryThumbs.length === gallery.length ? galleryThumbs : undefined,
+    galleryMediums:
+      galleryMediums.length === gallery.length ? galleryMediums : undefined,
+    galleryLarges:
+      galleryLarges.length === gallery.length ? galleryLarges : undefined,
     galleryAlts: getGalleryAlts(doc, fallback, title),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,
+    modelName: asString(doc.modelName) ?? fallback?.modelName,
+    operationMode:
+      (asString(doc.operationMode) as CatalogProduct["operationMode"]) ??
+      fallback?.operationMode,
+    storageMaterials: storageMaterials?.length
+      ? storageMaterials
+      : fallback?.storageMaterials,
+    loadingMethods: loadingMethods?.length
+      ? loadingMethods
+      : fallback?.loadingMethods,
+    maxLoadKg: asNumber(doc.maxLoadKg) ?? fallback?.maxLoadKg,
+    warrantyMonths: asNumber(doc.warrantyMonths) ?? fallback?.warrantyMonths,
+    overallDimensions: dimensions
+      ? {
+          lengthMm: asNumber(dimensions.lengthMm),
+          widthMm: asNumber(dimensions.widthMm),
+          heightMm: asNumber(dimensions.heightMm)
+        }
+      : fallback?.overallDimensions,
+    installationEnvironments: installationEnvironments?.length
+      ? installationEnvironments
+      : fallback?.installationEnvironments,
     priceMode: asString(doc.priceMode) === "fixed" ? "fixed" : "request",
     priceFrom: asNumber(doc.priceFrom),
     priceTo: asNumber(doc.priceTo),
@@ -259,6 +467,7 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
 }
 
 function bySortOrder(a: CatalogProduct, b: CatalogProduct) {
+  if (Boolean(a.featured) !== Boolean(b.featured)) return a.featured ? -1 : 1;
   return (a.sortOrder ?? fallbackOrder.get(a.id) ?? 0) - (b.sortOrder ?? fallbackOrder.get(b.id) ?? 0);
 }
 

@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatGoogleSearchConsoleProperty,
   formatYandexWebmasterHostId,
   getTrackedSeoProperty
 } from "@/lib/seo-reporting/property";
 
 describe("SEO tracked property", () => {
+  it("makes a Google domain property readable without changing its API value", () => {
+    expect(formatGoogleSearchConsoleProperty("sc-domain:storage.example")).toBe(
+      "storage.example (весь домен)"
+    );
+    expect(
+      formatGoogleSearchConsoleProperty("https://storage.example/")
+    ).toBe("https://storage.example/");
+  });
+
   it("turns a Yandex host id into a readable URL", () => {
     expect(
       formatYandexWebmasterHostId(

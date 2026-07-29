@@ -18,6 +18,7 @@ import { Contacts } from "./payload/globals/Contacts";
 import { HomeContent } from "./payload/globals/HomeContent";
 import { LeadManagement } from "./payload/globals/LeadManagement";
 import { SiteNavigation } from "./payload/globals/SiteNavigation";
+import { canManageMedia } from "./payload/access/rbac";
 import {
   getDirectPostgresConnectionString,
   getPostgresConnectionString
@@ -189,6 +190,10 @@ export default buildConfig({
     vercelBlobStorage({
       collections: { media: true },
       addRandomSuffix: true,
+      cacheControlMaxAge: 31_536_000,
+      clientUploads: {
+        access: ({ req }) => canManageMedia(req.user)
+      },
       token: process.env.BLOB_READ_WRITE_TOKEN || ""
     })
   ]

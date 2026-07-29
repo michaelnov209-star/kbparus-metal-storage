@@ -1,6 +1,7 @@
 import { createSign } from "node:crypto";
 import type {
   ConfiguredGoogleSearchConsole,
+  SeoCountryObservation,
   SeoDateWindow,
   SeoObservation,
   SeoReportDevice,
@@ -39,7 +40,7 @@ type GoogleQueryOptions = {
   token: string;
   startDate: string;
   endDate: string;
-  dimensions: Array<"date" | "query" | "page">;
+  dimensions: Array<"date" | "query" | "page" | "country">;
   aggregationType: "byPage" | "byProperty";
   device: SeoReportDevice;
   query: string;
@@ -303,7 +304,14 @@ export async function fetchGoogleSearchConsoleDataset({
     truncated: false
   });
 
-  const [timeline, currentQueries, previousQueries, queryPages] =
+  const [
+    timeline,
+    currentQueries,
+    previousQueries,
+    queryPages,
+    currentPages,
+    currentCountries
+  ] =
     await Promise.all([
       runGoogleQuery({
         config,
@@ -352,6 +360,28 @@ export async function fetchGoogleSearchConsoleDataset({
         device,
         query,
         fetchImpl
+      }),
+      runGoogleQuery({
+        config,
+        token,
+        startDate: window.currentStart,
+        endDate: window.currentEnd,
+        dimensions: ["page"],
+        aggregationType: "byPage",
+        device,
+        query,
+        fetchImpl
+      }),
+      runGoogleQuery({
+        config,
+        token,
+        startDate: window.currentStart,
+        endDate: window.currentEnd,
+        dimensions: ["country"],
+        aggregationType: "byProperty",
+        device,
+        query,
+        fetchImpl
       })
     ]);
 
@@ -372,25 +402,51 @@ export async function fetchGoogleSearchConsoleDataset({
     string,
     { page: string; impressions: number }
   >();
-  const pageRows = queryPages.rows.flatMap((row) => {
+  queryPages.rows.forEach((row) => {
     const keys = stringKeys(row, 2);
-    if (!keys || !keys[0] || !keys[1]) return [];
+    if (!keys || !keys[0] || !keys[1]) return;
     const page = safeHttpUrl(keys[1]!);
-    if (!page) return [];
+    if (!page) return;
     const impressions = numberOrZero(row.impressions);
     const current = pageByQuery.get(keys[0]!);
     if (!current || impressions > current.impressions) {
       pageByQuery.set(keys[0]!, { page, impressions });
     }
+  });
+
+  const pageRows = currentPages.rows.flatMap((row) => {
+    const keys = stringKeys(row, 1);
+    if (!keys?.[0]) return [];
+    const page = safeHttpUrl(keys[0]);
+    if (!page) return [];
     return [
       metricObservation(row, {
         date: window.currentEnd,
-        query: keys[0]!,
+        query: "",
         page,
         device
       })
     ];
   });
+
+  const countryRows: SeoCountryObservation[] = currentCountries.rows.flatMap(
+    (row) => {
+      const keys = stringKeys(row, 1);
+      const country = keys?.[0]?.trim().toLowerCase();
+      if (!country || !/^[a-z]{3}$/.test(country)) return [];
+      const impressions = numberOrZero(row.impressions);
+      return [
+        {
+          source: "google" as const,
+          date: window.currentEnd,
+          country,
+          clicks: numberOrZero(row.clicks),
+          impressions,
+          position: positionOrNull(row.position, impressions)
+        }
+      ];
+    }
+  );
 
   function normalizeQueryRows(
     rows: GoogleSearchAnalyticsRow[],
@@ -432,12 +488,15 @@ export async function fetchGoogleSearchConsoleDataset({
     summaryRows,
     queryRows,
     pageRows,
+    countryRows,
     actualStart: dates[0] ?? null,
     actualEnd: dates.at(-1) ?? null,
     truncated:
       timeline.truncated ||
       currentQueries.truncated ||
       previousQueries.truncated ||
-      queryPages.truncated
+      queryPages.truncated ||
+      currentPages.truncated ||
+      currentCountries.truncated
   };
 }

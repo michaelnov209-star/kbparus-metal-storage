@@ -35,10 +35,20 @@ export type SeoObservation = {
   position: number | null;
 };
 
+export type SeoCountryObservation = {
+  source: SeoSource;
+  date: string;
+  country: string;
+  clicks: number;
+  impressions: number;
+  position: number | null;
+};
+
 export type SeoSourceDataset = {
   summaryRows: SeoObservation[];
   queryRows: SeoObservation[];
   pageRows: SeoObservation[];
+  countryRows?: SeoCountryObservation[];
   actualStart: string | null;
   actualEnd: string | null;
   truncated: boolean;
@@ -81,6 +91,11 @@ export type SeoQueryMetric = SeoMetricSummary & {
 export type SeoPageMetric = SeoMetricSummary & {
   source: SeoSource;
   page: string;
+};
+
+export type SeoCountryMetric = SeoMetricSummary & {
+  source: SeoSource;
+  country: string;
 };
 
 export type SeoSourceReport = {
@@ -136,7 +151,7 @@ export type SeoReportingConfig = {
 export type SeoReportResponse = {
   provider: SeoProvider;
   trackedProperty?: string | null;
-  status: "ready" | "not_configured" | "error";
+  status: "ready" | "empty" | "not_configured" | "error";
   requestedDays: SeoReportPeriod;
   coverageDays: number;
   lastCollectedAt?: string | null;
@@ -175,6 +190,20 @@ export type SeoReportResponse = {
     position: number | null;
     previousPosition?: number | null;
     positionChange?: number | null;
+  }>;
+  pages: Array<{
+    page: string;
+    clicks: number;
+    impressions: number;
+    ctr: number | null;
+    position: number | null;
+  }>;
+  countries: Array<{
+    country: string;
+    clicks: number;
+    impressions: number;
+    ctr: number | null;
+    position: number | null;
   }>;
   notices: string[];
   truncated: boolean;

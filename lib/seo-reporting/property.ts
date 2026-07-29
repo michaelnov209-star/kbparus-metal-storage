@@ -14,6 +14,15 @@ export function formatYandexWebmasterHostId(hostId: string): string {
   return `${protocol.toLowerCase()}://${hostname}${isDefaultPort ? "" : `:${port}`}`;
 }
 
+export function formatGoogleSearchConsoleProperty(siteUrl: string): string {
+  const normalized = siteUrl.trim();
+  if (normalized.toLowerCase().startsWith("sc-domain:")) {
+    const domain = normalized.slice("sc-domain:".length).trim();
+    return domain ? `${domain} (весь домен)` : normalized;
+  }
+  return normalized;
+}
+
 export function getTrackedSeoProperty(
   config: SeoReportingConfig,
   provider: SeoProvider
@@ -26,5 +35,7 @@ export function getTrackedSeoProperty(
   }
 
   const source = config.google;
-  return source.configured ? source.siteUrl : null;
+  return source.configured
+    ? formatGoogleSearchConsoleProperty(source.siteUrl)
+    : null;
 }

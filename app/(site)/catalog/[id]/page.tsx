@@ -108,7 +108,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
       : null;
 
   return (
-    <main className="line-page catalog-detail-page" id="top">
+    <main className="line-page catalog-detail-page category-detail-v2" id="top">
       <JsonLd data={breadcrumb} />
       {productList && <JsonLd data={productList} />}
       <header className="catalog-detail-header">

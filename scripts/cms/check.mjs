@@ -16,6 +16,12 @@ import { resolve } from "node:path";
 const checks = [];
 let failed = 0;
 const SKIP_DB = process.env.CMS_CHECK_SKIP_DB === "1";
+const packageJson = JSON.parse(readFileSync(resolve("package.json"), "utf8"));
+const expectedNodeEngine = String(packageJson.engines?.node ?? "");
+const expectedNodeMajor = Number.parseInt(
+  expectedNodeEngine.match(/\d+/)?.[0] ?? "",
+  10
+);
 
 function check(name, fn, { soft = false } = {}) {
   try {
@@ -57,17 +63,27 @@ console.log("\n🔍 CMS preflight checks\n");
 
 // === 0. Runtime ===
 console.log("Runtime:");
-check("Node major version is 22", () => {
+check(`Node matches package engine ${expectedNodeEngine}`, () => {
   const major = parseInt(process.versions.node.split(".")[0], 10);
-  if (major !== 22) {
+  if (!Number.isFinite(expectedNodeMajor)) {
+    throw new Error("package.json engines.node is missing or invalid");
+  }
+  if (major !== expectedNodeMajor) {
     throw new Error(
-      `Node ${process.versions.node} обнаружен. Требуется Node 22.x. ` +
-      `Vercel: проверить package.json engines = "22.x" и Project Settings → Node.js Version. ` +
-      `Локально: nvm use 22 / volta install node@22.`
+      `Node ${process.versions.node} обнаружен. Требуется ${expectedNodeEngine}. ` +
+      `Vercel: проверьте package.json engines и Project Settings → Node.js Version. ` +
+      `Локально: nvm use ${expectedNodeMajor} / volta install node@${expectedNodeMajor}.`
     );
   }
   return true;
 }, { soft: true });
+check(".nvmrc matches package engine", () => {
+  const nvmMajor = Number.parseInt(readFileSync(resolve(".nvmrc"), "utf8").trim(), 10);
+  if (nvmMajor !== expectedNodeMajor) {
+    throw new Error(`.nvmrc=${nvmMajor}, package.json=${expectedNodeEngine}`);
+  }
+  return true;
+});
 
 // === 1. Env vars ===
 console.log("\nEnvironment variables:");

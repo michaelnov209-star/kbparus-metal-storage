@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   FALLBACK_SITE_URL,
   getSiteUrl,
-  getTrustedSiteOrigins
+  getTrustedSiteOrigins,
+  normalizeProjectSiteOrigin
 } from "@/lib/seo/site";
 
 describe("canonical site URL", () => {
@@ -33,6 +34,13 @@ describe("canonical site URL", () => {
     expect(getSiteUrl("//evil.example")).toBe(FALLBACK_SITE_URL);
   });
 
+  it("never treats related КБ Парус sites as this project's canonical origin", () => {
+    expect(getSiteUrl("https://kbparus.ru/catalog")).toBe(FALLBACK_SITE_URL);
+    expect(getSiteUrl("https://www.kbparus.ru/")).toBe(FALLBACK_SITE_URL);
+    expect(getSiteUrl("https://линииокраски.рф/")).toBe(FALLBACK_SITE_URL);
+    expect(normalizeProjectSiteOrigin("https://kbparus.ru")).toBeUndefined();
+  });
+
   it("builds an exact CSRF origin allowlist for production and previews", () => {
     expect(
       getTrustedSiteOrigins({
@@ -43,6 +51,19 @@ describe("canonical site URL", () => {
     ).toEqual([
       FALLBACK_SITE_URL,
       "https://example.com",
+      "https://kbparus-preview.vercel.app"
+    ]);
+  });
+
+  it("drops another brand site's origin from the shared allowlist", () => {
+    expect(
+      getTrustedSiteOrigins({
+        NODE_ENV: "production",
+        NEXT_PUBLIC_SITE_URL: "https://kbparus.ru",
+        VERCEL_URL: "kbparus-preview.vercel.app"
+      })
+    ).toEqual([
+      FALLBACK_SITE_URL,
       "https://kbparus-preview.vercel.app"
     ]);
   });

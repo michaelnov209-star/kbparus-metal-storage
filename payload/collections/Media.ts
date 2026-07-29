@@ -8,6 +8,18 @@ import {
   publicReadAvailableMedia
 } from "../access/rbac";
 
+const webp = (quality: number) =>
+  ({
+    format: "webp" as const,
+    options: { quality }
+  });
+
+const derivedSizeAdmin = {
+  disableGroupBy: true,
+  disableListColumn: true,
+  disableListFilter: true
+} as const;
+
 export const Media: CollectionConfig = {
   slug: "media",
   hooks: {
@@ -20,8 +32,8 @@ export const Media: CollectionConfig = {
   admin: {
     group: adminGroups.media,
     description: {
-      ru: adminHints.media,
-      en: "Business asset library for the website."
+      ru: `${adminHints.media} Загружайте обычный JPG, PNG, WebP или AVIF: сайт сам ограничит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера.`,
+      en: "Business asset library with automatic responsive WebP processing."
     },
     useAsTitle: "filename",
     defaultColumns: ["internalTitle", "assetType", "usageArea", "alt"],
@@ -29,22 +41,71 @@ export const Media: CollectionConfig = {
     pagination: { defaultLimit: 24, limits: [12, 24, 48] }
   },
   upload: {
-    mimeTypes: ["image/*", "video/mp4", "video/webm", "video/quicktime", "application/pdf"],
+    allowRestrictedFileTypes: false,
+    adminThumbnail: "cardSm",
+    constructorOptions: {
+      // Keep a compressed image bomb from exhausting a serverless worker
+      // before the 2400px output cap can be applied.
+      limitInputPixels: 40_000_000
+    },
+    mimeTypes: [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+      "application/pdf"
+    ],
+    resizeOptions: {
+      width: 2400,
+      height: 2400,
+      fit: "inside",
+      withoutEnlargement: true
+    },
     modifyResponseHeaders: ({ headers }) => {
       headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      headers.set("X-Content-Type-Options", "nosniff");
       return headers;
     },
     imageSizes: [
-      { name: "thumb", width: 320, height: undefined, position: "centre" },
-      { name: "medium", width: 800, height: undefined, position: "centre" },
-      { name: "large", width: 1600, height: undefined, position: "centre" },
+      {
+        name: "thumb",
+        width: 320,
+        height: undefined,
+        position: "centre",
+        withoutEnlargement: true,
+        formatOptions: webp(78),
+        admin: derivedSizeAdmin
+      },
+      {
+        name: "medium",
+        width: 800,
+        height: undefined,
+        position: "centre",
+        withoutEnlargement: true,
+        formatOptions: webp(80),
+        admin: derivedSizeAdmin
+      },
+      {
+        name: "large",
+        width: 1600,
+        height: undefined,
+        position: "centre",
+        withoutEnlargement: true,
+        formatOptions: webp(82),
+        admin: derivedSizeAdmin
+      },
       {
         name: "cardSm",
         width: 320,
         height: 240,
         fit: "contain",
         position: "centre",
-        withoutEnlargement: false
+        withoutEnlargement: true,
+        formatOptions: webp(78),
+        admin: derivedSizeAdmin
       },
       {
         name: "cardMd",
@@ -52,7 +113,9 @@ export const Media: CollectionConfig = {
         height: 480,
         fit: "contain",
         position: "centre",
-        withoutEnlargement: false
+        withoutEnlargement: true,
+        formatOptions: webp(80),
+        admin: derivedSizeAdmin
       },
       {
         name: "cardLg",
@@ -60,10 +123,12 @@ export const Media: CollectionConfig = {
         height: 720,
         fit: "contain",
         position: "centre",
-        withoutEnlargement: false
+        withoutEnlargement: true,
+        formatOptions: webp(82),
+        admin: derivedSizeAdmin
       }
     ],
-    formatOptions: { format: "webp", options: { quality: 80 } }
+    formatOptions: webp(82)
   },
   fields: [
     {
@@ -73,6 +138,7 @@ export const Media: CollectionConfig = {
         en: "List in the public website API"
       },
       type: "checkbox",
+      required: true,
       defaultValue: true,
       admin: {
         description: {

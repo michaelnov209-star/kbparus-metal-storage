@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  FileText,
+  Globe2,
   LoaderCircle,
   Minus,
   RefreshCw,
@@ -55,6 +57,28 @@ const DEVICES: Array<{ value: SeoReportDevice; label: string }> = [
   { value: "mobile", label: "Смартфоны" },
   { value: "tablet", label: "Планшеты" }
 ];
+
+const COUNTRY_LABELS: Record<string, string> = {
+  rus: "Россия",
+  kaz: "Казахстан",
+  blr: "Беларусь",
+  arm: "Армения",
+  kgz: "Кыргызстан",
+  uzb: "Узбекистан",
+  are: "ОАЭ",
+  deu: "Германия",
+  usa: "США",
+  unk: "Страна не определена"
+};
+
+const GOOGLE_SETUP_LABELS: Record<string, string> = {
+  GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL:
+    "Email service account из Google Cloud",
+  GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY:
+    "Закрытый ключ service account (хранится только в Vercel)",
+  GOOGLE_SEARCH_CONSOLE_SITE_URL:
+    "Точное имя ресурса Search Console: sc-domain:домен или URL-prefix"
+};
 
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
@@ -223,6 +247,17 @@ function PositionChart({ report }: { report: SeoReportResponse }) {
   );
 }
 
+function formatCountry(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return COUNTRY_LABELS[normalized] ?? normalized.toUpperCase();
+}
+
+function setupLabel(item: string, provider: SeoProvider): string {
+  if (provider !== "google") return item;
+  const envName = item.split(" ", 1)[0] ?? item;
+  return GOOGLE_SETUP_LABELS[envName] ?? item;
+}
+
 function positionBand(position: number | null): {
   className: string;
   label: string;
@@ -236,7 +271,13 @@ function positionBand(position: number | null): {
   return { className: "is-below-20", label: "20+" };
 }
 
-function TopQueriesPanel({ report }: { report: SeoReportResponse }) {
+function TopQueriesPanel({
+  report,
+  provider
+}: {
+  report: SeoReportResponse;
+  provider: SeoProvider;
+}) {
   const rows = [...report.queries]
     .filter((row) => row.impressions > 0)
     .sort(
@@ -302,12 +343,100 @@ function TopQueriesPanel({ report }: { report: SeoReportResponse }) {
         <div className="kb-seo-chart-empty">
           <Search size={22} aria-hidden />
           <span>
-            Яндекс ещё не накопил показы для этого сайта. Топ запросов появится
-            здесь автоматически после первых показов в поиске.
+            {provider === "google"
+              ? "Google Search Console ещё не вернул запросы для выбранных условий. Они появятся после первых показов сайта в Google."
+              : "Яндекс ещё не накопил показы для этого сайта. Топ запросов появится здесь автоматически после первых показов в поиске."}
           </span>
         </div>
       )}
     </section>
+  );
+}
+
+function SearchBreakdownPanel({
+  report,
+  provider
+}: {
+  report: SeoReportResponse;
+  provider: SeoProvider;
+}) {
+  const pages = report.pages.slice(0, 10);
+  const countries = report.countries.slice(0, 10);
+
+  return (
+    <div className="kb-seo-dimensions-grid">
+      <section className="kb-seo-panel">
+        <div className="kb-seo-panel__head">
+          <div>
+            <span>Посадочные страницы</span>
+            <h2>Топ-10 страниц из поиска</h2>
+          </div>
+          <FileText size={20} aria-hidden />
+        </div>
+        {pages.length > 0 ? (
+          <div className="kb-seo-compact-list">
+            {pages.map((row, index) => (
+              <a
+                href={row.page}
+                key={row.page}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{getDisplayPath(row.page)}</strong>
+                <small>
+                  {formatNumber(row.impressions)} показов · позиция{" "}
+                  {formatPosition(row.position)}
+                </small>
+                <ExternalLink size={13} aria-hidden />
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="kb-seo-chart-empty">
+            <FileText size={22} aria-hidden />
+            <span>Данных по страницам за выбранный период пока нет.</span>
+          </div>
+        )}
+      </section>
+
+      <section className="kb-seo-panel">
+        <div className="kb-seo-panel__head">
+          <div>
+            <span>География показов</span>
+            <h2>Страны аудитории</h2>
+          </div>
+          <Globe2 size={20} aria-hidden />
+        </div>
+        {provider !== "google" ? (
+          <div className="kb-seo-chart-empty">
+            <Globe2 size={22} aria-hidden />
+            <span>
+              Разбивка по странам доступна в Google Search Console. Для Яндекса
+              регион задаётся в настройках Вебмастера.
+            </span>
+          </div>
+        ) : countries.length > 0 ? (
+          <div className="kb-seo-compact-list">
+            {countries.map((row, index) => (
+              <div key={row.country}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{formatCountry(row.country)}</strong>
+                <small>
+                  {formatNumber(row.impressions)} показов ·{" "}
+                  {formatNumber(row.clicks)} кликов
+                </small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="kb-seo-chart-empty">
+            <Globe2 size={22} aria-hidden />
+            <span>Google пока не вернул географию показов.</span>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -685,17 +814,39 @@ export function SeoReportsClient({
           <Settings2 size={28} aria-hidden />
           <h2>Подключите {providerLabel}</h2>
           <p>
-            Интерфейс готов. Для реальных отчётов нужно выдать сайту доступ только
-            на чтение к данным поисковой системы.
+            {provider === "google"
+              ? "Интерфейс готов. Создайте service account, добавьте его email пользователем ресурса Search Console с доступом только на чтение и сохраните три переменные в Vercel."
+              : "Интерфейс готов. Для реальных отчётов нужно выдать сайту доступ только на чтение к данным поисковой системы."}
           </p>
           <ul>
             {(report.setup || []).map((item) => (
               <li key={item}>
                 <CheckCircle2 size={16} aria-hidden />
-                {item}
+                <span>
+                  {provider === "google"
+                    ? setupLabel(item, provider)
+                    : item}
+                  <code>{item}</code>
+                </span>
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {report?.status === "empty" ? (
+        <div className="kb-seo-state is-empty">
+          <Search size={28} aria-hidden />
+          <h2>Показов по выбранным условиям пока нет</h2>
+          <p>
+            {report.notices[0] ??
+              "Поисковая система ещё не зафиксировала показов сайта за этот период."}
+          </p>
+          {report.trackedProperty ? (
+            <small>
+              Проверен ресурс: <strong>{report.trackedProperty}</strong>
+            </small>
+          ) : null}
         </div>
       ) : null}
 
@@ -780,7 +931,12 @@ export function SeoReportsClient({
             </article>
           </div>
 
-          {!query ? <TopQueriesPanel report={report} /> : null}
+          {!query ? (
+            <>
+              <TopQueriesPanel report={report} provider={provider} />
+              <SearchBreakdownPanel report={report} provider={provider} />
+            </>
+          ) : null}
 
           <section className="kb-seo-panel">
             <div className="kb-seo-panel__head">

@@ -34,10 +34,13 @@ describe("admin branding", () => {
     const component = readProjectFile("app/(auth)/admin/login/LoginClient.tsx");
     const styles = readProjectFile("app/(auth)/auth.css");
 
-    expect(component).toContain('width="118" height="39"');
-    expect(component).toContain('width="104" height="35"');
+    expect(component).toContain('width="168" height="56"');
+    expect(component).toContain('width="130" height="43"');
     expect(styles).toMatch(
-      /\.kb-auth-brand img\s*\{[\s\S]*?width:\s*118px;[\s\S]*?height:\s*auto;/
+      /\.kb-auth-brand img\s*\{[\s\S]*?width:\s*168px;[\s\S]*?height:\s*auto;/
+    );
+    expect(styles).toMatch(
+      /\.kb-auth-brand--mobile img\s*\{[\s\S]*?width:\s*130px;/
     );
   });
 });

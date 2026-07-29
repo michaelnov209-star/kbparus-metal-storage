@@ -163,6 +163,30 @@ describe("Payload production migration safety", () => {
     );
     expect(index).toContain("migration_20260728_224500_lead_rate_limits");
   });
+
+  it("keeps the product editor migration additive, repeat-safe and reversible", () => {
+    const migration = read(
+      "migrations/20260729_171500_product_editor_experience.ts"
+    );
+    const index = read("migrations/index.ts");
+
+    expect(migration).toContain("EXCEPTION WHEN duplicate_object THEN NULL");
+    expect(migration).toContain("CREATE TABLE IF NOT EXISTS");
+    expect(migration).toContain("ADD COLUMN IF NOT EXISTS");
+    expect(migration).toContain("CREATE INDEX IF NOT EXISTS");
+    expect(migration).toContain("DROP TABLE IF EXISTS");
+    expect(migration).toContain("DROP COLUMN IF EXISTS");
+    expect(migration).toContain(
+      'ALTER COLUMN "no_index" DROP DEFAULT'
+    );
+    expect(migration).toContain(
+      `ALTER COLUMN "catalog_href" SET DEFAULT '#catalog'`
+    );
+    expect(index).toContain(
+      "migration_20260729_171500_product_editor_experience"
+    );
+  });
+
   it("keeps the production workflow read-only and main-only", () => {
     const workflow = read(".github/workflows/cms-migrate-production.yml");
     const jobPreamble = workflow.slice(

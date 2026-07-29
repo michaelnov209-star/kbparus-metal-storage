@@ -13,6 +13,7 @@ import { getSiteContacts } from "@/lib/cms/contacts";
 import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import "@/styles/line-page.css";
+import "@/styles/public-conversion.css";
 
 /**
  * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
@@ -734,7 +735,9 @@ export default async function Home() {
               >
                 {contacts.socials.whatsapp ? <MessageCircle size={30} /> : <PhoneCall size={30} />}
               </a>
-              <a className="vk" href={contacts.socials.vk || "https://www.kbparus.ru/"} target="_blank" rel="noreferrer">VK</a>
+              {contacts.socials.vk ? (
+                <a className="vk" href={contacts.socials.vk} target="_blank" rel="noreferrer">VK</a>
+              ) : null}
             </div>
           </article>
         </div>

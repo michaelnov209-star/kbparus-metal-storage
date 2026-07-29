@@ -1,5 +1,14 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, PackageCheck, Ruler, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  FileText,
+  PackageCheck,
+  Ruler,
+  ShieldCheck
+} from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { LeadForm } from "@/components/LeadForm";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
@@ -27,6 +36,23 @@ function linkTargetProps(link: SiteLink) {
 
 function toProductGalleryImage(source: string, product: CatalogProduct, index: number): ProductGalleryImage {
   const alt = product.galleryAlts?.[index] ?? product.imageAlt ?? `${product.title} — фото ${index + 1}`;
+  const thumbSrc = product.galleryThumbs?.[index];
+  const mediumSrc = product.galleryMediums?.[index];
+  const largeSrc = product.galleryLarges?.[index];
+  if (thumbSrc || mediumSrc || largeSrc) {
+    return {
+      alt,
+      src: mediumSrc ?? largeSrc ?? thumbSrc ?? source,
+      srcSet: buildImageSrcSet([
+        { src: thumbSrc, width: 320 },
+        { src: mediumSrc, width: 800 },
+        { src: largeSrc, width: 1600 }
+      ]),
+      sizes: "(max-width: 1180px) calc(100vw - 40px), 540px",
+      thumbSrc: thumbSrc ?? mediumSrc ?? source,
+      largeSrc: largeSrc ?? mediumSrc ?? source
+    };
+  }
   const localVariants = getLocalProductImageVariants(source);
   if (localVariants) {
     return {
@@ -43,6 +69,12 @@ function toProductGalleryImage(source: string, product: CatalogProduct, index: n
     return {
       alt,
       src: product.imageMedium ?? source,
+      srcSet: buildImageSrcSet([
+        { src: product.imageThumb, width: 320 },
+        { src: product.imageMedium, width: 800 },
+        { src: product.imageLarge, width: 1600 }
+      ]),
+      sizes: "(max-width: 1180px) calc(100vw - 40px), 540px",
       thumbSrc: product.imageThumb ?? product.imageMedium ?? source,
       largeSrc: product.imageLarge ?? source
     };
@@ -119,7 +151,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   });
 
   return (
-    <main className="line-page catalog-detail-page product-detail-page" id="top">
+    <main className="line-page catalog-detail-page product-detail-page product-detail-v2" id="top">
       <JsonLd data={breadcrumb} />
       <JsonLd data={productLd} />
       <header className="catalog-detail-header">
@@ -142,18 +174,21 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         <span>{product.title}</span>
       </div>
 
-      <section className="product-title-strip">
-        <span className="line-kicker">Карточка оборудования</span>
-        <h1>{product.title}</h1>
-        <p>{product.summary}</p>
-      </section>
-
-      <section className="product-hero">
-        <ProductGallery images={productGallery} title={product.title} />
-        <div className="product-hero-copy">
-          <span className="line-kicker">Подбор исполнения</span>
-          <h2>Подберём систему под ваш склад</h2>
-          <p>Уточним формат листа, нагрузку, количество уровней, способ загрузки и ограничения помещения, чтобы инженер сразу подготовил предметное предложение.</p>
+      <section className="product-hero product-first-fold">
+        <ProductGallery
+          badge={product.badge}
+          images={productGallery}
+          title={product.title}
+        />
+        <div className="product-hero-copy product-title-strip">
+          <span className="line-kicker">Карточка оборудования</span>
+          <h1>{product.title}</h1>
+          <p>{product.summary}</p>
+          <div className="product-hero-points" aria-label="Что учтем при подборе">
+            <span><Ruler size={16} /> Размеры склада</span>
+            <span><ShieldCheck size={16} /> Рабочую нагрузку</span>
+            <span><PackageCheck size={16} /> Способ загрузки</span>
+          </div>
           <div className="product-price-row">
             {product.pageMode === "configurator" ? (
               <strong>Стоимость рассчитывается ниже</strong>
@@ -198,6 +233,38 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
           </ul>
         </article>
       </section>
+
+      {product.documents?.length ? (
+        <section
+          className="product-downloads"
+          aria-labelledby="product-downloads-title"
+        >
+          <div className="product-downloads__intro">
+            <FileText size={24} aria-hidden />
+            <div>
+              <span className="line-kicker">Документы</span>
+              <h2 id="product-downloads-title">Материалы по оборудованию</h2>
+              <p>Паспорта, инструкции и каталоги, которые добавлены к этой карточке.</p>
+            </div>
+          </div>
+          <div className="product-downloads__list">
+            {product.documents.map((document) => (
+              <a
+                href={document.href}
+                key={`${document.title}-${document.href}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <span>
+                  <FileText size={18} aria-hidden />
+                  <strong>{document.title}</strong>
+                </span>
+                <Download size={18} aria-hidden />
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {product.pageMode === "configurator" && product.calculatorProfileId ? (
         <div id="product-configurator">

@@ -20,6 +20,17 @@ describe("resolveCmsMediaUrl", () => {
     ).toBe("/assets/images/catalog/item.jpg");
   });
 
+  it("recognizes an absolute same-site Payload proxy and keeps it out of next/image", () => {
+    expect(
+      resolveCmsMediaUrl(
+        {
+          url: "https://kbparus-metal-storage.vercel.app/api/media/file/item.jpg"
+        },
+        { fallback: "/assets/images/catalog/item.jpg" }
+      )
+    ).toBe("/assets/images/catalog/item.jpg");
+  });
+
   it("uses the requested size and falls back when the sized file is local", () => {
     expect(
       resolveCmsMediaUrl(

@@ -2,6 +2,13 @@ import type { SeoReportingConfig } from "./types";
 
 type Environment = Record<string, string | undefined>;
 
+const OTHER_KBPARUS_PROJECT_HOSTS = new Set([
+  "kbparus.ru",
+  "www.kbparus.ru",
+  "линииокраски.рф",
+  "xn--80apaabkbctmxn.xn--p1ai"
+]);
+
 function readRequired(env: Environment, names: readonly string[]) {
   const values = new Map<string, string>();
   const missing: string[] = [];
@@ -31,6 +38,24 @@ function parseRegionIds(value: string | undefined): number[] {
   );
 }
 
+function googlePropertyBelongsToAnotherProject(value: string): boolean {
+  const normalized = value.trim();
+  const domainProperty = normalized.match(/^sc-domain:(.+)$/i)?.[1]?.trim();
+  if (domainProperty) {
+    return OTHER_KBPARUS_PROJECT_HOSTS.has(
+      domainProperty.toLocaleLowerCase("en-US")
+    );
+  }
+
+  try {
+    return OTHER_KBPARUS_PROJECT_HOSTS.has(
+      new URL(normalized).hostname.toLocaleLowerCase("en-US")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function isYandexHistoryEnabled(
   env: Environment = process.env
 ): boolean {
@@ -44,6 +69,16 @@ export function readSeoReportingConfig(env: Environment = process.env): SeoRepor
     "GOOGLE_SEARCH_CONSOLE_SITE_URL"
   ] as const;
   const google = readRequired(env, googleRequired);
+  const googleSiteUrl = google.values.get("GOOGLE_SEARCH_CONSOLE_SITE_URL");
+  if (
+    googleSiteUrl &&
+    googlePropertyBelongsToAnotherProject(googleSiteUrl)
+  ) {
+    google.values.delete("GOOGLE_SEARCH_CONSOLE_SITE_URL");
+    google.missing.push(
+      "GOOGLE_SEARCH_CONSOLE_SITE_URL (указан ресурс другого сайта КБ Парус)"
+    );
+  }
 
   const yandexRequired = [
     "YANDEX_WEBMASTER_OAUTH_TOKEN",

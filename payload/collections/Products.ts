@@ -1,6 +1,119 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionBeforeValidateHook, CollectionConfig, Field } from "payload";
+import { createProductSlug } from "../../lib/cms/product-slug";
 import { adminGroups, adminHints } from "../admin/structure";
 import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
+
+const HELP_LABEL = {
+  path: "@/app/(payload)/components/AdminHelpLabel",
+  exportName: "AdminHelpLabel"
+} as const;
+
+function help(text: string, width?: string) {
+  return {
+    ...(width ? { width } : {}),
+    components: { Label: HELP_LABEL },
+    custom: { helpText: text }
+  };
+}
+
+const createUniqueProductSlug: CollectionBeforeValidateHook = async ({
+  data,
+  operation,
+  originalDoc,
+  req
+}) => {
+  if (!data) return data;
+
+  const originalSlug =
+    originalDoc && typeof originalDoc.slug === "string" ? originalDoc.slug.trim() : "";
+  const submittedSlug = typeof data.slug === "string" ? data.slug.trim() : "";
+  const title = typeof data.title === "string" ? data.title.trim() : "";
+
+  if (!data.shortTitle && title) {
+    data.shortTitle = title.length > 72 ? `${title.slice(0, 69).trim()}…` : title;
+  }
+
+  if (operation === "update" && originalSlug) {
+    data.slug = originalSlug;
+    return data;
+  }
+
+  if (submittedSlug) {
+    data.slug = submittedSlug;
+    return data;
+  }
+
+  const baseSlug = createProductSlug(title);
+  if (!baseSlug) return data;
+
+  let candidate = baseSlug;
+  for (let suffix = 2; suffix < 100; suffix += 1) {
+    const existing = await req.payload.find({
+      collection: "products",
+      depth: 0,
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      where: { slug: { equals: candidate } }
+    });
+
+    if (existing.docs.length === 0) {
+      data.slug = candidate;
+      return data;
+    }
+
+    candidate = `${baseSlug}-${suffix}`;
+  }
+
+  data.slug = `${baseSlug}-${Date.now().toString(36)}`;
+  return data;
+};
+
+const documentsField: Field = {
+  name: "documents",
+  label: { ru: "Файлы для скачивания", en: "Downloads" },
+  labels: {
+    singular: { ru: "Документ", en: "Document" },
+    plural: { ru: "Документы", en: "Documents" }
+  },
+  type: "array",
+  admin: {
+    description: {
+      ru: "Загрузите паспорт, инструкцию, каталог или чертёж в PDF. На странице товара появится понятная кнопка скачивания.",
+      en: "Upload product PDFs for visitors."
+    },
+    initCollapsed: true
+  },
+  fields: [
+    {
+      name: "title",
+      label: { ru: "Название для клиента", en: "Public title" },
+      type: "text",
+      required: true,
+      admin: {
+        placeholder: "Паспорт оборудования",
+        ...help("Так эта кнопка будет называться на странице товара. Пишите по-человечески: «Паспорт», «Инструкция», «Каталог PDF».")
+      }
+    },
+    {
+      name: "file",
+      label: { ru: "Загрузить файл", en: "File" },
+      type: "upload",
+      relationTo: "media",
+      required: true,
+      filterOptions: {
+        mimeType: { equals: "application/pdf" }
+      },
+      admin: help("Выберите готовый PDF из медиатеки или загрузите новый файл. Публичные документы не должны содержать конфиденциальные данные.")
+    },
+    {
+      name: "href",
+      label: { ru: "Старая ссылка", en: "Legacy URL" },
+      type: "text",
+      admin: { hidden: true }
+    }
+  ]
+};
 
 export const Products: CollectionConfig = {
   slug: "products",
@@ -11,229 +124,646 @@ export const Products: CollectionConfig = {
   admin: {
     group: adminGroups.catalog,
     description: {
-      ru: `${adminHints.catalog} Товары — это конкретные модели оборудования и посадочные страницы для продаж.`,
-      en: "Concrete equipment models within subcategories."
+      ru: `${adminHints.catalog} Для новой карточки достаточно пройти пять понятных вкладок; адрес и технические поля сайт заполнит сам.`,
+      en: "Concrete equipment models within categories."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "pageMode", "priceMode", "_status"],
-    listSearchableFields: ["title", "shortTitle", "slug", "summary"],
+    defaultColumns: ["title", "category", "pageMode", "featured", "_status"],
+    listSearchableFields: ["title", "shortTitle", "slug", "sku", "summary"],
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
+  },
+  hooks: {
+    beforeValidate: [createUniqueProductSlug]
   },
   versions: { drafts: true },
   fields: [
     {
+      name: "productEditorGuide",
+      type: "ui",
+      admin: {
+        components: {
+          Field: {
+            path: "@/app/(payload)/components/ProductEditorGuide",
+            exportName: "ProductEditorGuide"
+          }
+        }
+      }
+    },
+    {
+      name: "productLivePreview",
+      type: "ui",
+      admin: {
+        components: {
+          Field: {
+            path: "@/app/(payload)/components/ProductLivePreview",
+            exportName: "ProductLivePreview"
+          }
+        }
+      }
+    },
+    {
+      name: "slug",
+      label: { ru: "Адрес товара в URL", en: "URL slug" },
+      type: "text",
+      required: true,
+      unique: true,
+      admin: {
+        hidden: true,
+        description: {
+          ru: "Создаётся автоматически из названия и не меняется после публикации.",
+          en: "Generated from the title and preserved after publication."
+        }
+      }
+    },
+    {
       type: "tabs",
       tabs: [
         {
-          label: { ru: "Основное", en: "Main" },
+          label: { ru: "1. Описание", en: "1. Description" },
+          description: {
+            ru: "Название, место в каталоге и понятное описание для клиента.",
+            en: "Core product information."
+          },
           fields: [
+            {
+              name: "title",
+              label: { ru: "Название товара", en: "Title" },
+              type: "text",
+              required: true,
+              admin: {
+                placeholder: "Автоматизированная система хранения листового металла Compact",
+                ...help("Полное коммерческое название. Оно станет главным заголовком страницы; адрес страницы сайт создаст автоматически.")
+              }
+            },
             {
               type: "row",
               fields: [
-                { name: "slug", label: { ru: "Адрес товара в URL", en: "URL slug" }, type: "text", required: true, unique: true, admin: { width: "40%" } },
-                { name: "sku", label: { ru: "Внутренний артикул", en: "SKU" }, type: "text", admin: { width: "30%" } },
-                { name: "sortOrder", label: { ru: "Порядок показа", en: "Sort" }, type: "number", defaultValue: 0, admin: { width: "15%" } }
+                {
+                  name: "shortTitle",
+                  label: { ru: "Короткое название", en: "Short title" },
+                  type: "text",
+                  admin: {
+                    placeholder: "Compact 3000×1500",
+                    ...help("Используется в компактных карточках и списках. Если оставить пустым, сайт возьмёт полное название.", "50%")
+                  }
+                },
+                {
+                  name: "sku",
+                  label: { ru: "Артикул (если используется)", en: "SKU" },
+                  type: "text",
+                  admin: {
+                    placeholder: "KBP-SHM-COMPACT",
+                    ...help("Внутренний код модели для менеджеров и документов. Можно оставить пустым, если артикулов пока нет.", "50%")
+                  }
+                }
               ]
             },
-            { name: "title", label: { ru: "Название (полное)", en: "Title" }, type: "text", required: true },
-            { name: "shortTitle", label: { ru: "Короткое название", en: "Short title" }, type: "text" },
             {
               type: "row",
               fields: [
                 {
                   name: "category",
-                  label: { ru: "Категория", en: "Category" },
+                  label: { ru: "Раздел каталога", en: "Category" },
                   type: "relationship",
                   relationTo: "categories",
                   required: true,
-                  admin: { width: "50%" }
+                  admin: help("Где товар будет показан на сайте. Например: «Консольные стеллажи».", "50%")
                 },
                 {
                   name: "subcategory",
-                  label: { ru: "Подкатегория", en: "Subcategory" },
+                  label: { ru: "Подраздел (необязательно)", en: "Subcategory" },
                   type: "relationship",
                   relationTo: "subcategories",
-                  admin: { width: "50%" }
+                  admin: help("Используйте, только если внутри выбранного раздела уже есть дополнительное деление. В остальных случаях оставьте пустым.", "50%")
                 }
               ]
             },
             {
               name: "badge",
-              label: { ru: "Бейдж (метка над названием)", en: "Badge" },
+              label: { ru: "Короткая метка на карточке", en: "Badge" },
               type: "text",
-              admin: { description: { ru: "Например: «Под погрузчик», «Двусторонний»", en: "" } }
-            },
-            { name: "summary", label: { ru: "Краткое описание", en: "Summary" }, type: "textarea", required: true },
-            { name: "description", label: { ru: "Полное описание", en: "Description" }, type: "textarea", required: true }
-          ]
-        },
-        {
-          label: { ru: "Изображения", en: "Images" },
-          fields: [
-            {
-              name: "image",
-              label: { ru: "Главное изображение", en: "Main image" },
-              type: "upload",
-              relationTo: "media",
               admin: {
-                description: {
-                  ru: "Основное изображение товара из медиа-библиотеки. Если пока не загружено, сайт использует временный путь из поля ниже.",
-                  en: "Primary product image from media library."
-                }
+                placeholder: "Под погрузчик",
+                ...help("Небольшая подпись над названием: «Автоматизированный», «Двусторонний», «До 5 тонн». Не повторяйте название товара.")
               }
             },
             {
-              name: "legacyImagePath",
-              label: { ru: "Текущий путь к главному изображению", en: "Legacy main image path" },
-              type: "text",
+              name: "summary",
+              label: { ru: "Кратко: польза товара", en: "Summary" },
+              type: "textarea",
+              required: true,
+              maxLength: 260,
+              admin: {
+                placeholder: "Компактно хранит листовой металл и быстро подаёт нужную кассету в рабочую зону.",
+                ...help("Одно–два предложения для карточки каталога. Сначала результат для клиента, затем важное отличие модели.")
+              }
+            },
+            {
+              name: "description",
+              label: { ru: "Подробное описание", en: "Description" },
+              type: "textarea",
+              required: true,
+              admin: {
+                rows: 7,
+                placeholder: "Опишите задачу, принцип работы и кому подходит система…",
+                ...help("Расскажите простым языком: какую проблему решает система, как работает и в каких условиях особенно полезна.")
+              }
+            }
+          ]
+        },
+        {
+          label: { ru: "2. Фото и файлы", en: "2. Media" },
+          description: {
+            ru: "Главное фото, галерея с разными ракурсами и документы для скачивания.",
+            en: "Product media and downloads."
+          },
+          fields: [
+            {
+              name: "image",
+              label: { ru: "Главное фото товара", en: "Main image" },
+              type: "upload",
+              relationTo: "media",
+              filterOptions: {
+                mimeType: { contains: "image/" }
+              },
               admin: {
                 description: {
-                  ru: "Временное поле миграции. Используется для текущих изображений из /assets, пока менеджер не заменит их файлом из медиа-библиотеки.",
-                  en: "Temporary migration field for existing static images."
+                  ru: "Это фото увидят в каталоге первым. Можно загрузить обычный JPG, PNG, WebP или AVIF — система сама уменьшит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера.",
+                  en: "Primary product image."
                 },
-                placeholder: "/assets/images/products/auto-sheet-metal/1.1.jpg"
+                ...help("Лучший вариант: чистый общий ракурс оборудования без текста и чужих логотипов, горизонтальный кадр не меньше 1600×1000.")
               }
             },
             {
               name: "gallery",
-              label: { ru: "Галерея (доп. фото)", en: "Gallery" },
-              type: "array",
-              fields: [{ name: "image", type: "upload", relationTo: "media" }]
-            },
-            {
-              name: "legacyGalleryPaths",
-              label: { ru: "Текущие пути к изображениям галереи", en: "Legacy gallery paths" },
+              label: { ru: "Дополнительные фото", en: "Gallery" },
+              labels: {
+                singular: { ru: "Фотография", en: "Photo" },
+                plural: { ru: "Фотографии", en: "Photos" }
+              },
               type: "array",
               admin: {
                 description: {
-                  ru: "Временное поле миграции для текущей галереи из /assets. Новые фото лучше добавлять через поле «Галерея».",
-                  en: "Temporary migration field for existing static gallery images."
-                }
+                  ru: "Добавьте общий вид, другой ракурс, важную деталь и оборудование в работе. Все новые фото автоматически оптимизируются; порядок можно менять перетаскиванием.",
+                  en: "Additional product images."
+                },
+                initCollapsed: true
               },
-              fields: [{ name: "path", label: { ru: "Путь", en: "Path" }, type: "text", required: true }]
+              fields: [
+                {
+                  name: "image",
+                  label: { ru: "Выбрать или загрузить фото", en: "Image" },
+                  type: "upload",
+                  relationTo: "media",
+                  required: true,
+                  filterOptions: {
+                    mimeType: { contains: "image/" }
+                  },
+                  admin: help("Не дублируйте главное фото. Лучше показать другой ракурс, узел конструкции, загрузку металла или работу оператора.")
+                }
+              ]
+            },
+            documentsField,
+            {
+              name: "legacyImagePath",
+              label: { ru: "Служебный путь к фото", en: "Legacy image path" },
+              type: "text",
+              admin: { hidden: true }
+            },
+            {
+              name: "legacyGalleryPaths",
+              label: { ru: "Служебные пути галереи", en: "Legacy gallery paths" },
+              type: "array",
+              admin: { hidden: true },
+              fields: [{ name: "path", type: "text", required: true }]
             }
           ]
         },
         {
-          label: { ru: "Цена", en: "Price" },
+          label: { ru: "3. Цена и калькулятор", en: "3. Price" },
+          description: {
+            ru: "Как показывать стоимость и нужен ли на странице конфигуратор.",
+            en: "Pricing and configurator."
+          },
           fields: [
             {
               name: "priceMode",
-              label: { ru: "Режим цены", en: "Price mode" },
+              label: { ru: "Как показывать цену", en: "Price mode" },
               type: "select",
               options: [
-                { label: { ru: "Цена по запросу", en: "Request" }, value: "request" },
-                { label: { ru: "Фиксированная цена", en: "Fixed" }, value: "fixed" }
+                { label: { ru: "По запросу — менеджер уточнит параметры", en: "Request" }, value: "request" },
+                { label: { ru: "Показывать ориентир «от … ₽»", en: "Fixed" }, value: "fixed" }
               ],
               defaultValue: "request",
-              required: true
+              required: true,
+              admin: help("Если точная стоимость зависит от проекта, оставьте «По запросу». Цену «от» ставьте только после подтверждения руководителем.")
             },
-            { name: "priceFrom", label: { ru: "Цена от (₽)", en: "Price from" }, type: "number", admin: { description: { ru: "Минимальная цена для отображения «от X ₽»", en: "" } } },
-            { name: "priceTo", label: { ru: "Цена до (₽, опционально)", en: "Price to" }, type: "number" },
-            { name: "priceLabel", label: { ru: "Кастомный текст цены (опционально)", en: "Custom label" }, type: "text" }
-          ]
-        },
-        {
-          label: { ru: "Конфигуратор (если есть)", en: "Configurator" },
-          fields: [
+            {
+              type: "row",
+              fields: [
+                {
+                  name: "priceFrom",
+                  label: { ru: "Стоимость от, ₽", en: "Price from" },
+                  type: "number",
+                  admin: {
+                    condition: (data) => data?.priceMode === "fixed",
+                    ...help("Минимальный реалистичный бюджет базовой комплектации без разделителей и пробелов.", "50%")
+                  }
+                },
+                {
+                  name: "priceTo",
+                  label: { ru: "Стоимость до, ₽ (необязательно)", en: "Price to" },
+                  type: "number",
+                  admin: {
+                    condition: (data) => data?.priceMode === "fixed",
+                    ...help("Заполняйте только если нужен честный диапазон «от — до».", "50%")
+                  }
+                }
+              ]
+            },
+            {
+              name: "priceLabel",
+              label: { ru: "Свой текст вместо цены (редко)", en: "Custom price label" },
+              type: "text",
+              admin: {
+                condition: (data) => data?.priceMode === "fixed",
+                ...help("Необязательное исключение: например, «После инженерного расчёта». Обычно оставляйте пустым.")
+              }
+            },
             {
               name: "pageMode",
-              label: { ru: "Тип страницы товара", en: "Page mode" },
+              label: { ru: "Что показать на странице товара", en: "Page mode" },
               type: "select",
               options: [
-                { label: { ru: "Обычная страница (форма заявки)", en: "Standard" }, value: "standard" },
-                { label: { ru: "С калькулятором-конфигуратором", en: "Configurator" }, value: "configurator" }
+                { label: { ru: "Обычная заявка на расчёт", en: "Standard" }, value: "standard" },
+                { label: { ru: "Калькулятор с предварительной стоимостью", en: "Configurator" }, value: "configurator" }
               ],
               defaultValue: "standard",
-              required: true
+              required: true,
+              admin: help("Калькулятор включайте только для моделей, для которых уже создан и проверен профиль расчёта.")
             },
             {
               name: "calculatorProfile",
-              label: { ru: "Связанный профиль калькулятора", en: "Calculator profile" },
+              label: { ru: "Какой расчёт использовать", en: "Calculator profile" },
               type: "relationship",
               relationTo: "calculator-profiles",
               admin: {
-                description: { ru: "Заполнять только если выбран режим «С калькулятором».", en: "" },
-                condition: (data) => data?.pageMode === "configurator"
+                condition: (data) => data?.pageMode === "configurator",
+                ...help("Выберите профиль с ценами и коэффициентами именно для этой модели. После выбора обязательно проверьте тестовый расчёт.")
               }
             }
           ]
         },
         {
-          label: { ru: "Спецификации", en: "Specs" },
+          label: { ru: "4. Характеристики", en: "4. Specifications" },
+          description: {
+            ru: "Где применяется, основные параметры и что проверит инженер.",
+            en: "Structured product facts."
+          },
           fields: [
             {
+              type: "collapsible",
+              label: { ru: "Основные параметры товара", en: "Core attributes" },
+              admin: {
+                initCollapsed: false,
+                description: {
+                  ru: "Поля как в сильных товарных кабинетах: помогают клиенту сравнивать оборудование и искать его по фильтрам.",
+                  en: "Structured comparison attributes."
+                }
+              },
+              fields: [
+                {
+                  type: "row",
+                  fields: [
+                    {
+                      name: "modelName",
+                      label: { ru: "Модель / серия", en: "Model" },
+                      type: "text",
+                      admin: {
+                        placeholder: "Compact 3000×1500",
+                        ...help("Короткое обозначение модели без повторения полного названия.", "50%")
+                      }
+                    },
+                    {
+                      name: "operationMode",
+                      label: { ru: "Принцип работы", en: "Operation mode" },
+                      type: "select",
+                      options: [
+                        { label: { ru: "Ручной", en: "Manual" }, value: "manual" },
+                        { label: { ru: "Механизированный", en: "Mechanized" }, value: "mechanized" },
+                        { label: { ru: "Автоматизированный", en: "Automated" }, value: "automated" }
+                      ],
+                      admin: help("Выберите, как материал выдаётся из системы в обычной работе.", "50%")
+                    }
+                  ]
+                },
+                {
+                  name: "storageMaterials",
+                  label: { ru: "Что можно хранить", en: "Stored materials" },
+                  type: "select",
+                  hasMany: true,
+                  options: [
+                    { label: { ru: "Листовой металл", en: "Sheet metal" }, value: "sheet-metal" },
+                    { label: { ru: "Трубы", en: "Pipes" }, value: "pipes" },
+                    { label: { ru: "Профиль и сортовой прокат", en: "Profiles" }, value: "profiles" },
+                    { label: { ru: "Паллеты и тарные места", en: "Pallets" }, value: "pallets" },
+                    { label: { ru: "Оснастка и штампы", en: "Tooling" }, value: "tooling" },
+                    { label: { ru: "Инструмент и комплектующие", en: "Parts" }, value: "parts" },
+                    { label: { ru: "Кабель и барабаны", en: "Cable" }, value: "cable" },
+                    { label: { ru: "Смешанная номенклатура", en: "Mixed" }, value: "mixed" }
+                  ],
+                  admin: help("Можно выбрать несколько вариантов. Эти значения будут использоваться для сравнения и будущих фильтров каталога.")
+                },
+                {
+                  name: "loadingMethods",
+                  label: { ru: "Как загружается и обслуживается", en: "Loading methods" },
+                  type: "select",
+                  hasMany: true,
+                  options: [
+                    { label: { ru: "Вручную", en: "Manual" }, value: "manual" },
+                    { label: { ru: "Погрузчиком", en: "Forklift" }, value: "forklift" },
+                    { label: { ru: "Штабелером / ричтраком", en: "Stacker" }, value: "stacker" },
+                    { label: { ru: "Кран-балкой", en: "Crane" }, value: "crane" },
+                    { label: { ru: "Вакуумным захватом", en: "Vacuum lifter" }, value: "vacuum" },
+                    { label: { ru: "Автоматическим экстрактором", en: "Extractor" }, value: "extractor" }
+                  ],
+                  admin: help("Выберите реальные способы загрузки. Не отмечайте варианты, которые требуют отдельной, отсутствующей комплектации.")
+                },
+                {
+                  type: "row",
+                  fields: [
+                    {
+                      name: "maxLoadKg",
+                      label: { ru: "Максимальная рабочая нагрузка, кг", en: "Max load" },
+                      type: "number",
+                      min: 0,
+                      admin: {
+                        placeholder: "3000",
+                        ...help("Укажите подтверждённую нагрузку на полку, кассету или уровень. Если значение зависит от проекта — оставьте пустым.", "50%")
+                      }
+                    },
+                    {
+                      name: "warrantyMonths",
+                      label: { ru: "Гарантия, месяцев", en: "Warranty months" },
+                      type: "number",
+                      min: 0,
+                      admin: {
+                        placeholder: "12",
+                        ...help("Заполняйте только по фактическим условиям договора или коммерческого предложения.", "50%")
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: "overallDimensions",
+                  label: { ru: "Габарит системы, мм (если типовой)", en: "Overall dimensions" },
+                  type: "group",
+                  admin: {
+                    description: {
+                      ru: "Для проектного оборудования можно оставить пустым и указать диапазоны ниже в характеристиках.",
+                      en: "Leave empty for engineered-to-order systems."
+                    }
+                  },
+                  fields: [
+                    {
+                      type: "row",
+                      fields: [
+                        { name: "lengthMm", label: { ru: "Длина", en: "Length" }, type: "number", min: 0, admin: { width: "33%" } },
+                        { name: "widthMm", label: { ru: "Ширина", en: "Width" }, type: "number", min: 0, admin: { width: "33%" } },
+                        { name: "heightMm", label: { ru: "Высота", en: "Height" }, type: "number", min: 0, admin: { width: "34%" } }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  name: "installationEnvironments",
+                  label: { ru: "Где устанавливается", en: "Installation environments" },
+                  type: "select",
+                  hasMany: true,
+                  options: [
+                    { label: { ru: "Производственный цех", en: "Workshop" }, value: "workshop" },
+                    { label: { ru: "Закрытый склад", en: "Warehouse" }, value: "warehouse" },
+                    { label: { ru: "Уличное исполнение под навесом", en: "Covered outdoor" }, value: "covered-outdoor" },
+                    { label: { ru: "Уличное исполнение", en: "Outdoor" }, value: "outdoor" }
+                  ],
+                  admin: help("Отмечайте уличное исполнение только если конструкция и покрытие действительно рассчитаны на эти условия.")
+                }
+              ]
+            },
+            {
               name: "applications",
-              label: { ru: "Применение (где используется)", en: "Applications" },
+              label: { ru: "Где применяется", en: "Applications" },
+              labels: {
+                singular: { ru: "Сценарий применения", en: "Application" },
+                plural: { ru: "Сценарии применения", en: "Applications" }
+              },
               type: "array",
-              fields: [{ name: "value", type: "text" }]
+              admin: {
+                description: { ru: "Один сценарий в каждой строке.", en: "One use case per row." },
+                initCollapsed: true
+              },
+              fields: [
+                {
+                  name: "value",
+                  label: { ru: "Сценарий", en: "Use case" },
+                  type: "text",
+                  required: true,
+                  admin: {
+                    placeholder: "Участки лазерной и плазменной резки",
+                    ...help("Пишите конкретное место или процесс, где система полезна. Не используйте общие фразы вроде «для бизнеса».")
+                  }
+                }
+              ]
             },
             {
               name: "specs",
-              label: { ru: "Технические характеристики", en: "Specs" },
+              label: { ru: "Технические характеристики", en: "Specifications" },
+              labels: {
+                singular: { ru: "Характеристика", en: "Specification" },
+                plural: { ru: "Характеристики", en: "Specifications" }
+              },
               type: "array",
+              admin: {
+                description: {
+                  ru: "Слева — название параметра, справа — значение с единицей измерения.",
+                  en: "Parameter and value pairs."
+                },
+                initCollapsed: true
+              },
               fields: [
-                { name: "label", label: { ru: "Параметр", en: "Label" }, type: "text", required: true },
-                { name: "value", label: { ru: "Значение", en: "Value" }, type: "text", required: true }
+                {
+                  name: "label",
+                  label: { ru: "Параметр", en: "Parameter" },
+                  type: "text",
+                  required: true,
+                  admin: { placeholder: "Нагрузка на уровень", ...help("Короткое и понятное название без двоеточия.") }
+                },
+                {
+                  name: "value",
+                  label: { ru: "Значение", en: "Value" },
+                  type: "text",
+                  required: true,
+                  admin: { placeholder: "до 3 000 кг", ...help("Обязательно укажите единицу измерения и слово «до», если это предельное значение.") }
+                }
               ]
             },
             {
               name: "includes",
-              label: { ru: "Что входит / что проверим", en: "Includes" },
+              label: { ru: "Что входит в подбор", en: "Included checks" },
+              labels: {
+                singular: { ru: "Пункт подбора", en: "Included item" },
+                plural: { ru: "Пункты подбора", en: "Included items" }
+              },
               type: "array",
-              fields: [{ name: "value", type: "text" }]
-            },
-            {
-              name: "documents",
-              label: { ru: "Документы (PDF и т.д.)", en: "Documents" },
-              type: "array",
+              admin: {
+                description: {
+                  ru: "Что клиент получит или что инженер проверит перед предложением.",
+                  en: "Deliverables and checks."
+                },
+                initCollapsed: true
+              },
               fields: [
-                { name: "title", type: "text", required: true },
-                { name: "href", label: { ru: "Ссылка/URL", en: "Link" }, type: "text", required: true }
+                {
+                  name: "value",
+                  label: { ru: "Пункт", en: "Item" },
+                  type: "text",
+                  required: true,
+                  admin: {
+                    placeholder: "Проверка нагрузки на пол и опоры",
+                    ...help("Начните с результата или действия: «расчёт», «проверка», «подбор», «схема».")
+                  }
+                }
               ]
             },
             {
               name: "referenceUrl",
-              label: { ru: "Ссылка на эталонный товар (опционально)", en: "Reference URL" },
-              type: "text"
+              label: { ru: "Служебный источник", en: "Reference URL" },
+              type: "text",
+              admin: { hidden: true }
             }
           ]
         },
         {
-          label: { ru: "SEO", en: "SEO" },
+          label: { ru: "5. Поиск и публикация", en: "5. SEO and publishing" },
+          description: {
+            ru: "Предпросмотр поисковой выдачи, видимость страницы и приоритет в каталоге.",
+            en: "Search and publication settings."
+          },
           fields: [
-            { name: "seoTitle", label: { ru: "Title для поисковика", en: "SEO Title" }, type: "text" },
-            { name: "seoDescription", label: { ru: "Meta description", en: "Description" }, type: "textarea" },
-            { name: "ogImage", label: { ru: "Картинка для соцсетей", en: "OG image" }, type: "upload", relationTo: "media" },
+            {
+              name: "seoPreview",
+              type: "ui",
+              admin: {
+                components: {
+                  Field: {
+                    path: "@/app/(payload)/components/ProductSeoPreview",
+                    exportName: "ProductSeoPreview"
+                  }
+                }
+              }
+            },
+            {
+              name: "seoTitle",
+              label: { ru: "Заголовок в поиске (необязательно)", en: "SEO title" },
+              type: "text",
+              maxLength: 68,
+              admin: {
+                placeholder: "Консольные стеллажи для металла | КБ Парус",
+                ...help("Оставьте пустым, чтобы использовать название товара. Если заполняете — укажите товар и основную потребность, до 60–68 символов.")
+              }
+            },
+            {
+              name: "seoDescription",
+              label: { ru: "Описание в поиске (необязательно)", en: "SEO description" },
+              type: "textarea",
+              maxLength: 160,
+              admin: {
+                placeholder: "Проектирование и производство системы под вашу нагрузку, помещение и способ загрузки.",
+                ...help("Одно полезное обещание: что это, для кого и какой следующий шаг. Не перечисляйте ключевые слова через запятую.")
+              }
+            },
+            {
+              name: "ogImage",
+              label: { ru: "Фото для мессенджеров и соцсетей", en: "Social image" },
+              type: "upload",
+              relationTo: "media",
+              filterOptions: {
+                mimeType: { contains: "image/" }
+              },
+              admin: help("Картинка появится при отправке ссылки в Telegram и других сервисах. Если не выбрать, используется главное фото.")
+            },
             {
               name: "keywords",
-              label: { ru: "Ключевые слова", en: "Keywords" },
+              label: { ru: "Поисковые темы для редакции", en: "Keywords" },
+              labels: {
+                singular: { ru: "Поисковая тема", en: "Keyword" },
+                plural: { ru: "Поисковые темы", en: "Keywords" }
+              },
               type: "array",
-              fields: [{ name: "value", type: "text" }]
+              admin: {
+                description: {
+                  ru: "Не влияют на ранжирование напрямую; помогают планировать текст страницы.",
+                  en: "Editorial search themes."
+                },
+                initCollapsed: true
+              },
+              fields: [
+                {
+                  name: "value",
+                  label: { ru: "Запрос или тема", en: "Keyword" },
+                  type: "text",
+                  required: true,
+                  admin: {
+                    placeholder: "стеллаж для листового металла",
+                    ...help("Добавляйте одну естественную фразу в строке — так, как её мог бы искать клиент.")
+                  }
+                }
+              ]
             },
-            { name: "noIndex", label: { ru: "Скрыть от поисковиков", en: "No-index" }, type: "checkbox" }
-          ]
-        },
-        {
-          label: { ru: "Публикация", en: "Publishing" },
-          fields: [
+            {
+              name: "featuredGuide",
+              type: "ui",
+              admin: {
+                components: {
+                  Field: {
+                    path: "@/app/(payload)/components/FeaturedPlacementGuide",
+                    exportName: "FeaturedPlacementGuide"
+                  }
+                }
+              }
+            },
+            {
+              type: "row",
+              fields: [
+                {
+                  name: "featured",
+                  label: { ru: "Показывать первым в своей категории", en: "Featured" },
+                  type: "checkbox",
+                  defaultValue: false,
+                  admin: help("Включённый товар поднимается выше обычных. Не отмечайте все товары: приоритет должен помогать клиенту выбрать.")
+                },
+                {
+                  name: "sortOrder",
+                  label: { ru: "Порядок среди обычных товаров", en: "Sort order" },
+                  type: "number",
+                  defaultValue: 0,
+                  admin: help("Меньшее число показывается раньше: 0, затем 10, затем 20. Если порядок не важен, оставьте 0.", "50%")
+                }
+              ]
+            },
+            {
+              name: "noIndex",
+              label: { ru: "Временно скрыть страницу от поисковиков", en: "No index" },
+              type: "checkbox",
+              defaultValue: false,
+              admin: help("Используйте для незавершённой или служебной страницы. Обычный опубликованный товар должен оставаться доступным поиску.")
+            },
             {
               name: "draft",
               label: { ru: "Устаревший признак черновика", en: "Legacy draft flag" },
               type: "checkbox",
               defaultValue: false,
-              admin: {
-                hidden: true,
-                description: {
-                  ru: "Служебное поле оставлено только для совместимости. Публикацией управляет штатный статус Payload.",
-                  en: "Kept for backwards compatibility. Payload draft status is authoritative."
-                }
-              }
-            },
-            {
-              name: "featured",
-              label: { ru: "Рекомендуемый (показывать в верхней части категории)", en: "Featured" },
-              type: "checkbox"
+              admin: { hidden: true }
             }
           ]
         }

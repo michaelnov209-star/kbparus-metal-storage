@@ -237,6 +237,244 @@
       "height": 525
     }
   },
+  "/assets/images/products/automated-warehouse-systems/pallet-asrs-stacker-crane-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/846684f96fac1358-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/846684f96fac1358-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/846684f96fac1358-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/automated-warehouse-systems/pallet-asrs-stacker-crane.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/530f5ed4d5aa71a0-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/530f5ed4d5aa71a0-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/530f5ed4d5aa71a0-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/cable-racks/cable-drum-rack-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/1b2155ec07015204-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/1b2155ec07015204-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/1b2155ec07015204-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/cable-racks/cable-drum-rack.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/2b4f1b0a264311ed-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/2b4f1b0a264311ed-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/2b4f1b0a264311ed-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/cantilever-racks/double-sided-cantilever-rack-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a1eb2d3232649c5f-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a1eb2d3232649c5f-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a1eb2d3232649c5f-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/cantilever-racks/double-sided-cantilever-rack.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a30165de31c74f23-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a30165de31c74f23-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a30165de31c74f23-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/carousel-vertical-module/vertical-carousel-module-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/4c5ac0c84ccf3141-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/4c5ac0c84ccf3141-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/4c5ac0c84ccf3141-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/carousel-vertical-module/vertical-carousel-module.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a971ec28a121e390-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a971ec28a121e390-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a971ec28a121e390-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/front-pallet-racks/selective-pallet-rack-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/f0abe3291a434423-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/f0abe3291a434423-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/f0abe3291a434423-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/front-pallet-racks/selective-pallet-rack.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/332c1216dc7b748b-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/332c1216dc7b748b-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/332c1216dc7b748b-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/inlocker/smart-industrial-locker-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/96a7dd51bb5bec48-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/96a7dd51bb5bec48-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/96a7dd51bb5bec48-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/inlocker/smart-industrial-locker.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/984b1de540acf276-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/984b1de540acf276-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/984b1de540acf276-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/lifting-equipment/vacuum-sheet-lifter-jib-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/4093975b205247b0-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/4093975b205247b0-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/4093975b205247b0-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/lifting-equipment/vacuum-sheet-lifter-jib.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a6eab172ddcd2a4e-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a6eab172ddcd2a4e-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a6eab172ddcd2a4e-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
   "/assets/images/products/manual-sheet-metal/2.1.png": {
     "thumb": {
       "src": "/assets/images/products/optimized/7e00c31375024698-320.webp",
@@ -390,6 +628,23 @@
       "height": 1122
     }
   },
+  "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a6a28010681faf77-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a6a28010681faf77-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a6a28010681faf77-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
   "/assets/images/products/manual-sort-and-pipe-storage/4.4.1.png": {
     "thumb": {
       "src": "/assets/images/products/optimized/35f37cfbea3d1ee4-320.webp",
@@ -473,6 +728,261 @@
       "src": "/assets/images/products/optimized/871de7ddcddb047d-1448.webp",
       "width": 1448,
       "height": 1086
+    }
+  },
+  "/assets/images/products/manual-sort-and-pipe-storage/fishbone-racks-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/8be63a6f25f8d246-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/8be63a6f25f8d246-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/8be63a6f25f8d246-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/mezzanines/warehouse-mezzanine-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/417cfe58d344b0a1-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/417cfe58d344b0a1-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/417cfe58d344b0a1-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/mezzanines/warehouse-mezzanine.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/997cf0e73db6a111-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/997cf0e73db6a111-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/997cf0e73db6a111-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/packing-marking/packing-marking-workstation-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/1d2da3d0ea6ea787-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/1d2da3d0ea6ea787-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/1d2da3d0ea6ea787-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/packing-marking/packing-marking-workstation.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/a63a51bc86909010-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/a63a51bc86909010-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/a63a51bc86909010-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/d9425a45501e6823-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/d9425a45501e6823-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/d9425a45501e6823-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/996fa18d72d44647-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/996fa18d72d44647-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/996fa18d72d44647-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/shelf-racks/industrial-shelving-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/311b5c96f72204bd-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/311b5c96f72204bd-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/311b5c96f72204bd-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/shelf-racks/industrial-shelving.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/2fd90f85539f455f-320.webp",
+      "width": 320,
+      "height": 320
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/2fd90f85539f455f-800.webp",
+      "width": 800,
+      "height": 800
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/2fd90f85539f455f-1254.webp",
+      "width": 1254,
+      "height": 1254
+    }
+  },
+  "/assets/images/products/sort-and-pipe-storage/automated-long-goods-tower-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/e522ad84b1e9a413-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/e522ad84b1e9a413-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/e522ad84b1e9a413-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/sort-and-pipe-storage/automated-long-goods-tower.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/0a1804491d821947-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/0a1804491d821947-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/0a1804491d821947-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/warehouse-equipment/electric-pallet-equipment-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/ceccff1d3d6b8530-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/ceccff1d3d6b8530-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/ceccff1d3d6b8530-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/warehouse-equipment/electric-pallet-equipment.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/4262a2d8675525d9-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/4262a2d8675525d9-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/4262a2d8675525d9-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/warehouse-erp/warehouse-management-system-in-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/e145150c8d79c8a3-320.webp",
+      "width": 320,
+      "height": 200
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/e145150c8d79c8a3-800.webp",
+      "width": 800,
+      "height": 500
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/e145150c8d79c8a3-1586.webp",
+      "width": 1586,
+      "height": 992
+    }
+  },
+  "/assets/images/products/warehouse-erp/warehouse-management-system.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/0c0a1d3d9d3a3583-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/0c0a1d3d9d3a3583-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/0c0a1d3d9d3a3583-1536.webp",
+      "width": 1536,
+      "height": 1024
     }
   }
 }

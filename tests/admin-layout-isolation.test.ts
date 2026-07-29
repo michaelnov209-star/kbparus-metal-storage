@@ -53,12 +53,14 @@ describe("admin layout isolation", () => {
   });
   it("keeps internal admin links on client navigation", () => {
     const seoNav = source("app/(payload)/components/SeoNavLink.tsx");
-    const training = source("app/(payload)/components/AdminTraining.tsx");
+    const trainingNav = source(
+      "app/(payload)/components/AdminTrainingNavButton.tsx"
+    );
 
     expect(seoNav).toContain("@payloadcms/ui/elements/Link");
     expect(seoNav).not.toContain('<a className="kb-admin-seo-nav"');
-    expect(training).toContain("@payloadcms/ui/elements/Link");
-    expect(training).not.toContain('<a className="kb-admin-training__link"');
+    expect(trainingNav).toContain('router.push("/admin?tour=1")');
+    expect(trainingNav).not.toContain("window.location.assign");
   });
 
   it("prefetches only after navigation intent and supports touch input", () => {

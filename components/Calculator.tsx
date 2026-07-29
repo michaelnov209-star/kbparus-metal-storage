@@ -25,6 +25,9 @@ import type { CalculatorInput } from "@/lib/calculator";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
 import { createLeadConsent } from "@/lib/leads/contract";
+import { getLocalCatalogImageVariants } from "@/lib/cms/catalog-image-variants";
+import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
+import { buildImageSrcSet } from "@/lib/media/srcset";
 
 const steps = ["Материал", "Габариты", "Доступ", "Решение"];
 
@@ -111,6 +114,24 @@ const guidedChoices: Array<{
   }
 ];
 
+function calculatorCardImage(source: string) {
+  const catalogVariants = getLocalCatalogImageVariants(source);
+  if (catalogVariants) {
+    return {
+      src: catalogVariants.medium,
+      srcSet: `${catalogVariants.thumb} 320w, ${catalogVariants.medium} 640w, ${catalogVariants.large} 960w`
+    };
+  }
+
+  const productVariants = getLocalProductImageVariants(source);
+  if (!productVariants) return { src: source, srcSet: undefined };
+
+  return {
+    src: productVariants.medium.src,
+    srcSet: buildImageSrcSet(Object.values(productVariants))
+  };
+}
+
 const siteConditions = [
   "Узкий проезд",
   "Кран-балка",
@@ -196,6 +217,7 @@ export function Calculator({
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
   const progress = ((step + 1) / steps.length) * 100;
   const display = profileCopy[profile.id];
+  const displayImage = calculatorCardImage(display.image);
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
   const systemCharacter = profile.productType === "automated" ? "tech" : profile.productType === "hybrid" ? "hybrid" : "manual";
   const scaleScore =
@@ -433,15 +455,21 @@ export function Calculator({
   return (
     <section
       className={`calculator-shell reveal character-${systemCharacter} scale-${projectScale.id}`}
+      data-ui="calculator-v2"
       data-testid="calculator"
       id="calculator"
     >
       <div className="calculator-heading">
-        <span className="line-kicker">Конфигуратор системы хранения</span>
-        <h2>Соберите решение для склада за четыре спокойных шага</h2>
+        <span className="line-kicker">Предварительный подбор</span>
+        <h2>Подберите систему хранения за 2 минуты</h2>
         <p>
-          Минимум полей, только важные решения: материал, габариты, доступ к хранению и финальная инженерная рекомендация.
+          Укажите, что храните и в каком объёме. Калькулятор покажет подходящее решение и ориентир по бюджету — без сложных терминов.
         </p>
+        <div className="calculator-value-strip" aria-label="Что даёт предварительный подбор">
+          <span><PackageSearch size={18} /> Шесть готовых типов систем</span>
+          <span><Gauge size={18} /> Бюджет обновляется сразу</span>
+          <span><ShieldCheck size={18} /> Финально проверит инженер</span>
+        </div>
       </div>
 
       <div className="calculator-product">
@@ -463,71 +491,83 @@ export function Calculator({
               <div className="calc-panel-title">
                 <PackageSearch size={24} />
                 <div>
-                  <h3>Выберите систему хранения</h3>
-                  <p>Сначала выберите реальное направление оборудования. Если сомневаетесь, ниже есть быстрый помощник.</p>
+                  <h3>Что нужно хранить?</h3>
+                  <p>Выберите ближайший сценарий. Конкретный тип оборудования можно уточнить ниже.</p>
                 </div>
               </div>
 
-              <div className="system-showcase" aria-label="Системы хранения">
-                {profiles.map((item, index) => {
-                  const card = profileCopy[item.id];
-                  const isActive = item.id === input.systemId;
-                  const isRecommended = index < 2;
-                  const typeLabel = item.productType === "automated"
-                    ? "Автоматизированная"
-                    : item.productType === "rollout"
-                      ? "Выкатная"
-                      : item.productType === "hybrid"
-                        ? "Комбинированная"
-                        : "Ручная";
+              <div className="material-choice-grid" aria-label="Сценарий хранения">
+                {guidedChoices.map((choice, index) => {
+                  const ChoiceIcon = index === 0 ? Layers3 : index === 1 ? Warehouse : PackageSearch;
                   return (
                     <button
-                      className={isActive ? "system-card is-active" : "system-card"}
-                      key={item.id}
+                      className={choice.profileId === input.systemId ? "material-choice is-active" : "material-choice"}
+                      key={choice.title}
                       type="button"
-                      onClick={() => selectProfile(item.id)}
+                      onClick={() => selectGuidedChoice(choice.profileId)}
                     >
-                      <div className="system-card-tags">
-                        <span>{typeLabel}</span>
-                        {isRecommended && <em>Рекомендуем</em>}
-                        {isActive && <b>Выбрано</b>}
-                      </div>
-                      <img
-                        src={card.image}
-                        alt={card.title}
-                        loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
-                        width={1536}
-                        height={1024}
-                      />
-                      <strong>{card.shortTitle}</strong>
-                      <small>{card.description}</small>
+                      <span className="material-choice-icon"><ChoiceIcon size={22} /></span>
+                      <span className="material-choice-copy">
+                        <strong>{choice.title}</strong>
+                        <small>{choice.text}</small>
+                      </span>
+                      <span className="material-choice-check" aria-hidden="true"><Check size={16} /></span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="guided-assist">
-                <div>
-                  <span className="guided-kicker">Помочь с подбором</span>
-                  <strong>Если не уверены, выберите сценарий хранения</strong>
-                  <small>Сценарий только подставит подходящее направление. Переход дальше остается под вашим контролем.</small>
+              <details className="equipment-picker">
+                <summary>
+                  <span>
+                    <strong>Знаю, какая система нужна</strong>
+                    <small>Сейчас выбрано: {display.shortTitle}</small>
+                  </span>
+                  <span className="equipment-picker-action">Выбрать точный тип</span>
+                </summary>
+                <div className="system-showcase" aria-label="Все типы систем хранения">
+                  {profiles.map((item, index) => {
+                    const card = profileCopy[item.id];
+                    const cardImage = calculatorCardImage(card.image);
+                    const isActive = item.id === input.systemId;
+                    const isRecommended = index < 2;
+                    const typeLabel = item.productType === "automated"
+                      ? "Автоматизированная"
+                      : item.productType === "rollout"
+                        ? "Выкатная"
+                        : item.productType === "hybrid"
+                          ? "Комбинированная"
+                          : "Ручная";
+                    return (
+                      <button
+                        className={isActive ? "system-card is-active" : "system-card"}
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectProfile(item.id)}
+                      >
+                        <div className="system-card-tags">
+                          <span>{typeLabel}</span>
+                          {isRecommended && <em>Популярное</em>}
+                          {isActive && <b>Выбрано</b>}
+                        </div>
+                        <img
+                          src={cardImage.src}
+                          srcSet={cardImage.srcSet}
+                          sizes="(max-width: 760px) 72px, 180px"
+                          alt={card.title}
+                          loading="lazy"
+                          decoding="async"
+                          fetchPriority="low"
+                          width={1536}
+                          height={1024}
+                        />
+                        <strong>{card.shortTitle}</strong>
+                        <small>{card.description}</small>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="guided-actions">
-                  {guidedChoices.map((choice) => (
-                    <button
-                      className={choice.profileId === input.systemId ? "guided-choice is-active" : "guided-choice"}
-                      key={choice.title}
-                      type="button"
-                      onClick={() => selectGuidedChoice(choice.profileId)}
-                    >
-                      <span>{choice.title}</span>
-                      <small>{choice.text}</small>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </details>
             </div>
           )}
 
@@ -916,7 +956,9 @@ export function Calculator({
           <span className="line-kicker">Ваше решение</span>
           <h3>{display.shortTitle}</h3>
           <img
-            src={display.image}
+            src={displayImage.src}
+            srcSet={displayImage.srcSet}
+            sizes="320px"
             alt={display.title}
             loading="lazy"
             decoding="async"

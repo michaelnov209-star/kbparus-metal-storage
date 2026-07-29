@@ -1,4 +1,5 @@
 import {
+  buildSeoCountryMetrics,
   buildSeoPageMetrics,
   buildSeoQueryMetrics,
   buildSeoSourceSummary,
@@ -226,7 +227,14 @@ export function buildSeoReportResponse({
   );
   const base: Omit<
     SeoReportResponse,
-    "status" | "summary" | "trend" | "queries" | "notices" | "truncated"
+    | "status"
+    | "summary"
+    | "trend"
+    | "queries"
+    | "pages"
+    | "countries"
+    | "notices"
+    | "truncated"
   > = {
     provider: input.provider,
     requestedDays: input.period,
@@ -264,6 +272,8 @@ export function buildSeoReportResponse({
       summary: emptySummary,
       trend: [],
       queries: [],
+      pages: [],
+      countries: [],
       notices: [
         "Источник не подключён. После настройки отчёт начнёт показывать реальные данные."
       ],
@@ -279,6 +289,8 @@ export function buildSeoReportResponse({
       summary: emptySummary,
       trend: [],
       queries: [],
+      pages: [],
+      countries: [],
       notices: [execution.message],
       truncated: false
     };
@@ -317,6 +329,19 @@ export function buildSeoReportResponse({
     window
   );
   const queryMetrics = allQueryMetrics.slice(0, RESPONSE_QUERY_LIMIT);
+  const pageMetrics = buildSeoPageMetrics(
+    execution.dataset.pageRows,
+    window
+  );
+  const countryMetrics = buildSeoCountryMetrics(
+    execution.dataset.countryRows ?? [],
+    window
+  );
+  const hasReportData =
+    execution.dataset.summaryRows.length > 0 ||
+    allQueryMetrics.length > 0 ||
+    pageMetrics.length > 0 ||
+    countryMetrics.length > 0;
   const responseTruncated =
     execution.dataset.truncated ||
     allQueryMetrics.length > RESPONSE_QUERY_LIMIT;
@@ -345,6 +370,31 @@ export function buildSeoReportResponse({
           "Live API Яндекса хранит только последние 14 дней; длинные периоды станут доступны после накопления собственной истории.",
           "Для запроса Яндекс возвращает только его наиболее популярную посадочную страницу."
         ];
+
+  if (!hasReportData) {
+    const emptyNotices = [
+      input.query
+        ? `По запросу «${input.query}» и выбранным фильтрам показов нет. Это не означает позицию «100+».`
+        : "По выбранным условиям поисковая система ещё не зафиксировала показов сайта."
+    ];
+    if (input.provider === "google" && input.period === 365) {
+      emptyNotices.push(
+        "Сравнение с предыдущим годом отключено: live-истории Search Console недостаточно для двух полных лет."
+      );
+    }
+    return {
+      ...readyBase,
+      status: "empty",
+      summary: emptySummary,
+      trend: [],
+      queries: [],
+      pages: [],
+      countries: [],
+      notices: emptyNotices,
+      truncated: false
+    };
+  }
+
   if (input.provider === "google" && input.period === 365) {
     notices.push(
       "Сравнение с предыдущим годом отключено: live-истории Search Console недостаточно для двух полных лет."
@@ -393,6 +443,20 @@ export function buildSeoReportResponse({
       ...(metric.positionImprovement !== null
         ? { positionChange: metric.positionImprovement }
         : {})
+    })),
+    pages: pageMetrics.map((metric) => ({
+      page: metric.page,
+      clicks: metric.clicks,
+      impressions: metric.impressions,
+      ctr: metric.ctr,
+      position: metric.averagePosition
+    })),
+    countries: countryMetrics.map((metric) => ({
+      country: metric.country,
+      clicks: metric.clicks,
+      impressions: metric.impressions,
+      ctr: metric.ctr,
+      position: metric.averagePosition
     })),
     notices,
     truncated: responseTruncated

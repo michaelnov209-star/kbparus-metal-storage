@@ -1,5 +1,7 @@
 import { classifySeoDate, shiftIsoDate } from "./dates";
 import type {
+  SeoCountryMetric,
+  SeoCountryObservation,
   SeoDateWindow,
   SeoMetricChange,
   SeoMetricSummary,
@@ -241,6 +243,50 @@ export function buildSeoPageMetrics(
     (left, right) =>
       right.impressions - left.impressions ||
       left.page.localeCompare(right.page, "ru")
+  );
+}
+
+export function buildSeoCountryMetrics(
+  rows: readonly SeoCountryObservation[],
+  window: SeoDateWindow
+): SeoCountryMetric[] {
+  const grouped = new Map<string, SeoCountryObservation[]>();
+
+  for (const row of rows) {
+    if (classifySeoDate(row.date, window) !== "current" || !row.country) {
+      continue;
+    }
+    const key = `${row.source}:${row.country.toLocaleLowerCase("en-US")}`;
+    const bucket = grouped.get(key);
+    if (bucket) bucket.push(row);
+    else grouped.set(key, [row]);
+  }
+
+  const result: SeoCountryMetric[] = [];
+  for (const currentRows of grouped.values()) {
+    const metrics = aggregateSeoMetrics(
+      currentRows.map((row) => ({
+        source: row.source,
+        date: row.date,
+        query: "",
+        page: null,
+        device: "all",
+        clicks: row.clicks,
+        impressions: row.impressions,
+        position: row.position
+      }))
+    );
+    result.push({
+      source: currentRows[0]!.source,
+      country: currentRows[0]!.country,
+      ...metrics
+    });
+  }
+
+  return result.sort(
+    (left, right) =>
+      right.impressions - left.impressions ||
+      left.country.localeCompare(right.country, "en")
   );
 }
 

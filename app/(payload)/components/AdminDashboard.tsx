@@ -9,6 +9,7 @@ import {
   CircleGauge,
   Contact,
   FileClock,
+  FolderTree,
   Image as ImageIcon,
   Inbox,
   LayoutDashboard,
@@ -27,8 +28,10 @@ import {
 } from "@/payload/access/rbac";
 import { AdminIntentLink } from "./AdminIntentLink";
 import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
+import { AdminTraining } from "./AdminTraining";
 
 type DashboardCounts = {
+  categories: number | null;
   products: number | null;
   calculatorProfiles: number | null;
   media: number | null;
@@ -134,6 +137,41 @@ function roleLabel(role: CmsRole | null): string {
   return "Ограниченный доступ";
 }
 
+type DashboardUser = {
+  displayName?: unknown;
+  email?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
+  name?: unknown;
+};
+
+function cleanUserPart(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function userDisplayName(user: unknown): string {
+  if (!user || typeof user !== "object") return "Пользователь";
+
+  const candidate = user as DashboardUser;
+  const firstAndLast = [
+    cleanUserPart(candidate.firstName),
+    cleanUserPart(candidate.lastName)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const storedName =
+    cleanUserPart(candidate.displayName) ||
+    firstAndLast ||
+    cleanUserPart(candidate.name);
+  if (storedName) return storedName;
+
+  const email = cleanUserPart(candidate.email);
+  const emailName = email.split("@", 1)[0]?.replace(/[._-]+/g, " ").trim();
+  if (!emailName) return email || "Пользователь";
+
+  return emailName.replace(/(^|\s)\p{L}/gu, (letter) => letter.toUpperCase());
+}
+
 async function readDashboardCounts(
   payload: Payload,
   role: CmsRole | null
@@ -142,7 +180,10 @@ async function readDashboardCounts(
     const hasContentAccess = role === "admin" || role === "editor";
     const hasMediaAccess = canManageMedia({ role });
     const hasLeadAccess = role === "admin";
-    const [products, calculatorProfiles, media, leads] = await Promise.all([
+    const [categories, products, calculatorProfiles, media, leads] = await Promise.all([
+      hasContentAccess
+        ? payload.count({ collection: "categories", overrideAccess: true })
+        : null,
       hasContentAccess
         ? payload.count({ collection: "products", overrideAccess: true })
         : null,
@@ -158,6 +199,7 @@ async function readDashboardCounts(
     ]);
 
     return {
+      categories: categories?.totalDocs ?? null,
       products: products?.totalDocs ?? null,
       calculatorProfiles: calculatorProfiles?.totalDocs ?? null,
       media: media?.totalDocs ?? null,
@@ -166,6 +208,7 @@ async function readDashboardCounts(
   } catch (error) {
     console.error("[admin-dashboard] Counters are unavailable", error);
     return {
+      categories: null,
       products: null,
       calculatorProfiles: null,
       media: null,
@@ -198,7 +241,7 @@ async function getDashboardCounts(
 function CountSkeleton() {
   return (
     <div className="kb-control-center__metrics" aria-busy="true">
-      {Array.from({ length: 4 }, (_, index) => (
+      {Array.from({ length: 5 }, (_, index) => (
         <span className="kb-control-center__metric-skeleton" key={index} />
       ))}
     </div>
@@ -215,7 +258,13 @@ async function DashboardMetrics({
   const counts = await getDashboardCounts(payload, role);
   const metrics = [
     {
-      label: "Товаров",
+      label: "Категорий",
+      value: counts.categories,
+      href: "/admin/collections/categories",
+      icon: FolderTree
+    },
+    {
+      label: "Карточек товаров",
       value: counts.products,
       href: "/admin/collections/products",
       icon: Package
@@ -243,7 +292,12 @@ async function DashboardMetrics({
   return (
     <div className="kb-control-center__metrics">
       {metrics.map((metric) => (
-        <AdminIntentLink className="kb-control-center__metric" href={metric.href} key={metric.label}>
+        <AdminIntentLink
+          className="kb-control-center__metric"
+          data-tour={metric.href === "/admin/collections/leads" ? "metric-leads" : undefined}
+          href={metric.href}
+          key={metric.label}
+        >
           <span>
             <metric.icon size={17} aria-hidden />
             {metric.label}
@@ -256,10 +310,19 @@ async function DashboardMetrics({
 }
 
 function WorkspaceCard({ item }: { item: WorkspaceItem }) {
+  const tourTarget = ({
+    "/admin/globals/home-content": "card-home",
+    "/admin/collections/products": "card-products",
+    "/admin/collections/calculator-profiles": "card-calculator",
+    "/admin/collections/leads": "card-leads",
+    "/admin/collections/media": "card-media"
+  } as Record<string, string>)[item.href];
+
   return (
     <AdminIntentLink
       className="kb-control-center__card"
       data-accent={item.accent ? "true" : "false"}
+      data-tour={tourTarget}
       href={item.href}
     >
       <span className="kb-control-center__card-icon">
@@ -292,18 +355,27 @@ export async function AdminDashboard({
     Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
     Boolean(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID)
   ].filter(Boolean).length;
+  const displayName = userDisplayName(authenticatedUser);
 
   const content = (
     <section className="kb-control-center" aria-label="Обзор и быстрые действия">
-      <header className="kb-control-center__hero">
+      <header className="kb-control-center__hero" data-tour="dashboard-hero">
         <div>
-          <span className="kb-control-center__eyebrow">
-            <ShieldCheck size={15} aria-hidden />
-            {roleLabel(role)}
-          </span>
+          <div className="kb-control-center__identity">
+            <span className="kb-control-center__identity-avatar" aria-hidden>
+              {displayName.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="kb-control-center__identity-copy">
+              <strong>{displayName}</strong>
+              <small>
+                <ShieldCheck size={13} aria-hidden />
+                {roleLabel(role)}
+              </small>
+            </span>
+          </div>
           <h1>Центр управления сайтом</h1>
           <p>Главное на одном экране: контент, заявки, расчёты и состояние сервисов.</p>
-          <div className="kb-control-center__quick-actions">
+          <div className="kb-control-center__quick-actions" data-tour="quick-actions">
             {canEdit ? (
               <AdminIntentLink
                 className="kb-control-center__action kb-control-center__action--primary"
@@ -328,7 +400,7 @@ export async function AdminDashboard({
           </div>
         </div>
 
-        <aside className="kb-control-center__status">
+        <aside className="kb-control-center__status" data-tour="system-status">
           <div className="kb-control-center__status-head">
             <span>Системный контур</span>
             <strong>{integrationsConfigured}/3</strong>
@@ -351,7 +423,7 @@ export async function AdminDashboard({
       </Suspense>
 
       <div className="kb-control-center__layout">
-        <section className="kb-control-center__panel">
+        <section className="kb-control-center__panel" data-tour="workspace">
           <div className="kb-control-center__section-head">
             <div>
               <span>Рабочие разделы</span>
@@ -367,7 +439,7 @@ export async function AdminDashboard({
         </section>
 
         {visibleSystem.length ? (
-          <aside className="kb-control-center__panel kb-control-center__panel--system">
+          <aside className="kb-control-center__panel kb-control-center__panel--system" data-tour="system-panel">
             <div className="kb-control-center__section-head">
               <div>
                 <span>Контроль</span>
@@ -383,6 +455,8 @@ export async function AdminDashboard({
           </aside>
         ) : null}
       </div>
+
+      {role ? <AdminTraining role={role} /> : null}
 
       <footer className="kb-control-center__footer">
         <ShieldCheck size={16} aria-hidden />

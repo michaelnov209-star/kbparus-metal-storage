@@ -129,6 +129,21 @@ describe("SEO reporting configuration", () => {
       regionIds: [1, 225]
     });
   });
+
+  it("rejects a Search Console property that belongs to another КБ Парус site", () => {
+    const config = readSeoReportingConfig({
+      GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL: "seo@example.test",
+      GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY: "line-1\\nline-2",
+      GOOGLE_SEARCH_CONSOLE_SITE_URL: "sc-domain:kbparus.ru"
+    });
+
+    expect(config.google).toEqual({
+      configured: false,
+      missing: [
+        "GOOGLE_SEARCH_CONSOLE_SITE_URL (указан ресурс другого сайта КБ Парус)"
+      ]
+    });
+  });
 });
 
 describe("SEO reporting aggregation", () => {
@@ -182,9 +197,64 @@ describe("SEO reporting aggregation", () => {
 
     expect(report.status).toBe("not_configured");
     expect(report.queries).toEqual([]);
+    expect(report.pages).toEqual([]);
+    expect(report.countries).toEqual([]);
     expect(report.trend).toEqual([]);
     expect(report.setup).toEqual(["GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL"]);
     expect(report.summary.position).toBeNull();
+  });
+
+  it("returns real Google landing pages and country breakdowns", () => {
+    const input: SeoReportInput = {
+      provider: "google",
+      period: 30,
+      device: "all",
+      query: ""
+    };
+    const report = buildSeoReportResponse({
+      input,
+      generatedAt: now,
+      execution: {
+        state: "ok",
+        dataset: {
+          summaryRows: [
+            observation({ date: "2026-07-10", query: "", page: null })
+          ],
+          queryRows: [],
+          pageRows: [
+            observation({
+              date: "2026-07-26",
+              query: "",
+              page: "https://example.test/catalog/racks",
+              impressions: 80
+            })
+          ],
+          countryRows: [
+            {
+              source: "google",
+              date: "2026-07-26",
+              country: "rus",
+              clicks: 7,
+              impressions: 90,
+              position: 6
+            }
+          ],
+          actualStart: "2026-07-10",
+          actualEnd: "2026-07-10",
+          truncated: false
+        }
+      }
+    });
+
+    expect(report.pages[0]).toMatchObject({
+      page: "https://example.test/catalog/racks",
+      impressions: 80
+    });
+    expect(report.countries[0]).toMatchObject({
+      country: "rus",
+      impressions: 90,
+      position: 6
+    });
   });
 
   it("reports zero actual coverage when Yandex returned no rows", () => {
@@ -210,7 +280,7 @@ describe("SEO reporting aggregation", () => {
       }
     });
 
-    expect(report.status).toBe("ready");
+    expect(report.status).toBe("empty");
     expect(report.coverageDays).toBe(0);
     expect(report.dateRange).toEqual({
       start: "2026-07-13",

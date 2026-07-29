@@ -42,6 +42,7 @@ type HealthItem = {
   href?: string;
   icon: typeof Activity;
   label: string;
+  required?: boolean;
   state: HealthState;
   status: string;
 };
@@ -292,13 +293,12 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       label: "Bitrix24",
       description: bitrix.enabled
         ? "Передача заявок в CRM включена."
-        : bitrix.webhookUrlConfigured
-          ? "Webhook сохранён, но автоматическая передача отключена."
-          : "Интеграция подготовлена к будущему подключению.",
-      status: bitrix.enabled ? "Работает" : bitrix.webhookUrlConfigured ? "Готов к включению" : "Не подключён",
-      state: bitrix.enabled ? "healthy" : bitrix.webhookUrlConfigured ? "configured" : "disabled",
+        : "Bitrix24 не используется в текущем процессе. Заявки сохраняются в админке и отправляются в Telegram и на почту.",
+      status: bitrix.enabled ? "Работает" : "Не используется",
+      state: bitrix.enabled ? "healthy" : "disabled",
       icon: Cloud,
-      href: "/admin/integrations"
+      href: "/admin/integrations",
+      required: false
     }
   ];
 }
@@ -417,12 +417,15 @@ async function SystemScore({
 }) {
   const { leadDelivery } = await summaryPromise;
   const healthItems = buildHealthItems(leadDelivery);
-  const healthyCount = healthItems.filter((item) => item.state === "healthy").length;
-  const attentionCount = healthItems.filter((item) => item.state === "attention").length;
+  const requiredItems = healthItems.filter((item) => item.required !== false);
+  const healthyCount = requiredItems.filter((item) => item.state === "healthy").length;
+  const attentionCount = requiredItems.filter(
+    (item) => item.state === "attention" || item.state === "disabled"
+  ).length;
 
   return (
     <div className="kb-system__score" data-state={attentionCount ? "attention" : "healthy"}>
-      <strong>{healthyCount}/{healthItems.length}</strong>
+      <strong>{healthyCount}/{requiredItems.length}</strong>
       <span>{attentionCount ? "Есть критичный сигнал" : "Критичных сбоев нет"}</span>
       <small>Сборка {deploySha}</small>
     </div>

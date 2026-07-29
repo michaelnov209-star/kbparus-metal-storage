@@ -109,11 +109,11 @@ export const LeadManagement: GlobalConfig = {
           fields: [
             {
               name: "bitrix24",
-              label: { ru: "Подготовка интеграции Bitrix24", en: "Bitrix24 preparation" },
+              label: { ru: "Необязательная интеграция Bitrix24", en: "Optional Bitrix24 integration" },
               type: "group",
               admin: {
                 description: {
-                  ru: "Пока Bitrix24 не настроен в production env. Этот блок нужен как рабочая памятка перед интеграцией."
+                  ru: "Bitrix24 не входит в текущий рабочий процесс. Сайт полноценно принимает заявки через админку, Telegram и почту; этот блок оставлен только на случай будущего подключения CRM."
                 }
               },
               fields: [
@@ -121,8 +121,9 @@ export const LeadManagement: GlobalConfig = {
                   name: "status",
                   label: { ru: "Статус", en: "Status" },
                   type: "select",
-                  defaultValue: "planned",
+                  defaultValue: "not_used",
                   options: [
+                    { label: { ru: "Не используется", en: "Not used" }, value: "not_used" },
                     { label: { ru: "Запланировано", en: "Planned" }, value: "planned" },
                     { label: { ru: "На проверке", en: "Testing" }, value: "testing" },
                     { label: { ru: "Готово", en: "Ready" }, value: "ready" }

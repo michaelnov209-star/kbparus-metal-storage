@@ -12,8 +12,26 @@ export function publicSeoProviderError(
   provider: "Google Search Console" | "Яндекс Вебмастер",
   error: unknown
 ): string {
-  if (error instanceof SeoProviderError && error.status) {
-    return `${provider} временно недоступен (HTTP ${error.status})`;
+  if (error instanceof SeoProviderError) {
+    if (provider === "Google Search Console") {
+      if (error.status === 400 || error.status === 401) {
+        return "Google не принял учётные данные service account. Проверьте email и закрытый ключ.";
+      }
+      if (error.status === 403) {
+        return "Service account не имеет доступа к выбранному ресурсу Search Console. Добавьте его email в список пользователей ресурса.";
+      }
+      if (error.status === 404) {
+        return "Ресурс Search Console не найден. Проверьте точное значение GOOGLE_SEARCH_CONSOLE_SITE_URL.";
+      }
+      if (error.status === 429) {
+        return "Google временно ограничил частоту запросов. Повторите обновление позже.";
+      }
+    }
+
+    if (error.status) {
+      return `${provider} временно недоступен (HTTP ${error.status})`;
+    }
+    if (error.message) return error.message;
   }
   return `${provider} временно недоступен`;
 }

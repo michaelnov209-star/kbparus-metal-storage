@@ -1,10 +1,12 @@
 # КБ Парус — «Системы хранения металла»
 
-Production-ready B2B-сайт для направления «Системы хранения металла» КБ Парус / ООО «Технокам». Next.js + Payload CMS на Vercel. Сайт работает как инструмент первичного подбора оборудования: клиент выбирает систему, видит ориентировочную стоимость «от ... ₽», оставляет заявку → менеджер получает структурированные данные в Bitrix24 и Telegram.
+Production-ready B2B-сайт отдельного направления «Системы хранения металла» КБ Парус / ООО «Технокам». Next.js + Payload CMS на Vercel. Сайт работает как инструмент первичного подбора оборудования: клиент выбирает систему, видит ориентировочную стоимость «от ... ₽», оставляет заявку → менеджер получает структурированные данные в Telegram, почте и журнале заявок CMS.
 
 - **Production:** https://kbparus-metal-storage.vercel.app
 - **Admin:** https://kbparus-metal-storage.vercel.app/admin
 - **Health:** https://kbparus-metal-storage.vercel.app/api/health
+
+`kbparus.ru` — другой сайт бренда, посвящённый линиям порошковой окраски. Он не используется как canonical/origin этого проекта. После покупки отдельного домена систем хранения нужно заменить `NEXT_PUBLIC_SITE_URL`, разрешённые origin форм и ресурсы в поисковых кабинетах.
 
 ## Стек
 
@@ -12,9 +14,9 @@ Production-ready B2B-сайт для направления «Системы х�
 |------|------------|
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 5.9 strict |
 | CMS | Payload 3 (`/admin`), Postgres (Neon), Vercel Blob, `sharp` для обработки изображений |
-| Hosting | Vercel, auto-deploy из `main`, Node 22.x (exact pin) |
+| Hosting | Vercel, auto-deploy из `main`, Node 24.x (exact pin) |
 | Тесты | Vitest + Playwright (390/768/1280, WCAG, visual regression) |
-| Интеграции | Bitrix24 (webhook), Telegram Bot API |
+| Интеграции | Telegram Bot API, Яндекс Почта, Яндекс Метрика/Вебмастер, Google Search Console; Bitrix24 оставлен как опциональный будущий канал |
 
 Без Tailwind и CSS-in-JS — нативный CSS в `app/globals.css`. ESM-пакет (`"type": "module"`).
 
@@ -57,14 +59,14 @@ docs/               # Документация (см. docs/README.md)
 Payload admin доступен по `/admin`. Сейчас это не только стандартная CMS-оболочка, а рабочая панель менеджера:
 
 - кастомный SaaS-dashboard с быстрыми действиями: новый товар, загрузка фото, заявки, главная;
-- карточки показателей: товары, категории, медиа, заявки;
+- карточки показателей: товары, профили расчёта, медиа, заявки;
 - карта главной страницы в порядке публичной витрины: hero → каталог → калькулятор → доверие → контакты;
 - карта каталога в порядке сайта: категория → вложенные товары → визуальные превью, готовность контента, быстрые ссылки “редактировать” и “посмотреть на сайте”;
-- блок ролевых сценариев для контент-менеджера, менеджера продаж, инженера и руководителя;
+- ролевое рабочее пространство для администратора, редактора контента и медиа-менеджера;
 - операционный блок Preview / Status / Health для проверки сайта, заявок и `/api/health`;
-- SEO Reporting Center: реальные данные Google Search Console и Яндекс Вебмастера, периоды 30/90/180/365 дней, устройства, запросы, динамика и CSV;
+- SEO Reporting Center: реальные данные Google Search Console и Яндекс Вебмастера, периоды 30/90/180/365 дней, устройства, топ запросов, посадочные страницы, страны Google, динамика и CSV;
 - блок “Безопасный порядок работы” для публикации контента;
-- встроенный пункт “Обучение” с пошаговым tour-overlay, подсветкой элементов и всплывающими подсказками со стрелками;
+- встроенное ролевое обучение с затемнением экрана, точечной подсветкой, изогнутой стрелкой, прогрессом и повторным запуском из меню;
 - светлая тема админки и отдельные premium industrial стили в `app/(payload)/custom.scss`.
 
 Кастомные компоненты админки лежат в `app/(payload)/components/`. При изменении компонентов, подключённых к Payload admin, запускать `npm run cms:generate-importmap`.
@@ -104,7 +106,7 @@ Payload admin доступен по `/admin`. Сейчас это не толь�
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Опционально — уведомления о заявках |
 | `NEXT_PUBLIC_YANDEX_METRIKA_ID` | Опционально — счетчик Яндекс Метрики |
 | `GOOGLE_SITE_VERIFICATION`, `YANDEX_SITE_VERIFICATION` | Опционально — подтверждение сайта в поисковых кабинетах |
-| `GOOGLE_SEARCH_CONSOLE_*` | Read-only подключение SEO-отчётов Google |
+| `GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL`, `GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY`, `GOOGLE_SEARCH_CONSOLE_SITE_URL` | Read-only подключение SEO-отчётов Google |
 | `YANDEX_WEBMASTER_*` | Подключение SEO-отчётов Яндекса |
 
 Подключение и ограничения SEO-источников описаны в [`docs/operations/seo-reporting.md`](docs/operations/seo-reporting.md).

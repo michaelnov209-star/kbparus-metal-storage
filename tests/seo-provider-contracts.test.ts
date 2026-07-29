@@ -74,6 +74,36 @@ describe("Google Search Console provider contract", () => {
           { status: 200, headers: { "content-type": "application/json" } }
         );
       }
+      if (body.dimensions.join(",") === "page") {
+        return new Response(
+          JSON.stringify({
+            rows: [
+              {
+                keys: ["https://example.test/catalog/racks"],
+                clicks: 7,
+                impressions: 90,
+                position: 6.5
+              }
+            ]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        );
+      }
+      if (body.dimensions.join(",") === "country") {
+        return new Response(
+          JSON.stringify({
+            rows: [
+              {
+                keys: ["rus"],
+                clicks: 8,
+                impressions: 100,
+                position: 7
+              }
+            ]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        );
+      }
 
       return new Response(
         JSON.stringify({
@@ -104,7 +134,7 @@ describe("Google Search Console provider contract", () => {
       fetchImpl: fetchMock as typeof fetch
     });
 
-    expect(requestBodies).toHaveLength(4);
+    expect(requestBodies).toHaveLength(6);
     expect(requestBodies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -118,6 +148,14 @@ describe("Google Search Console provider contract", () => {
         expect.objectContaining({
           dimensions: ["query", "page"],
           aggregationType: "byPage"
+        }),
+        expect.objectContaining({
+          dimensions: ["page"],
+          aggregationType: "byPage"
+        }),
+        expect.objectContaining({
+          dimensions: ["country"],
+          aggregationType: "byProperty"
         })
       ])
     );
@@ -127,6 +165,14 @@ describe("Google Search Console provider contract", () => {
     expect(dataset.queryRows[0]).toMatchObject({
       query: "стеллажи для металла",
       page: "https://example.test/catalog/racks"
+    });
+    expect(dataset.pageRows[0]).toMatchObject({
+      page: "https://example.test/catalog/racks",
+      impressions: 90
+    });
+    expect(dataset.countryRows?.[0]).toMatchObject({
+      country: "rus",
+      impressions: 100
     });
   });
 
@@ -160,7 +206,7 @@ describe("Google Search Console provider contract", () => {
       fetchImpl: fetchMock as typeof fetch
     });
 
-    expect(searchBodies).toHaveLength(3);
+    expect(searchBodies).toHaveLength(5);
     expect(
       searchBodies.some((body) => body.startDate === "2024-07-27")
     ).toBe(false);

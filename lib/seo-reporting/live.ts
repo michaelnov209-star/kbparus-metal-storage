@@ -166,7 +166,9 @@ export async function getLiveSeoReport(
 
   const request = loadLiveSeoReport(input, env, now, fetchImpl)
     .then((report) => {
-      if (report.status === "ready") cacheReport(key, report);
+      if (report.status === "ready" || report.status === "empty") {
+        cacheReport(key, report);
+      }
       return report;
     })
     .finally(() => {

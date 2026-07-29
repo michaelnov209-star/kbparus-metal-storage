@@ -164,12 +164,14 @@ async function IntegrationGrid({
     },
     {
       title: "Bitrix24",
-      description: "Передача заявок в CRM подготовлена и включается отдельным безопасным переключателем.",
+      description: bitrix.enabled
+        ? "Передача заявок в CRM включена."
+        : "Bitrix24 не используется в текущем рабочем процессе. Заявки сохраняются в админке и дублируются в Telegram и на почту.",
       icon: Workflow,
-      state: bitrix.enabled ? "connected" : bitrix.webhookUrlConfigured ? "configured" : "disabled",
-      status: bitrix.enabled ? "Передача включена" : bitrix.webhookUrlConfigured ? "Готов к включению" : "Не подключён",
+      state: bitrix.enabled ? "connected" : "disabled",
+      status: bitrix.enabled ? "Передача включена" : "Не используется",
       actionHref: "/admin/globals/lead-management",
-      actionLabel: "Управление заявками"
+      actionLabel: "Рабочий процесс заявок"
     }
   ];
 

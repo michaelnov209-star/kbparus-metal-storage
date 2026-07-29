@@ -27,10 +27,14 @@ import {
   parseLeadPayload,
   readLeadJsonBody
 } from "@/lib/leads/validation";
+import {
+  FALLBACK_SITE_URL,
+  normalizeProjectSiteOrigin
+} from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 
-const PRODUCTION_ORIGIN = "https://kbparus-metal-storage.vercel.app";
+const PRODUCTION_ORIGIN = FALLBACK_SITE_URL;
 const MIN_FORM_FILL_MS = 2_000;
 
 async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?: string }> {
@@ -78,16 +82,6 @@ async function notifyTelegram(lead: TelegramLead): Promise<{ ok: boolean; error?
   }
 }
 
-function normalizeOrigin(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  try {
-    const normalized = value.startsWith("http") ? value : `https://${value}`;
-    return new URL(normalized).origin;
-  } catch {
-    return undefined;
-  }
-}
-
 function getAllowedOrigins(request: Request): Set<string> {
   const requestOrigin = new URL(request.url).origin;
   const configuredOrigins = [
@@ -99,7 +93,7 @@ function getAllowedOrigins(request: Request): Set<string> {
     process.env.VERCEL_URL,
     ...(process.env.LEAD_ALLOWED_ORIGINS?.split(",") ?? [])
   ]
-    .map((value) => normalizeOrigin(value?.trim()))
+    .map((value) => normalizeProjectSiteOrigin(value?.trim()))
     .filter((value): value is string => Boolean(value));
 
   return new Set(configuredOrigins);
@@ -110,7 +104,7 @@ function isOriginAllowed(request: Request): boolean {
   if (!origin) {
     return process.env.NODE_ENV !== "production" || process.env.LEAD_ALLOW_NO_ORIGIN === "true";
   }
-  const normalized = normalizeOrigin(origin);
+  const normalized = normalizeProjectSiteOrigin(origin);
   return Boolean(normalized && getAllowedOrigins(request).has(normalized));
 }
 

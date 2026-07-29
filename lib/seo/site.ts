@@ -1,5 +1,14 @@
 export const FALLBACK_SITE_URL = "https://kbparus-metal-storage.vercel.app";
 
+// These are separate КБ Парус web properties. They may be linked as related
+// projects, but must never become this site's canonical origin or CMS origin.
+const NON_PROJECT_HOSTNAMES = new Set([
+  "kbparus.ru",
+  "www.kbparus.ru",
+  "xn--80apaabkbctmxn.xn--p1ai",
+  "линииокраски.рф"
+]);
+
 function isLocalHostname(hostname: string) {
   return (
     hostname === "localhost" ||
@@ -8,7 +17,9 @@ function isLocalHostname(hostname: string) {
   );
 }
 
-function normalizeSiteOrigin(value: string | undefined): string | undefined {
+export function normalizeProjectSiteOrigin(
+  value: string | undefined
+): string | undefined {
   const candidate = value?.trim();
   if (!candidate || candidate.startsWith("//")) return undefined;
 
@@ -20,8 +31,15 @@ function normalizeSiteOrigin(value: string | undefined): string | undefined {
     const protocolAllowed =
       url.protocol === "https:" ||
       (url.protocol === "http:" && isLocalHostname(url.hostname));
+    const hostname = url.hostname.toLocaleLowerCase("en-US");
 
-    if (!protocolAllowed || url.username || url.password || !url.hostname) {
+    if (
+      !protocolAllowed ||
+      url.username ||
+      url.password ||
+      !hostname ||
+      NON_PROJECT_HOSTNAMES.has(hostname)
+    ) {
       return undefined;
     }
 
@@ -36,7 +54,7 @@ export function getSiteUrl(
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL
 ): string {
-  return normalizeSiteOrigin(value) ?? FALLBACK_SITE_URL;
+  return normalizeProjectSiteOrigin(value) ?? FALLBACK_SITE_URL;
 }
 
 export function getTrustedSiteOrigins(
@@ -44,10 +62,10 @@ export function getTrustedSiteOrigins(
 ): string[] {
   const origins = [
     FALLBACK_SITE_URL,
-    normalizeSiteOrigin(env.NEXT_PUBLIC_SITE_URL),
-    normalizeSiteOrigin(env.VERCEL_PROJECT_PRODUCTION_URL),
-    normalizeSiteOrigin(env.VERCEL_URL),
-    normalizeSiteOrigin(env.VERCEL_BRANCH_URL)
+    normalizeProjectSiteOrigin(env.NEXT_PUBLIC_SITE_URL),
+    normalizeProjectSiteOrigin(env.VERCEL_PROJECT_PRODUCTION_URL),
+    normalizeProjectSiteOrigin(env.VERCEL_URL),
+    normalizeProjectSiteOrigin(env.VERCEL_BRANCH_URL)
   ];
 
   if (env.NODE_ENV !== "production") {

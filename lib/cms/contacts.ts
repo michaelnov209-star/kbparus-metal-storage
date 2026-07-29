@@ -29,9 +29,7 @@ export const DEFAULT_CONTACTS: SiteContacts = {
   address: "МО, г. Ногинск, 1-й Кардолентный проезд, д. 5",
   worktime: "Пн–Пт 9:00–18:00",
   legalName: "ООО «Технокам»",
-  socials: {
-    vk: "https://www.kbparus.ru/"
-  }
+  socials: {}
 };
 
 export interface SiteSocialLinkInput {

@@ -8,15 +8,11 @@ import { DEFAULT_CONTACTS, mapContactSocials } from "@/lib/cms/contacts";
 
 describe("site contact links", () => {
   it("does not disguise email and phone fallbacks as messengers", () => {
-    expect(DEFAULT_CONTACTS.socials).toEqual({
-      vk: "https://www.kbparus.ru/"
-    });
+    expect(DEFAULT_CONTACTS.socials).toEqual({});
   });
 
-  it("maps only configured messenger links and keeps the verified VK fallback", () => {
-    expect(mapContactSocials(null)).toEqual({
-      vk: "https://www.kbparus.ru/"
-    });
+  it("maps only configured messenger links without inventing a social profile", () => {
+    expect(mapContactSocials(null)).toEqual({});
 
     expect(
       mapContactSocials([
@@ -27,8 +23,7 @@ describe("site contact links", () => {
       ])
     ).toEqual({
       telegram: "https://t.me/kbparus",
-      whatsapp: "https://wa.me/74994033962",
-      vk: "https://www.kbparus.ru/"
+      whatsapp: "https://wa.me/74994033962"
     });
   });
 
@@ -40,8 +35,6 @@ describe("site contact links", () => {
         { platform: "max", url: "not a url" },
         { platform: "vk", url: "http://vk.com/kbparus" }
       ])
-    ).toEqual({
-      vk: "https://www.kbparus.ru/"
-    });
+    ).toEqual({});
   });
 });

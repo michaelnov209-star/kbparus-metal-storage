@@ -21,16 +21,16 @@ describe("admin route assets", () => {
 
   it("builds bounded, cacheable stylesheets for special admin screens", () => {
     const assets = [
-      "public/assets/admin/control-center.css",
-      "public/assets/admin/seo-reports.css",
-      "public/assets/admin/system-center.css"
-    ];
+      ["public/assets/admin/control-center.css", 20_000],
+      ["public/assets/admin/seo-reports.css", 28_000],
+      ["public/assets/admin/system-center.css", 18_000]
+    ] as const;
 
-    for (const asset of assets) {
+    for (const [asset, byteBudget] of assets) {
       const absolutePath = resolve(projectRoot, asset);
       expect(existsSync(absolutePath)).toBe(true);
       expect(statSync(absolutePath).size).toBeGreaterThan(1_000);
-      expect(statSync(absolutePath).size).toBeLessThan(25_000);
+      expect(statSync(absolutePath).size).toBeLessThan(byteBudget);
     }
 
     const vercel = source("vercel.json");

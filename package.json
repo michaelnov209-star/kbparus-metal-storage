@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "scripts": {
     "predev": "npm run images:optimize && npm run admin:styles",
@@ -23,6 +23,7 @@
     "test:e2e": "npm run build && node e2e/run.mjs",
     "test:e2e:update": "npm run build && node e2e/run.mjs visual.spec.ts --update-snapshots",
     "test:e2e:report": "playwright show-report output/playwright/report",
+    "screenshots:comparison": "node scripts/visual/capture-comparison.mjs",
     "cms:check": "node scripts/cms/check.mjs",
     "cms:generate-importmap": "node scripts/cms/safe-generate-importmap.mjs",
     "cms:migrate:audit": "node scripts/cms/audit-migration-state.mjs",

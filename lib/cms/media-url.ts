@@ -27,7 +27,13 @@ function mediaFileUrl(filename: string) {
 }
 
 export function isLocalCmsMediaUrl(value: string) {
-  return value.startsWith("/api/media/file/");
+  if (value.startsWith("/api/media/file/")) return true;
+
+  try {
+    return new URL(value).pathname.startsWith("/api/media/file/");
+  } catch {
+    return false;
+  }
 }
 
 /**
