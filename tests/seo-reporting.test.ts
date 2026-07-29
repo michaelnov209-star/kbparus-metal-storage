@@ -13,6 +13,10 @@ import {
   parseSeoReportInput
 } from "@/lib/seo-reporting/dates";
 import { buildSeoReportResponse } from "@/lib/seo-reporting/report";
+import {
+  publicSeoProviderError,
+  SeoProviderError
+} from "@/lib/seo-reporting/providers/errors";
 import type {
   SeoObservation,
   SeoReportInput
@@ -143,6 +147,24 @@ describe("SEO reporting configuration", () => {
         "GOOGLE_SEARCH_CONSOLE_SITE_URL (указан ресурс другого сайта КБ Парус)"
       ]
     });
+  });
+});
+
+describe("SEO provider errors", () => {
+  it("does not confuse an OAuth failure with missing Search Console property access", () => {
+    expect(
+      publicSeoProviderError(
+        "Google Search Console",
+        new SeoProviderError("Google OAuth не выдал токен доступа", 403)
+      )
+    ).toContain("учётные данные service account");
+
+    expect(
+      publicSeoProviderError(
+        "Google Search Console",
+        new SeoProviderError("Google Search Console не вернул отчёт", 403)
+      )
+    ).toContain("не имеет доступа");
   });
 });
 

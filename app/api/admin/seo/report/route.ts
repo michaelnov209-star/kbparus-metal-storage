@@ -36,7 +36,8 @@ export async function GET(request: Request) {
   }
   const cms = auth.cms;
 
-  const parsed = parseSeoReportInput(new URL(request.url).searchParams);
+  const searchParams = new URL(request.url).searchParams;
+  const parsed = parseSeoReportInput(searchParams);
   if (!parsed.ok) {
     return NextResponse.json(
       { error: parsed.error },
@@ -88,7 +89,9 @@ export async function GET(request: Request) {
     }
   }
 
-  const report = await getLiveSeoReport(input);
+  const report = await getLiveSeoReport(input, {
+    forceRefresh: searchParams.get("refresh") === "1"
+  });
   return NextResponse.json(
     {
       ...report,

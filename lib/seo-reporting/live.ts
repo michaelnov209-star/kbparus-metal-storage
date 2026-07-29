@@ -15,6 +15,7 @@ type LiveSeoReportOptions = {
   env?: Environment;
   now?: Date;
   fetchImpl?: typeof fetch;
+  forceRefresh?: boolean;
 };
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
@@ -149,7 +150,8 @@ export async function getLiveSeoReport(
   {
     env = process.env,
     now = new Date(),
-    fetchImpl = fetch
+    fetchImpl = fetch,
+    forceRefresh = false
   }: LiveSeoReportOptions = {}
 ): Promise<SeoReportResponse> {
   const canUseRuntimeCache = env === process.env && fetchImpl === fetch;
@@ -158,7 +160,7 @@ export async function getLiveSeoReport(
   }
 
   const key = reportCacheKey(input);
-  const cached = readCachedReport(key);
+  const cached = forceRefresh ? null : readCachedReport(key);
   if (cached) return cached;
 
   const inFlight = inFlightReports.get(key);

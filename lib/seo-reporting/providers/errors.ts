@@ -14,8 +14,20 @@ export function publicSeoProviderError(
 ): string {
   if (error instanceof SeoProviderError) {
     if (provider === "Google Search Console") {
-      if (error.status === 400 || error.status === 401) {
+      const isOauthFailure = error.message.startsWith("Google OAuth");
+      if (
+        isOauthFailure &&
+        (error.status === 400 ||
+          error.status === 401 ||
+          error.status === 403)
+      ) {
         return "Google не принял учётные данные service account. Проверьте email и закрытый ключ.";
+      }
+      if (error.status === 400) {
+        return "Google отклонил параметры отчёта. Проверьте точное имя ресурса Search Console.";
+      }
+      if (error.status === 401) {
+        return "Google не принял токен доступа. Обновите отчёт; если ошибка повторится, проверьте service account.";
       }
       if (error.status === 403) {
         return "Service account не имеет доступа к выбранному ресурсу Search Console. Добавьте его email в список пользователей ресурса.";

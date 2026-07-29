@@ -510,7 +510,7 @@ export function SeoReportsClient({
   const [goalsRefreshKey, setGoalsRefreshKey] = useState(0);
 
   const loadReport = useCallback(
-    async (signal?: AbortSignal) => {
+    async (signal?: AbortSignal, forceRefresh = false) => {
       setLoading(true);
       setError(null);
 
@@ -521,6 +521,7 @@ export function SeoReportsClient({
           device
         });
         if (query) params.set("query", query);
+        if (forceRefresh) params.set("refresh", "1");
 
         const response = await fetch(`/api/admin/seo/report?${params}`, {
           method: "GET",
@@ -593,7 +594,7 @@ export function SeoReportsClient({
       setGoalsRefreshKey((value) => value + 1);
       return;
     }
-    void loadReport();
+    void loadReport(undefined, true);
   }, [activeView, loadReport]);
 
   const queryStats = useMemo(() => {
