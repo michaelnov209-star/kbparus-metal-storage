@@ -23,6 +23,38 @@ html[data-theme] .kb-admin-workspace-nav {
   box-shadow: 0 14px 32px rgba(4, 10, 16, 0.18);
 }
 
+html[data-theme] .kb-admin-workspace-nav__brand,
+html[data-theme] .kb-admin-workspace-nav__brand:visited {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 5px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ffffff, #f4f6f8);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 11px;
+  box-shadow: 0 10px 24px rgba(4, 10, 16, 0.2);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+html[data-theme] .kb-admin-workspace-nav__brand:hover {
+  border-color: rgba(252, 84, 19, 0.55);
+  box-shadow: 0 12px 28px rgba(4, 10, 16, 0.25);
+  transform: translateY(-1px);
+}
+
+html[data-theme] .kb-admin-workspace-nav__brand img {
+  display: block;
+  width: 148px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 html[data-theme] .kb-admin-workspace-nav__label {
   padding: 3px 10px 5px;
   color: #93a0ad;
@@ -593,6 +625,10 @@ html[data-theme] .kb-admin-workspace-nav__link:focus-visible {
 }
 
 @media (max-width: 767px) {
+  html[data-theme] .kb-admin-workspace-nav__brand img {
+    width: 132px;
+  }
+
   html[data-theme] .collection-list,
   html[data-theme] .collection-edit,
   html[data-theme] .global-edit {

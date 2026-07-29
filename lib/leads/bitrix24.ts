@@ -90,11 +90,49 @@ export function resolveBitrix24WebhookUrl(value: string | undefined): string | u
   const webhookUrl = clean(value);
   if (!webhookUrl) return undefined;
 
-  if (/\/crm\.[a-z.]+(?:\.json)?(?:\?.*)?$/i.test(webhookUrl)) return webhookUrl;
+  try {
+    const url = new URL(webhookUrl);
+    const hostname = url.hostname.toLowerCase();
+    const isIpLiteral =
+      /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) ||
+      hostname.startsWith("[");
+    const blockedHostname =
+      hostname === "localhost" ||
+      hostname.endsWith(".localhost") ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      !hostname.includes(".") ||
+      isIpLiteral;
 
-  const [urlWithoutQuery, query] = webhookUrl.split("?", 2);
-  const baseUrl = urlWithoutQuery.endsWith("/") ? urlWithoutQuery : `${urlWithoutQuery}/`;
-  return `${baseUrl}crm.deal.add.json${query ? `?${query}` : ""}`;
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      blockedHostname
+    ) {
+      return undefined;
+    }
+
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (
+      segments[0]?.toLowerCase() !== "rest" ||
+      !/^\d+$/.test(segments[1] || "") ||
+      !/^[a-z\d_-]{4,128}$/i.test(segments[2] || "")
+    ) {
+      return undefined;
+    }
+
+    const method = segments.slice(3).join(".").toLowerCase();
+    if (method && method !== "crm.deal.add" && method !== "crm.deal.add.json") {
+      return undefined;
+    }
+
+    url.pathname = `/${segments.slice(0, 3).join("/")}/crm.deal.add.json`;
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return undefined;
+  }
 }
 
 export function buildBitrix24Payload(lead: Bitrix24Lead, fieldMap: Bitrix24FieldMap = {}): Bitrix24Payload {

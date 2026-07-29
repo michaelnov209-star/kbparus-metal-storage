@@ -103,7 +103,7 @@ export function LoginClient() {
       <aside className="kb-auth-showcase" aria-label="Возможности панели управления">
         <div className="kb-auth-showcase__grid" aria-hidden="true" />
         <div className="kb-auth-brand kb-auth-brand--inverse">
-          <img src="/brand/logo-g.png" alt="" width="48" height="48" />
+          <img src="/brand/logo-g.png" alt="" width="118" height="39" />
           <span>
             <strong>КБ Парус</strong>
             <small>Панель управления сайтом</small>
@@ -131,7 +131,7 @@ export function LoginClient() {
       <main className="kb-auth-main">
         <div className="kb-auth-card">
           <div className="kb-auth-brand kb-auth-brand--mobile">
-            <img src="/brand/logo-g.png" alt="" width="44" height="44" />
+            <img src="/brand/logo-g.png" alt="" width="104" height="35" />
             <span>
               <strong>КБ Парус</strong>
               <small>Панель управления сайтом</small>

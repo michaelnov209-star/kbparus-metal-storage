@@ -15,6 +15,13 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
 
   return (
     <div className="kb-admin-workspace-nav" aria-label="Основные разделы">
+      <AdminIntentLink
+        aria-label="КБ Парус — обзор админки"
+        className="kb-admin-workspace-nav__brand"
+        href="/admin"
+      >
+        <img src="/brand/logo-g.png" alt="КБ Парус" width={226} height={75} />
+      </AdminIntentLink>
       <span className="kb-admin-workspace-nav__label">Рабочее пространство</span>
       <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin">
         <LayoutDashboard size={17} aria-hidden />

@@ -3,8 +3,58 @@ import { DefaultTemplate } from "@payloadcms/next/templates";
 import { LockKeyhole } from "lucide-react";
 import { redirect } from "next/navigation";
 import { canEditContent } from "@/payload/access/rbac";
+import type {
+  SeoProvider,
+  SeoReportDevice,
+  SeoReportPeriod
+} from "@/lib/seo-reporting/types";
 import { AdminAccessDenied } from "./AdminAccessDenied";
-import { SeoReportsClient } from "./SeoReportsClient";
+import {
+  SeoReportsClient,
+  type SeoReportsInitialState
+} from "./SeoReportsClient";
+
+const allowedPeriods = new Set<number>([30, 90, 180, 365]);
+const allowedProviders = new Set<SeoProvider>(["google", "yandex"]);
+const allowedDevices = new Set<SeoReportDevice>([
+  "all",
+  "desktop",
+  "mobile",
+  "tablet"
+]);
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function parseSeoReportsInitialState(
+  searchParams: AdminViewServerProps["searchParams"]
+): SeoReportsInitialState {
+  const requestedPeriod = Number(firstParam(searchParams?.period));
+  const requestedProvider = firstParam(searchParams?.provider) as
+    | SeoProvider
+    | undefined;
+  const requestedDevice = firstParam(searchParams?.device) as
+    | SeoReportDevice
+    | undefined;
+
+  return {
+    activeView:
+      firstParam(searchParams?.view) === "goals" ? "goals" : "visibility",
+    period: allowedPeriods.has(requestedPeriod)
+      ? (requestedPeriod as SeoReportPeriod)
+      : 30,
+    provider:
+      requestedProvider && allowedProviders.has(requestedProvider)
+        ? requestedProvider
+        : "yandex",
+    device:
+      requestedDevice && allowedDevices.has(requestedDevice)
+        ? requestedDevice
+        : "all",
+    query: firstParam(searchParams?.query)?.trim() ?? ""
+  };
+}
 
 export function SeoReportingView({
   initPageResult,
@@ -25,7 +75,7 @@ export function SeoReportingView({
       title="SEO-отчёты недоступны"
     />
   ) : (
-    <SeoReportsClient />
+    <SeoReportsClient initialState={parseSeoReportsInitialState(searchParams)} />
   );
 
   return (

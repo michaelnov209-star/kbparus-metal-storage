@@ -26,10 +26,16 @@ import {
   isSmtpConfigured,
   smtpSettingsFromEnv
 } from "./lib/email/smtp-config";
+import {
+  getSiteUrl,
+  getTrustedSiteOrigins
+} from "./lib/seo/site";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const smtpSettings = smtpSettingsFromEnv(process.env);
 const smtpFromName = process.env.SMTP_FROM_NAME?.trim() || "КБ Парус";
+const payloadServerURL = getSiteUrl();
+const payloadCsrfOrigins = getTrustedSiteOrigins(process.env);
 
 async function createPayloadEmailAdapter() {
   if (!isSmtpConfigured(smtpSettings)) return undefined;
@@ -52,6 +58,8 @@ async function createPayloadEmailAdapter() {
 const payloadEmail = await createPayloadEmailAdapter();
 
 export default buildConfig({
+  serverURL: payloadServerURL,
+  csrf: payloadCsrfOrigins,
   admin: {
     user: Users.slug,
     avatar: "default",

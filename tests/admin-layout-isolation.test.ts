@@ -104,6 +104,21 @@ describe("admin layout isolation", () => {
     expect(seoClient).toContain("<Suspense");
   });
 
+  it("passes SEO filters from the server without a hydration waterfall", () => {
+    const seoClient = source(
+      "app/(payload)/components/SeoReportsClient.tsx"
+    );
+    const seoView = source(
+      "app/(payload)/components/SeoReportingView.tsx"
+    );
+
+    expect(seoView).toContain("parseSeoReportsInitialState(searchParams)");
+    expect(seoView).toContain("<SeoReportsClient initialState=");
+    expect(seoClient).toContain("initialState: SeoReportsInitialState");
+    expect(seoClient).not.toContain("filtersReady");
+    expect(seoClient).not.toContain("window.location.search);\n    const requestedPeriod");
+  });
+
   it("renders the SEO root view inside Payload's default navigation template", () => {
     const loader = source(
       "app/(payload)/components/SeoReportingViewLoader.tsx"

@@ -18,7 +18,8 @@ import {
   SearchCheck,
   ServerCog,
   ShieldCheck,
-  TriangleAlert
+  TriangleAlert,
+  WandSparkles
 } from "lucide-react";
 
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
@@ -28,6 +29,7 @@ import { getCmsRole } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
 import { CalculatorProfileSyncButton } from "./CalculatorProfileSyncButton";
+import { CmsCurrentStateSyncButton } from "./CmsCurrentStateSyncButton";
 
 type HealthState = "healthy" | "configured" | "disabled" | "attention";
 
@@ -370,6 +372,27 @@ async function SystemPanels({ dataPromise }: { dataPromise: Promise<SystemData> 
         </div>
         <div className="kb-system__health-grid">
           {healthItems.map((item) => <HealthCard item={item} key={item.label} />)}
+        </div>
+      </section>
+
+      <section className="kb-system__section kb-system__content-sync">
+        <div className="kb-system__section-head">
+          <div>
+            <span>Контроль содержимого</span>
+            <h2>Сайт и редактор показывают одно и то же</h2>
+          </div>
+          <WandSparkles size={20} aria-hidden />
+        </div>
+        <div className="kb-system__content-sync-body">
+          <div>
+            <strong>Заполнить резервные значения в CMS</strong>
+            <p>
+              Проверка найдёт поля, которые сайт сейчас берёт из кода, добавит
+              действующие изображения и видео в медиатеку и заполнит редактор.
+              Уже сохранённые правки не перезаписываются.
+            </p>
+          </div>
+          <CmsCurrentStateSyncButton />
         </div>
       </section>
 

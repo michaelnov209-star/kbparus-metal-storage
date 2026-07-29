@@ -265,41 +265,32 @@ function exportCsv(report: SeoReportResponse) {
 
 type SeoReportView = "visibility" | "goals";
 
-export function SeoReportsClient() {
-  const [filtersReady, setFiltersReady] = useState(false);
-  const [activeView, setActiveView] = useState<SeoReportView>("visibility");
-  const [period, setPeriod] = useState<SeoReportPeriod>(30);
-  const [provider, setProvider] = useState<SeoProvider>("yandex");
-  const [device, setDevice] = useState<SeoReportDevice>("all");
-  const [queryDraft, setQueryDraft] = useState("");
-  const [query, setQuery] = useState("");
+export type SeoReportsInitialState = {
+  activeView: SeoReportView;
+  device: SeoReportDevice;
+  period: SeoReportPeriod;
+  provider: SeoProvider;
+  query: string;
+};
+
+export function SeoReportsClient({
+  initialState
+}: {
+  initialState: SeoReportsInitialState;
+}) {
+  const [activeView, setActiveView] = useState<SeoReportView>(
+    initialState.activeView
+  );
+  const [period, setPeriod] = useState<SeoReportPeriod>(initialState.period);
+  const [provider, setProvider] = useState<SeoProvider>(initialState.provider);
+  const [device, setDevice] = useState<SeoReportDevice>(initialState.device);
+  const [queryDraft, setQueryDraft] = useState(initialState.query);
+  const [query, setQuery] = useState(initialState.query);
   const [report, setReport] = useState<SeoReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [goalsLoading, setGoalsLoading] = useState(false);
   const [goalsRefreshKey, setGoalsRefreshKey] = useState(0);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requestedPeriod = Number(params.get("period"));
-    const requestedProvider = params.get("provider");
-    const requestedDevice = params.get("device");
-    const requestedQuery = params.get("query")?.trim() ?? "";
-
-    setActiveView(params.get("view") === "goals" ? "goals" : "visibility");
-    if (PERIODS.some((item) => item.days === requestedPeriod)) {
-      setPeriod(requestedPeriod as SeoReportPeriod);
-    }
-    if (PROVIDERS.some((item) => item.value === requestedProvider)) {
-      setProvider(requestedProvider as SeoProvider);
-    }
-    if (DEVICES.some((item) => item.value === requestedDevice)) {
-      setDevice(requestedDevice as SeoReportDevice);
-    }
-    setQueryDraft(requestedQuery);
-    setQuery(requestedQuery);
-    setFiltersReady(true);
-  }, []);
 
   const loadReport = useCallback(
     async (signal?: AbortSignal) => {
@@ -345,16 +336,14 @@ export function SeoReportsClient() {
   );
 
   useEffect(() => {
-    if (!filtersReady || activeView !== "visibility") return;
+    if (activeView !== "visibility") return;
 
     const controller = new AbortController();
     void loadReport(controller.signal);
     return () => controller.abort();
-  }, [activeView, filtersReady, loadReport]);
+  }, [activeView, loadReport]);
 
   useEffect(() => {
-    if (!filtersReady) return;
-
     const params = new URLSearchParams(window.location.search);
     params.set("view", activeView);
     params.set("period", String(period));
@@ -376,7 +365,7 @@ export function SeoReportsClient() {
       "",
       search ? `${window.location.pathname}?${search}` : window.location.pathname
     );
-  }, [activeView, device, filtersReady, period, provider, query]);
+  }, [activeView, device, period, provider, query]);
 
   const handleGoalsLoadingChange = useCallback((value: boolean) => {
     setGoalsLoading(value);
@@ -410,24 +399,6 @@ export function SeoReportsClient() {
   const summary = report?.summary;
   const providerLabel = PROVIDERS.find((item) => item.value === provider)?.label ?? provider;
   const activeLoading = activeView === "goals" ? goalsLoading : loading;
-
-  if (!filtersReady) {
-    return (
-      <section
-        className="kb-seo-view"
-        aria-label="Загрузка раздела аналитики"
-        aria-busy="true"
-      >
-        <div className="kb-seo-initializing" role="status" aria-live="polite">
-          <LoaderCircle className="is-spinning" size={22} aria-hidden />
-          <div>
-            <strong>Открываю аналитику</strong>
-            <span>Восстанавливаю выбранный раздел и период.</span>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section
@@ -463,7 +434,7 @@ export function SeoReportsClient() {
           className="kb-seo-refresh"
           type="button"
           onClick={handleRefresh}
-          disabled={activeLoading || !filtersReady}
+          disabled={activeLoading}
         >
           <RefreshCw
             size={16}

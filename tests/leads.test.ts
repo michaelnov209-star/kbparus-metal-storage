@@ -94,6 +94,30 @@ describe("Bitrix24 lead payload", () => {
     );
   });
 
+  it("rejects unsafe or unrelated Bitrix24 webhook targets", () => {
+    expect(
+      resolveBitrix24WebhookUrl("http://example.bitrix24.ru/rest/1/token/")
+    ).toBeUndefined();
+    expect(
+      resolveBitrix24WebhookUrl("https://127.0.0.1/rest/1/token/")
+    ).toBeUndefined();
+    expect(
+      resolveBitrix24WebhookUrl(
+        "https://example.bitrix24.ru/rest/1/token/crm.contact.list.json"
+      )
+    ).toBeUndefined();
+    expect(resolveBitrix24WebhookUrl("file:///etc/passwd")).toBeUndefined();
+    expect(
+      getBitrix24RuntimeConfig({
+        BITRIX24_ENABLED: "true",
+        BITRIX24_WEBHOOK_URL: "http://localhost/rest/1/token/"
+      })
+    ).toEqual({
+      enabled: false,
+      webhookUrlConfigured: false
+    });
+  });
+
   it("maps ordinary contact lead to safe standard Bitrix fields", () => {
     const payload = buildBitrix24Payload({
       leadType: "contact",

@@ -89,6 +89,8 @@ input {
 
 .kb-auth-brand img {
   flex: 0 0 auto;
+  width: 118px;
+  height: auto;
   object-fit: contain;
 }
 
@@ -196,6 +198,10 @@ input {
 .kb-auth-brand--mobile {
   display: none;
   margin-bottom: 34px;
+}
+
+.kb-auth-brand--mobile img {
+  width: 104px;
 }
 
 .kb-auth-brand--mobile small {
