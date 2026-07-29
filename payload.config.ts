@@ -1,6 +1,5 @@
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import { ru } from "@payloadcms/translations/languages/ru";
 import { attachDatabasePool } from "@vercel/functions";
 import sharp from "sharp";
@@ -24,6 +23,7 @@ import {
   getPostgresConnectionString
 } from "./lib/config/postgres";
 import { getPayloadSecret } from "./lib/config/payload-secret";
+import { responsiveVercelBlobStorage } from "./lib/storage/vercel-blob-responsive";
 import {
   isSmtpConfigured,
   smtpSettingsFromEnv
@@ -187,9 +187,8 @@ export default buildConfig({
       : { transactionOptions: false as const })
   }),
   plugins: [
-    vercelBlobStorage({
+    responsiveVercelBlobStorage({
       collections: { media: true },
-      addRandomSuffix: true,
       cacheControlMaxAge: 31_536_000,
       clientUploads: {
         access: ({ req }) => canManageMedia(req.user)

@@ -82,4 +82,14 @@ describe("CMS media upload optimization", () => {
     expect(config).toContain("clientUploads:");
     expect(config).toContain("canManageMedia(req.user)");
   });
+
+  it("uses a Blob adapter that keeps generated sizes addressable", () => {
+    const config = readFileSync(
+      resolve(process.cwd(), "payload.config.ts"),
+      "utf8"
+    );
+
+    expect(config).toContain("responsiveVercelBlobStorage");
+    expect(config).not.toContain("vercelBlobStorage({");
+  });
 });

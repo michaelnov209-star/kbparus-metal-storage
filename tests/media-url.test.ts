@@ -11,16 +11,16 @@ describe("resolveCmsMediaUrl", () => {
     ).toBe("https://example.public.blob.vercel-storage.com/catalog/item.webp");
   });
 
-  it("keeps the Payload media route backed by the cloud-storage handler", () => {
+  it("uses a versioned public asset for legacy records with broken derived Blob names", () => {
     expect(
       resolveCmsMediaUrl(
         { url: "/api/media/file/item.jpg" },
         { fallback: "/assets/images/catalog/item.jpg" }
       )
-    ).toBe("/api/media/file/item.jpg");
+    ).toBe("/assets/images/catalog/item.jpg");
   });
 
-  it("keeps an absolute same-site Payload media URL", () => {
+  it("recognizes an absolute same-site Payload proxy and uses the legacy fallback", () => {
     expect(
       resolveCmsMediaUrl(
         {
@@ -28,12 +28,10 @@ describe("resolveCmsMediaUrl", () => {
         },
         { fallback: "/assets/images/catalog/item.jpg" }
       )
-    ).toBe(
-      "https://kbparus-metal-storage.vercel.app/api/media/file/item.jpg"
-    );
+    ).toBe("/assets/images/catalog/item.jpg");
   });
 
-  it("uses the requested Payload-generated responsive size", () => {
+  it("uses the fallback when a legacy derived-size URL is local", () => {
     expect(
       resolveCmsMediaUrl(
         {
@@ -42,7 +40,7 @@ describe("resolveCmsMediaUrl", () => {
         },
         { size: "thumb", fallback: "/assets/images/catalog/item.jpg" }
       )
-    ).toBe("/api/media/file/item-thumb.jpg");
+    ).toBe("/assets/images/catalog/item.jpg");
   });
 
   it("returns the fallback when media is missing", () => {

@@ -7,7 +7,7 @@ vi.mock("@/lib/cms/client", () => ({
 import { normalizeCmsProduct } from "@/lib/cms/products";
 
 describe("CMS product media normalization", () => {
-  it("does not replace a synced product image with its legacy static fallback", () => {
+  it("keeps the optimized static fallback for synced legacy product media", () => {
     const product = normalizeCmsProduct({
       slug: "warehouse-management-system",
       title: "Warehouse Management System",
@@ -33,16 +33,16 @@ describe("CMS product media normalization", () => {
     });
 
     expect(product?.image).toBe(
-      "/api/media/file/warehouse-management-system.webp"
+      "/assets/images/products/warehouse-erp/warehouse-management-system.png"
     );
-    expect(product?.imageThumb).toBe(
-      "/api/media/file/warehouse-management-system-320.webp"
+    expect(product?.imageThumb).toMatch(
+      /^\/assets\/images\/products\/optimized\/.+-320\.webp$/
     );
-    expect(product?.imageMedium).toBe(
-      "/api/media/file/warehouse-management-system-800.webp"
+    expect(product?.imageMedium).toMatch(
+      /^\/assets\/images\/products\/optimized\/.+-800\.webp$/
     );
-    expect(product?.imageLarge).toBe(
-      "/api/media/file/warehouse-management-system-1600.webp"
+    expect(product?.imageLarge).toMatch(
+      /^\/assets\/images\/products\/optimized\/.+-1536\.webp$/
     );
   });
 

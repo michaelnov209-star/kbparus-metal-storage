@@ -26,11 +26,21 @@ function mediaFileUrl(filename: string) {
   return `/api/media/file/${filename}`;
 }
 
+export function isLocalCmsMediaUrl(value: string) {
+  if (value.startsWith("/api/media/file/")) return true;
+
+  try {
+    return new URL(value).pathname.startsWith("/api/media/file/");
+  } catch {
+    return false;
+  }
+}
+
 /**
- * A Payload `/api/media/file/*` URL is not a reference to Vercel's immutable
- * filesystem: the configured cloud-storage handler serves that filename from
- * Vercel Blob. Therefore every URL supplied by a populated Media relationship
- * must take precedence over the legacy static fallback.
+ * Current catalog records created before the Blob filename fix contain valid
+ * originals but unusable generated-size paths. Keep their optimized, versioned
+ * public fallback until those records are reprocessed. New editor uploads do
+ * not have a legacy fallback and therefore use the CMS/Blob URL directly.
  */
 export function resolveCmsMediaUrl(
   value: unknown,
@@ -47,6 +57,7 @@ export function resolveCmsMediaUrl(
     (asString(media.filename) ? mediaFileUrl(asString(media.filename)!) : undefined);
 
   if (!candidate) return fallback;
+  if (fallback && isLocalCmsMediaUrl(candidate)) return fallback;
   return candidate;
 }
 
