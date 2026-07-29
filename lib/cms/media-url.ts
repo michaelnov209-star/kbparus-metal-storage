@@ -26,21 +26,11 @@ function mediaFileUrl(filename: string) {
   return `/api/media/file/${filename}`;
 }
 
-export function isLocalCmsMediaUrl(value: string) {
-  if (value.startsWith("/api/media/file/")) return true;
-
-  try {
-    return new URL(value).pathname.startsWith("/api/media/file/");
-  } catch {
-    return false;
-  }
-}
-
 /**
- * Payload can return a local `/api/media/file/*` URL even when that file is not
- * present in the immutable Vercel deployment. Prefer a versioned public asset
- * when one exists; keep absolute Blob/CDN URLs so newly uploaded CMS media still
- * works without a code release.
+ * A Payload `/api/media/file/*` URL is not a reference to Vercel's immutable
+ * filesystem: the configured cloud-storage handler serves that filename from
+ * Vercel Blob. Therefore every URL supplied by a populated Media relationship
+ * must take precedence over the legacy static fallback.
  */
 export function resolveCmsMediaUrl(
   value: unknown,
@@ -57,7 +47,6 @@ export function resolveCmsMediaUrl(
     (asString(media.filename) ? mediaFileUrl(asString(media.filename)!) : undefined);
 
   if (!candidate) return fallback;
-  if (fallback && isLocalCmsMediaUrl(candidate)) return fallback;
   return candidate;
 }
 

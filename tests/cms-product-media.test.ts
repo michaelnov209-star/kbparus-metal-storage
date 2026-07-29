@@ -7,6 +7,45 @@ vi.mock("@/lib/cms/client", () => ({
 import { normalizeCmsProduct } from "@/lib/cms/products";
 
 describe("CMS product media normalization", () => {
+  it("does not replace a synced product image with its legacy static fallback", () => {
+    const product = normalizeCmsProduct({
+      slug: "warehouse-management-system",
+      title: "Warehouse Management System",
+      summary: "Summary",
+      description: "Description",
+      category: { slug: "warehouse-erp" },
+      legacyImagePath:
+        "/assets/images/products/warehouse-erp/warehouse-management-system.png",
+      image: {
+        url: "/api/media/file/warehouse-management-system.webp",
+        sizes: {
+          thumb: {
+            url: "/api/media/file/warehouse-management-system-320.webp"
+          },
+          medium: {
+            url: "/api/media/file/warehouse-management-system-800.webp"
+          },
+          large: {
+            url: "/api/media/file/warehouse-management-system-1600.webp"
+          }
+        }
+      }
+    });
+
+    expect(product?.image).toBe(
+      "/api/media/file/warehouse-management-system.webp"
+    );
+    expect(product?.imageThumb).toBe(
+      "/api/media/file/warehouse-management-system-320.webp"
+    );
+    expect(product?.imageMedium).toBe(
+      "/api/media/file/warehouse-management-system-800.webp"
+    );
+    expect(product?.imageLarge).toBe(
+      "/api/media/file/warehouse-management-system-1600.webp"
+    );
+  });
+
   it("keeps responsive gallery sizes from newly uploaded media", () => {
     const product = normalizeCmsProduct({
       slug: "new-product",
