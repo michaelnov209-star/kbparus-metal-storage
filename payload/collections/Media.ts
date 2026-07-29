@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { MEDIA_UPLOAD_MIME_TYPES } from "../../lib/storage/media-upload-policy";
 import { normalizeUploadBuffersBeforeCloudStorage } from "../../lib/storage/normalize-upload-buffers";
 import { adminGroups, adminHints } from "../admin/structure";
 import {
@@ -48,16 +49,7 @@ export const Media: CollectionConfig = {
       // before the 2400px output cap can be applied.
       limitInputPixels: 40_000_000
     },
-    mimeTypes: [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/avif",
-      "video/mp4",
-      "video/webm",
-      "video/quicktime",
-      "application/pdf"
-    ],
+    mimeTypes: [...MEDIA_UPLOAD_MIME_TYPES],
     resizeOptions: {
       width: 2400,
       height: 2400,

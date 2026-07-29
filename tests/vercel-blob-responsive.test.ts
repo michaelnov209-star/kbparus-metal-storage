@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+  MEDIA_UPLOAD_MAX_BYTES,
+  MEDIA_UPLOAD_MIME_TYPES,
+  getBlobClientUploadPolicy
+} from "@/lib/storage/media-upload-policy";
 import { shouldAddBlobRandomSuffix } from "@/lib/storage/vercel-blob-responsive";
 
 describe("responsive Vercel Blob filenames", () => {
@@ -21,5 +26,17 @@ describe("responsive Vercel Blob filenames", () => {
         "product.webp"
       )
     ).toBe(false);
+  });
+
+  it("limits direct uploads before bytes reach the public Blob store", () => {
+    const policy = getBlobClientUploadPolicy(31_536_000);
+
+    expect(policy.maximumSizeInBytes).toBe(64 * 1024 * 1024);
+    expect(policy.maximumSizeInBytes).toBe(MEDIA_UPLOAD_MAX_BYTES);
+    expect(policy.allowedContentTypes).toEqual([
+      ...MEDIA_UPLOAD_MIME_TYPES
+    ]);
+    expect(policy.allowedContentTypes).not.toContain("image/svg+xml");
+    expect(policy.allowedContentTypes).not.toContain("text/html");
   });
 });

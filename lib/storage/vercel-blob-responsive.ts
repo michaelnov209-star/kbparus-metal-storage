@@ -20,6 +20,7 @@ import {
   type UploadCollectionSlug
 } from "payload";
 import { getRangeRequestInfo } from "payload/internal";
+import { getBlobClientUploadPolicy } from "./media-upload-policy";
 import { consumeRawClientBlobUpload } from "./normalize-upload-buffers";
 
 type ResponsiveVercelBlobStorageOptions = {
@@ -117,10 +118,7 @@ function createClientUploadRoute({
             throw new Forbidden();
           }
 
-          return {
-            addRandomSuffix: true,
-            cacheControlMaxAge
-          };
+          return getBlobClientUploadPolicy(cacheControlMaxAge);
         },
         onUploadCompleted: async () => {},
         request: req as unknown as Request,
