@@ -20,6 +20,7 @@ import {
 } from "@/lib/cms/current-state-sync";
 import {
   buildManagedHomeVisualPatch,
+  buildManagedProductContentPatch,
   buildManagedVisualPatch,
   currentStateRuntimeLimits,
   repairProductGalleries,
@@ -232,6 +233,85 @@ describe("CMS current-state fallback model", () => {
         managedIds
       )
     ).toEqual({});
+  });
+
+  it("replaces only known legacy product copy that contains unsafe claims", () => {
+    const seed = {
+      applications: [{ value: "цеха с двумя проходами обслуживания" }],
+      description:
+        "Двустороннее исполнение позволяет организовать удобный доступ из двух проходов. В рабочее положение выводится только одна кассета: остальные уровни блокируются, чтобы снизить риск опрокидывания.",
+      includes: [{ value: "подбор межблокировки кассет" }],
+      sku: "KBP-MSM-2SIDE-ROLLOUT",
+      slug: "two-side-rollout-rack",
+      specs: [
+        {
+          label: "Безопасность",
+          value: "одновременно открывается одна кассета"
+        }
+      ],
+      summary:
+        "Выкатной стеллаж с доступом к кассетам с обеих сторон и блокировкой одновременного открытия."
+    };
+    const legacy = {
+      description:
+        "Двустороннее исполнение увеличивает скорость работы: кассеты выкатываются в обе стороны, два оператора могут работать одновременно с разной номенклатурой.",
+      sku: "KBP-MSM-2SIDE-ROLLOUT",
+      slug: "two-side-rollout-rack"
+    };
+
+    expect(buildManagedProductContentPatch(legacy, seed)).toEqual({
+      applications: seed.applications,
+      description: seed.description,
+      includes: seed.includes,
+      specs: seed.specs,
+      summary: seed.summary
+    });
+    expect(
+      buildManagedProductContentPatch(
+        {
+          ...legacy,
+          description: "Текст уже проверен и изменён редактором."
+        },
+        seed
+      )
+    ).toEqual({});
+  });
+
+  it("converts the legacy shelf record into the matching mobile cassette product", () => {
+    const seed = {
+      applications: [{ value: "буфер материала у станка" }],
+      badge: "Мобильная кассета",
+      description: "Актуальное описание кассеты.",
+      includes: [{ value: "проверка маршрута" }],
+      shortTitle: "Мобильная кассета-платформа",
+      sku: "KBP-MSM-MOBILE-CASSETTE",
+      slug: "shelves-manual-sheet",
+      specs: [{ label: "Тип конструкции", value: "рамная кассета" }],
+      subcategory: 17,
+      summary: "Актуальное резюме кассеты.",
+      title: "Мобильная кассета-платформа для листового металла"
+    };
+
+    expect(
+      buildManagedProductContentPatch(
+        {
+          sku: "KBP-MSM-SHELVES",
+          slug: "shelves-manual-sheet"
+        },
+        seed
+      )
+    ).toEqual({
+      applications: seed.applications,
+      badge: seed.badge,
+      description: seed.description,
+      includes: seed.includes,
+      shortTitle: seed.shortTitle,
+      sku: seed.sku,
+      specs: seed.specs,
+      subcategory: seed.subcategory,
+      summary: seed.summary,
+      title: seed.title
+    });
   });
 
   it("refreshes managed home media while preserving editor-selected images and row content", () => {

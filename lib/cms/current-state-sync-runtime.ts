@@ -75,6 +75,59 @@ type ManagedVisualSyncResult = {
   updatedRecords: number;
 };
 
+type ManagedProductContentCorrection = {
+  fields: string[];
+  guard: Record<string, string>;
+};
+
+const MANAGED_PRODUCT_CONTENT_CORRECTIONS: Record<
+  string,
+  ManagedProductContentCorrection
+> = {
+  "two-side-rollout-rack": {
+    guard: {
+      sku: "KBP-MSM-2SIDE-ROLLOUT",
+      description:
+        "Двустороннее исполнение увеличивает скорость работы: кассеты выкатываются в обе стороны, два оператора могут работать одновременно с разной номенклатурой."
+    },
+    fields: ["summary", "description", "applications", "specs", "includes"]
+  },
+  "shelves-manual-sheet": {
+    guard: {
+      sku: "KBP-MSM-SHELVES"
+    },
+    fields: [
+      "title",
+      "shortTitle",
+      "sku",
+      "subcategory",
+      "badge",
+      "summary",
+      "description",
+      "applications",
+      "specs",
+      "includes"
+    ]
+  },
+  depalletizer: {
+    guard: {
+      sku: "KBP-MSM-DEPAL",
+      description:
+        "Устройство, которое автоматически отделяет лист от пачки и подаёт его на следующий технологический этап. Применяется в линиях лазерной резки и комплектации."
+    },
+    fields: [
+      "title",
+      "shortTitle",
+      "badge",
+      "summary",
+      "description",
+      "applications",
+      "specs",
+      "includes"
+    ]
+  }
+};
+
 function asDocs(value: unknown): PlainRecord[] {
   if (!value || typeof value !== "object") return [];
   const docs = (value as { docs?: unknown }).docs;
@@ -421,6 +474,23 @@ function countManagedCollectionVisualChanges(
   }, 0);
 }
 
+function countManagedProductContentChanges(
+  docs: PlainRecord[],
+  seeds: PlainRecord[]
+) {
+  const currentBySlug = docsBySlug(docs);
+  return seeds.reduce((total, seed) => {
+    const slug = stringValue(seed.slug);
+    const current = slug ? currentBySlug.get(slug) : undefined;
+    return (
+      total +
+      (current
+        ? Object.keys(buildManagedProductContentPatch(current, seed)).length
+        : 0)
+    );
+  }, 0);
+}
+
 export async function auditCurrentState(
   cms: Payload,
   requestUrl: string,
@@ -504,6 +574,10 @@ export async function auditCurrentState(
     snapshot.products,
     productSeeds,
     managedMediaIds
+  );
+  missingFields += countManagedProductContentChanges(
+    snapshot.products,
+    productSeeds
   );
 
   const missingRecords =
@@ -755,6 +829,69 @@ async function syncCollectionMissingOnly(
   }
 
   return { createdRecords, docs, updatedFields, updatedRecords };
+}
+
+export function buildManagedProductContentPatch(
+  current: PlainRecord,
+  seed: PlainRecord
+): PlainRecord {
+  const slug = stringValue(seed.slug);
+  const correction = slug
+    ? MANAGED_PRODUCT_CONTENT_CORRECTIONS[slug]
+    : undefined;
+  if (!correction || stringValue(current.slug) !== slug) return {};
+
+  const isKnownLegacyRecord = Object.entries(correction.guard).every(
+    ([field, expected]) => stringValue(current[field]) === expected
+  );
+  if (!isKnownLegacyRecord) return {};
+
+  return correction.fields.reduce<PlainRecord>((patch, field) => {
+    if (seed[field] !== undefined) patch[field] = seed[field];
+    return patch;
+  }, {});
+}
+
+async function syncManagedProductContent(
+  cms: Payload,
+  currentDocs: PlainRecord[],
+  seeds: PlainRecord[]
+): Promise<
+  ManagedVisualSyncResult & {
+    docs: PlainRecord[];
+  }
+> {
+  const bySlug = docsBySlug(currentDocs);
+  const docs = [...currentDocs];
+  let updatedFields = 0;
+  let updatedRecords = 0;
+
+  for (const seed of seeds) {
+    const slug = stringValue(seed.slug);
+    const current = slug ? bySlug.get(slug) : undefined;
+    const id = current ? documentId(current) : undefined;
+    if (!slug || !current || id === undefined) continue;
+
+    const patch = buildManagedProductContentPatch(current, seed);
+    const fields = Object.keys(patch).length;
+    if (fields === 0) continue;
+
+    const keepDraft = current._status === "draft";
+    const updated = (await cms.update({
+      collection: "products",
+      id,
+      data: patch as never,
+      draft: keepDraft,
+      overrideAccess: true
+    })) as unknown as PlainRecord;
+    const index = docs.findIndex((item) => documentId(item) === id);
+    if (index >= 0) docs[index] = updated;
+    bySlug.set(slug, updated);
+    updatedFields += fields;
+    updatedRecords += 1;
+  }
+
+  return { docs, updatedFields, updatedRecords };
 }
 
 /**
@@ -1097,10 +1234,15 @@ export async function syncCurrentStateContent(
     snapshot.products,
     productSeeds
   );
+  const productContent = await syncManagedProductContent(
+    cms,
+    products.docs,
+    productSeeds
+  );
   const productVisuals = await syncManagedCollectionVisuals(
     cms,
     "products",
-    products.docs,
+    productContent.docs,
     productSeeds,
     managedMediaIds
   );
@@ -1118,6 +1260,7 @@ export async function syncCurrentStateContent(
       categories.updatedFields +
       subcategoryVisuals.updatedFields +
       subcategories.updatedFields +
+      productContent.updatedFields +
       productVisuals.updatedFields +
       products.updatedFields,
     updatedRecords:
@@ -1128,6 +1271,7 @@ export async function syncCurrentStateContent(
       categories.updatedRecords +
       subcategoryVisuals.updatedRecords +
       subcategories.updatedRecords +
+      productContent.updatedRecords +
       productVisuals.updatedRecords +
       products.updatedRecords
   };
