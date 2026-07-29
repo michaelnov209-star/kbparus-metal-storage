@@ -314,6 +314,48 @@ describe("CMS current-state fallback model", () => {
     });
   });
 
+  it("restores new secondary photos only for the known empty legacy gallery", () => {
+    const seed = {
+      gallery: [{ image: 202 }],
+      legacyGalleryPaths: [
+        {
+          path: "/assets/images/products/manual-sheet-metal/2.1-safe-detail.png"
+        }
+      ],
+      slug: "forklift-cassette-rack"
+    };
+    const legacy = {
+      gallery: [],
+      legacyGalleryPaths: [
+        { path: "/assets/images/products/manual-sheet-metal/2.1.png" }
+      ],
+      slug: "forklift-cassette-rack"
+    };
+
+    expect(buildManagedProductContentPatch(legacy, seed)).toEqual({
+      gallery: seed.gallery,
+      legacyGalleryPaths: seed.legacyGalleryPaths
+    });
+    expect(
+      buildManagedProductContentPatch(
+        {
+          ...legacy,
+          gallery: [{ image: "editor-upload" }]
+        },
+        seed
+      )
+    ).toEqual({});
+    expect(
+      buildManagedProductContentPatch(
+        {
+          ...legacy,
+          legacyGalleryPaths: [{ path: "/custom/editor-gallery.png" }]
+        },
+        seed
+      )
+    ).toEqual({});
+  });
+
   it("refreshes managed home media while preserving editor-selected images and row content", () => {
     const patch = buildManagedHomeVisualPatch(
       {

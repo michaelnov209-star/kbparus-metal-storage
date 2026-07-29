@@ -128,6 +128,26 @@ const MANAGED_PRODUCT_CONTENT_CORRECTIONS: Record<
   }
 };
 
+const MANAGED_PRODUCT_GALLERY_CORRECTIONS: Record<string, string> = {
+  "forklift-cassette-rack":
+    "/assets/images/products/manual-sheet-metal/2.1.png",
+  "rollout-cassette-rack":
+    "/assets/images/products/manual-sheet-metal/2.2.png",
+  "hybrid-rollout-rack":
+    "/assets/images/products/manual-sheet-metal/2.3.png",
+  "two-side-rollout-rack":
+    "/assets/images/products/manual-sheet-metal/2.4.png",
+  "vertical-rollout-cassette":
+    "/assets/images/products/manual-sheet-metal/2.5.png",
+  "vertical-stationary":
+    "/assets/images/products/manual-sheet-metal/2.6.png",
+  "pyramid-vertical":
+    "/assets/images/products/manual-sheet-metal/2.7.png",
+  "shelves-manual-sheet":
+    "/assets/images/products/manual-sheet-metal/2.8.png",
+  depalletizer: "/assets/images/products/manual-sheet-metal/2.9.png"
+};
+
 function asDocs(value: unknown): PlainRecord[] {
   if (!value || typeof value !== "object") return [];
   const docs = (value as { docs?: unknown }).docs;
@@ -839,17 +859,43 @@ export function buildManagedProductContentPatch(
   const correction = slug
     ? MANAGED_PRODUCT_CONTENT_CORRECTIONS[slug]
     : undefined;
-  if (!correction || stringValue(current.slug) !== slug) return {};
+  if (!slug || stringValue(current.slug) !== slug) return {};
 
-  const isKnownLegacyRecord = Object.entries(correction.guard).every(
-    ([field, expected]) => stringValue(current[field]) === expected
-  );
-  if (!isKnownLegacyRecord) return {};
+  const patch: PlainRecord = {};
+  const isKnownLegacyRecord =
+    correction &&
+    Object.entries(correction.guard).every(
+      ([field, expected]) => stringValue(current[field]) === expected
+    );
 
-  return correction.fields.reduce<PlainRecord>((patch, field) => {
-    if (seed[field] !== undefined) patch[field] = seed[field];
-    return patch;
-  }, {});
+  if (isKnownLegacyRecord) {
+    for (const field of correction.fields) {
+      if (seed[field] !== undefined) patch[field] = seed[field];
+    }
+  }
+
+  const legacyGalleryPath = MANAGED_PRODUCT_GALLERY_CORRECTIONS[slug];
+  const currentLegacyGalleryPaths = Array.isArray(
+    current.legacyGalleryPaths
+  )
+    ? current.legacyGalleryPaths
+        .map((row) => plainRecord(row))
+        .map((row) => stringValue(row?.path))
+        .filter((path): path is string => Boolean(path))
+    : [];
+  const seedGallery = Array.isArray(seed.gallery) ? seed.gallery : [];
+  if (
+    legacyGalleryPath &&
+    relationIds(current.gallery).length === 0 &&
+    currentLegacyGalleryPaths.length === 1 &&
+    currentLegacyGalleryPaths[0] === legacyGalleryPath &&
+    seedGallery.length > 0
+  ) {
+    patch.gallery = seed.gallery;
+    patch.legacyGalleryPaths = seed.legacyGalleryPaths;
+  }
+
+  return patch;
 }
 
 async function syncManagedProductContent(
