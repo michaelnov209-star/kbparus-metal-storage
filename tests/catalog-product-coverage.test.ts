@@ -31,6 +31,12 @@ describe("catalog product coverage", () => {
       expect(product.galleryAlts?.length ?? product.gallery.length).toBe(
         product.gallery.length
       );
+      expect(
+        product.gallery.some((source) =>
+          source.startsWith("/assets/images/catalog/")
+        ),
+        `${product.id} must not reuse a category cover inside its product gallery`
+      ).toBe(false);
 
       for (const source of [product.image, ...product.gallery]) {
         if (!source.startsWith("/assets/")) continue;

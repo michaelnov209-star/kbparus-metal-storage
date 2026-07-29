@@ -1,5 +1,10 @@
 import { cache } from "react";
 import { catalogProducts, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
+import { getProductGallerySlots } from "@/lib/catalog/product-gallery";
+import {
+  relationDocumentId,
+  sanitizeProductGalleryRows
+} from "./product-gallery-policy";
 import { getLocalProductImageVariants } from "./product-image-variants";
 import { getCmsClient } from "./client";
 import {
@@ -9,6 +14,7 @@ import {
 } from "./media-url";
 
 type CmsRelationLike = {
+  image?: unknown;
   slug?: unknown;
 };
 
@@ -273,12 +279,29 @@ function mergeSpecs(
   return Array.from(merged.values());
 }
 
-function getGalleryFallback(
-  fallback: CatalogProduct | undefined,
-  index: number,
-  size: CmsMediaSize
-) {
-  const source = fallback?.gallery[index] ?? fallback?.image;
+function hasCmsGalleryField(doc: CmsProductLike) {
+  return Object.prototype.hasOwnProperty.call(doc, "gallery");
+}
+
+function getManagedLegacyPath(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+
+  const internalTitle = asString(
+    (value as { internalTitle?: unknown }).internalTitle
+  );
+  const prefix = "Legacy asset:";
+  if (!internalTitle?.startsWith(prefix)) return undefined;
+
+  const path = internalTitle.slice(prefix.length).trim();
+  return path.startsWith("/") && !path.startsWith("//") ? path : undefined;
+}
+
+function getLocalImageBySize(
+  source: string | undefined,
+  size?: CmsMediaSize
+): string | undefined {
+  if (!source || !size) return source;
+
   const variants = getLocalProductImageVariants(source);
   if (!variants) return source;
   if (size === "thumb") return variants.thumb.src;
@@ -286,41 +309,136 @@ function getGalleryFallback(
   return variants.large.src;
 }
 
+function resolveProductMediaUrl(
+  value: unknown,
+  options: {
+    fallback?: string;
+    size?: CmsMediaSize;
+  } = {}
+): string | undefined {
+  const managedLegacyPath = getManagedLegacyPath(value);
+  if (managedLegacyPath) {
+    return getLocalImageBySize(
+      options.fallback ?? managedLegacyPath,
+      options.size
+    );
+  }
+
+  return (
+    resolveCmsMediaUrl(value, { size: options.size }) ??
+    getLocalImageBySize(options.fallback, options.size)
+  );
+}
+
+function getFallbackGallerySlots(fallback: CatalogProduct | undefined) {
+  return fallback
+    ? getProductGallerySlots(fallback).filter((slot) => !slot.isMain)
+    : [];
+}
+
+function getGalleryFallback(
+  fallback: CatalogProduct | undefined,
+  index: number,
+  size: CmsMediaSize
+) {
+  const source = getFallbackGallerySlots(fallback)[index]?.source;
+  return getLocalImageBySize(source, size);
+}
+
+function getGalleryFallbackForItem(
+  doc: CmsProductLike,
+  fallback: CatalogProduct | undefined,
+  item: CmsGalleryItem,
+  displayedIndex: number,
+  size: CmsMediaSize
+) {
+  const managedLegacyPath = getManagedLegacyPath(item.image);
+  if (!managedLegacyPath) {
+    return getGalleryFallback(fallback, displayedIndex, size);
+  }
+
+  const currentSlots = getFallbackGallerySlots(fallback);
+  const exactCurrentSlot = currentSlots.find(
+    (slot) => slot.source === managedLegacyPath
+  );
+  if (exactCurrentSlot) {
+    return getLocalImageBySize(exactCurrentSlot.source, size);
+  }
+
+  const originalIndex = getLegacyGalleryPaths(doc).indexOf(managedLegacyPath);
+  if (originalIndex >= 0) {
+    return getLocalImageBySize(currentSlots[originalIndex]?.source, size);
+  }
+
+  return getLocalImageBySize(managedLegacyPath, size);
+}
+
+function getLegacyGalleryPaths(doc: CmsProductLike): string[] {
+  return Array.isArray(doc.legacyGalleryPaths)
+    ? doc.legacyGalleryPaths
+        .map((item) =>
+          item && typeof item === "object"
+            ? asString((item as CmsLegacyGalleryItem).path)
+            : undefined
+        )
+        .filter((item): item is string => Boolean(item))
+    : [];
+}
+
+function getCmsGalleryRows(doc: CmsProductLike): CmsGalleryItem[] {
+  if (!Array.isArray(doc.gallery)) return [];
+
+  const categoryImageId =
+    doc.category && typeof doc.category === "object"
+      ? relationDocumentId((doc.category as CmsRelationLike).image)
+      : undefined;
+
+  return sanitizeProductGalleryRows({
+    categoryImageId,
+    mainImageId: relationDocumentId(doc.image),
+    rows: doc.gallery.filter(
+      (item): item is CmsGalleryItem =>
+        Boolean(item) && typeof item === "object"
+    )
+  }).rows;
+}
+
 function getGalleryBySize(
   doc: CmsProductLike,
   fallback: CatalogProduct | undefined,
   size: "thumb" | "medium" | "large"
 ): string[] {
-  const cmsGallery = Array.isArray(doc.gallery)
-    ? doc.gallery
-        .map((item, index) =>
-          item && typeof item === "object"
-            ? resolveCmsMediaUrl((item as CmsGalleryItem).image, {
-                size,
-                fallback: getGalleryFallback(fallback, index, size)
-              })
-            : undefined
-        )
-        .filter((item): item is string => Boolean(item))
-    : [];
+  if (hasCmsGalleryField(doc)) {
+    return getCmsGalleryRows(doc)
+      .map((item, index) =>
+        resolveProductMediaUrl(item.image, {
+          size,
+          fallback: getGalleryFallbackForItem(
+            doc,
+            fallback,
+            item,
+            index,
+            size
+          )
+        })
+      )
+      .filter((item): item is string => Boolean(item));
+  }
 
-  if (cmsGallery.length > 0) return cmsGallery;
-  return (
-    fallback?.gallery
-      .map((_, index) => getGalleryFallback(fallback, index, size))
-      .filter((item): item is string => Boolean(item)) ?? []
-  );
+  const legacyGallery = getLegacyGalleryPaths(doc);
+  if (legacyGallery.length > 0) {
+    return legacyGallery
+      .map((source) => getLocalImageBySize(source, size))
+      .filter((item): item is string => Boolean(item));
+  }
+
+  return getFallbackGallerySlots(fallback)
+    .map((_, index) => getGalleryFallback(fallback, index, size))
+    .filter((item): item is string => Boolean(item));
 }
 
 function getGallery(doc: CmsProductLike, fallback?: CatalogProduct): string[] {
-  const cmsGallery = getGalleryBySize(doc, fallback, "medium");
-  const legacyGallery = Array.isArray(doc.legacyGalleryPaths)
-    ? doc.legacyGalleryPaths
-        .map((item) => (item && typeof item === "object" ? asString((item as CmsLegacyGalleryItem).path) : undefined))
-        .filter((item): item is string => Boolean(item))
-    : [];
-
-  return cmsGallery.length > 0 ? cmsGallery : legacyGallery.length > 0 ? legacyGallery : fallback?.gallery ?? [];
+  return getGalleryBySize(doc, fallback, "medium");
 }
 
 function getGalleryAlts(
@@ -328,18 +446,28 @@ function getGalleryAlts(
   fallback: CatalogProduct | undefined,
   productTitle: string
 ): string[] {
-  const cmsAlts = Array.isArray(doc.gallery)
-    ? doc.gallery.map((item, index) =>
-        item && typeof item === "object"
-          ? resolveCmsMediaAlt(
-              (item as CmsGalleryItem).image,
-              `${productTitle} — фото ${index + 1}`
-            ) ?? ""
-          : ""
-      )
-    : [];
+  if (hasCmsGalleryField(doc)) {
+    return getCmsGalleryRows(doc).map(
+      (item, index) =>
+        resolveCmsMediaAlt(
+          item.image,
+          `${productTitle} — фото ${index + 1}`
+        ) ?? ""
+    );
+  }
 
-  return cmsAlts.length > 0 ? cmsAlts : fallback?.galleryAlts ?? [];
+  const legacyGallery = getLegacyGalleryPaths(doc);
+  if (legacyGallery.length > 0) {
+    return legacyGallery.map(
+      (_, index) => `${productTitle} — фото ${index + 1}`
+    );
+  }
+
+  return getFallbackGallerySlots(fallback).map(
+    (slot, index) =>
+      fallback?.galleryAlts?.[slot.index] ??
+      `${productTitle} — фото ${index + 1}`
+  );
 }
 
 function getKeywords(value: unknown): string[] | undefined {
@@ -360,9 +488,8 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
   if (!id || !title || !summary || !description || !categoryId) return null;
 
   const fallback = fallbackById.get(id);
-  const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
-  const localVariants = getLocalProductImageVariants(localFallback);
-  const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
+  const localFallback = fallback?.image ?? asString(doc.legacyImagePath);
+  const image = resolveProductMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
 
   const applications = getTextValues(doc.applications);
@@ -400,17 +527,17 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     sku: asString(doc.sku) ?? fallback?.sku ?? id,
     image,
     imageAlt: resolveCmsMediaAlt(doc.image, title),
-    imageThumb: resolveCmsMediaUrl(doc.image, {
+    imageThumb: resolveProductMediaUrl(doc.image, {
       size: "thumb",
-      fallback: localVariants?.thumb.src ?? localFallback
+      fallback: localFallback
     }),
-    imageMedium: resolveCmsMediaUrl(doc.image, {
+    imageMedium: resolveProductMediaUrl(doc.image, {
       size: "medium",
-      fallback: localVariants?.medium.src ?? localFallback
+      fallback: localFallback
     }),
-    imageLarge: resolveCmsMediaUrl(doc.image, {
+    imageLarge: resolveProductMediaUrl(doc.image, {
       size: "large",
-      fallback: localVariants?.large.src ?? localFallback
+      fallback: localFallback
     }),
     gallery,
     galleryThumbs:
@@ -476,29 +603,54 @@ export const getCatalogProducts = cache(async (): Promise<CatalogProduct[]> => {
   if (!cms) return fallbackProducts.slice().sort(bySortOrder);
 
   try {
-    const response = await cms.find({
-      collection: "products",
-      depth: 1,
-      draft: false,
-      overrideAccess: true,
-      limit: 500,
-      pagination: false,
-      sort: "sortOrder"
-    });
+    const [publishedResponse, latestStateResponse] = await Promise.all([
+      cms.find({
+        collection: "products",
+        depth: 1,
+        draft: false,
+        overrideAccess: true,
+        limit: 500,
+        pagination: false,
+        sort: "sortOrder"
+      }),
+      // Payload's public draft:false query returns no row for a draft-only
+      // product. A cheap latest-state probe keeps such a record authoritative
+      // instead of resurrecting the static seed on the public site.
+      cms.find({
+        collection: "products",
+        depth: 0,
+        draft: true,
+        overrideAccess: true,
+        limit: 1,
+        sort: "sortOrder"
+      })
+    ]);
 
-    const merged = new Map<string, CatalogProduct>(
-      fallbackProducts.map((product) => [product.id, product])
-    );
-
-    for (const rawDoc of response.docs) {
-      const doc = rawDoc as CmsProductLike;
-      if (doc._status === "draft") continue;
-
-      const product = normalizeCmsProduct(doc);
-      if (product) merged.set(product.id, product);
+    const docs = Array.isArray(publishedResponse.docs)
+      ? publishedResponse.docs
+      : [];
+    const latestStateDocs = Array.isArray(latestStateResponse.docs)
+      ? latestStateResponse.docs
+      : [];
+    const collectionHasRecords =
+      docs.length > 0 ||
+      latestStateDocs.length > 0 ||
+      (typeof latestStateResponse.totalDocs === "number" &&
+        latestStateResponse.totalDocs > 0);
+    if (!collectionHasRecords) {
+      return fallbackProducts.slice().sort(bySortOrder);
     }
 
-    return Array.from(merged.values()).sort(bySortOrder);
+    const products: CatalogProduct[] = [];
+    for (const rawDoc of docs) {
+      const doc = rawDoc as CmsProductLike;
+      if (doc._status !== "published") continue;
+
+      const product = normalizeCmsProduct(doc);
+      if (product) products.push(product);
+    }
+
+    return products.sort(bySortOrder);
   } catch (error) {
     console.warn("[cms] Catalog products fallback is active:", error);
     return fallbackProducts.slice().sort(bySortOrder);

@@ -19,7 +19,17 @@ function progressiveFactor(count: number, baseCount: number, extraFactor: number
 }
 
 function nearestAllowed(value: number, allowed: readonly number[]) {
-  return allowed.includes(value) ? value : allowed[0];
+  if (allowed.length === 0) return value;
+  if (!Number.isFinite(value)) return allowed[0];
+
+  return allowed.reduce((nearest, candidate) => {
+    const candidateDistance = Math.abs(candidate - value);
+    const nearestDistance = Math.abs(nearest - value);
+
+    if (candidateDistance < nearestDistance) return candidate;
+    if (candidateDistance === nearestDistance && candidate < nearest) return candidate;
+    return nearest;
+  }, allowed[0]);
 }
 
 export function calculateStorageSystem(

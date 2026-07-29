@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   MEDIA_UPLOAD_MAX_BYTES,
   MEDIA_UPLOAD_MIME_TYPES,
@@ -7,6 +9,19 @@ import {
 import { shouldAddBlobRandomSuffix } from "@/lib/storage/vercel-blob-responsive";
 
 describe("responsive Vercel Blob filenames", () => {
+  it("rejects anonymous uploads before reading the request body", () => {
+    const source = readFileSync(
+      resolve("lib/storage/vercel-blob-responsive.ts"),
+      "utf8"
+    );
+    const authCheck = source.indexOf("if (!req.user)");
+    const bodyRead = source.indexOf("const body = await req.json?.()");
+
+    expect(authCheck).toBeGreaterThan(-1);
+    expect(bodyRead).toBeGreaterThan(authCheck);
+    expect(source).toContain("if (error instanceof APIError)");
+  });
+
   it("adds a random suffix to the original upload", () => {
     expect(
       shouldAddBlobRandomSuffix("product.webp", "product.webp")

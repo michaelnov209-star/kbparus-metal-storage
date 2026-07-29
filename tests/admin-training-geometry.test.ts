@@ -30,6 +30,12 @@ describe("admin training geometry", () => {
     expect(connector).not.toBeNull();
     expect(connector?.end.y).toBe(204);
     expect(connector?.end.y).toBeGreaterThan(target.bottom);
+    expect(
+      Math.abs((connector?.start.x ?? 0) - (connector?.end.x ?? 0))
+    ).toBeGreaterThanOrEqual(56);
+    expect(
+      Math.abs((connector?.start.x ?? 0) - (connector?.end.x ?? 0))
+    ).toBeLessThanOrEqual(72);
     expect(connector?.path).toContain(" C ");
     expect(connector?.path).not.toContain(" Q ");
   });
@@ -95,5 +101,11 @@ describe("admin training geometry", () => {
     expect(connector).not.toBeNull();
     expect(connector?.start.x).toBeLessThan(360);
     expect(connector?.end.x).toBeGreaterThan(target.right);
+    expect(
+      Math.abs((connector?.start.y ?? 0) - (connector?.end.y ?? 0))
+    ).toBeGreaterThanOrEqual(56);
+    expect(
+      Math.abs((connector?.start.y ?? 0) - (connector?.end.y ?? 0))
+    ).toBeLessThanOrEqual(72);
   });
 });

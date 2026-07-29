@@ -78,6 +78,8 @@ describe("admin layout isolation", () => {
     expect(intentLink).toContain("onMouseEnter={handleMouseEnter}");
     expect(intentLink).toContain("onFocus={handleFocus}");
     expect(intentLink).toContain("onPointerDown={handlePointerDown}");
+    expect(intentLink).toContain("PREFETCH_COOLDOWN_MS");
+    expect(intentLink).toContain('data-kb-admin-intent="true"');
     expect(intentLink).toContain("prefetch={false}");
     expect(workspaceNav).toContain("<AdminIntentLink");
     expect(workspaceNav).not.toMatch(/\sprefetch(?:\s|>)/);
@@ -92,6 +94,7 @@ describe("admin layout isolation", () => {
     );
 
     expect(bridge).toContain('anchor.closest(".nav")');
+    expect(bridge).toContain('anchor.dataset.kbAdminIntent === "true"');
     expect(bridge).toContain("isAdminAuthOnlyPath(url.pathname)");
     expect(bridge).toContain('document.addEventListener("pointerover"');
     expect(bridge).toContain('document.addEventListener("pointerdown"');

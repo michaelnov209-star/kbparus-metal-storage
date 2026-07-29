@@ -5,6 +5,7 @@ import config from "@payload-config";
 
 import {
   auditCurrentState,
+  repairProductGalleries,
   syncCurrentStateAsset,
   syncCurrentStateContent
 } from "../../lib/cms/current-state-sync-runtime";
@@ -27,7 +28,7 @@ const cms = await getPayload({ config });
 const initial = await auditCurrentState(cms, sourceUrl);
 
 console.log(
-  `[cms-current-state] assets=${initial.assetTotal}, missingAssets=${initial.missingAssets.length}, missingRecords=${initial.missingRecords}, missingFields=${initial.missingFields}`
+  `[cms-current-state] assets=${initial.assetTotal}, missingAssets=${initial.missingAssets.length}, missingRecords=${initial.missingRecords}, missingFields=${initial.missingFields}, invalidGalleryRows=${initial.invalidProductGalleryRows}`
 );
 
 if (!apply) {
@@ -42,20 +43,25 @@ for (const [index, assetKey] of initial.missingAssets.entries()) {
   );
 }
 
+const galleries =
+  initial.invalidProductGalleryRows > 0
+    ? await repairProductGalleries(cms)
+    : { removedRows: 0, updatedProducts: 0 };
 const content = await syncCurrentStateContent(cms, sourceUrl);
 const final = await auditCurrentState(cms, sourceUrl);
 
 console.log(
-  `[cms-current-state] content created=${content.createdRecords}, updatedRecords=${content.updatedRecords}, updatedFields=${content.updatedFields}`
+  `[cms-current-state] content created=${content.createdRecords}, updatedRecords=${content.updatedRecords}, updatedFields=${content.updatedFields}, galleryProducts=${galleries.updatedProducts}, galleryRowsRemoved=${galleries.removedRows}`
 );
 console.log(
-  `[cms-current-state] complete missingAssets=${final.missingAssets.length}, missingRecords=${final.missingRecords}, missingFields=${final.missingFields}`
+  `[cms-current-state] complete missingAssets=${final.missingAssets.length}, missingRecords=${final.missingRecords}, missingFields=${final.missingFields}, invalidGalleryRows=${final.invalidProductGalleryRows}`
 );
 
 if (
   final.missingAssets.length > 0 ||
   final.missingRecords > 0 ||
-  final.missingFields > 0
+  final.missingFields > 0 ||
+  final.invalidProductGalleryRows > 0
 ) {
   process.exit(1);
 }

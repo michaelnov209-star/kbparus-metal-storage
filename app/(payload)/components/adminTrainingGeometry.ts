@@ -33,6 +33,8 @@ const VIEWPORT_MARGIN = 12;
 const POPOVER_GAP = 48;
 const CONNECTOR_OUTSET = 4;
 const ANCHOR_INSET = 32;
+const CONNECTOR_CROSS_OFFSET = 64;
+const CONNECTOR_MIN_CROSS_OFFSET = 56;
 
 const placements: TrainingPlacement[] = [
   "top",
@@ -179,6 +181,58 @@ function anchorRange(start: number, size: number) {
   };
 }
 
+function spreadCrossAxisAnchors(
+  start: number,
+  end: number,
+  startRange: { min: number; max: number },
+  endRange: { min: number; max: number },
+  preferredDirection: 1 | -1
+) {
+  if (Math.abs(start - end) >= CONNECTOR_MIN_CROSS_OFFSET) {
+    return { start, end };
+  }
+
+  const midpoint = (start + end) / 2;
+  let spreadStart = clamp(
+    midpoint + preferredDirection * (CONNECTOR_CROSS_OFFSET / 2),
+    startRange.min,
+    startRange.max
+  );
+  let spreadEnd = clamp(
+    midpoint - preferredDirection * (CONNECTOR_CROSS_OFFSET / 2),
+    endRange.min,
+    endRange.max
+  );
+
+  // Narrow targets can consume one half of the offset. Move the other anchor
+  // farther along its edge so the curve still reads as an arrow rather than a
+  // vertical or horizontal bolt.
+  let missing =
+    CONNECTOR_CROSS_OFFSET -
+    preferredDirection * (spreadStart - spreadEnd);
+
+  if (missing > 0) {
+    const startRoom =
+      preferredDirection === 1
+        ? startRange.max - spreadStart
+        : spreadStart - startRange.min;
+    const startShift = Math.min(missing, Math.max(startRoom, 0));
+    spreadStart += preferredDirection * startShift;
+    missing -= startShift;
+  }
+
+  if (missing > 0) {
+    const endRoom =
+      preferredDirection === 1
+        ? spreadEnd - endRange.min
+        : endRange.max - spreadEnd;
+    const endShift = Math.min(missing, Math.max(endRoom, 0));
+    spreadEnd -= preferredDirection * endShift;
+  }
+
+  return { start: spreadStart, end: spreadEnd };
+}
+
 /**
  * Connects the closest outer edges of the popover and spotlight. The endpoint
  * deliberately stays outside the highlighted content; this prevents the line
@@ -220,12 +274,19 @@ export function getTrainingConnectorGeometry(
       Math.max(cardXRange.min, targetXRange.min),
       Math.min(cardXRange.max, targetXRange.max)
     );
+    const spread = spreadCrossAxisAnchors(
+      clamp(sharedX, cardXRange.min, cardXRange.max),
+      clamp(sharedX, targetXRange.min, targetXRange.max),
+      cardXRange,
+      targetXRange,
+      sharedX > viewport.width / 2 ? -1 : 1
+    );
     start = {
-      x: clamp(sharedX, cardXRange.min, cardXRange.max),
+      x: spread.start,
       y: card.top - CONNECTOR_OUTSET
     };
     end = {
-      x: clamp(sharedX, targetXRange.min, targetXRange.max),
+      x: spread.end,
       y: target.bottom + CONNECTOR_OUTSET
     };
     axis = "vertical";
@@ -237,12 +298,19 @@ export function getTrainingConnectorGeometry(
       Math.max(cardXRange.min, targetXRange.min),
       Math.min(cardXRange.max, targetXRange.max)
     );
+    const spread = spreadCrossAxisAnchors(
+      clamp(sharedX, cardXRange.min, cardXRange.max),
+      clamp(sharedX, targetXRange.min, targetXRange.max),
+      cardXRange,
+      targetXRange,
+      sharedX > viewport.width / 2 ? -1 : 1
+    );
     start = {
-      x: clamp(sharedX, cardXRange.min, cardXRange.max),
+      x: spread.start,
       y: card.bottom + CONNECTOR_OUTSET
     };
     end = {
-      x: clamp(sharedX, targetXRange.min, targetXRange.max),
+      x: spread.end,
       y: target.top - CONNECTOR_OUTSET
     };
     axis = "vertical";
@@ -254,13 +322,20 @@ export function getTrainingConnectorGeometry(
       Math.max(cardYRange.min, targetYRange.min),
       Math.min(cardYRange.max, targetYRange.max)
     );
+    const spread = spreadCrossAxisAnchors(
+      clamp(sharedY, cardYRange.min, cardYRange.max),
+      clamp(sharedY, targetYRange.min, targetYRange.max),
+      cardYRange,
+      targetYRange,
+      sharedY > viewport.height / 2 ? -1 : 1
+    );
     start = {
       x: card.left - CONNECTOR_OUTSET,
-      y: clamp(sharedY, cardYRange.min, cardYRange.max)
+      y: spread.start
     };
     end = {
       x: target.right + CONNECTOR_OUTSET,
-      y: clamp(sharedY, targetYRange.min, targetYRange.max)
+      y: spread.end
     };
     axis = "horizontal";
     direction = -1;
@@ -271,13 +346,20 @@ export function getTrainingConnectorGeometry(
       Math.max(cardYRange.min, targetYRange.min),
       Math.min(cardYRange.max, targetYRange.max)
     );
+    const spread = spreadCrossAxisAnchors(
+      clamp(sharedY, cardYRange.min, cardYRange.max),
+      clamp(sharedY, targetYRange.min, targetYRange.max),
+      cardYRange,
+      targetYRange,
+      sharedY > viewport.height / 2 ? -1 : 1
+    );
     start = {
       x: card.right + CONNECTOR_OUTSET,
-      y: clamp(sharedY, cardYRange.min, cardYRange.max)
+      y: spread.start
     };
     end = {
       x: target.left - CONNECTOR_OUTSET,
-      y: clamp(sharedY, targetYRange.min, targetYRange.max)
+      y: spread.end
     };
     axis = "horizontal";
     direction = 1;

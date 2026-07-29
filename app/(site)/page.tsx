@@ -14,6 +14,7 @@ import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import "@/styles/line-page.css";
 import "@/styles/public-conversion.css";
+import "@/styles/calculator-v3.css";
 
 /**
  * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
@@ -417,7 +418,9 @@ export default async function Home() {
         <CatalogGrid items={catalogCategories} />
       </section>
 
-      <Calculator profiles={calculatorProfiles} />
+      {calculatorProfiles.length > 0 ? (
+        <Calculator profiles={calculatorProfiles} />
+      ) : null}
 
       <Banner
         title="Получите бесплатный расчет стоимости оборудования"

@@ -373,14 +373,22 @@ export function AdminTraining({ role }: { role: CmsRole }) {
                 <svg className="kb-admin-training-arrow" aria-hidden viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}>
                   <defs>
                     <filter id="kb-tour-glow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feGaussianBlur stdDeviation="2" result="blur" />
                       <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
                       </feMerge>
                     </filter>
-                    <marker id="kb-tour-arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#fc5413" />
+                    <marker
+                      id="kb-tour-arrowhead"
+                      markerHeight="11"
+                      markerUnits="userSpaceOnUse"
+                      markerWidth="11"
+                      orient="auto"
+                      refX="9.5"
+                      refY="5.5"
+                    >
+                      <path d="M 0 0 L 10 5.5 L 0 11 z" fill="#fc5413" />
                     </marker>
                   </defs>
                   <path
@@ -390,7 +398,7 @@ export function AdminTraining({ role }: { role: CmsRole }) {
                     markerEnd="url(#kb-tour-arrowhead)"
                     stroke="#fc5413"
                     strokeLinecap="round"
-                    strokeWidth="4"
+                    strokeWidth="3"
                   />
                 </svg>
               ) : null}

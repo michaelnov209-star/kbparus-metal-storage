@@ -475,174 +475,310 @@
       "height": 992
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.1.png": {
+  "/assets/images/products/manual-sheet-metal/2.1-safe-detail.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/7e00c31375024698-320.webp",
+      "src": "/assets/images/products/optimized/ec306276b771e99f-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/7e00c31375024698-800.webp",
+      "src": "/assets/images/products/optimized/ec306276b771e99f-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/7e00c31375024698-1402.webp",
+      "src": "/assets/images/products/optimized/ec306276b771e99f-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.2.png": {
+  "/assets/images/products/manual-sheet-metal/2.1-safe-studio.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/690c8ecf3a661100-320.webp",
+      "src": "/assets/images/products/optimized/8b48609c0dd6c32d-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/690c8ecf3a661100-800.webp",
+      "src": "/assets/images/products/optimized/8b48609c0dd6c32d-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/690c8ecf3a661100-1402.webp",
+      "src": "/assets/images/products/optimized/8b48609c0dd6c32d-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.3.png": {
+  "/assets/images/products/manual-sheet-metal/2.2-safe-action.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/41c7ed81c2122704-320.webp",
+      "src": "/assets/images/products/optimized/3380735e7e4198d4-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/41c7ed81c2122704-800.webp",
+      "src": "/assets/images/products/optimized/3380735e7e4198d4-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/41c7ed81c2122704-1402.webp",
+      "src": "/assets/images/products/optimized/3380735e7e4198d4-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.4.png": {
+  "/assets/images/products/manual-sheet-metal/2.2-safe-studio.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/a276bec816cb7380-320.webp",
+      "src": "/assets/images/products/optimized/6f1d43c127dd04c6-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/a276bec816cb7380-800.webp",
+      "src": "/assets/images/products/optimized/6f1d43c127dd04c6-800.webp",
       "width": 800,
-      "height": 640
+      "height": 639
     },
     "large": {
-      "src": "/assets/images/products/optimized/a276bec816cb7380-1402.webp",
-      "width": 1402,
-      "height": 1122
+      "src": "/assets/images/products/optimized/6f1d43c127dd04c6-1403.webp",
+      "width": 1403,
+      "height": 1121
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.5.png": {
+  "/assets/images/products/manual-sheet-metal/2.3-safe-action.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/a05779d69783548d-320.webp",
+      "src": "/assets/images/products/optimized/95651d01f2fda2fe-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/a05779d69783548d-800.webp",
+      "src": "/assets/images/products/optimized/95651d01f2fda2fe-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/a05779d69783548d-1402.webp",
+      "src": "/assets/images/products/optimized/95651d01f2fda2fe-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.6.png": {
+  "/assets/images/products/manual-sheet-metal/2.3-safe-studio.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/95eb3a4c2b37d1f6-320.webp",
+      "src": "/assets/images/products/optimized/568f1316b6204579-320.webp",
+      "width": 320,
+      "height": 256
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/568f1316b6204579-800.webp",
+      "width": 800,
+      "height": 640
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/568f1316b6204579-1402.webp",
+      "width": 1402,
+      "height": 1122
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.4-safe-action.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/08b1748673bb16b2-320.webp",
+      "width": 320,
+      "height": 256
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/08b1748673bb16b2-800.webp",
+      "width": 800,
+      "height": 640
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/08b1748673bb16b2-1402.webp",
+      "width": 1402,
+      "height": 1122
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.4-safe-studio.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/1f40d5b0af550958-320.webp",
+      "width": 320,
+      "height": 256
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/1f40d5b0af550958-800.webp",
+      "width": 800,
+      "height": 640
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/1f40d5b0af550958-1402.webp",
+      "width": 1402,
+      "height": 1122
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.5-safe-detail.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/2c4d94c9b3abc054-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/2c4d94c9b3abc054-800.webp",
+      "width": 800,
+      "height": 532
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/2c4d94c9b3abc054-1537.webp",
+      "width": 1537,
+      "height": 1023
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.5-safe-studio.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/6913c89f8586695e-320.webp",
+      "width": 320,
+      "height": 256
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/6913c89f8586695e-800.webp",
+      "width": 800,
+      "height": 640
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/6913c89f8586695e-1402.webp",
+      "width": 1402,
+      "height": 1122
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.6-safe-detail.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/6d7d715c9fc3ad6e-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/6d7d715c9fc3ad6e-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/6d7d715c9fc3ad6e-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.6-safe-studio.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/6c884c713b091114-320.webp",
       "width": 320,
       "height": 257
     },
     "medium": {
-      "src": "/assets/images/products/optimized/95eb3a4c2b37d1f6-800.webp",
+      "src": "/assets/images/products/optimized/6c884c713b091114-800.webp",
       "width": 800,
       "height": 643
     },
     "large": {
-      "src": "/assets/images/products/optimized/95eb3a4c2b37d1f6-1399.webp",
+      "src": "/assets/images/products/optimized/6c884c713b091114-1399.webp",
       "width": 1399,
       "height": 1124
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.7.png": {
+  "/assets/images/products/manual-sheet-metal/2.7-safe-detail.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/9c1506a1c9944f05-320.webp",
+      "src": "/assets/images/products/optimized/fdb337bf782b859c-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/fdb337bf782b859c-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/fdb337bf782b859c-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.7-safe-studio.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/c2078134247089e3-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/9c1506a1c9944f05-800.webp",
+      "src": "/assets/images/products/optimized/c2078134247089e3-800.webp",
       "width": 800,
-      "height": 640
+      "height": 639
     },
     "large": {
-      "src": "/assets/images/products/optimized/9c1506a1c9944f05-1402.webp",
-      "width": 1402,
-      "height": 1122
+      "src": "/assets/images/products/optimized/c2078134247089e3-1403.webp",
+      "width": 1403,
+      "height": 1121
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.8.png": {
+  "/assets/images/products/manual-sheet-metal/2.8-safe-loaded.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/dda7c31557d6e074-320.webp",
+      "src": "/assets/images/products/optimized/53b6d5ffafc2b55e-320.webp",
+      "width": 320,
+      "height": 213
+    },
+    "medium": {
+      "src": "/assets/images/products/optimized/53b6d5ffafc2b55e-800.webp",
+      "width": 800,
+      "height": 533
+    },
+    "large": {
+      "src": "/assets/images/products/optimized/53b6d5ffafc2b55e-1536.webp",
+      "width": 1536,
+      "height": 1024
+    }
+  },
+  "/assets/images/products/manual-sheet-metal/2.8-safe-studio.png": {
+    "thumb": {
+      "src": "/assets/images/products/optimized/43d56cf3ca8604b0-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/dda7c31557d6e074-800.webp",
+      "src": "/assets/images/products/optimized/43d56cf3ca8604b0-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/dda7c31557d6e074-1402.webp",
+      "src": "/assets/images/products/optimized/43d56cf3ca8604b0-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/2.9.png": {
+  "/assets/images/products/manual-sheet-metal/2.9-safe-detail.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/b8e5d4e4d32684ac-320.webp",
+      "src": "/assets/images/products/optimized/cdd9082a88ff8afb-320.webp",
       "width": 320,
       "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/b8e5d4e4d32684ac-800.webp",
+      "src": "/assets/images/products/optimized/cdd9082a88ff8afb-800.webp",
       "width": 800,
       "height": 640
     },
     "large": {
-      "src": "/assets/images/products/optimized/b8e5d4e4d32684ac-1402.webp",
+      "src": "/assets/images/products/optimized/cdd9082a88ff8afb-1402.webp",
       "width": 1402,
       "height": 1122
     }
   },
-  "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png": {
+  "/assets/images/products/manual-sheet-metal/2.9-safe-studio.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/a6a28010681faf77-320.webp",
+      "src": "/assets/images/products/optimized/98e972d93d69ec37-320.webp",
       "width": 320,
-      "height": 200
+      "height": 256
     },
     "medium": {
-      "src": "/assets/images/products/optimized/a6a28010681faf77-800.webp",
+      "src": "/assets/images/products/optimized/98e972d93d69ec37-800.webp",
       "width": 800,
-      "height": 500
+      "height": 639
     },
     "large": {
-      "src": "/assets/images/products/optimized/a6a28010681faf77-1586.webp",
-      "width": 1586,
-      "height": 992
+      "src": "/assets/images/products/optimized/98e972d93d69ec37-1403.webp",
+      "width": 1403,
+      "height": 1121
     }
   },
   "/assets/images/products/manual-sort-and-pipe-storage/4.4.1.png": {
@@ -815,36 +951,36 @@
       "height": 1024
     }
   },
-  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-in-action.png": {
+  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-action-safe.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/d9425a45501e6823-320.webp",
+      "src": "/assets/images/products/optimized/ea021e5e96156ff6-320.webp",
       "width": 320,
       "height": 200
     },
     "medium": {
-      "src": "/assets/images/products/optimized/d9425a45501e6823-800.webp",
+      "src": "/assets/images/products/optimized/ea021e5e96156ff6-800.webp",
       "width": 800,
       "height": 500
     },
     "large": {
-      "src": "/assets/images/products/optimized/d9425a45501e6823-1586.webp",
+      "src": "/assets/images/products/optimized/ea021e5e96156ff6-1586.webp",
       "width": 1586,
       "height": 992
     }
   },
-  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack.png": {
+  "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-studio-safe.png": {
     "thumb": {
-      "src": "/assets/images/products/optimized/996fa18d72d44647-320.webp",
+      "src": "/assets/images/products/optimized/5e645fb71d174735-320.webp",
       "width": 320,
       "height": 200
     },
     "medium": {
-      "src": "/assets/images/products/optimized/996fa18d72d44647-800.webp",
+      "src": "/assets/images/products/optimized/5e645fb71d174735-800.webp",
       "width": 800,
       "height": 500
     },
     "large": {
-      "src": "/assets/images/products/optimized/996fa18d72d44647-1586.webp",
+      "src": "/assets/images/products/optimized/5e645fb71d174735-1586.webp",
       "width": 1586,
       "height": 992
     }

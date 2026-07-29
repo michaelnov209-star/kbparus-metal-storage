@@ -1,9 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/cms/client", () => ({
+  getCmsClient: vi.fn(async () => null)
+}));
 
 import { calculatorProfiles } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { toCalculatorProfileSeed } from "@/lib/calculator/profile-seed";
 import { mergeCmsCalculatorProfile } from "@/lib/calculator/cms-profile";
+import { resolvePublishedCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { CalculatorProfiles } from "@/payload/collections/CalculatorProfiles";
 import type { CalculatorProfile as CmsCalculatorProfile } from "@/payload-types";
 
@@ -50,6 +55,18 @@ function cmsDocFromRuntime(profile: (typeof calculatorProfiles)[number], index: 
 }
 
 describe("CMS calculator profile parity", () => {
+  it("does not resurrect an unpublished profile from the static seed", () => {
+    const published = cmsDocFromRuntime(calculatorProfiles[1], 1);
+    const profiles = resolvePublishedCalculatorProfiles([published]);
+
+    expect(profiles.map((profile) => profile.id)).toEqual([
+      calculatorProfiles[1].id
+    ]);
+    expect(
+      profiles.some((profile) => profile.id === calculatorProfiles[0].id)
+    ).toBe(false);
+  });
+
   const excelDefaultTotals = {
     "auto-sheet-metal": 7_408_000,
     "auto-sort-metal": 21_387_840,
@@ -164,6 +181,55 @@ describe("CMS calculator profile parity", () => {
       gateBasePrice: 120000,
       baseShelfCount: 6,
       extraShelfFactor: 0.15
+    });
+  });
+
+  it("uses the published CMS profile image and accessible description at runtime", () => {
+    const profile = calculatorProfiles[0];
+    const merged = mergeCmsCalculatorProfile(
+      {
+        ...cmsDocFromRuntime(profile, 0),
+        image: {
+          id: 42,
+          publiclyAvailable: true,
+          alt: "Автоматизированный склад в производственном цехе",
+          url: "https://assets.example.com/calculator/automatic-storage.webp",
+          createdAt: "2026-07-29T00:00:00.000Z",
+          updatedAt: "2026-07-29T00:00:00.000Z"
+        }
+      },
+      profile
+    );
+
+    expect(merged.image).toBe(
+      "https://assets.example.com/calculator/automatic-storage.webp"
+    );
+    expect(merged.imageAlt).toBe(
+      "Автоматизированный склад в производственном цехе"
+    );
+  });
+
+  it("keeps the verified image fallback when CMS media is absent or unresolved", () => {
+    const profile = calculatorProfiles[0];
+
+    expect(
+      mergeCmsCalculatorProfile(
+        { ...cmsDocFromRuntime(profile, 0), image: null },
+        profile
+      )
+    ).toMatchObject({
+      image: profile.image,
+      imageAlt: profile.imageAlt
+    });
+
+    expect(
+      mergeCmsCalculatorProfile(
+        { ...cmsDocFromRuntime(profile, 0), image: 42 },
+        profile
+      )
+    ).toMatchObject({
+      image: profile.image,
+      imageAlt: profile.imageAlt
     });
   });
 

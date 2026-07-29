@@ -5,7 +5,7 @@ import { ImageLightbox } from "@/components/ImageLightbox";
 import { LeadForm } from "@/components/LeadForm";
 import type { CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { categorySeoGuides } from "@/data/storageSystems/categorySeoGuides";
-import { formatRoundedRub } from "@/lib/calculator/format";
+import { getProductPriceLabel } from "@/lib/catalog/product-price";
 import { getCatalogCategories, getCatalogCategory, getRelatedCatalogCategories } from "@/lib/cms/catalog";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
@@ -229,9 +229,7 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
                     <strong>
                       {product.pageMode === "configurator"
                         ? "Рассчитать в конфигураторе"
-                        : product.priceMode === "fixed" && product.priceFrom
-                          ? `от ${formatRoundedRub(product.priceFrom)}`
-                          : "Цена по запросу"}
+                        : getProductPriceLabel(product)}
                     </strong>
                     <b>Перейти в товар <ArrowRight size={16} /></b>
                   </div>

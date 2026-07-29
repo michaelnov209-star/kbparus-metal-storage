@@ -1,5 +1,12 @@
+import homeImageManifestJson from "./homeImageManifest.json";
+
 const HOME_IMAGES = "/assets/images/home";
 const SCENARIOS = `${HOME_IMAGES}/scenarios`;
+const homeImageManifest = homeImageManifestJson as Record<string, string>;
+
+function optimizedScenario(source: string) {
+  return homeImageManifest[source] ?? source;
+}
 
 /**
  * Owned, locally optimized imagery. Public pages must not depend on temporary
@@ -9,13 +16,13 @@ const SCENARIOS = `${HOME_IMAGES}/scenarios`;
 export const visualAssets = {
   hero: `${HOME_IMAGES}/optimized/metal-storage-hero-poster-e2b60a440bad.webp`,
   warehouse: `${SCENARIOS}/warehouse-after-f3da93cd8945.webp`,
-  sheetMetal: `${SCENARIOS}/sheet-metal-near-laser-3a47b6bfd950.webp`,
+  sheetMetal: optimizedScenario(`${SCENARIOS}/sheet-metal-near-laser-safe.png`),
   forklift: `${SCENARIOS}/pullout-cassette-forklift-04282fda184a.webp`,
   steelProfile: `${SCENARIOS}/cantilever-crane-access-eb8cfef04cdf.webp`,
   tubesProfile: `${SCENARIOS}/tubes-address-storage-3f234f0a235e.webp`,
-  engineering: `${SCENARIOS}/sheet-metal-near-laser-3a47b6bfd950.webp`,
+  engineering: optimizedScenario(`${SCENARIOS}/sheet-metal-near-laser-safe.png`),
   metalCoils: `${SCENARIOS}/warehouse-after-f3da93cd8945.webp`,
-  productionLine: `${SCENARIOS}/sheet-metal-near-laser-3a47b6bfd950.webp`,
+  productionLine: optimizedScenario(`${SCENARIOS}/sheet-metal-near-laser-safe.png`),
   beforeWarehouse: `${SCENARIOS}/warehouse-before-0aca47ad13b1.webp`,
   afterWarehouse: `${SCENARIOS}/warehouse-after-f3da93cd8945.webp`,
   calculator: `${SCENARIOS}/pullout-cassette-forklift-04282fda184a.webp`

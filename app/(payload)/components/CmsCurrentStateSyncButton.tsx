@@ -11,6 +11,7 @@ import {
 
 type AuditStatus = {
   assetTotal: number;
+  invalidProductGalleryRows: number;
   missingAssets: string[];
   missingFields: number;
   missingRecords: number;
@@ -28,7 +29,9 @@ type ApiResponse = {
   status?: AuditStatus;
   updatedFields?: number;
   createdRecords?: number;
+  removedRows?: number;
   updatedRecords?: number;
+  updatedProducts?: number;
 };
 
 async function callSyncApi(body: Record<string, unknown>): Promise<ApiResponse> {
@@ -63,6 +66,7 @@ export function CmsCurrentStateSyncButton() {
 
       const totalWork =
         status.missingAssets.length +
+        (status.invalidProductGalleryRows > 0 ? 1 : 0) +
         (status.missingFields > 0 || status.missingRecords > 0 ? 1 : 0);
 
       if (totalWork === 0) {
@@ -83,6 +87,18 @@ export function CmsCurrentStateSyncButton() {
         await callSyncApi({ action: "asset", assetKey });
       }
 
+      let repairedGalleries: ApiResponse | undefined;
+      if (status.invalidProductGalleryRows > 0) {
+        setState({
+          kind: "loading",
+          detail: "Убираю повторы основного фото и обложки категорий из галерей…",
+          progress: 86
+        });
+        repairedGalleries = await callSyncApi({
+          action: "product-galleries"
+        });
+      }
+
       setState({
         kind: "loading",
         detail: "Заполняю пустые поля текущими значениями без перезаписи ваших правок…",
@@ -99,7 +115,8 @@ export function CmsCurrentStateSyncButton() {
       const remaining =
         (finalAudit.status?.missingAssets.length ?? 0) +
         (finalAudit.status?.missingFields ?? 0) +
-        (finalAudit.status?.missingRecords ?? 0);
+        (finalAudit.status?.missingRecords ?? 0) +
+        (finalAudit.status?.invalidProductGalleryRows ?? 0);
 
       if (remaining > 0) {
         throw new Error(
@@ -109,7 +126,7 @@ export function CmsCurrentStateSyncButton() {
 
       setState({
         kind: "success",
-        message: `Готово: заполнено полей ${content.updatedFields ?? 0}, добавлено записей ${content.createdRecords ?? 0}. Существующие правки сохранены.`
+        message: `Готово: заполнено полей ${content.updatedFields ?? 0}, добавлено записей ${content.createdRecords ?? 0}, очищено лишних фото ${repairedGalleries?.removedRows ?? 0}. Существующие правки сохранены.`
       });
       router.refresh();
     } catch (error) {

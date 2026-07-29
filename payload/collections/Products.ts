@@ -2,6 +2,11 @@ import type { CollectionBeforeValidateHook, CollectionConfig, Field } from "payl
 import { createProductSlug } from "../../lib/cms/product-slug";
 import { adminGroups, adminHints } from "../admin/structure";
 import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
+import {
+  revalidateProductAfterChange,
+  revalidateProductAfterDelete
+} from "../hooks/revalidateProduct";
+import { normalizeProductGallery } from "../hooks/normalizeProductGallery";
 
 const HELP_LABEL = {
   path: "@/app/(payload)/components/AdminHelpLabel",
@@ -133,7 +138,9 @@ export const Products: CollectionConfig = {
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
   hooks: {
-    beforeValidate: [createUniqueProductSlug]
+    afterChange: [revalidateProductAfterChange],
+    afterDelete: [revalidateProductAfterDelete],
+    beforeValidate: [createUniqueProductSlug, normalizeProductGallery]
   },
   versions: { drafts: true },
   fields: [
@@ -280,15 +287,16 @@ export const Products: CollectionConfig = {
           fields: [
             {
               name: "image",
-              label: { ru: "Главное фото товара", en: "Main image" },
+              label: { ru: "Главное фото товара", en: "Primary product image" },
               type: "upload",
               relationTo: "media",
+              required: true,
               filterOptions: {
                 mimeType: { contains: "image/" }
               },
               admin: {
                 description: {
-                  ru: "Это фото увидят в каталоге первым. Можно загрузить обычный JPG, PNG, WebP или AVIF — система сама уменьшит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера.",
+                  ru: "Первое изображение в каталоге и на странице товара. Можно загрузить обычный JPG, PNG, WebP или AVIF — система сама уменьшит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера.",
                   en: "Primary product image."
                 },
                 ...help("Лучший вариант: чистый общий ракурс оборудования без текста и чужих логотипов, горизонтальный кадр не меньше 1600×1000.")
@@ -296,15 +304,16 @@ export const Products: CollectionConfig = {
             },
             {
               name: "gallery",
-              label: { ru: "Дополнительные фото", en: "Gallery" },
+              label: { ru: "Галерея товара", en: "Product gallery" },
               labels: {
                 singular: { ru: "Фотография", en: "Photo" },
                 plural: { ru: "Фотографии", en: "Photos" }
               },
               type: "array",
+              maxRows: 12,
               admin: {
                 description: {
-                  ru: "Добавьте общий вид, другой ракурс, важную деталь и оборудование в работе. Все новые фото автоматически оптимизируются; порядок можно менять перетаскиванием.",
+                  ru: "Здесь находятся дополнительные фото: другие ракурсы, важные узлы и оборудование в работе. Не добавляйте сюда обложку категории и не повторяйте главное фото. Все изображения сразу видны миниатюрами в предпросмотре; порядок можно менять перетаскиванием.",
                   en: "Additional product images."
                 },
                 initCollapsed: true

@@ -100,9 +100,14 @@ function createClientUploadRoute({
     (({ req }: { req: PayloadRequest }) => Boolean(req.user));
 
   return async (req: PayloadRequest) => {
-    const body = await req.json?.();
+    // Reject anonymous requests before parsing a potentially large body. The
+    // collection policy below still decides whether this user may upload.
+    if (!req.user) {
+      throw new Forbidden();
+    }
 
     try {
+      const body = await req.json?.();
       const response = await handleClientUpload({
         body,
         onBeforeGenerateToken: async (_pathname, collectionSlug) => {
@@ -127,6 +132,9 @@ function createClientUploadRoute({
 
       return Response.json(response);
     } catch (error) {
+      if (error instanceof APIError) {
+        throw error;
+      }
       req.payload.logger.error(error);
       throw new APIError("Vercel Blob client upload failed");
     }

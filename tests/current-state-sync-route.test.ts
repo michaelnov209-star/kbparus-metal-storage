@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
   authenticate: vi.fn(),
   isTrusted: vi.fn(),
+  repairGalleries: vi.fn(),
   revalidatePath: vi.fn(),
   syncAsset: vi.fn(),
   syncContent: vi.fn()
@@ -24,6 +25,7 @@ vi.mock("@/lib/cms/client", () => ({
 
 vi.mock("@/lib/cms/current-state-sync-runtime", () => ({
   auditCurrentState: mocks.audit,
+  repairProductGalleries: mocks.repairGalleries,
   syncCurrentStateAsset: mocks.syncAsset,
   syncCurrentStateContent: mocks.syncContent
 }));
@@ -57,6 +59,7 @@ describe("CMS current-state admin route", () => {
     });
     mocks.audit.mockResolvedValue({
       assetTotal: 3,
+      invalidProductGalleryRows: 0,
       missingAssets: [],
       missingFields: 0,
       missingRecords: 0
@@ -66,6 +69,10 @@ describe("CMS current-state admin route", () => {
       createdRecords: 1,
       updatedFields: 8,
       updatedRecords: 2
+    });
+    mocks.repairGalleries.mockResolvedValue({
+      removedRows: 14,
+      updatedProducts: 9
     });
   });
 
@@ -117,6 +124,18 @@ describe("CMS current-state admin route", () => {
       updatedRecords: 2
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/", "layout");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/catalog", "layout");
+  });
+
+  it("repairs product galleries through the authenticated admin action", async () => {
+    const response = await POST(request({ action: "product-galleries" }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      removedRows: 14,
+      updatedProducts: 9
+    });
+    expect(mocks.repairGalleries).toHaveBeenCalledWith({ marker: "cms" });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/catalog", "layout");
   });
 });

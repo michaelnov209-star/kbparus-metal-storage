@@ -20,6 +20,18 @@ describe("resolveCmsMediaUrl", () => {
     ).toBe("/assets/images/catalog/item.jpg");
   });
 
+  it("prefers the current fallback for managed legacy media even when its old Blob URL still works", () => {
+    expect(
+      resolveCmsMediaUrl(
+        {
+          internalTitle: "Legacy asset: /assets/images/catalog/old-item.jpg",
+          url: "https://example.public.blob.vercel-storage.com/old-item.webp"
+        },
+        { fallback: "/assets/images/catalog/current-item.webp" }
+      )
+    ).toBe("/assets/images/catalog/current-item.webp");
+  });
+
   it("recognizes an absolute same-site Payload proxy and uses the legacy fallback", () => {
     expect(
       resolveCmsMediaUrl(

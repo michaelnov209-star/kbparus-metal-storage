@@ -10,6 +10,7 @@ type CmsMediaLike = {
   url?: unknown;
   filename?: unknown;
   alt?: unknown;
+  internalTitle?: unknown;
   sizes?: Record<string, { url?: unknown; filename?: unknown } | undefined> | null;
 };
 
@@ -49,6 +50,10 @@ export function resolveCmsMediaUrl(
   if (!value || typeof value !== "object") return fallback;
 
   const media = value as CmsMediaLike;
+  const internalTitle = asString(media.internalTitle);
+  if (fallback && internalTitle?.startsWith("Legacy asset:")) {
+    return fallback;
+  }
   const sized = size ? media.sizes?.[size] : undefined;
   const candidate =
     asString(sized?.url) ??

@@ -74,6 +74,7 @@ export interface HomePageContent {
 interface MediaDoc {
   url?: string | null;
   alt?: string | null;
+  internalTitle?: string | null;
   sizes?: Record<string, { url?: string | null; width?: number | null }> | null;
 }
 
@@ -362,8 +363,17 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
   ]
 };
 
-function pickUrl(media: MaybeMedia): string | undefined {
+function isManagedLegacyMedia(media: MaybeMedia): boolean {
+  return Boolean(
+    media &&
+    typeof media !== "number" &&
+    media.internalTitle?.startsWith("Legacy asset:")
+  );
+}
+
+function pickUrl(media: MaybeMedia, managedFallback?: string): string | undefined {
   if (!media || typeof media === "number") return undefined;
+  if (managedFallback && isManagedLegacyMedia(media)) return managedFallback;
   return media.url ?? undefined;
 }
 
@@ -395,12 +405,12 @@ function withFallback<T>(items: T[] | null | undefined, fallback: T[]): T[] {
 
 function mediaWithFallback(media: MaybeMedia, fallbackUrl: string, fallbackAlt: string) {
   return {
-    imageUrl: pickUrl(media) ?? fallbackUrl,
+    imageUrl: pickUrl(media, fallbackUrl) ?? fallbackUrl,
     imageAlt: pickAlt(media) ?? fallbackAlt
   };
 }
 
-function normalizeHomeContent(home: AnyRecord | null | undefined): HomePageContent {
+export function normalizeHomeContent(home: AnyRecord | null | undefined): HomePageContent {
   const hero = normalizeHero(home?.hero);
   const defaults = DEFAULT_HOME_CONTENT;
 
@@ -544,19 +554,28 @@ function normalizeHero(hero: AnyRecord | null | undefined): HeroData {
 }
 
 function normalizeStoredMaterials(items: AnyRecord[] | null | undefined, defaults: HomePageContent["storedMaterials"]) {
+  const defaultsByTitle = new Map(
+    defaults.map((item) => [item.title.trim().toLocaleLowerCase("ru"), item])
+  );
   const normalized =
     items
-      ?.map((item, index) => ({
-        title: item.title,
-        text: item.description,
-        label: item.label ?? defaults[index]?.label ?? item.title,
-        icon: (item.icon ?? defaults[index]?.icon ?? "package-check") as IconKey,
-        imageUrl:
-          pickUrl(item.image) ??
-          defaults[index]?.imageUrl ??
-          visualAssets.warehouse,
-        imageAlt: pickAlt(item.image) ?? item.title ?? "Система хранения металла"
-      }))
+      ?.map((item) => {
+        const title = typeof item.title === "string" ? item.title : "";
+        const fallback = defaultsByTitle.get(
+          title.trim().toLocaleLowerCase("ru")
+        );
+        return {
+          title: item.title,
+          text: item.description,
+          label: item.label ?? fallback?.label ?? item.title,
+          icon: (item.icon ?? fallback?.icon ?? "package-check") as IconKey,
+          imageUrl:
+            pickUrl(item.image, fallback?.imageUrl) ??
+            fallback?.imageUrl ??
+            visualAssets.warehouse,
+          imageAlt: pickAlt(item.image) ?? item.title ?? "Система хранения металла"
+        };
+      })
       .filter((item) => item.title && item.text) ?? [];
   return normalized.length > 0 ? normalized : defaults;
 }
@@ -598,15 +617,22 @@ function normalizeIconCards<T extends { title: string; text: string; icon: IconK
 }
 
 function normalizeCases(items: AnyRecord[] | null | undefined, defaults: HomePageContent["cases"]) {
+  const defaultsByTitle = new Map(
+    defaults.map((item) => [item.title.trim().toLocaleLowerCase("ru"), item])
+  );
   const normalized =
     items
-      ?.map((item, index) => {
-        const media = mediaWithFallback(item.image, defaults[index]?.imageUrl ?? visualAssets.productionLine, item.title ?? "Кейс");
+      ?.map((item) => {
+        const title = typeof item.title === "string" ? item.title : "";
+        const fallback = defaultsByTitle.get(
+          title.trim().toLocaleLowerCase("ru")
+        );
+        const media = mediaWithFallback(item.image, fallback?.imageUrl ?? visualAssets.productionLine, item.title ?? "Кейс");
         return {
-          customer: item.customer ?? item.title ?? defaults[index]?.customer ?? "Компания-заказчик",
+          customer: item.customer ?? item.title ?? fallback?.customer ?? "Компания-заказчик",
           title: item.title,
-          task: item.task ?? item.description ?? defaults[index]?.task ?? "",
-          result: item.result ?? defaults[index]?.result ?? "",
+          task: item.task ?? item.description ?? fallback?.task ?? "",
+          result: item.result ?? fallback?.result ?? "",
           ...media
         };
       })

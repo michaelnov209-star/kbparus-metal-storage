@@ -105,6 +105,23 @@
   padding: clamp(18px, 2.4vw, 32px);
 }
 
+.product-detail-v2 .product-gallery-thumbs {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scroll-snap-type: x proximity;
+  scrollbar-color: #9aa6af transparent;
+  scrollbar-width: thin;
+}
+
+.product-detail-v2 .product-gallery-thumbs button {
+  flex: 0 0 86px;
+  height: 68px;
+  scroll-snap-align: start;
+}
+
 .product-detail-v2 .product-title-strip {
   display: grid;
   align-content: center;

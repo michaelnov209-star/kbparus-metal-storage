@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateStorageSystem, formatRoundedRub, normalizeCalculatorInput } from "@/lib/calculator";
+import { calculatorProfiles } from "@/data/storageSystems/excelCalculator";
 
 describe("Excel-based storage calculator", () => {
   it("matches the selected automated sheet metal Excel scenario", () => {
@@ -149,6 +150,35 @@ describe("Excel-based storage calculator", () => {
     expect(result.lineItems[2]?.amount).toBe(420000);
     expect(result.fromPrice).toBe(1839330);
   });
+
+  it("uses the nearest permitted values and resolves equal distances downward", () => {
+    const profile = calculatorProfiles.find((item) => item.id === "auto-sheet-metal");
+    expect(profile).toBeDefined();
+
+    const result = calculateStorageSystem(
+      normalizeCalculatorInput({
+        systemId: "auto-sheet-metal",
+        heightMm: 130,
+        widthMm: 1750,
+        lengthMm: 4600,
+        loadKg: 2250,
+        shelfCount: 18,
+        towerCount: 4.6,
+        optionIds: []
+      }),
+      profile
+    );
+
+    expect(result.engineeringSummary.dimensionsLabel).toBe("3100×1600×120 мм");
+    expect(result.engineeringSummary.totalStoredWeightKg).toBe(2000 * 20 * 5);
+    expect(result.factors).toMatchObject({
+      heightFactor: 1.15,
+      widthFactor: 1.1,
+      lengthFactor: 1.1,
+      loadFactor: 1.2
+    });
+  });
+
   it("rounds public price display to thousands", () => {
     expect(formatRoundedRub(34_428_563)).toBe("34 429 000 ₽");
   });

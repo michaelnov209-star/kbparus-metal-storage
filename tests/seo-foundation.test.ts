@@ -38,6 +38,18 @@ describe("SEO foundation", () => {
     expect(categories.some((category) => category.id === hiddenId)).toBe(false);
   });
 
+  it("supports an authoritative CMS list without resurrecting static categories", () => {
+    const cmsCategory = {
+      ...mergeCatalogCategories([])[0],
+      id: "cms-only-category",
+      source: "cms" as const
+    };
+
+    expect(mergeCatalogCategories([cmsCategory], [], false)).toEqual([
+      cmsCategory
+    ]);
+  });
+
   it("keeps CMS media crawlable while blocking admin and API discovery", () => {
     const config = robots();
     const rule = Array.isArray(config.rules) ? config.rules[0] : config.rules;

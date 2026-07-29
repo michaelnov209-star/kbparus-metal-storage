@@ -15,6 +15,9 @@ function getAdminDestination(target: EventTarget | null): string | null {
 
   const anchor = target.closest<HTMLAnchorElement>("a[href]");
   if (!anchor || !anchor.closest(".nav")) return null;
+  // Custom workspace links already prefetch on intent themselves. Skipping
+  // them here prevents two speculative RSC/DB requests before one navigation.
+  if (anchor.dataset.kbAdminIntent === "true") return null;
 
   const url = new URL(anchor.href, window.location.origin);
   if (

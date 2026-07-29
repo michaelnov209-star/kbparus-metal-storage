@@ -19,12 +19,66 @@ import {
   mergeMissingState
 } from "@/lib/cms/current-state-sync";
 import {
+  buildManagedHomeVisualPatch,
+  buildManagedVisualPatch,
   currentStateRuntimeLimits,
+  repairProductGalleries,
   syncCurrentStateAsset,
   syncCurrentStateContent
 } from "@/lib/cms/current-state-sync-runtime";
 
 describe("CMS current-state fallback model", () => {
+  it("repairs stored product galleries without deleting valid secondary photos", async () => {
+    const cms = {
+      find: vi.fn(async ({ collection }: { collection: string }) => {
+        if (collection === "categories") {
+          return {
+            docs: [{ id: 1, image: 50, slug: "category" }],
+            hasNextPage: false
+          };
+        }
+        if (collection === "products") {
+          return {
+            docs: [
+              {
+                _status: "published",
+                category: 1,
+                gallery: [
+                  { id: "primary", image: 10 },
+                  { id: "valid", image: 20 },
+                  { id: "duplicate", image: 20 },
+                  { id: "category", image: 50 }
+                ],
+                id: 2,
+                image: 10,
+                slug: "product"
+              }
+            ],
+            hasNextPage: false
+          };
+        }
+        return { docs: [], hasNextPage: false };
+      }),
+      findGlobal: vi.fn(async () => ({})),
+      update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => data)
+    };
+
+    const result = await repairProductGalleries(cms as never);
+
+    expect(result).toEqual({ removedRows: 3, updatedProducts: 1 });
+    expect(cms.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: "products",
+        data: {
+          _status: "published",
+          gallery: [{ id: "valid", image: 20 }]
+        },
+        draft: false,
+        id: 2
+      })
+    );
+  });
+
   it("registers every fixed asset once, including both hero videos and poster", () => {
     const paths = CURRENT_STATE_ASSETS.map((asset) => asset.publicPath);
 
@@ -80,6 +134,19 @@ describe("CMS current-state fallback model", () => {
     expect(merged.updatedFields).toBe(2);
   });
 
+  it("keeps intentionally emptied arrays authoritative", () => {
+    const merged = mergeMissingState(
+      { gallery: [], applications: [] },
+      {
+        gallery: [{ image: 42 }],
+        applications: [{ value: "Производство" }]
+      }
+    );
+
+    expect(merged.value).toEqual({ gallery: [], applications: [] });
+    expect(merged.updatedFields).toBe(0);
+  });
+
   it("builds Payload-ready home and complete catalog seeds", () => {
     const mediaIds = new Map(
       CURRENT_STATE_ASSETS.map((asset, index) => [
@@ -123,6 +190,112 @@ describe("CMS current-state fallback model", () => {
       category: expect.any(String),
       image: expect.any(String),
       legacyImagePath: expect.stringMatching(/^\/assets\//)
+    });
+    const firstProduct = catalogProducts[0];
+    const firstProductSeed = products.find(
+      (product) => product.slug === firstProduct.id
+    );
+    expect(
+      (firstProductSeed?.gallery as Array<{ image: string }> | undefined) ?? []
+    ).not.toContainEqual({ image: mediaIds.get(firstProduct.image) });
+  });
+
+  it("refreshes only seed-managed catalog images and preserves editor uploads", () => {
+    const managedIds = new Set(["legacy-main", "legacy-angle"]);
+    const seed = {
+      gallery: [{ image: "safe-angle" }],
+      image: "safe-main",
+      legacyGalleryPaths: [{ path: "/assets/safe-angle.webp" }],
+      legacyImagePath: "/assets/safe-main.webp"
+    };
+
+    expect(
+      buildManagedVisualPatch(
+        "products",
+        {
+          gallery: [{ image: "legacy-angle" }],
+          image: "legacy-main"
+        },
+        seed,
+        managedIds
+      )
+    ).toEqual(seed);
+
+    expect(
+      buildManagedVisualPatch(
+        "products",
+        {
+          gallery: [{ image: "editor-angle" }],
+          image: "editor-main"
+        },
+        seed,
+        managedIds
+      )
+    ).toEqual({});
+  });
+
+  it("refreshes managed home media while preserving editor-selected images and row content", () => {
+    const patch = buildManagedHomeVisualPatch(
+      {
+        hero: {
+          background: {
+            poster: "legacy-poster",
+            video: "editor-video"
+          },
+          title: "Заголовок редактора"
+        },
+        storedMaterials: [
+          {
+            id: "row-1",
+            title: "Листовой металл",
+            description: "Текст редактора",
+            image: "legacy-sheet"
+          },
+          {
+            id: "row-2",
+            title: "Трубы и профиль",
+            description: "Другой текст",
+            image: "editor-tubes"
+          }
+        ]
+      },
+      {
+        hero: {
+          background: {
+            poster: "safe-poster",
+            video: "seed-video"
+          }
+        },
+        storedMaterials: [
+          { title: "Листовой металл", image: "safe-sheet" },
+          { title: "Трубы и профиль", image: "seed-tubes" }
+        ]
+      },
+      new Set(["legacy-poster", "legacy-sheet"])
+    );
+
+    expect(patch).toEqual({
+      hero: {
+        background: {
+          poster: "safe-poster",
+          video: "editor-video"
+        },
+        title: "Заголовок редактора"
+      },
+      storedMaterials: [
+        {
+          id: "row-1",
+          title: "Листовой металл",
+          description: "Текст редактора",
+          image: "safe-sheet"
+        },
+        {
+          id: "row-2",
+          title: "Трубы и профиль",
+          description: "Другой текст",
+          image: "editor-tubes"
+        }
+      ]
     });
   });
 

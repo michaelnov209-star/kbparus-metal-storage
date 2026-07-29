@@ -14,8 +14,8 @@ import { LeadForm } from "@/components/LeadForm";
 import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery, type ProductGalleryImage } from "@/components/ProductGallery";
 import { getSeoForItem, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
-import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
-import { formatRoundedRub } from "@/lib/calculator/format";
+import { getProductGallerySlots } from "@/lib/catalog/product-gallery";
+import { getProductPriceLabel } from "@/lib/catalog/product-price";
 import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { getCatalogCategory } from "@/lib/cms/catalog";
 import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
@@ -34,11 +34,18 @@ function linkTargetProps(link: SiteLink) {
   return link.openInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
 }
 
-function toProductGalleryImage(source: string, product: CatalogProduct, index: number): ProductGalleryImage {
-  const alt = product.galleryAlts?.[index] ?? product.imageAlt ?? `${product.title} — фото ${index + 1}`;
-  const thumbSrc = product.galleryThumbs?.[index];
-  const mediumSrc = product.galleryMediums?.[index];
-  const largeSrc = product.galleryLarges?.[index];
+function toProductGalleryImage(
+  source: string,
+  product: CatalogProduct,
+  index: number,
+  isMain: boolean
+): ProductGalleryImage {
+  const alt = isMain
+    ? product.imageAlt ?? product.title
+    : product.galleryAlts?.[index] ?? `${product.title} — фото ${index + 1}`;
+  const thumbSrc = isMain ? product.imageThumb : product.galleryThumbs?.[index];
+  const mediumSrc = isMain ? product.imageMedium : product.galleryMediums?.[index];
+  const largeSrc = isMain ? product.imageLarge : product.galleryLarges?.[index];
   if (thumbSrc || mediumSrc || largeSrc) {
     return {
       alt,
@@ -65,7 +72,7 @@ function toProductGalleryImage(source: string, product: CatalogProduct, index: n
     };
   }
 
-  if (source === product.image) {
+  if (isMain) {
     return {
       alt,
       src: product.imageMedium ?? source,
@@ -129,10 +136,12 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   ]);
   if (!category || !product) notFound();
   const calculatorProfile = product.calculatorProfileId
-    ? getCalculatorProfile(product.calculatorProfileId, calculatorProfiles)
+    ? calculatorProfiles.find(
+        (profile) => profile.id === product.calculatorProfileId
+      )
     : undefined;
-  const productGallery = (product.gallery.length > 0 ? product.gallery : [product.image]).map((source, index) =>
-    toProductGalleryImage(source, product, index)
+  const productGallery = getProductGallerySlots(product).map((slot) =>
+    toProductGalleryImage(slot.source, product, slot.index, slot.isMain)
   );
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
@@ -146,6 +155,8 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
     name: product.title,
     description: product.description,
     image: toAbsoluteUrl(product.image),
+    priceFrom: product.priceMode === "fixed" ? product.priceFrom : undefined,
+    priceTo: product.priceMode === "fixed" ? product.priceTo : undefined,
     sku: product.sku,
     url: productUrl
   });
@@ -192,10 +203,8 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
           <div className="product-price-row">
             {product.pageMode === "configurator" ? (
               <strong>Стоимость рассчитывается ниже</strong>
-            ) : product.priceMode === "fixed" && product.priceFrom ? (
-              <strong>от {formatRoundedRub(product.priceFrom)}</strong>
             ) : (
-              <strong>Цена по запросу</strong>
+              <strong>{getProductPriceLabel(product)}</strong>
             )}
             <a className="line-primary" href={product.pageMode === "configurator" ? "#product-configurator" : "#product-request"}>
               {product.pageMode === "configurator" ? "Настроить параметры" : "Оставить заявку"}

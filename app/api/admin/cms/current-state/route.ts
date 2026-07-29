@@ -8,6 +8,7 @@ import {
 import { CURRENT_STATE_ASSET_BY_KEY } from "@/lib/cms/current-state-sync";
 import {
   auditCurrentState,
+  repairProductGalleries,
   syncCurrentStateAsset,
   syncCurrentStateContent
 } from "@/lib/cms/current-state-sync-runtime";
@@ -22,7 +23,7 @@ const privateHeaders = {
 };
 
 type SyncRequestBody = {
-  action?: "asset" | "audit" | "content";
+  action?: "asset" | "audit" | "content" | "product-galleries";
   assetKey?: string;
 };
 
@@ -58,7 +59,10 @@ export async function POST(request: Request) {
     return errorResponse("Некорректный JSON", 400);
   }
 
-  if (!body.action || !["asset", "audit", "content"].includes(body.action)) {
+  if (
+    !body.action ||
+    !["asset", "audit", "content", "product-galleries"].includes(body.action)
+  ) {
     return errorResponse("Неизвестное действие синхронизации", 400);
   }
 
@@ -83,6 +87,15 @@ export async function POST(request: Request) {
         body.assetKey,
         request.url
       );
+      return NextResponse.json(
+        { ok: true, ...result },
+        { headers: privateHeaders }
+      );
+    }
+
+    if (body.action === "product-galleries") {
+      const result = await repairProductGalleries(auth.cms);
+      revalidatePath("/catalog", "layout");
       return NextResponse.json(
         { ok: true, ...result },
         { headers: privateHeaders }

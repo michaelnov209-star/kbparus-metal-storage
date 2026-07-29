@@ -4,7 +4,6 @@ import {
   normalizeCalculatorInput,
   type CalculatorInput
 } from "@/lib/calculator";
-import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { getCmsClient } from "@/lib/cms/client";
@@ -206,12 +205,26 @@ export async function POST(request: Request) {
   const isConfiguratorLead = payload.leadType === "configurator" || hasCalculatorInput;
 
   const calculatorProfiles = isConfiguratorLead ? await getCalculatorProfiles() : [];
+  const calculatorProfileId =
+    typeof rawCalculatorInput.systemId === "string"
+      ? rawCalculatorInput.systemId
+      : undefined;
   const calculatorProfile = isConfiguratorLead
-    ? getCalculatorProfile(
-        typeof rawCalculatorInput.systemId === "string" ? rawCalculatorInput.systemId : undefined,
-        calculatorProfiles
-      )
+    ? calculatorProfiles.find((profile) => profile.id === calculatorProfileId)
     : undefined;
+  if (isConfiguratorLead && !calculatorProfile) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Этот профиль расчёта сейчас недоступен. Обновите страницу и выберите опубликованный вариант."
+      },
+      {
+        status: 422,
+        headers: rateLimitHeaders(rateLimit)
+      }
+    );
+  }
   const calculatorInput = isConfiguratorLead
     ? normalizeCalculatorInput(
         {

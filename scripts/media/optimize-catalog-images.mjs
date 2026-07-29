@@ -13,6 +13,12 @@ const manifestPath = path.join(
   "storageSystems",
   "catalogImageManifest.json"
 );
+const catalogDataPath = path.join(
+  projectRoot,
+  "data",
+  "storageSystems",
+  "excelCatalog.ts"
+);
 
 const variants = [
   { key: "thumb", width: 320, height: 240 },
@@ -33,10 +39,38 @@ async function exists(filePath) {
 
 await mkdir(outputDir, { recursive: true });
 
-const sourceFiles = (await readdir(sourceDir, { withFileTypes: true }))
+// Only public category covers referenced by the catalog are build inputs.
+// Superseded originals may remain in the repository for audit/recovery without
+// leaking back into the runtime manifest or generating unnecessary derivatives.
+const catalogData = await readFile(catalogDataPath, "utf8");
+const referencedSourceNames = new Set(
+  Array.from(
+    catalogData.matchAll(
+      /image:\s*["']\/assets\/images\/catalog\/([^"']+)["']/g
+    ),
+    (match) => match[1]
+  )
+);
+if (referencedSourceNames.size === 0) {
+  throw new Error("[catalog-images] No category image references found in excelCatalog.ts");
+}
+
+const availableSourceNames = new Set(
+  (await readdir(sourceDir, { withFileTypes: true }))
   .filter((entry) => entry.isFile() && supportedExtensions.has(path.extname(entry.name).toLowerCase()))
   .map((entry) => entry.name)
-  .sort((left, right) => left.localeCompare(right, "en"));
+);
+const missingSourceNames = Array.from(referencedSourceNames).filter(
+  (sourceName) => !availableSourceNames.has(sourceName)
+);
+if (missingSourceNames.length > 0) {
+  throw new Error(
+    `[catalog-images] Missing referenced source files: ${missingSourceNames.join(", ")}`
+  );
+}
+const sourceFiles = Array.from(referencedSourceNames).sort((left, right) =>
+  left.localeCompare(right, "en")
+);
 
 const manifest = {};
 const expectedOutputFiles = new Set();

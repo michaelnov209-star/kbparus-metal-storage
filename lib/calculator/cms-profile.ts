@@ -5,6 +5,7 @@ import {
   type PriceOption
 } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfile as CmsCalculatorProfile } from "@/payload-types";
+import { resolveCmsMediaAlt, resolveCmsMediaUrl } from "@/lib/cms/media-url";
 
 function positiveNumber(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
@@ -78,6 +79,8 @@ export function mergeCmsCalculatorProfile(
     title: doc.title?.trim() || fallback.title,
     shortTitle: doc.shortTitle?.trim() || fallback.shortTitle,
     description: doc.description?.trim() || fallback.description,
+    image: resolveCmsMediaUrl(doc.image, { fallback: fallback.image }),
+    imageAlt: resolveCmsMediaAlt(doc.image, fallback.imageAlt ?? fallback.title),
     heightOptions: factorOptions(doc.heightOptions, fallback.heightOptions),
     widthOptions: factorOptions(doc.widthOptions, fallback.widthOptions),
     lengthOptions: factorOptions(doc.lengthOptions, fallback.lengthOptions),

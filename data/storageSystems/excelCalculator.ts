@@ -34,6 +34,8 @@ export interface CalculatorProfile {
   sourceSheet: string;
   productType: ProductType;
   description: string;
+  image?: string;
+  imageAlt?: string;
   heightOptions: readonly FactorOption[];
   widthOptions: readonly FactorOption[];
   lengthOptions: readonly FactorOption[];
@@ -164,6 +166,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Авт. скл. лист. металл",
     productType: "automated",
     description: "Башенная система для листового металла с подъемным модулем, опциями безопасности и выдачи.",
+    image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
+    imageAlt: "Автоматизированная система хранения листового металла",
     ...sheetGeometry,
     loadOptions: automaticLoadOptions,
     shelfCountOptions: [10, 15, 20, 25],
@@ -194,6 +198,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Авт. скл. сорт. металл",
     productType: "automated",
     description: "Автоматизированная система для труб, профиля, балок и сортового проката.",
+    image: "/assets/images/catalog/03-sort-and-pipe-storage.jpg",
+    imageAlt: "Автоматизированная система хранения сортового и трубного проката",
     heightOptions: [
       { value: 300, factor: 1 },
       { value: 400, factor: 1.1 },
@@ -240,6 +246,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Стеллаж с выкатными кассетами",
     productType: "rollout",
     description: "Система для листа и пачек, где каждая кассета выдвигается для прямого доступа.",
+    image: "/assets/images/products/manual-sheet-metal/2.2-safe-studio.png",
+    imageAlt: "Стеллаж с выкатными кассетами",
     ...sheetGeometry,
     loadOptions: rolloutLoadOptions,
     shelfCountOptions: [5, 6, 7, 8, 9, 10],
@@ -271,6 +279,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Кассетный под погрузчик",
     productType: "cassette",
     description: "Кассетное хранение листа с обслуживанием погрузчиком без сложной автоматики.",
+    image: "/assets/images/products/manual-sheet-metal/2.1-safe-studio.png",
+    imageAlt: "Кассетный стеллаж под погрузчик",
     ...sheetGeometry,
     loadOptions: forkliftLoadOptions,
     shelfCountOptions: [5, 10, 15, 20, 25],
@@ -298,6 +308,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Двухсторонний стеллаж с выкатными кассетами",
     productType: "rollout",
     description: "Выкатные кассеты с обслуживанием с одной или двух сторон склада.",
+    image: "/assets/images/products/manual-sheet-metal/2.4-safe-studio.png",
+    imageAlt: "Двухсторонний стеллаж с выкатными кассетами",
     ...sheetGeometry,
     loadOptions: rolloutLoadOptions,
     shelfCountOptions: [5, 6, 7, 8, 9, 10],
@@ -331,6 +343,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
     sourceSheet: "Гибридный стеллаж",
     productType: "hybrid",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
+    image: "/assets/images/products/manual-sheet-metal/2.3-safe-studio.png",
+    imageAlt: "Гибридный стеллаж с выкатными кассетами",
     ...sheetGeometry,
     loadOptions: forkliftLoadOptions,
     shelfCountOptions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],

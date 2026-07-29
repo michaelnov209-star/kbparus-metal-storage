@@ -67,7 +67,7 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
   if (!id || !title || !summary) return null;
 
   const fallback = fallbackById.get(id);
-  const localFallback = asString(doc.legacyImagePath) ?? fallback?.image;
+  const localFallback = fallback?.image ?? asString(doc.legacyImagePath);
   const localVariants = getLocalCatalogImageVariants(localFallback);
   const image = resolveCmsMediaUrl(doc.image, { fallback: localFallback });
   if (!image) return null;
@@ -104,24 +104,23 @@ export function normalizeCmsCategory(doc: CmsCategoryLike): CatalogCategoryView 
 
 export function mergeCatalogCategories(
   cmsCategories: CatalogCategoryView[],
-  suppressedFallbackIds: Iterable<string> = []
+  suppressedFallbackIds: Iterable<string> = [],
+  includeStaticFallback = true
 ): CatalogCategoryView[] {
-  const byId = new Map<string, CatalogCategoryView>(
-    excelHomeCatalog.map((item, index) => {
+  const byId = new Map<string, CatalogCategoryView>();
+  if (includeStaticFallback) {
+    for (const [index, item] of excelHomeCatalog.entries()) {
       const variants = getLocalCatalogImageVariants(item.image);
-      return [
-        item.id,
-        {
-          ...item,
-          imageThumb: variants?.thumb,
-          imageMedium: variants?.medium,
-          imageLarge: variants?.large,
-          sortOrder: index,
-          source: "fallback"
-        }
-      ];
-    })
-  );
+      byId.set(item.id, {
+        ...item,
+        imageThumb: variants?.thumb,
+        imageMedium: variants?.medium,
+        imageLarge: variants?.large,
+        sortOrder: index,
+        source: "fallback"
+      });
+    }
+  }
 
   for (const id of suppressedFallbackIds) {
     byId.delete(id);
@@ -143,23 +142,45 @@ export const getCatalogCategories = cache(async (): Promise<CatalogCategoryView[
   if (!cms) return mergeCatalogCategories([]);
 
   try {
-    const response = await cms.find({
-      collection: "categories",
-      depth: 1,
-      draft: false,
-      overrideAccess: true,
-      limit: 100,
-      pagination: false,
-      sort: "sortOrder"
-    });
+    const [publishedResponse, latestStateResponse] = await Promise.all([
+      cms.find({
+        collection: "categories",
+        depth: 1,
+        draft: false,
+        overrideAccess: true,
+        limit: 100,
+        pagination: false,
+        sort: "sortOrder"
+      }),
+      cms.find({
+        collection: "categories",
+        depth: 0,
+        draft: true,
+        overrideAccess: true,
+        limit: 1,
+        sort: "sortOrder"
+      })
+    ]);
+    const publishedDocs = Array.isArray(publishedResponse.docs)
+      ? publishedResponse.docs
+      : [];
+    const latestStateDocs = Array.isArray(latestStateResponse.docs)
+      ? latestStateResponse.docs
+      : [];
+    const collectionHasRecords =
+      publishedDocs.length > 0 ||
+      latestStateDocs.length > 0 ||
+      (typeof latestStateResponse.totalDocs === "number" &&
+        latestStateResponse.totalDocs > 0);
+    if (!collectionHasRecords) return mergeCatalogCategories([]);
 
-    const cmsCategories = response.docs
+    const cmsCategories = publishedDocs
       .map((doc) => doc as CmsCategoryLike)
       .filter((doc) => doc._status !== "draft")
       .map((doc) => normalizeCmsCategory(doc))
       .filter((item): item is CatalogCategoryView => Boolean(item));
 
-    return mergeCatalogCategories(cmsCategories);
+    return mergeCatalogCategories(cmsCategories, [], false);
   } catch (error) {
     console.warn("[cms] Catalog categories fallback is active:", error);
     return mergeCatalogCategories([]);

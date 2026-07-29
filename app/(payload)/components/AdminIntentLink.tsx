@@ -18,6 +18,8 @@ type AdminIntentLinkProps = PropsWithChildren<
   }
 >;
 
+const PREFETCH_COOLDOWN_MS = 30_000;
+
 /**
  * Prefetches after real user intent. This avoids an admin-wide background
  * request burst while removing the RSC/auth/DB wait after a deliberate click.
@@ -32,7 +34,7 @@ export function AdminIntentLink({
 }: AdminIntentLinkProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const prefetched = useRef(false);
+  const prefetchedAt = useRef(0);
   const targetPath = href.split(/[?#]/, 1)[0]?.replace(/\/+$/, "") || "/";
   const currentPath = pathname.replace(/\/+$/, "") || "/";
   const isCurrent =
@@ -40,8 +42,10 @@ export function AdminIntentLink({
       ? currentPath === targetPath
       : currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
   const prefetch = useCallback(() => {
-    if (prefetched.current) return;
-    prefetched.current = true;
+    const now = Date.now();
+    if (now - prefetchedAt.current < PREFETCH_COOLDOWN_MS) return;
+
+    prefetchedAt.current = now;
     router.prefetch(href);
   }, [href, router]);
 
@@ -64,6 +68,7 @@ export function AdminIntentLink({
     <Link
       {...props}
       aria-current={props["aria-current"] ?? (isCurrent ? "page" : undefined)}
+      data-kb-admin-intent="true"
       href={href}
       onFocus={handleFocus}
       onMouseEnter={handleMouseEnter}

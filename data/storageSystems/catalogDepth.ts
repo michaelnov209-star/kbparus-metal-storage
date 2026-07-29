@@ -128,14 +128,14 @@ export const catalogSubcategories: CatalogSubcategory[] = [
     categoryId: "manual-sheet-metal",
     title: "Кассетные системы хранения листа",
     summary: "Кассеты под погрузчик, выкатные и гибридные стеллажи для оперативного доступа к листовому металлу.",
-    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+    image: "/assets/images/catalog/02-manual-sheet-metal-safe.png"
   },
   {
     id: "manual-sheet-vertical-systems",
     categoryId: "manual-sheet-metal",
     title: "Вертикальные системы и пирамиды",
     summary: "Стационарные и передвижные решения для вертикального хранения листового металла на ограниченной площади.",
-    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+    image: "/assets/images/catalog/02-manual-sheet-metal-safe.png"
   },
   {
     id: "manual-sort-fishbone",
@@ -305,12 +305,16 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Кассетный стеллаж под погрузчик",
     shortTitle: "Кассеты под погрузчик",
     sku: "KBP-MSM-FORKLIFT-CASS",
-    image: "/assets/images/products/manual-sheet-metal/2.1.png",
+    image: "/assets/images/products/manual-sheet-metal/2.1-safe-studio.png",
+    imageAlt: "Кассетный стеллаж с отдельными кассетами и карманами под вилочный погрузчик",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.1.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.1-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.1-safe-detail.png"
     ],
-    galleryAlts: ["Кассетный стеллаж под погрузчик", "Работа кассетной системы с кран-балкой"],
+    galleryAlts: [
+      "Кассетный стеллаж под погрузчик — общий вид",
+      "Съёмная кассета и закрытые карманы под вилы — детальный ракурс"
+    ],
     pageMode: "configurator",
     calculatorProfileId: "forklift-cassette-rack",
     priceMode: "request",
@@ -332,12 +336,16 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Стеллаж с выкатными кассетами",
     shortTitle: "Выкатные кассеты",
     sku: "KBP-MSM-ROLLOUT-CASS",
-    image: "/assets/images/products/manual-sheet-metal/2.2.png",
+    image: "/assets/images/products/manual-sheet-metal/2.2-safe-studio.png",
+    imageAlt: "Стеллаж с шестью закрытыми выкатными кассетами",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.2.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.2-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.2-safe-action.png"
     ],
-    galleryAlts: ["Стеллаж с выкатными кассетами", "Выкатная кассета с листовым металлом в работе"],
+    galleryAlts: [
+      "Стеллаж с выкатными кассетами — общий вид",
+      "Одна кассета выдвинута на штатной боковой опорной раме"
+    ],
     pageMode: "configurator",
     calculatorProfileId: "rollout-cassette-rack",
     priceMode: "request",
@@ -359,12 +367,13 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Совмещённый (гибридный) стеллаж",
     shortTitle: "Гибридный стеллаж",
     sku: "KBP-MSM-HYBRID",
-    image: "/assets/images/products/manual-sheet-metal/2.3.png",
+    image: "/assets/images/products/manual-sheet-metal/2.3-safe-studio.png",
+    imageAlt: "Гибридный стеллаж с верхними кассетами под погрузчик и нижними выкатными кассетами",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.3.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.3-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.3-safe-action.png"
     ],
-    galleryAlts: ["Совмещённый кассетный стеллаж", "Обслуживание кассетного стеллажа кран-балкой"],
+    galleryAlts: ["Гибридный кассетный стеллаж — общий вид", "Безопасная работа с нижней выкатной кассетой"],
     pageMode: "configurator",
     calculatorProfileId: "hybrid-rollout-rack",
     priceMode: "request",
@@ -386,25 +395,26 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Стеллаж с выкатными кассетами двустороннего исполнения",
     shortTitle: "Двусторонние выкатные",
     sku: "KBP-MSM-2SIDE-ROLLOUT",
-    image: "/assets/images/products/manual-sheet-metal/2.4.png",
+    image: "/assets/images/products/manual-sheet-metal/2.4-safe-studio.png",
+    imageAlt: "Анкерованный двусторонний стеллаж с закрытыми кассетами",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.4.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.4-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.4-safe-action.png"
     ],
-    galleryAlts: ["Двусторонний стеллаж с выкатными кассетами", "Безопасная работа с выкатной кассетой"],
+    galleryAlts: ["Двусторонний стеллаж в закрытом положении", "Подача листа с единственной открытой кассеты"],
     pageMode: "configurator",
     calculatorProfileId: "two-side-rollout-rack",
     priceMode: "request",
     badge: "Двусторонний",
-    summary: "Выкатной стеллаж с возможностью выкатывания кассет с двух сторон для удвоенного доступа.",
-    description: "Двустороннее исполнение увеличивает скорость работы: кассеты выкатываются в обе стороны, два оператора могут работать одновременно с разной номенклатурой.",
-    applications: ["цеха с двумя рабочими постами", "распределительные склады", "производства с высоким оборотом"],
+    summary: "Выкатной стеллаж с доступом к кассетам с обеих сторон и блокировкой одновременного открытия.",
+    description: "Двустороннее исполнение позволяет организовать удобный доступ из двух проходов. В рабочее положение выводится только одна кассета: остальные уровни блокируются, чтобы снизить риск опрокидывания.",
+    applications: ["цеха с двумя проходами обслуживания", "распределительные склады", "производства с высоким оборотом"],
     specs: [
       { label: "Доступ", value: "с двух сторон" },
-      { label: "Производительность", value: "до 2× против односторонних" },
+      { label: "Безопасность", value: "одновременно открывается одна кассета" },
       { label: "Нагрузка на кассету", value: "до 5 000 кг" }
     ],
-    includes: ["проверка свободного пространства с двух сторон", "расчёт количества операторов", "оптимизация потока"]
+    includes: ["проверка свободного пространства с двух сторон", "подбор межблокировки кассет", "оптимизация потока"]
   },
   {
     id: "vertical-rollout-cassette",
@@ -413,12 +423,16 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Стеллаж для вертикального хранения с выкатными кассетами",
     shortTitle: "Вертикальные выкатные",
     sku: "KBP-MSM-VERTICAL-ROLLOUT",
-    image: "/assets/images/products/manual-sheet-metal/2.5.png",
+    image: "/assets/images/products/manual-sheet-metal/2.5-safe-studio.png",
+    imageAlt: "Вертикальный выкатной кассетный стеллаж с одной рабочей кассетой",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.5.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.5-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.5-safe-detail.png"
     ],
-    galleryAlts: ["Вертикальный стеллаж с выкатными кассетами", "Промышленная работа с кассетной системой хранения листа"],
+    galleryAlts: [
+      "Вертикальный стеллаж с одной выдвинутой кассетой",
+      "Направляющие и опоры вертикальной выкатной кассеты"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Вертикальный",
@@ -439,12 +453,16 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Стеллаж вертикального хранения стационарный/передвижной",
     shortTitle: "Вертикальный стационарный",
     sku: "KBP-MSM-VERTICAL-STAT",
-    image: "/assets/images/products/manual-sheet-metal/2.6.png",
+    image: "/assets/images/products/manual-sheet-metal/2.6-safe-studio.png",
+    imageAlt: "Стационарный вертикальный стеллаж с разделителями для листового металла",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.6.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.6-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.6-safe-detail.png"
     ],
-    galleryAlts: ["Стационарный стеллаж вертикального хранения", "Загрузка листового металла в промышленной зоне"],
+    galleryAlts: [
+      "Стационарный стеллаж вертикального хранения с двумя пачками листа",
+      "Опоры, ограничители и анкер стационарного вертикального стеллажа"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Вертикальный",
@@ -465,12 +483,16 @@ export const catalogProducts: CatalogProduct[] = [
     title: "Пирамиды вертикального хранения стационарные/передвижные",
     shortTitle: "Пирамиды вертикальные",
     sku: "KBP-MSM-PYRAMID",
-    image: "/assets/images/products/manual-sheet-metal/2.7.png",
+    image: "/assets/images/products/manual-sheet-metal/2.7-safe-studio.png",
+    imageAlt: "Стационарная пирамида для вертикального хранения листового металла",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.7.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.7-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.7-safe-detail.png"
     ],
-    galleryAlts: ["Пирамида вертикального хранения", "Работа с листовым металлом на промышленном складе"],
+    galleryAlts: [
+      "Стационарная пирамида с пачкой листового металла",
+      "Нижняя опора и анкер пирамиды вертикального хранения"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Пирамида",
@@ -487,54 +509,62 @@ export const catalogProducts: CatalogProduct[] = [
   {
     id: "shelves-manual-sheet",
     categoryId: "manual-sheet-metal",
-    subcategoryId: "manual-sheet-vertical-systems",
-    title: "Полки для хранения листового металла",
-    shortTitle: "Полки",
-    sku: "KBP-MSM-SHELVES",
-    image: "/assets/images/products/manual-sheet-metal/2.8.png",
+    subcategoryId: "manual-sheet-cassette-systems",
+    title: "Мобильная кассета-платформа для листового металла",
+    shortTitle: "Мобильная кассета-платформа",
+    sku: "KBP-MSM-MOBILE-CASSETTE",
+    image: "/assets/images/products/manual-sheet-metal/2.8-safe-studio.png",
+    imageAlt: "Низкопрофильная мобильная кассета-платформа для пачки листового металла",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.8.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.8-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.8-safe-loaded.png"
     ],
-    galleryAlts: ["Полки для листового металла", "Безопасное перемещение пакета листового металла"],
+    galleryAlts: [
+      "Пустая мобильная кассета-платформа с роликами, упорами и ручкой",
+      "Мобильная кассета-платформа с пачкой листового металла у станка лазерной резки"
+    ],
     pageMode: "standard",
     priceMode: "request",
-    badge: "Базовое решение",
-    summary: "Базовые полочные стеллажи для хранения листового металла малого формата.",
-    description: "Простое и надёжное решение для небольших цехов или участков, где нет необходимости в сложных автоматизированных системах. Открытые полки обеспечивают визуальный контроль материала.",
-    applications: ["небольшие цеха", "ремонтные участки", "склады инструмента и металла"],
+    badge: "Мобильная кассета",
+    summary: "Низкопрофильная кассета для хранения и перемещения пачки листового металла внутри производственного участка.",
+    description: "Жёсткая рамная платформа удерживает пачку листа между боковыми упорами. Роликовая опора и ручка упрощают перемещение кассеты по предусмотренному маршруту; точная схема движения, фиксации и грузоподъёмность определяются проектом.",
+    applications: ["буфер материала у станка", "внутрицеховое перемещение пачек", "низкоуровневое хранение листа"],
     specs: [
-      { label: "Тип конструкции", value: "полочная" },
-      { label: "Доступ", value: "открытый" },
-      { label: "Применение", value: "малый формат листа" }
+      { label: "Тип конструкции", value: "низкопрофильная рамная кассета" },
+      { label: "Перемещение", value: "роликовая опора, схема по проекту" },
+      { label: "Фиксация груза", value: "переставляемые боковые упоры" }
     ],
-    includes: ["подбор количества уровней", "расчёт нагрузки", "проверка габаритов"]
+    includes: ["подбор габаритов под формат листа", "расчёт кассеты по массе пачки", "проверка маршрута и способа фиксации"]
   },
   {
     id: "depalletizer",
     categoryId: "manual-sheet-metal",
     subcategoryId: "manual-sheet-cassette-systems",
-    title: "Депаллетайзер для листового металла",
-    shortTitle: "Депаллетайзер",
+    title: "Штыревой депаллетайзер для листового металла",
+    shortTitle: "Штыревой депаллетайзер",
     sku: "KBP-MSM-DEPAL",
-    image: "/assets/images/products/manual-sheet-metal/2.9.png",
+    image: "/assets/images/products/manual-sheet-metal/2.9-safe-studio.png",
+    imageAlt: "Пассивный штыревой депаллетайзер для снятия пачки листового металла с деревянного поддона",
     gallery: [
-      "/assets/images/products/manual-sheet-metal/2.9.png",
-      "/assets/images/products/manual-sheet-metal/manual-sheet-racks-in-action.png"
+      "/assets/images/products/manual-sheet-metal/2.9-safe-studio.png",
+      "/assets/images/products/manual-sheet-metal/2.9-safe-detail.png"
     ],
-    galleryAlts: ["Депаллетайзер для листового металла", "Подача листового металла в производственной зоне"],
+    galleryAlts: [
+      "Низкопрофильный штыревой депаллетайзер с двенадцатью переставляемыми опорами",
+      "Крепления переставляемых штырей и вилочный тоннель депаллетайзера крупным планом"
+    ],
     pageMode: "standard",
     priceMode: "request",
-    badge: "Автоматизация",
-    summary: "Депаллетайзер для автоматического разделения и подачи листового металла из пачки.",
-    description: "Устройство, которое автоматически отделяет лист от пачки и подаёт его на следующий технологический этап. Применяется в линиях лазерной резки и комплектации.",
-    applications: ["линии лазерной резки", "автоматизированная подача листа", "комплектовочные участки"],
+    badge: "Подготовка материала",
+    summary: "Пассивный штыревой стол для быстрого снятия пачки листового металла с деревянного поддона или транспортных брусьев.",
+    description: "Переставляемые штыри с защитными наконечниками располагаются в проёмах деревянного поддона и принимают пачку листа при опускании. Поддон освобождается, а материал можно перенести в кассету хранения. Устройство не подаёт лист автоматически и работает совместно с погрузчиком или другим предусмотренным подъёмным оборудованием.",
+    applications: ["перегрузка листа с деревянных поддонов", "комплектация кассет хранения", "участки приёмки листового металла"],
     specs: [
-      { label: "Назначение", value: "разделение и подача листа" },
-      { label: "Тип работы", value: "автоматический" },
-      { label: "Интеграция", value: "с линиями резки" }
+      { label: "Тип работы", value: "пассивный штыревой стол" },
+      { label: "Опоры", value: "12 переставляемых штырей" },
+      { label: "Перемещение", value: "вилочные тоннели для погрузчика" }
     ],
-    includes: ["проверка совместимости с оборудованием", "подбор по толщине листа", "интеграция в технологический поток"]
+    includes: ["проверка формата поддонов и брусьев", "расстановка штырей под окна поддона", "расчёт по массе пачки", "проверка сценария безопасной перегрузки"]
   },
   // === Категория 4: Ручные системы хранения сортового металла ===
   // Подкатегория «Стеллажи типа Ёлочка» (4 товара из листа Excel "Елочка")
@@ -665,13 +695,11 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Автоматизированная башенная система хранения труб и сортового металлопроката",
     gallery: [
       "/assets/images/products/sort-and-pipe-storage/automated-long-goods-tower.png",
-      "/assets/images/products/sort-and-pipe-storage/automated-long-goods-tower-in-action.png",
-      "/assets/images/catalog/03-sort-and-pipe-storage.jpg"
+      "/assets/images/products/sort-and-pipe-storage/automated-long-goods-tower-in-action.png"
     ],
     galleryAlts: [
       "Башенная система хранения длинномерного металлопроката",
-      "Автоматическая выдача кассеты с трубами и профилем",
-      "Системы хранения сортового и трубного металлопроката"
+      "Автоматическая выдача кассеты с трубами и профилем"
     ],
     pageMode: "configurator",
     calculatorProfileId: "auto-sort-metal",
@@ -708,10 +736,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Вертикальный карусельный складской модуль",
     gallery: [
       "/assets/images/products/carousel-vertical-module/vertical-carousel-module.png",
-      "/assets/images/products/carousel-vertical-module/vertical-carousel-module-in-action.png",
-      "/assets/images/catalog/05-carousel-vertical-module.png"
+      "/assets/images/products/carousel-vertical-module/vertical-carousel-module-in-action.png"
     ],
-    galleryAlts: ["Вертикальный карусельный модуль", "Выдача полки оператору", "Карусельный вертикальный модуль в каталоге"],
+    galleryAlts: ["Вертикальный карусельный модуль", "Выдача полки оператору"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Вертикальное хранение",
@@ -745,10 +772,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Автоматизированный паллетный склад со штабелером-краном",
     gallery: [
       "/assets/images/products/automated-warehouse-systems/pallet-asrs-stacker-crane.png",
-      "/assets/images/products/automated-warehouse-systems/pallet-asrs-stacker-crane-in-action.png",
-      "/assets/images/catalog/06-automated-warehouse-systems.png"
+      "/assets/images/products/automated-warehouse-systems/pallet-asrs-stacker-crane-in-action.png"
     ],
-    galleryAlts: ["Паллетный автоматизированный склад", "Штабелер-кран перемещает паллету", "Автоматизированные складские системы"],
+    galleryAlts: ["Паллетный автоматизированный склад", "Штабелер-кран перемещает паллету"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Комплексный проект",
@@ -782,10 +808,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Автоматизированный шкаф InLocker с ячейками",
     gallery: [
       "/assets/images/products/inlocker/smart-industrial-locker.png",
-      "/assets/images/products/inlocker/smart-industrial-locker-in-action.png",
-      "/assets/images/catalog/07-inlocker.png"
+      "/assets/images/products/inlocker/smart-industrial-locker-in-action.png"
     ],
-    galleryAlts: ["Шкаф InLocker", "Сотрудник получает инструмент из ячейки", "Автоматизированная система ячеек InLocker"],
+    galleryAlts: ["Шкаф InLocker", "Сотрудник получает инструмент из ячейки"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Контролируемая выдача",
@@ -819,10 +844,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Вакуумный подъёмник листового металла на консольном кране",
     gallery: [
       "/assets/images/products/lifting-equipment/vacuum-sheet-lifter-jib.png",
-      "/assets/images/products/lifting-equipment/vacuum-sheet-lifter-jib-in-action.png",
-      "/assets/images/catalog/08-lifting-equipment.png"
+      "/assets/images/products/lifting-equipment/vacuum-sheet-lifter-jib-in-action.png"
     ],
-    galleryAlts: ["Вакуумный захват на консольном кране", "Перемещение металлического листа вакуумным подъёмником", "Грузоподъёмное оборудование"],
+    galleryAlts: ["Вакуумный захват на консольном кране", "Перемещение металлического листа вакуумным подъёмником"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Безопасная подача",
@@ -852,14 +876,16 @@ export const catalogProducts: CatalogProduct[] = [
     shortTitle: "Стеллаж с выкатными полками",
     sku: "KBP-ROLL-HEAVY",
     modelName: "Heavy Pull-Out Rack",
-    image: "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack.png",
-    imageAlt: "Промышленный стеллаж с выкатными полками",
+    image: "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-studio-safe.png",
+    imageAlt: "Двухсекционный промышленный стеллаж с восемью закрытыми выкатными полками",
     gallery: [
-      "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack.png",
-      "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-in-action.png",
-      "/assets/images/catalog/09-rollout-shelf-storage.png"
+      "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-studio-safe.png",
+      "/assets/images/products/rollout-shelf-storage/heavy-duty-pullout-rack-action-safe.png"
     ],
-    galleryAlts: ["Стеллаж с выкатными полками", "Обслуживание выдвинутой полки краном", "Системы хранения с выкатными полками"],
+    galleryAlts: [
+      "Двухсекционный стеллаж с четырьмя закрытыми выкатными уровнями в каждой секции",
+      "Обслуживание одной выдвинутой нижней полки талью и двухветвевым цепным стропом"
+    ],
     pageMode: "standard",
     priceMode: "request",
     badge: "Прямой доступ",
@@ -893,10 +919,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Двусторонний консольный стеллаж с трубами и профилем",
     gallery: [
       "/assets/images/products/cantilever-racks/double-sided-cantilever-rack.png",
-      "/assets/images/products/cantilever-racks/double-sided-cantilever-rack-in-action.png",
-      "/assets/images/catalog/10-cantilever-racks.png"
+      "/assets/images/products/cantilever-racks/double-sided-cantilever-rack-in-action.png"
     ],
-    galleryAlts: ["Двусторонний консольный стеллаж", "Загрузка длинномера на консоли", "Консольные стеллажи"],
+    galleryAlts: ["Двусторонний консольный стеллаж", "Загрузка длинномера на консоли"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Двусторонний",
@@ -930,10 +955,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Фронтальные паллетные стеллажи на складе",
     gallery: [
       "/assets/images/products/front-pallet-racks/selective-pallet-rack.png",
-      "/assets/images/products/front-pallet-racks/selective-pallet-rack-in-action.png",
-      "/assets/images/catalog/11-front-pallet-racks.png"
+      "/assets/images/products/front-pallet-racks/selective-pallet-rack-in-action.png"
     ],
-    galleryAlts: ["Фронтальный паллетный стеллаж", "Погрузчик обслуживает паллетный стеллаж", "Паллетные фронтальные стеллажи"],
+    galleryAlts: ["Фронтальный паллетный стеллаж", "Погрузчик обслуживает паллетный стеллаж"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Прямой доступ к паллете",
@@ -967,10 +991,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Электрическая складская техника для паллет",
     gallery: [
       "/assets/images/products/warehouse-equipment/electric-pallet-equipment.png",
-      "/assets/images/products/warehouse-equipment/electric-pallet-equipment-in-action.png",
-      "/assets/images/catalog/12-warehouse-equipment.png"
+      "/assets/images/products/warehouse-equipment/electric-pallet-equipment-in-action.png"
     ],
-    galleryAlts: ["Электрическая паллетная техника", "Перемещение паллеты на складе", "Складская техника"],
+    galleryAlts: ["Электрическая паллетная техника", "Перемещение паллеты на складе"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Подбор под маршрут",
@@ -1004,10 +1027,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Промышленные полочные стеллажи с ручным отбором",
     gallery: [
       "/assets/images/products/shelf-racks/industrial-shelving.png",
-      "/assets/images/products/shelf-racks/industrial-shelving-in-action.png",
-      "/assets/images/catalog/13-shelf-racks.png"
+      "/assets/images/products/shelf-racks/industrial-shelving-in-action.png"
     ],
-    galleryAlts: ["Промышленный полочный стеллаж", "Ручной отбор с промышленного полочного стеллажа", "Полочные стеллажи"],
+    galleryAlts: ["Промышленный полочный стеллаж", "Ручной отбор с промышленного полочного стеллажа"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Ручной отбор",
@@ -1041,10 +1063,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Стальной складской мезонин с рабочими уровнями",
     gallery: [
       "/assets/images/products/mezzanines/warehouse-mezzanine.png",
-      "/assets/images/products/mezzanines/warehouse-mezzanine-in-action.png",
-      "/assets/images/catalog/14-mezzanines.png"
+      "/assets/images/products/mezzanines/warehouse-mezzanine-in-action.png"
     ],
-    galleryAlts: ["Складской мезонин", "Многоуровневый складской мезонин", "Складские мезонины"],
+    galleryAlts: ["Складской мезонин", "Многоуровневый складской мезонин"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Использование высоты",
@@ -1078,10 +1099,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Стеллаж с кабельными барабанами и размоткой",
     gallery: [
       "/assets/images/products/cable-racks/cable-drum-rack.png",
-      "/assets/images/products/cable-racks/cable-drum-rack-in-action.png",
-      "/assets/images/catalog/15-cable-racks.png"
+      "/assets/images/products/cable-racks/cable-drum-rack-in-action.png"
     ],
-    galleryAlts: ["Стеллаж для кабельных барабанов", "Размотка кабеля со стеллажа для барабанов", "Стеллажи для хранения и размотки кабеля"],
+    galleryAlts: ["Стеллаж для кабельных барабанов", "Размотка кабеля со стеллажа для барабанов"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Хранение и размотка",
@@ -1115,10 +1135,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Промышленный пост упаковки и маркировки продукции",
     gallery: [
       "/assets/images/products/packing-marking/packing-marking-workstation.png",
-      "/assets/images/products/packing-marking/packing-marking-workstation-in-action.png",
-      "/assets/images/catalog/16-packing-marking-storage.png"
+      "/assets/images/products/packing-marking/packing-marking-workstation-in-action.png"
     ],
-    galleryAlts: ["Пост упаковки и маркировки", "Оператор на посту упаковки и маркировки", "Упаковка, маркировка и хранение"],
+    galleryAlts: ["Пост упаковки и маркировки", "Оператор на посту упаковки и маркировки"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Организация рабочего места",
@@ -1152,10 +1171,9 @@ export const catalogProducts: CatalogProduct[] = [
     imageAlt: "Интерфейс управления складом и интеграции с ERP",
     gallery: [
       "/assets/images/products/warehouse-erp/warehouse-management-system.png",
-      "/assets/images/products/warehouse-erp/warehouse-management-system-in-action.png",
-      "/assets/images/catalog/17-warehouse-erp.png"
+      "/assets/images/products/warehouse-erp/warehouse-management-system-in-action.png"
     ],
-    galleryAlts: ["Система управления складом", "Оператор работает в системе управления складом", "Системы управления складом и ERP"],
+    galleryAlts: ["Система управления складом", "Оператор работает в системе управления складом"],
     pageMode: "standard",
     priceMode: "request",
     badge: "Цифровой контур",

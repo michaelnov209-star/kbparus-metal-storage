@@ -2,6 +2,7 @@ import { catalogProducts, catalogSubcategories } from "@/data/storageSystems/cat
 import { excelHomeCatalog } from "@/data/storageSystems/excelCatalog";
 import { DEFAULT_CONTACTS } from "@/lib/cms/contacts";
 import { DEFAULT_HOME_CONTENT } from "@/lib/cms/home-content";
+import { getProductGallerySlots } from "@/lib/catalog/product-gallery";
 import { DEFAULT_SITE_NAVIGATION } from "@/lib/cms/site-navigation";
 
 export type CurrentStateAsset = {
@@ -95,8 +96,8 @@ export function mergeMissingState<T>(
   if (Array.isArray(current) && Array.isArray(fallback)) {
     if (current.length === 0) {
       return {
-        updatedFields: countPopulatedLeaves(fallback),
-        value: structuredClone(fallback) as T
+        updatedFields: 0,
+        value: current
       };
     }
 
@@ -462,6 +463,9 @@ export function buildProductSeeds(
       const calculatorProfile = product.calculatorProfileId
         ? calculatorProfileIds.get(product.calculatorProfileId)
         : undefined;
+      const secondaryGalleryPaths = getProductGallerySlots(product)
+        .filter((slot) => !slot.isMain)
+        .map((slot) => slot.source);
 
       return removeUndefined({
         slug: product.id,
@@ -476,11 +480,11 @@ export function buildProductSeeds(
         description: product.description,
         image: mediaId(mediaIds, product.image),
         legacyImagePath: product.image,
-        gallery: product.gallery
+        gallery: secondaryGalleryPaths
           .map((path) => mediaId(mediaIds, path))
           .filter((id): id is number | string => id !== undefined)
           .map((image) => ({ image })),
-        legacyGalleryPaths: product.gallery.map((path) => ({ path })),
+        legacyGalleryPaths: secondaryGalleryPaths.map((path) => ({ path })),
         priceMode: product.priceMode,
         priceFrom: product.priceFrom,
         priceTo: product.priceTo,

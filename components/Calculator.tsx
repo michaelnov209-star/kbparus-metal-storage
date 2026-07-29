@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent
+} from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   ClipboardCheck,
   Gauge,
-  Info,
   Layers3,
   MapPin,
   MessageSquareText,
@@ -20,7 +25,7 @@ import {
 } from "lucide-react";
 import { calculatorProfiles as fallbackCalculatorProfiles, getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfile, CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
-import { calculateStorageSystem, formatRoundedRub, formatRub, normalizeCalculatorInput } from "@/lib/calculator";
+import { calculateStorageSystem, formatRoundedRub, formatRub } from "@/lib/calculator";
 import type { CalculatorInput } from "@/lib/calculator";
 import { trackYandexGoal } from "@/lib/analytics/metrika";
 import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/leads/client-state";
@@ -28,6 +33,12 @@ import { createLeadConsent } from "@/lib/leads/contract";
 import { getLocalCatalogImageVariants } from "@/lib/cms/catalog-image-variants";
 import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
 import { buildImageSrcSet } from "@/lib/media/srcset";
+import { CalculatorOptionGroup as OptionGroup } from "@/components/calculator/CalculatorOptionGroup";
+import { CalculatorProgress } from "@/components/calculator/CalculatorProgress";
+import {
+  buildInputForProfile,
+  reconcileInputForProfile
+} from "@/components/calculator/calculator-state";
 
 const steps = ["Материал", "Габариты", "Доступ", "Решение"];
 
@@ -48,25 +59,25 @@ const profileCopy: Record<CalculatorProfileId, { title: string; shortTitle: stri
     title: "Система хранения с выкатными полками",
     shortTitle: "Система с выкатными полками",
     description: "Для листа и пачек, когда нужен прямой доступ к каждой кассете.",
-    image: "/assets/images/catalog/02-manual-sheet-metal.png"
+    image: "/assets/images/products/manual-sheet-metal/2.2-safe-studio.png"
   },
   "forklift-cassette-rack": {
     title: "Кассетная система хранения листового металла",
     shortTitle: "Кассетная система хранения листового металла",
     description: "Для плотного хранения листа с доступом погрузчиком или складской техникой.",
-    image: "/assets/images/products/manual-sheet-metal/2.1.png"
+    image: "/assets/images/products/manual-sheet-metal/2.1-safe-studio.png"
   },
   "two-side-rollout-rack": {
     title: "Двухсторонняя система хранения с выкатными полками",
     shortTitle: "Двухсторонняя выкатная система",
     description: "Для складов, где нужен доступ к кассетам с одной или двух сторон.",
-    image: "/assets/images/products/manual-sheet-metal/2.4.png"
+    image: "/assets/images/products/manual-sheet-metal/2.4-safe-studio.png"
   },
   "hybrid-rollout-rack": {
     title: "Комбинированная система хранения с выкатными полками",
     shortTitle: "Гибридная система",
     description: "Комбинация полок под погрузчик и выкатных кассет в одной системе.",
-    image: "/assets/images/products/manual-sheet-metal/2.3.png"
+    image: "/assets/images/products/manual-sheet-metal/2.3-safe-studio.png"
   }
 };
 
@@ -158,36 +169,6 @@ const citySuggestions = [
   "Минск"
 ];
 
-function buildInputForProfile(
-  profileId: CalculatorProfileId,
-  profiles: readonly CalculatorProfile[]
-): CalculatorInput {
-  const profile = getCalculatorProfile(profileId, profiles);
-  const defaults = profile.defaultValues;
-
-  return normalizeCalculatorInput({
-    systemId: profile.id,
-    heightMm: defaults.heightMm,
-    widthMm: defaults.widthMm,
-    lengthMm: defaults.lengthMm,
-    materialLengthMm: defaults.lengthMm,
-    sheetWidthMm: defaults.widthMm,
-    loadKg: defaults.loadKg,
-    totalStorageWeightKg: defaults.loadKg * defaults.shelfCount * defaults.towerCount,
-    desiredCapacity: defaults.shelfCount,
-    shelfCount: defaults.shelfCount,
-    rolloutShelfCount: defaults.rolloutShelfCount ?? defaults.shelfCount,
-    cassetteCount: defaults.rolloutShelfCount ?? defaults.shelfCount,
-    towerCount: defaults.towerCount,
-    rolloutSide: defaults.rolloutSide ?? "one",
-    optionIds: [],
-    execution: profile.productType === "automated" ? "automatic" : "manual",
-    needsRolloutCassettes: profile.productType === "rollout" || profile.productType === "hybrid",
-    city: "",
-    comment: ""
-  }, profile);
-}
-
 export function Calculator({
   profiles = fallbackCalculatorProfiles
 }: {
@@ -204,6 +185,11 @@ export function Calculator({
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const formStartedAt = useRef<number>(Date.now());
   const calculatorStarted = useRef(false);
+  const leadFormRef = useRef<HTMLFormElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const mobileSummaryTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileSummaryCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileSummaryPanelRef = useRef<HTMLDivElement>(null);
   const profile = useMemo(() => getCalculatorProfile(input.systemId, profiles), [input.systemId, profiles]);
   const shelfCountOptions =
     profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount
@@ -215,26 +201,27 @@ export function Calculator({
       : profile.rolloutShelfCountOptions ?? [];
   const result = useMemo(() => calculateStorageSystem(input, profile), [input, profile]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
-  const progress = ((step + 1) / steps.length) * 100;
-  const display = profileCopy[profile.id];
+  const display = useMemo(() => {
+    const fallback = profileCopy[profile.id];
+    return {
+      ...fallback,
+      title: profile.title || fallback.title,
+      shortTitle: profile.shortTitle || fallback.shortTitle,
+      description: profile.description || fallback.description,
+      image: profile.image || fallback.image,
+      imageAlt: profile.imageAlt || profile.title || fallback.title
+    };
+  }, [
+    profile.description,
+    profile.id,
+    profile.image,
+    profile.imageAlt,
+    profile.shortTitle,
+    profile.title
+  ]);
   const displayImage = calculatorCardImage(display.image);
   const selectedOptions = profile.options.filter((option) => input.optionIds.includes(option.id));
   const systemCharacter = profile.productType === "automated" ? "tech" : profile.productType === "hybrid" ? "hybrid" : "manual";
-  const scaleScore =
-    input.loadKg / 1000 +
-    input.shelfCount * 0.75 +
-    input.towerCount * 1.35 +
-    selectedOptions.length * 0.7 +
-    (profile.productType === "automated" ? 2.1 : 0) +
-    (profile.productType === "hybrid" ? 1.3 : 0);
-  const projectScale =
-    scaleScore >= 15
-      ? { id: "complex", label: "Тяжелый промышленный комплекс", text: "Серьезная промышленная конфигурация", progress: 100 }
-      : scaleScore >= 10
-        ? { id: "industrial", label: "Промышленная система", text: "Индустриальная складская система", progress: 78 }
-        : scaleScore >= 6
-          ? { id: "module", label: "Складской модуль", text: "Складской модуль под регулярную работу", progress: 54 }
-          : { id: "compact", label: "Компактное решение", text: "Компактное решение для участка", progress: 32 };
   const conditionsComment = selectedConditions.length ? `Условия объекта: ${selectedConditions.join(", ")}` : "";
   const dimensionLabel = `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")}×${input.heightMm.toLocaleString("ru-RU")} мм`;
   const roundedPrice = formatRoundedRub(animatedPrice);
@@ -258,18 +245,35 @@ export function Calculator({
     profile.productType === "automated" ? "Конфигурация подходит для интенсивной выдачи материала" : "Схема сохраняет понятный доступ к каждому уровню",
     selectedConditions.includes("Погрузчик") ? "Доступ погрузчиком отмечен для инженерной проверки" : "Инженер проверит запас, монтаж и безопасность объекта"
   ];
+  const storageFormatLabel =
+    profile.pricing.kind === "hybrid"
+      ? `${input.shelfCount.toLocaleString("ru-RU")} полок под погрузчик + ${input.rolloutShelfCount.toLocaleString("ru-RU")} выкатных кассет`
+      : `${input.shelfCount.toLocaleString("ru-RU")} полок хранения в системе`;
   const summaryFacts = [
-    `${input.shelfCount.toLocaleString("ru-RU")} полок хранения в системе`,
+    storageFormatLabel,
     `Нагрузка до ${input.loadKg.toLocaleString("ru-RU")} кг на уровень хранения`,
     `${input.towerCount.toLocaleString("ru-RU")} секций, зона ${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")} мм`
   ];
   const resultFacts = [
-    { label: "Формат", value: `${input.shelfCount.toLocaleString("ru-RU")} полок / ${input.towerCount.toLocaleString("ru-RU")} секций` },
+    { label: "Формат", value: profile.pricing.kind === "hybrid" ? storageFormatLabel : `${input.shelfCount.toLocaleString("ru-RU")} полок / ${input.towerCount.toLocaleString("ru-RU")} секций` },
     { label: "Нагрузка", value: `${input.loadKg.toLocaleString("ru-RU")} кг на уровень` },
     { label: "Рабочая зона", value: dimensionLabel }
   ];
+  const stepSummaries = [
+    display.shortTitle,
+    `${input.lengthMm.toLocaleString("ru-RU")}×${input.widthMm.toLocaleString("ru-RU")} мм · ${input.loadKg.toLocaleString("ru-RU")} кг`,
+    profile.pricing.kind === "hybrid"
+      ? `${input.shelfCount} обычных + ${input.rolloutShelfCount} выкатных`
+      : `${input.shelfCount} уровней · ${input.towerCount} секц.`,
+    "Цена и контакты"
+  ];
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setAnimatedPrice(result.fromPrice);
+      return;
+    }
+
     const fromValue = animatedPrice;
     const toValue = result.fromPrice;
     const start = performance.now();
@@ -291,6 +295,38 @@ export function Calculator({
   useEffect(() => {
     captureLeadUtm();
   }, []);
+
+  useEffect(() => {
+    if (!mobileSummaryOpen) return;
+
+    mobileSummaryCloseRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileSummaryOpen(false);
+        mobileSummaryTriggerRef.current?.focus();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(
+        mobileSummaryPanelRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      ).filter((element) => !element.hasAttribute("hidden"));
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileSummaryOpen]);
 
   useEffect(() => {
     saveLastCalculatorLead({
@@ -335,18 +371,18 @@ export function Calculator({
   function selectProfile(profileId: CalculatorProfileId) {
     markCalculatorStarted("select_profile");
     trackYandexGoal("calculator_parameter_change", { field: "systemId", value: profileId });
-    setInput(buildInputForProfile(profileId, profiles));
+    setInput((current) =>
+      reconcileInputForProfile(current, profileId, profiles)
+    );
     setLeadStatus("");
   }
 
   function selectGuidedChoice(profileId: CalculatorProfileId) {
     markCalculatorStarted("guided_choice");
     trackYandexGoal("calculator_parameter_change", { field: "guidedChoice", value: profileId });
-    setInput({
-      ...buildInputForProfile(profileId, profiles),
-      city: "",
-      comment: ""
-    });
+    setInput((current) =>
+      reconcileInputForProfile(current, profileId, profiles)
+    );
     setLeadStatus("");
   }
 
@@ -452,10 +488,27 @@ export function Calculator({
     }
   }
 
+  function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    void submitLead();
+  }
+
+  function focusLeadForm() {
+    setMobileSummaryOpen(false);
+    leadFormRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "center"
+    });
+    window.setTimeout(() => phoneInputRef.current?.focus(), 180);
+  }
+
   return (
     <section
-      className={`calculator-shell reveal character-${systemCharacter} scale-${projectScale.id}`}
-      data-ui="calculator-v2"
+      className={`calculator-shell reveal character-${systemCharacter}`}
+      data-ui="calculator-v3"
       data-testid="calculator"
       id="calculator"
     >
@@ -473,17 +526,13 @@ export function Calculator({
       </div>
 
       <div className="calculator-product">
-        <div className="calc-progress" aria-label="Прогресс конфигуратора">
-          <div className="calc-steps">
-            {steps.map((item, index) => (
-              <button className={index === step ? "is-active" : ""} key={item} type="button" onClick={() => goToStep(index, "step_tab")}>
-                <span>{index + 1}</span>
-                {item}
-              </button>
-            ))}
-          </div>
-          <div className="calc-progress-line"><span style={{ width: `${progress}%` }} /></div>
-        </div>
+        <CalculatorProgress
+          currentStep={step}
+          steps={steps}
+          summaries={stepSummaries}
+          price={priceNumber}
+          onStepChange={(nextStep) => goToStep(nextStep, "step_tab")}
+        />
 
         <div className="calc-workspace">
           {step === 0 && (
@@ -497,24 +546,28 @@ export function Calculator({
               </div>
 
               <div className="material-choice-grid" aria-label="Сценарий хранения">
-                {guidedChoices.map((choice, index) => {
-                  const ChoiceIcon = index === 0 ? Layers3 : index === 1 ? Warehouse : PackageSearch;
-                  return (
-                    <button
-                      className={choice.profileId === input.systemId ? "material-choice is-active" : "material-choice"}
-                      key={choice.title}
-                      type="button"
-                      onClick={() => selectGuidedChoice(choice.profileId)}
-                    >
-                      <span className="material-choice-icon"><ChoiceIcon size={22} /></span>
-                      <span className="material-choice-copy">
-                        <strong>{choice.title}</strong>
-                        <small>{choice.text}</small>
-                      </span>
-                      <span className="material-choice-check" aria-hidden="true"><Check size={16} /></span>
-                    </button>
-                  );
-                })}
+                {guidedChoices
+                  .filter((choice) =>
+                    profiles.some((profile) => profile.id === choice.profileId)
+                  )
+                  .map((choice, index) => {
+                    const ChoiceIcon = index === 0 ? Layers3 : index === 1 ? Warehouse : PackageSearch;
+                    return (
+                      <button
+                        className={choice.profileId === input.systemId ? "material-choice is-active" : "material-choice"}
+                        key={choice.title}
+                        type="button"
+                        onClick={() => selectGuidedChoice(choice.profileId)}
+                      >
+                        <span className="material-choice-icon"><ChoiceIcon size={22} /></span>
+                        <span className="material-choice-copy">
+                          <strong>{choice.title}</strong>
+                          <small>{choice.text}</small>
+                        </span>
+                        <span className="material-choice-check" aria-hidden="true"><Check size={16} /></span>
+                      </button>
+                    );
+                  })}
               </div>
 
               <details className="equipment-picker">
@@ -528,7 +581,7 @@ export function Calculator({
                 <div className="system-showcase" aria-label="Все типы систем хранения">
                   {profiles.map((item, index) => {
                     const card = profileCopy[item.id];
-                    const cardImage = calculatorCardImage(card.image);
+                    const cardImage = calculatorCardImage(item.image || card.image);
                     const isActive = item.id === input.systemId;
                     const isRecommended = index < 2;
                     const typeLabel = item.productType === "automated"
@@ -554,7 +607,7 @@ export function Calculator({
                           src={cardImage.src}
                           srcSet={cardImage.srcSet}
                           sizes="(max-width: 760px) 72px, 180px"
-                          alt={card.title}
+                          alt={item.imageAlt || item.title || card.title}
                           loading="lazy"
                           decoding="async"
                           fetchPriority="low"
@@ -806,13 +859,12 @@ export function Calculator({
                 </div>
 
                 <div className="solution-evidence">
-                  <div className="project-scale-card">
+                  <div className="estimate-status-card">
+                    <ClipboardCheck size={22} />
                     <div>
-                      <span>Масштаб проекта</span>
-                      <strong>{projectScale.label}</strong>
-                      <small>{projectScale.text}</small>
+                      <strong>Предварительная комплектация рассчитана</strong>
+                      <span>Цена собрана по выбранным параметрам. Нагрузки, основание, монтаж и доставку проверит инженер.</span>
                     </div>
-                    <i><b style={{ width: `${projectScale.progress}%` }} /></i>
                   </div>
 
                   <div className="result-facts">
@@ -839,6 +891,11 @@ export function Calculator({
                   </div>
                 </div>
 
+                <form
+                  className="calculator-lead-form"
+                  onSubmit={handleLeadSubmit}
+                  ref={leadFormRef}
+                >
                 <div className="result-request-panel">
                   <div>
                     <span>Следующий шаг</span>
@@ -866,6 +923,7 @@ export function Calculator({
                         inputMode="tel"
                         maxLength={30}
                         name="phone"
+                        ref={phoneInputRef}
                         required
                         value={contact.phone}
                         onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
@@ -924,9 +982,8 @@ export function Calculator({
                 <button
                   className="primary-button result-submit"
                   data-testid="calculator-submit"
-                  type="button"
-                  onClick={submitLead}
-                  disabled={submittingLead || !consentAccepted}
+                  type="submit"
+                  disabled={submittingLead}
                 >
                   <Send size={18} />
                   Получить инженерный расчет
@@ -936,6 +993,7 @@ export function Calculator({
                     {leadStatus}
                   </p>
                 )}
+                </form>
               </div>
             </div>
           )}
@@ -945,10 +1003,12 @@ export function Calculator({
               <ArrowLeft size={18} />
               Назад
             </button>
-            <button className="secondary-button" type="button" disabled={step === steps.length - 1} onClick={() => goToStep(step + 1, "next_button")}>
-              Далее
-              <ArrowRight size={18} />
-            </button>
+            {step < steps.length - 1 && (
+              <button className="primary-button calc-next-button" type="button" onClick={() => goToStep(step + 1, "next_button")}>
+                {step === steps.length - 2 ? "Показать расчёт" : "Далее"}
+                <ArrowRight size={18} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -959,7 +1019,7 @@ export function Calculator({
             src={displayImage.src}
             srcSet={displayImage.srcSet}
             sizes="320px"
-            alt={display.title}
+            alt={display.imageAlt}
             loading="lazy"
             decoding="async"
             fetchPriority="low"
@@ -970,51 +1030,77 @@ export function Calculator({
             <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
             <small>ориентир до инженерной проверки</small>
           </div>
-          <div className="summary-scale">
-            <span>{projectScale.label}</span>
-            <i><b style={{ width: `${projectScale.progress}%` }} /></i>
+          <div className="summary-verification">
+            <ShieldCheck size={17} />
+            <span>Предварительная цена. Инженер проверит проект.</span>
           </div>
           <div className="summary-spec-grid" aria-label="Ключевые параметры">
             {summaryFacts.map((fact) => (
               <span key={fact}><Check size={16} />{fact}</span>
             ))}
           </div>
-          <button className="primary-button summary-cta" type="button" onClick={() => goToStep(3, "summary_cta")}>
-            <Send size={18} />
-            Перейти к заявке
+          <button
+            className="summary-cta"
+            type="button"
+            onClick={() =>
+              step === steps.length - 1
+                ? goToStep(1, "summary_edit")
+                : goToStep(3, "summary_cta")
+            }
+          >
+            {step === steps.length - 1 ? "Изменить параметры" : "Сразу к заявке"}
+            <ArrowRight size={17} />
           </button>
         </aside>
 
         <div className="mobile-summary-bar" aria-label="Краткий итог расчета">
-          <button className="mobile-summary-main" type="button" onClick={() => setMobileSummaryOpen(true)}>
+          <button
+            className="mobile-summary-main"
+            ref={mobileSummaryTriggerRef}
+            type="button"
+            onClick={() => setMobileSummaryOpen(true)}
+          >
             <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
             <small>{display.shortTitle} · {input.loadKg.toLocaleString("ru-RU")} кг</small>
           </button>
           <button
             className="mobile-summary-action"
             type="button"
-            onClick={() => (step < steps.length - 1 ? goToStep(step + 1, "mobile_next") : setMobileSummaryOpen(true))}
+            onClick={() =>
+              step < steps.length - 1
+                ? goToStep(step + 1, "mobile_next")
+                : focusLeadForm()
+            }
           >
-            {step < steps.length - 1 ? "Далее" : "Итог"}
+            {step < steps.length - 1 ? "Далее" : "К заявке"}
             <ArrowRight size={16} />
           </button>
         </div>
 
         {mobileSummaryOpen && (
-          <div className="mobile-summary-modal" role="dialog" aria-modal="true" aria-label="Итог конфигурации">
-            <div className="mobile-summary-panel">
-              <button className="mobile-summary-close" type="button" onClick={() => setMobileSummaryOpen(false)} aria-label="Закрыть итог">
+          <div className="mobile-summary-modal" role="dialog" aria-modal="true" aria-labelledby="calculator-mobile-summary-title">
+            <div className="mobile-summary-panel" ref={mobileSummaryPanelRef}>
+              <button
+                className="mobile-summary-close"
+                ref={mobileSummaryCloseRef}
+                type="button"
+                onClick={() => {
+                  setMobileSummaryOpen(false);
+                  mobileSummaryTriggerRef.current?.focus();
+                }}
+                aria-label="Закрыть итог"
+              >
                 <X size={20} />
               </button>
               <span className="line-kicker">Итог конфигурации</span>
-              <h3>{display.shortTitle}</h3>
+              <h3 id="calculator-mobile-summary-title">{display.shortTitle}</h3>
               <div className="summary-price price-live">
                 <span className="price-line"><span>от</span><b>{priceNumber}</b><em>₽</em></span>
                 <small>предварительная стоимость</small>
               </div>
-              <div className="summary-scale">
-                <span>{projectScale.label}</span>
-                <i><b style={{ width: `${projectScale.progress}%` }} /></i>
+              <div className="summary-verification">
+                <ShieldCheck size={17} />
+                <span>Цена предварительная — инженер проверит проект.</span>
               </div>
               <div className="summary-spec-grid">
                 {summaryFacts.map((fact) => (
@@ -1027,7 +1113,7 @@ export function Calculator({
                 type="button"
                 onClick={() => {
                   goToStep(3, "mobile_summary_cta");
-                  setMobileSummaryOpen(false);
+                  window.setTimeout(focusLeadForm, 0);
                 }}
               >
                 <Send size={18} />
@@ -1045,6 +1131,11 @@ function AnimatedNumber({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplayValue(value);
+      return;
+    }
+
     const fromValue = displayValue;
     const toValue = value;
     const start = performance.now();
@@ -1064,36 +1155,4 @@ function AnimatedNumber({ value }: { value: number }) {
   }, [value]);
 
   return <span className="animated-number">{displayValue.toLocaleString("ru-RU")}</span>;
-}
-
-function OptionGroup({
-  title,
-  hint,
-  unit,
-  values,
-  active,
-  onSelect
-}: {
-  title: string;
-  hint: string;
-  unit: string;
-  values: readonly number[];
-  active: number;
-  onSelect: (value: number) => void;
-}) {
-  return (
-    <div className="calc-option-group">
-      <div>
-        <span>{title}</span>
-        <small><Info size={14} />{hint}</small>
-      </div>
-      <div className="calc-chip-row">
-        {values.map((value) => (
-          <button className={active === value ? "calc-chip is-active" : "calc-chip"} key={value} type="button" onClick={() => onSelect(value)}>
-            {value.toLocaleString("ru-RU")} <em>{unit}</em>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 }

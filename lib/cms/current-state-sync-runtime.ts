@@ -25,6 +25,11 @@ import {
   type MediaIdMap,
   type PlainRecord
 } from "@/lib/cms/current-state-sync";
+import {
+  relationDocumentId,
+  sanitizeProductGalleryRows,
+  type ProductGalleryRow
+} from "@/lib/cms/product-gallery-policy";
 
 const MAX_ASSET_BYTES = 15 * 1024 * 1024;
 const COLLECTION_PAGE_SIZE = 100;
@@ -48,6 +53,7 @@ type CurrentStateSnapshot = {
 
 export type CurrentStateAudit = {
   assetTotal: number;
+  invalidProductGalleryRows: number;
   missingAssets: string[];
   missingFields: number;
   missingRecords: number;
@@ -55,6 +61,16 @@ export type CurrentStateAudit = {
 
 export type CurrentStateContentResult = {
   createdRecords: number;
+  updatedFields: number;
+  updatedRecords: number;
+};
+
+export type ProductGalleryRepairResult = {
+  removedRows: number;
+  updatedProducts: number;
+};
+
+type ManagedVisualSyncResult = {
   updatedFields: number;
   updatedRecords: number;
 };
@@ -264,6 +280,102 @@ function docsBySlug(docs: PlainRecord[]): Map<string, PlainRecord> {
   );
 }
 
+function managedLegacyMediaIds(docs: PlainRecord[]): Set<string> {
+  const ids = new Set<string>();
+  for (const doc of docs) {
+    const id = documentId(doc);
+    const title = stringValue(doc.internalTitle);
+    if (
+      id !== undefined &&
+      title?.startsWith("Legacy asset: /assets/")
+    ) {
+      ids.add(String(id));
+    }
+  }
+  return ids;
+}
+
+function relationIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) =>
+      relationDocumentId(
+        item && typeof item === "object"
+          ? (item as { image?: unknown }).image
+          : item
+      )
+    )
+    .filter(
+      (id): id is number | string =>
+        typeof id === "number" || typeof id === "string"
+    )
+    .map(String);
+}
+
+function relationIdEquals(left: unknown, right: unknown) {
+  const leftId = relationDocumentId(left);
+  const rightId = relationDocumentId(right);
+  return (
+    leftId !== undefined &&
+    rightId !== undefined &&
+    String(leftId) === String(rightId)
+  );
+}
+
+function sameRelationList(left: unknown, right: unknown) {
+  const leftIds = relationIds(left);
+  const rightIds = relationIds(right);
+  return (
+    leftIds.length === rightIds.length &&
+    leftIds.every((id, index) => id === rightIds[index])
+  );
+}
+
+function buildProductGalleryRepairPlan(
+  categories: PlainRecord[],
+  products: PlainRecord[]
+) {
+  const categoryImageById = new Map<string, number | string>();
+  for (const category of categories) {
+    const id = relationDocumentId(category.id);
+    const imageId = relationDocumentId(category.image);
+    if (id !== undefined && imageId !== undefined) {
+      categoryImageById.set(String(id), imageId);
+    }
+  }
+
+  return products
+    .map((product) => {
+      const id = documentId(product);
+      const categoryId = relationDocumentId(product.category);
+      const gallery = Array.isArray(product.gallery)
+        ? (product.gallery as ProductGalleryRow[])
+        : [];
+      const repair = sanitizeProductGalleryRows({
+        categoryImageId:
+          categoryId === undefined
+            ? undefined
+            : categoryImageById.get(String(categoryId)),
+        mainImageId: relationDocumentId(product.image),
+        rows: gallery
+      });
+      return {
+        id,
+        isDraft: product._status === "draft",
+        repair
+      };
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        id: number | string;
+        isDraft: boolean;
+        repair: ReturnType<typeof sanitizeProductGalleryRows<ProductGalleryRow>>;
+      } => item.id !== undefined && item.repair.removed > 0
+    );
+}
+
 function auditExistingRecords(
   docs: PlainRecord[],
   seeds: PlainRecord[]
@@ -284,6 +396,31 @@ function auditExistingRecords(
   return { missingFields, missingRecords };
 }
 
+function countManagedCollectionVisualChanges(
+  collection: "categories" | "products" | "subcategories",
+  docs: PlainRecord[],
+  seeds: PlainRecord[],
+  managedMediaIds: Set<string>
+) {
+  const currentBySlug = docsBySlug(docs);
+  return seeds.reduce((total, seed) => {
+    const slug = stringValue(seed.slug);
+    const current = slug ? currentBySlug.get(slug) : undefined;
+    if (!current) return total;
+    return (
+      total +
+      Object.keys(
+        buildManagedVisualPatch(
+          collection,
+          current,
+          seed,
+          managedMediaIds
+        )
+      ).length
+    );
+  }, 0);
+}
+
 export async function auditCurrentState(
   cms: Payload,
   requestUrl: string,
@@ -301,11 +438,21 @@ export async function auditCurrentState(
   const calculatorProfileIds = mapPublishedCalculatorProfileIds(
     snapshot.calculatorProfiles.published
   );
+  const managedMediaIds = managedLegacyMediaIds(snapshot.media);
+  const homeSeed = buildHomeContentSeed(mediaIds);
+  const categorySeeds = buildCategorySeeds(mediaIds);
+  const subcategorySeeds = buildSubcategorySeeds(mediaIds, categoryIds);
+  const productSeeds = buildProductSeeds(
+    mediaIds,
+    categoryIds,
+    subcategoryIds,
+    calculatorProfileIds
+  );
 
   let missingFields = 0;
   missingFields += mergeMissingState(
     snapshot.home,
-    buildHomeContentSeed(mediaIds)
+    homeSeed
   ).updatedFields;
   missingFields += mergeMissingState(
     snapshot.contacts,
@@ -318,26 +465,46 @@ export async function auditCurrentState(
 
   const categoryAudit = auditExistingRecords(
     snapshot.categories,
-    buildCategorySeeds(mediaIds)
+    categorySeeds
   );
   const subcategoryAudit = auditExistingRecords(
     snapshot.subcategories,
-    buildSubcategorySeeds(mediaIds, categoryIds)
+    subcategorySeeds
   );
   const productAudit = auditExistingRecords(
     snapshot.products,
-    buildProductSeeds(
-      mediaIds,
-      categoryIds,
-      subcategoryIds,
-      calculatorProfileIds
-    )
+    productSeeds
   );
 
   missingFields +=
     categoryAudit.missingFields +
     subcategoryAudit.missingFields +
     productAudit.missingFields;
+  missingFields += Object.keys(
+    buildManagedHomeVisualPatch(
+      snapshot.home,
+      homeSeed,
+      managedMediaIds
+    )
+  ).length;
+  missingFields += countManagedCollectionVisualChanges(
+    "categories",
+    snapshot.categories,
+    categorySeeds,
+    managedMediaIds
+  );
+  missingFields += countManagedCollectionVisualChanges(
+    "subcategories",
+    snapshot.subcategories,
+    subcategorySeeds,
+    managedMediaIds
+  );
+  missingFields += countManagedCollectionVisualChanges(
+    "products",
+    snapshot.products,
+    productSeeds,
+    managedMediaIds
+  );
 
   const missingRecords =
     excelHomeCatalog.filter((item) => !categoryIds.has(item.id)).length +
@@ -349,11 +516,46 @@ export async function auditCurrentState(
 
   return {
     assetTotal: CURRENT_STATE_ASSETS.length,
+    invalidProductGalleryRows: buildProductGalleryRepairPlan(
+      snapshot.categories,
+      snapshot.products
+    ).reduce((total, item) => total + item.repair.removed, 0),
     missingAssets: CURRENT_STATE_ASSETS.filter(
       (asset) => !mediaIds.has(asset.publicPath)
     ).map((asset) => asset.key),
     missingFields,
     missingRecords
+  };
+}
+
+export async function repairProductGalleries(
+  cms: Payload
+): Promise<ProductGalleryRepairResult> {
+  const snapshot = await readSnapshot(cms);
+  const plan = buildProductGalleryRepairPlan(
+    snapshot.categories,
+    snapshot.products
+  );
+
+  for (const item of plan) {
+    await cms.update({
+      collection: "products",
+      id: item.id,
+      data: {
+        gallery: item.repair.rows,
+        _status: item.isDraft ? "draft" : "published"
+      } as never,
+      draft: item.isDraft,
+      overrideAccess: true
+    });
+  }
+
+  return {
+    removedRows: plan.reduce(
+      (total, item) => total + item.repair.removed,
+      0
+    ),
+    updatedProducts: plan.length
   };
 }
 
@@ -555,6 +757,253 @@ async function syncCollectionMissingOnly(
   return { createdRecords, docs, updatedFields, updatedRecords };
 }
 
+/**
+ * A catalog image stays seed-managed only while the record points to a media
+ * document created from a local "Legacy asset". Images chosen by an editor
+ * have another media id and are therefore never overwritten here.
+ */
+async function syncManagedCollectionVisuals(
+  cms: Payload,
+  collection: "categories" | "products" | "subcategories",
+  currentDocs: PlainRecord[],
+  seeds: PlainRecord[],
+  managedMediaIds: Set<string>
+): Promise<ManagedVisualSyncResult> {
+  const bySlug = docsBySlug(currentDocs);
+  let updatedFields = 0;
+  let updatedRecords = 0;
+
+  for (const seed of seeds) {
+    const slug = stringValue(seed.slug);
+    const current = slug ? bySlug.get(slug) : undefined;
+    const id = current ? documentId(current) : undefined;
+    if (!current || id === undefined) continue;
+
+    const patch = buildManagedVisualPatch(
+      collection,
+      current,
+      seed,
+      managedMediaIds
+    );
+
+    const fields = Object.keys(patch).length;
+    if (fields === 0) continue;
+
+    const keepDraft = current._status === "draft";
+    await cms.update({
+      collection,
+      id,
+      data: patch as never,
+      draft: keepDraft,
+      overrideAccess: true
+    });
+    updatedFields += fields;
+    updatedRecords += 1;
+  }
+
+  return { updatedFields, updatedRecords };
+}
+
+export function buildManagedVisualPatch(
+  collection: "categories" | "products" | "subcategories",
+  current: PlainRecord,
+  seed: PlainRecord,
+  managedMediaIds: Set<string>
+): PlainRecord {
+  const patch: PlainRecord = {};
+  const currentImageId = relationDocumentId(current.image);
+  const desiredImageId = relationDocumentId(seed.image);
+  if (
+    currentImageId !== undefined &&
+    desiredImageId !== undefined &&
+    managedMediaIds.has(String(currentImageId)) &&
+    !relationIdEquals(current.image, seed.image)
+  ) {
+    patch.image = seed.image;
+    patch.legacyImagePath = seed.legacyImagePath;
+  }
+
+  if (collection !== "products") return patch;
+
+  const currentGalleryIds = relationIds(current.gallery);
+  const galleryIsManaged =
+    currentGalleryIds.length > 0 &&
+    currentGalleryIds.every((galleryId) =>
+      managedMediaIds.has(galleryId)
+    );
+
+  if (
+    galleryIsManaged &&
+    !sameRelationList(current.gallery, seed.gallery)
+  ) {
+    patch.gallery = seed.gallery;
+    patch.legacyGalleryPaths = seed.legacyGalleryPaths;
+  }
+
+  return patch;
+}
+
+function plainRecord(value: unknown): PlainRecord | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as PlainRecord)
+    : undefined;
+}
+
+function replaceManagedRelation(
+  current: PlainRecord,
+  desired: PlainRecord,
+  field: string,
+  managedMediaIds: Set<string>
+): PlainRecord | undefined {
+  const currentId = relationDocumentId(current[field]);
+  const desiredId = relationDocumentId(desired[field]);
+  if (
+    currentId === undefined ||
+    desiredId === undefined ||
+    !managedMediaIds.has(String(currentId)) ||
+    relationIdEquals(current[field], desired[field])
+  ) {
+    return undefined;
+  }
+  return { ...current, [field]: desired[field] };
+}
+
+function patchManagedRelationRows(
+  currentValue: unknown,
+  desiredValue: unknown,
+  matchField: string,
+  mediaField: string,
+  managedMediaIds: Set<string>
+): PlainRecord[] | undefined {
+  if (!Array.isArray(currentValue) || !Array.isArray(desiredValue)) {
+    return undefined;
+  }
+
+  const desiredByKey = new Map<string, PlainRecord>();
+  for (const item of desiredValue) {
+    const desired = plainRecord(item);
+    const key = desired ? stringValue(desired[matchField]) : undefined;
+    if (desired && key) desiredByKey.set(key, desired);
+  }
+
+  let changed = false;
+  const rows = currentValue.map((item) => {
+    const current = plainRecord(item);
+    const key = current ? stringValue(current[matchField]) : undefined;
+    const desired = key ? desiredByKey.get(key) : undefined;
+    if (!current || !desired) return item as PlainRecord;
+
+    const updated = replaceManagedRelation(
+      current,
+      desired,
+      mediaField,
+      managedMediaIds
+    );
+    if (!updated) return current;
+    changed = true;
+    return updated;
+  });
+
+  return changed ? rows : undefined;
+}
+
+/**
+ * Home-page media selected by an editor is never replaced. Only relations to
+ * media imported as "Legacy asset" follow a newer versioned seed asset, so the
+ * admin form continues to show the same image that the public page uses.
+ */
+export function buildManagedHomeVisualPatch(
+  current: PlainRecord,
+  seed: PlainRecord,
+  managedMediaIds: Set<string>
+): PlainRecord {
+  const patch: PlainRecord = {};
+
+  const patchBlock = (block: string, mediaField: string) => {
+    const currentBlock = plainRecord(current[block]);
+    const desiredBlock = plainRecord(seed[block]);
+    if (!currentBlock || !desiredBlock) return;
+    const updated = replaceManagedRelation(
+      currentBlock,
+      desiredBlock,
+      mediaField,
+      managedMediaIds
+    );
+    if (updated) patch[block] = updated;
+  };
+
+  const currentHero = plainRecord(current.hero);
+  const desiredHero = plainRecord(seed.hero);
+  const currentBackground = plainRecord(currentHero?.background);
+  const desiredBackground = plainRecord(desiredHero?.background);
+  if (currentHero && desiredHero && currentBackground && desiredBackground) {
+    let nextBackground = currentBackground;
+    let backgroundChanged = false;
+    for (const field of ["video", "mobileVideo", "poster", "image"]) {
+      const updated = replaceManagedRelation(
+        nextBackground,
+        desiredBackground,
+        field,
+        managedMediaIds
+      );
+      if (!updated) continue;
+      nextBackground = updated;
+      backgroundChanged = true;
+    }
+    if (backgroundChanged) {
+      patch.hero = { ...currentHero, background: nextBackground };
+    }
+  }
+
+  patchBlock("beforeBlock", "image");
+  patchBlock("afterBlock", "image");
+  patchBlock("kbparusBanner", "image");
+  patchBlock("coatingBanner", "image");
+
+  const rowCollections = [
+    ["storedMaterials", "title", "image"],
+    ["cases", "title", "image"],
+    ["reviews", "name", "image"],
+    ["partners", "name", "logo"]
+  ] as const;
+  for (const [field, matchField, mediaField] of rowCollections) {
+    const rows = patchManagedRelationRows(
+      current[field],
+      seed[field],
+      matchField,
+      mediaField,
+      managedMediaIds
+    );
+    if (rows) patch[field] = rows;
+  }
+
+  return patch;
+}
+
+async function syncManagedHomeVisuals(
+  cms: Payload,
+  current: PlainRecord,
+  seed: PlainRecord,
+  managedMediaIds: Set<string>
+): Promise<ManagedVisualSyncResult> {
+  const patch = buildManagedHomeVisualPatch(
+    current,
+    seed,
+    managedMediaIds
+  );
+  const updatedFields = Object.keys(patch).length;
+  if (updatedFields === 0) {
+    return { updatedFields: 0, updatedRecords: 0 };
+  }
+
+  await cms.updateGlobal({
+    slug: "home-content",
+    data: patch as never,
+    overrideAccess: true
+  });
+  return { updatedFields, updatedRecords: 1 };
+}
+
 export async function syncCurrentStateContent(
   cms: Payload,
   requestUrl: string,
@@ -567,12 +1016,15 @@ export async function syncCurrentStateContent(
     requestOrigin,
     fetcher
   );
+  const managedMediaIds = managedLegacyMediaIds(snapshot.media);
+  const homeSeed = buildHomeContentSeed(mediaIds);
+  const mergedHome = mergeMissingState(snapshot.home, homeSeed);
   const globalResults = await Promise.all([
     updateGlobalMissingOnly(
       cms,
       "home-content",
       snapshot.home,
-      buildHomeContentSeed(mediaIds)
+      homeSeed
     ),
     updateGlobalMissingOnly(
       cms,
@@ -587,20 +1039,42 @@ export async function syncCurrentStateContent(
       buildSiteNavigationSeed()
     )
   ]);
+  const homeVisuals = await syncManagedHomeVisuals(
+    cms,
+    mergedHome.value,
+    homeSeed,
+    managedMediaIds
+  );
 
+  const categorySeeds = buildCategorySeeds(mediaIds);
   const categories = await syncCollectionMissingOnly(
     cms,
     "categories",
     snapshot.categories,
-    buildCategorySeeds(mediaIds)
+    categorySeeds
+  );
+  const categoryVisuals = await syncManagedCollectionVisuals(
+    cms,
+    "categories",
+    categories.docs,
+    categorySeeds,
+    managedMediaIds
   );
   const categoryIds = mapIdsBySlug(categories.docs);
 
+  const subcategorySeeds = buildSubcategorySeeds(mediaIds, categoryIds);
   const subcategories = await syncCollectionMissingOnly(
     cms,
     "subcategories",
     snapshot.subcategories,
-    buildSubcategorySeeds(mediaIds, categoryIds)
+    subcategorySeeds
+  );
+  const subcategoryVisuals = await syncManagedCollectionVisuals(
+    cms,
+    "subcategories",
+    subcategories.docs,
+    subcategorySeeds,
+    managedMediaIds
   );
   const subcategoryIds = mapIdsBySlug(subcategories.docs);
   const calculatorProfiles = await syncCalculatorProfilesMissingOnly(
@@ -610,17 +1084,25 @@ export async function syncCurrentStateContent(
   const calculatorProfileIds = mapPublishedCalculatorProfileIds(
     calculatorProfiles.publishedDocs
   );
+  const productSeeds = buildProductSeeds(
+    mediaIds,
+    categoryIds,
+    subcategoryIds,
+    calculatorProfileIds
+  );
 
   const products = await syncCollectionMissingOnly(
     cms,
     "products",
     snapshot.products,
-    buildProductSeeds(
-      mediaIds,
-      categoryIds,
-      subcategoryIds,
-      calculatorProfileIds
-    )
+    productSeeds
+  );
+  const productVisuals = await syncManagedCollectionVisuals(
+    cms,
+    "products",
+    products.docs,
+    productSeeds,
+    managedMediaIds
   );
 
   return {
@@ -631,14 +1113,22 @@ export async function syncCurrentStateContent(
       products.createdRecords,
     updatedFields:
       globalResults.reduce((total, result) => total + result.updatedFields, 0) +
+      homeVisuals.updatedFields +
+      categoryVisuals.updatedFields +
       categories.updatedFields +
+      subcategoryVisuals.updatedFields +
       subcategories.updatedFields +
+      productVisuals.updatedFields +
       products.updatedFields,
     updatedRecords:
       calculatorProfiles.published +
       globalResults.reduce((total, result) => total + result.updatedRecords, 0) +
+      homeVisuals.updatedRecords +
+      categoryVisuals.updatedRecords +
       categories.updatedRecords +
+      subcategoryVisuals.updatedRecords +
       subcategories.updatedRecords +
+      productVisuals.updatedRecords +
       products.updatedRecords
   };
 }

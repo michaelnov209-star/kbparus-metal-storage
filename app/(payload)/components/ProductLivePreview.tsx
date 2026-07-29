@@ -9,6 +9,7 @@ import {
   Smartphone,
   Sparkles
 } from "lucide-react";
+import { getProductPriceLabel } from "@/lib/catalog/product-price";
 import "./product-editor.scss";
 
 type PreviewMode = "catalog" | "mobile";
@@ -54,6 +55,7 @@ function relationId(value: unknown): string | number | undefined {
   const object = value as { id?: unknown; value?: unknown };
   if (typeof object.id === "string" || typeof object.id === "number") return object.id;
   if (typeof object.value === "string" || typeof object.value === "number") return object.value;
+  if (object.value && object.value !== value) return relationId(object.value);
   return undefined;
 }
 
@@ -63,66 +65,135 @@ function directImageUrl(value: unknown): string | undefined {
   }
   if (!value || typeof value !== "object") return undefined;
   const object = value as {
+    internalTitle?: unknown;
     url?: unknown;
     thumbnailURL?: unknown;
+    value?: unknown;
     sizes?: { cardMd?: { url?: unknown }; medium?: { url?: unknown } };
   };
+  const legacyPrefix = "Legacy asset:";
+  if (
+    typeof object.internalTitle === "string" &&
+    object.internalTitle.startsWith(legacyPrefix)
+  ) {
+    const legacyPath = object.internalTitle.slice(legacyPrefix.length).trim();
+    if (legacyPath.startsWith("/") && !legacyPath.startsWith("//")) {
+      return legacyPath;
+    }
+    return typeof object.url === "string" &&
+      (object.url.startsWith("/") || object.url.startsWith("http"))
+      ? object.url
+      : undefined;
+  }
   const candidates = [
     object.sizes?.cardMd?.url,
     object.sizes?.medium?.url,
     object.thumbnailURL,
     object.url
   ];
-  return candidates.find(
+  const candidate = candidates.find(
     (candidate): candidate is string =>
       typeof candidate === "string" && (candidate.startsWith("/") || candidate.startsWith("http"))
   );
+  return candidate ?? (object.value && object.value !== value
+    ? directImageUrl(object.value)
+    : undefined);
 }
 
-function formatPrice(value?: number) {
-  return value ? `${new Intl.NumberFormat("ru-RU").format(value)} ₽` : "";
+function galleryImageValues(fields: FormState) {
+  return Object.entries(fields)
+    .map(([path, field]) => {
+      const match = /^gallery\.(\d+)\.image$/.exec(path);
+      return match ? { index: Number(match[1]), value: field.value } : undefined;
+    })
+    .filter(
+      (item): item is { index: number; value: unknown } =>
+        Boolean(item) && item!.value !== undefined && item!.value !== null
+    )
+    .sort((a, b) => a.index - b.index)
+    .map((item) => item.value);
+}
+
+function imageValueKey(value: unknown) {
+  return directImageUrl(value) ?? relationId(value)?.toString() ?? "";
+}
+
+function uniqueSecondaryImageValues(values: unknown[], primary: unknown) {
+  const primaryKey = imageValueKey(primary);
+  const seen = new Set<string>();
+
+  return values
+    .filter((value) => {
+      const key = imageValueKey(value);
+      if (!key || key === primaryKey || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 12);
+}
+
+async function resolveImageValue(value: unknown, signal: AbortSignal) {
+  const direct = directImageUrl(value);
+  if (direct) return direct;
+
+  const id = relationId(value);
+  if (id === undefined) return undefined;
+
+  const response = await fetch(`/api/media/${encodeURIComponent(String(id))}?depth=0`, {
+    credentials: "same-origin",
+    signal
+  });
+  if (!response.ok) return undefined;
+  return directImageUrl(await response.json());
 }
 
 export function ProductLivePreview() {
   const [mode, setMode] = useState<PreviewMode>("catalog");
   const [resolvedImage, setResolvedImage] = useState<string>();
+  const [resolvedGallery, setResolvedGallery] = useState<string[]>([]);
   const snapshot = useFormFields(([fields]) => {
     const state = fields as FormState;
+    const image = state.image?.value;
+    const galleryImages = uniqueSecondaryImageValues(
+      galleryImageValues(state),
+      image
+    );
     return {
       badge: textValue(state, "badge"),
       description: textValue(state, "description"),
       featured: Boolean(state.featured?.value),
       fields: state,
-      image: state.image?.value,
+      galleryImages,
+      galleryKey: galleryImages.map(imageValueKey).join("|"),
+      image,
+      imageKey: imageValueKey(image),
       priceFrom: numericValue(state, "priceFrom"),
       priceLabel: textValue(state, "priceLabel"),
       priceMode: textValue(state, "priceMode") || "request",
+      priceTo: numericValue(state, "priceTo"),
       shortTitle: textValue(state, "shortTitle"),
       summary: textValue(state, "summary"),
       title: textValue(state, "title")
     };
   });
+  const selectedImage = useMemo(
+    () => snapshot.image,
+    [snapshot.imageKey]
+  );
+  const selectedGallery = useMemo(
+    () => snapshot.galleryImages,
+    [snapshot.galleryKey]
+  );
 
   useEffect(() => {
-    const direct = directImageUrl(snapshot.image);
-    if (direct) {
-      setResolvedImage(direct);
-      return;
-    }
-
-    const id = relationId(snapshot.image);
-    if (id === undefined) {
+    if (!snapshot.imageKey) {
       setResolvedImage(undefined);
       return;
     }
 
     const controller = new AbortController();
-    void fetch(`/api/media/${encodeURIComponent(String(id))}?depth=0`, {
-      credentials: "same-origin",
-      signal: controller.signal
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((media) => setResolvedImage(directImageUrl(media)))
+    void resolveImageValue(selectedImage, controller.signal)
+      .then(setResolvedImage)
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setResolvedImage(undefined);
@@ -130,7 +201,31 @@ export function ProductLivePreview() {
       });
 
     return () => controller.abort();
-  }, [snapshot.image]);
+  }, [selectedImage, snapshot.imageKey]);
+
+  useEffect(() => {
+    if (!snapshot.galleryKey) {
+      setResolvedGallery([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    void Promise.all(
+      selectedGallery.map((value) =>
+        resolveImageValue(value, controller.signal)
+      )
+    )
+      .then((images) =>
+        setResolvedGallery(images.filter((image): image is string => Boolean(image)))
+      )
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setResolvedGallery([]);
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedGallery, snapshot.galleryKey]);
 
   const readiness = useMemo(() => {
     const checks = [
@@ -139,7 +234,7 @@ export function ProductLivePreview() {
       { done: Boolean(snapshot.summary), label: "Краткое описание", weight: 10 },
       { done: snapshot.description.length >= 120, label: "Подробное описание", weight: 10 },
       { done: hasValue(snapshot.fields, "image"), label: "Главное фото", weight: 18 },
-      { done: hasNestedValue(snapshot.fields, "gallery"), label: "Галерея", weight: 12 },
+      { done: hasNestedValue(snapshot.fields, "gallery"), label: "Дополнительные фото", weight: 12 },
       { done: hasNestedValue(snapshot.fields, "specs"), label: "Характеристики", weight: 10 },
       { done: hasNestedValue(snapshot.fields, "applications"), label: "Применение", weight: 6 },
       { done: hasValue(snapshot.fields, "operationMode"), label: "Тип работы", weight: 6 },
@@ -159,11 +254,12 @@ export function ProductLivePreview() {
   const summary =
     snapshot.summary ||
     "Краткое описание появится здесь и поможет проверить, как карточка будет выглядеть для клиента.";
-  const price =
-    snapshot.priceLabel ||
-    (snapshot.priceMode === "fixed" && snapshot.priceFrom
-      ? `от ${formatPrice(snapshot.priceFrom)}`
-      : "Цена по запросу");
+  const price = getProductPriceLabel({
+    priceFrom: snapshot.priceFrom,
+    priceLabel: snapshot.priceLabel,
+    priceMode: snapshot.priceMode === "fixed" ? "fixed" : "request",
+    priceTo: snapshot.priceTo
+  });
 
   return (
     <section className="product-live-preview" aria-label="Предпросмотр карточки товара">
@@ -193,14 +289,37 @@ export function ProductLivePreview() {
       <div className="product-live-preview__content">
         <div className={mode === "mobile" ? "product-preview-device is-mobile" : "product-preview-device"}>
           <article className="product-preview-card">
-            <div className="product-preview-card__image">
-              {resolvedImage ? (
-                <img src={resolvedImage} alt="" />
-              ) : (
-                <span><ImageIcon size={27} /><small>Добавьте главное фото</small></span>
-              )}
-              {snapshot.featured ? <em>Рекомендуем</em> : null}
-              {snapshot.badge ? <b>{snapshot.badge}</b> : null}
+            <div className="product-preview-card__media">
+              <div className="product-preview-card__image">
+                {resolvedImage ? (
+                  <img src={resolvedImage} alt="" />
+                ) : (
+                  <span><ImageIcon size={27} /><small>Добавьте главное фото</small></span>
+                )}
+                {snapshot.featured ? <em>Рекомендуем</em> : null}
+                {snapshot.badge ? <b>{snapshot.badge}</b> : null}
+              </div>
+              <div
+                className="product-preview-card__thumbs"
+                aria-label="Главное фото и галерея товара"
+              >
+                <span className={resolvedImage ? "is-filled is-primary" : "is-primary"}>
+                  {resolvedImage ? <img src={resolvedImage} alt="" /> : <ImageIcon size={15} />}
+                  <small>Главное</small>
+                </span>
+                {resolvedGallery.map((image, index) => (
+                  <span className="is-filled" key={`${image}-${index}`}>
+                    <img src={image} alt="" />
+                    <small>Фото {index + 1}</small>
+                  </span>
+                ))}
+                {resolvedGallery.length === 0 ? (
+                  <span>
+                    <ImageIcon size={15} />
+                    <small>Ракурсы</small>
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div className="product-preview-card__copy">
               <small>КБ Парус · система хранения</small>
