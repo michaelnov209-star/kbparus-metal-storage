@@ -17,6 +17,7 @@ import {
   CURRENT_STATE_ASSETS,
   mergeMissingState
 } from "@/lib/cms/current-state-sync";
+import { syncCurrentStateAsset } from "@/lib/cms/current-state-sync-runtime";
 
 describe("CMS current-state fallback model", () => {
   it("registers every fixed asset once, including both hero videos and poster", () => {
@@ -118,5 +119,36 @@ describe("CMS current-state fallback model", () => {
       image: expect.any(String),
       legacyImagePath: expect.stringMatching(/^\/assets\//)
     });
+  });
+
+  it("copies fetched bytes into a Blob-safe upload buffer", async () => {
+    const asset = CURRENT_STATE_ASSETS[0];
+    let upload: Record<string, unknown> | undefined;
+    const cms = {
+      find: vi.fn(async () => ({ docs: [] })),
+      create: vi.fn(async (args: Record<string, unknown>) => {
+        upload = args;
+        return { id: 91 };
+      })
+    };
+    const fetcher = vi.fn(
+      async () =>
+        new Response(new Uint8Array([1, 2, 3, 4]), {
+          headers: { "content-type": asset.mimeType }
+        })
+    );
+
+    const result = await syncCurrentStateAsset(
+      cms as never,
+      asset.key,
+      "https://kbparus-metal-storage.vercel.app/api/admin/cms/current-state",
+      fetcher
+    );
+
+    const file = upload?.file as { data: Buffer };
+    expect(result).toEqual({ created: true, id: 91 });
+    expect(Buffer.isBuffer(file.data)).toBe(true);
+    expect(file.data.buffer).toBeInstanceOf(ArrayBuffer);
+    expect(file.data.buffer).not.toBeInstanceOf(SharedArrayBuffer);
   });
 });

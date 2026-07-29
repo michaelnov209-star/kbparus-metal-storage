@@ -253,6 +253,16 @@ function safeContentType(
   return value;
 }
 
+function copyIntoUploadBuffer(arrayBuffer: ArrayBuffer): Buffer {
+  const source = new Uint8Array(arrayBuffer);
+  // Node's fetch implementation may expose a SharedArrayBuffer-backed view in
+  // serverless runtimes. Blob storage rejects that backing store, so copy into
+  // an unpooled Buffer with a regular, isolated ArrayBuffer.
+  const copy = Buffer.allocUnsafeSlow(source.byteLength);
+  copy.set(source);
+  return copy;
+}
+
 export async function syncCurrentStateAsset(
   cms: Payload,
   assetKey: string,
@@ -289,7 +299,7 @@ export async function syncCurrentStateAsset(
     if (Number.isFinite(contentLength) && contentLength > MAX_ASSET_BYTES) {
       throw new Error("Файл превышает безопасный лимит 15 МБ");
     }
-    bytes = Buffer.from(await response.arrayBuffer());
+    bytes = copyIntoUploadBuffer(await response.arrayBuffer());
   } finally {
     clearTimeout(timeout);
   }
