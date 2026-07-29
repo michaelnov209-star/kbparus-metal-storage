@@ -22,6 +22,7 @@ import {
   getCmsRole
 } from "@/payload/access/rbac";
 import { AdminIntentLink } from "./AdminIntentLink";
+import { AdminNavModeToggle } from "./AdminNavModeToggle";
 import { AdminNavPrefetchBridge } from "./AdminNavPrefetchBridge";
 import { AdminTrainingNavButton } from "./AdminTrainingNavButton";
 
@@ -50,17 +51,19 @@ function AdminNavSection({
       <div className="kb-admin-workspace-nav__section-links">
         {items.map((item) => (
           <AdminIntentLink
+            aria-label={item.label}
             className="kb-admin-workspace-nav__section-link"
             data-tour={item.tour}
             href={item.href}
             key={item.href}
+            title={item.label}
           >
             <span className="kb-admin-workspace-nav__section-icon">
               <item.icon size={16} strokeWidth={1.9} aria-hidden />
             </span>
             <span className="kb-admin-workspace-nav__section-copy">
               <strong>{item.label}</strong>
-              <small>{item.description}</small>
+              <small title={item.description}>{item.description}</small>
             </span>
           </AdminIntentLink>
         ))}
@@ -84,19 +87,19 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
             href: "/admin/globals/home-content",
             icon: LayoutDashboard,
             label: "Главная страница",
-            description: "Первый экран и блоки сайта"
+            description: "Hero и блоки сайта"
           },
           {
             href: "/admin/globals/contacts",
             icon: Building2,
             label: "Контакты компании",
-            description: "Телефон, почта и реквизиты"
+            description: "Телефон и реквизиты"
           },
           {
             href: "/admin/globals/site-navigation",
             icon: Navigation,
             label: "Меню и подвал",
-            description: "Ссылки и навигация сайта"
+            description: "Навигация сайта"
           }
         ]
       : []),
@@ -106,7 +109,7 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
             href: "/admin/collections/media",
             icon: ImageIcon,
             label: "Медиа-библиотека",
-            description: "Фото, видео и документы"
+            description: "Фото, видео и файлы"
           }
         ]
       : [])
@@ -117,13 +120,13 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           href: "/admin/collections/categories",
           icon: FolderTree,
           label: "Категории",
-          description: "Основные направления каталога"
+          description: "Разделы каталога"
         },
         {
           href: "/admin/collections/subcategories",
           icon: ListTree,
           label: "Подкатегории",
-          description: "Внутренняя структура разделов"
+          description: "Структура каталога"
         },
         {
           href: "/admin/collections/products",
@@ -135,7 +138,7 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           href: "/admin/collections/calculator-profiles",
           icon: Calculator,
           label: "Профили расчёта",
-          description: "Цены и логика калькулятора"
+          description: "Цены калькулятора"
         }
       ]
     : [];
@@ -145,13 +148,13 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           href: "/admin/collections/leads",
           icon: Inbox,
           label: "Входящие заявки",
-          description: "Клиенты и статусы обработки"
+          description: "Клиенты и обработка"
         },
         {
           href: "/admin/globals/lead-management",
           icon: SlidersHorizontal,
           label: "Формы и доставка",
-          description: "Каналы отправки заявок"
+          description: "Доставка заявок"
         }
       ]
     : [];
@@ -161,7 +164,7 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           href: "/admin/collections/users",
           icon: UsersRound,
           label: "Команда и доступы",
-          description: "Роли сотрудников админки"
+          description: "Роли сотрудников"
         }
       ]
     : [];
@@ -174,29 +177,63 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
         className="kb-admin-workspace-nav__brand"
         data-tour="nav-overview"
         href="/admin"
+        title="КБ Парус — обзор админки"
       >
         <img src="/brand/logo-g.png" alt="КБ Парус" width={226} height={75} />
       </AdminIntentLink>
-      <span className="kb-admin-workspace-nav__label">Рабочее пространство</span>
-      <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin">
-        <LayoutDashboard size={17} aria-hidden />
+      <div className="kb-admin-workspace-nav__heading">
+        <span className="kb-admin-workspace-nav__label">Рабочее пространство</span>
+        <AdminNavModeToggle />
+      </div>
+      <AdminIntentLink
+        aria-label="Обзор и быстрые действия"
+        className="kb-admin-workspace-nav__link"
+        href="/admin"
+        title="Обзор и быстрые действия"
+      >
+        <span className="kb-admin-workspace-nav__section-icon">
+          <LayoutDashboard size={17} aria-hidden />
+        </span>
         <span>Обзор и быстрые действия</span>
       </AdminIntentLink>
       {canViewSeo ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" data-tour="nav-seo" href="/admin/seo">
-          <BarChart3 size={17} aria-hidden />
+        <AdminIntentLink
+          aria-label="SEO, цели и конверсии"
+          className="kb-admin-workspace-nav__link"
+          data-tour="nav-seo"
+          href="/admin/seo"
+          title="SEO, цели и конверсии"
+        >
+          <span className="kb-admin-workspace-nav__section-icon">
+            <BarChart3 size={17} aria-hidden />
+          </span>
           <span>SEO, цели и конверсии</span>
         </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" href="/admin/system">
-          <CircleGauge size={17} aria-hidden />
+        <AdminIntentLink
+          aria-label="Здоровье и история"
+          className="kb-admin-workspace-nav__link"
+          href="/admin/system"
+          title="Здоровье и история"
+        >
+          <span className="kb-admin-workspace-nav__section-icon">
+            <CircleGauge size={17} aria-hidden />
+          </span>
           <span>Здоровье и история</span>
         </AdminIntentLink>
       ) : null}
       {isAdmin ? (
-        <AdminIntentLink className="kb-admin-workspace-nav__link" data-tour="nav-integrations" href="/admin/integrations">
-          <Settings2 size={17} aria-hidden />
+        <AdminIntentLink
+          aria-label="Интеграции и статусы"
+          className="kb-admin-workspace-nav__link"
+          data-tour="nav-integrations"
+          href="/admin/integrations"
+          title="Интеграции и статусы"
+        >
+          <span className="kb-admin-workspace-nav__section-icon">
+            <Settings2 size={17} aria-hidden />
+          </span>
           <span>Интеграции и статусы</span>
         </AdminIntentLink>
       ) : null}

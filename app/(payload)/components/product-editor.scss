@@ -411,7 +411,7 @@
 }
 
 .product-editor-guide__steps li {
-  align-items: center;
+  align-items: flex-start;
   background: #f4f7f9;
   border: 1px solid #e3e8ed;
   border-radius: 12px;
@@ -439,9 +439,9 @@
 .product-editor-guide__steps small {
   color: #737d88;
   font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .product-editor-guide__url {
@@ -583,13 +583,6 @@
 .featured-placement-guide__mock small {
   color: #74808b;
   font-size: 10px;
-}
-
-/* Payload relationship fields use a tiny search input. Hide only its idle caret,
-   which otherwise looks like a broken selection cursor next to the chosen value. */
-.relationship input[role="combobox"],
-.upload input[role="combobox"] {
-  caret-color: transparent;
 }
 
 .array-field__header,

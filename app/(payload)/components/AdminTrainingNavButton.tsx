@@ -19,12 +19,15 @@ export function AdminTrainingNavButton() {
     <button
       className="kb-admin-workspace-nav__tour"
       type="button"
+      title="Обучение по админке"
       onClick={openTraining}
       onFocus={() => router.prefetch("/admin")}
       onMouseEnter={() => router.prefetch("/admin")}
       onPointerDown={() => router.prefetch("/admin")}
     >
-      <GraduationCap size={17} aria-hidden />
+      <span className="kb-admin-workspace-nav__section-icon">
+        <GraduationCap size={17} aria-hidden />
+      </span>
       <span>Обучение по админке</span>
     </button>
   );

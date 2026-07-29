@@ -26,10 +26,10 @@ export function ProductEditorGuide() {
       </div>
 
       <ol className="product-editor-guide__steps">
-        <li><CheckCircle2 size={17} /><span><b>1. Описание</b><small>Что это и для кого</small></span></li>
-        <li><Images size={17} /><span><b>2. Фото</b><small>Главное + разные ракурсы</small></span></li>
-        <li><ListChecks size={17} /><span><b>3. Данные</b><small>Цена и характеристики</small></span></li>
-        <li><SearchCheck size={17} /><span><b>4. Публикация</b><small>Проверка вида в поиске</small></span></li>
+        <li><CheckCircle2 size={17} /><span><b>1. Описание</b><small>Название и польза</small></span></li>
+        <li><Images size={17} /><span><b>2. Фото</b><small>Главное фото и ракурсы</small></span></li>
+        <li><ListChecks size={17} /><span><b>3. Данные</b><small>Цена и параметры</small></span></li>
+        <li><SearchCheck size={17} /><span><b>4. Публикация</b><small>SEO и публикация</small></span></li>
       </ol>
 
       <div className="product-editor-guide__url">

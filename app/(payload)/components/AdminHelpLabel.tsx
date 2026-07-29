@@ -11,6 +11,8 @@ type HelpField = FieldLabelClientProps["field"] & {
       helpText?: string;
     };
   };
+  label?: FieldLabelClientProps["label"];
+  required?: boolean;
 };
 
 export function AdminHelpLabel({
@@ -18,10 +20,12 @@ export function AdminHelpLabel({
   ...labelProps
 }: FieldLabelClientProps & { field?: HelpField }) {
   const helpText = field?.admin?.custom?.helpText;
+  const label = labelProps.label ?? field?.label;
+  const required = labelProps.required ?? field?.required ?? false;
 
   return (
     <span className="admin-help-label">
-      <FieldLabel {...labelProps} />
+      <FieldLabel {...labelProps} label={label} required={required} />
       {helpText ? (
         <span className="admin-help-label__trigger" tabIndex={0} aria-label="Показать подсказку">
           <CircleHelp aria-hidden="true" size={15} strokeWidth={2} />

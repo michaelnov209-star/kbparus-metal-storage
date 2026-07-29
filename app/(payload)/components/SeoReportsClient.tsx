@@ -805,7 +805,9 @@ export function SeoReportsClient({
             <div>
               <span>Доступ Google Search Console</span>
               <strong>
-                Добавьте служебный адрес пользователем ресурса с правом чтения
+                {report.status === "error"
+                  ? "Добавьте служебный адрес пользователем ресурса с правом чтения"
+                  : "Подключено: служебный доступ только на чтение"}
               </strong>
               <code>{report.googleServiceAccountEmail}</code>
             </div>

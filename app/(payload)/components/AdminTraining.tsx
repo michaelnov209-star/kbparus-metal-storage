@@ -1,7 +1,14 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,14 +21,20 @@ import {
 } from "lucide-react";
 
 import type { CmsRole } from "@/payload/access/rbac";
-
-type Placement = "top" | "right" | "bottom" | "left";
+import {
+  getTrainingConnectorGeometry,
+  getTrainingPopoverPosition,
+  type TrainingPlacement,
+  type TrainingPopoverPosition,
+  type TrainingRect,
+  type TrainingSize
+} from "./adminTrainingGeometry";
 
 type Step = {
   title: string;
   text: string;
   target: string;
-  placement: Placement;
+  placement: TrainingPlacement;
 };
 
 type TourDefinition = {
@@ -29,21 +42,6 @@ type TourDefinition = {
   duration: string;
   intro: string;
   steps: Step[];
-};
-
-type ViewportRect = {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-  right: number;
-  bottom: number;
-};
-
-type PopoverPosition = {
-  top: number;
-  left: number;
-  placement: Placement;
 };
 
 const TOUR_VERSION = "3";
@@ -171,11 +169,7 @@ const tours: Record<CmsRole, TourDefinition> = {
   }
 };
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function toViewportRect(rect: DOMRect): ViewportRect {
+function toViewportRect(rect: DOMRect): TrainingRect {
   const top = Math.max(rect.top - SPOTLIGHT_GAP, 8);
   const left = Math.max(rect.left - SPOTLIGHT_GAP, 8);
   const right = Math.min(rect.right + SPOTLIGHT_GAP, window.innerWidth - 8);
@@ -191,81 +185,17 @@ function toViewportRect(rect: DOMRect): ViewportRect {
   };
 }
 
-function getPosition(rect: ViewportRect, requested: Placement): PopoverPosition {
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const width = Math.min(POPOVER_WIDTH, viewportWidth - 24);
-  const gap = 22;
-
-  const spaces: Record<Placement, number> = {
-    top: rect.top,
-    right: viewportWidth - rect.right,
-    bottom: viewportHeight - rect.bottom,
-    left: rect.left
-  };
-
-  let placement = requested;
-  const required = placement === "left" || placement === "right" ? width + gap : POPOVER_HEIGHT + gap;
-  if (spaces[placement] < required) {
-    placement = (Object.entries(spaces).sort((a, b) => b[1] - a[1])[0]?.[0] as Placement) || "bottom";
-  }
-
-  if (placement === "right") {
-    return {
-      top: clamp(rect.top + rect.height / 2 - POPOVER_HEIGHT / 2, 12, viewportHeight - POPOVER_HEIGHT - 12),
-      left: clamp(rect.right + gap, 12, viewportWidth - width - 12),
-      placement
-    };
-  }
-
-  if (placement === "left") {
-    return {
-      top: clamp(rect.top + rect.height / 2 - POPOVER_HEIGHT / 2, 12, viewportHeight - POPOVER_HEIGHT - 12),
-      left: clamp(rect.left - width - gap, 12, viewportWidth - width - 12),
-      placement
-    };
-  }
-
-  if (placement === "top") {
-    return {
-      top: clamp(rect.top - POPOVER_HEIGHT - gap, 12, viewportHeight - POPOVER_HEIGHT - 12),
-      left: clamp(rect.left + rect.width / 2 - width / 2, 12, viewportWidth - width - 12),
-      placement
-    };
-  }
-
-  return {
-    top: clamp(rect.bottom + gap, 12, viewportHeight - POPOVER_HEIGHT - 12),
-    left: clamp(rect.left + rect.width / 2 - width / 2, 12, viewportWidth - width - 12),
-    placement
-  };
-}
-
-function getArrowPath(rect: ViewportRect, position: PopoverPosition): string {
-  const width = Math.min(POPOVER_WIDTH, window.innerWidth - 24);
-  const targetX = rect.left + rect.width / 2;
-  const targetY = rect.top + rect.height / 2;
-  let startX = position.left + width / 2;
-  let startY = position.top + POPOVER_HEIGHT / 2;
-
-  if (position.placement === "right") startX = position.left;
-  if (position.placement === "left") startX = position.left + width;
-  if (position.placement === "bottom") startY = position.top;
-  if (position.placement === "top") startY = position.top + POPOVER_HEIGHT;
-
-  const controlX = (startX + targetX) / 2 + (position.placement === "top" || position.placement === "bottom" ? 52 : 0);
-  const controlY = (startY + targetY) / 2 + (position.placement === "left" || position.placement === "right" ? -52 : 0);
-
-  return `M ${startX} ${startY} Q ${controlX} ${controlY} ${targetX} ${targetY}`;
-}
-
 export function AdminTraining({ role }: { role: CmsRole }) {
   const tour = tours[role];
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [targetRect, setTargetRect] = useState<ViewportRect | null>(null);
-  const [position, setPosition] = useState<PopoverPosition | null>(null);
+  const [targetRect, setTargetRect] = useState<TrainingRect | null>(null);
+  const [position, setPosition] = useState<TrainingPopoverPosition | null>(null);
+  const [popoverSize, setPopoverSize] = useState<TrainingSize>({
+    width: POPOVER_WIDTH,
+    height: POPOVER_HEIGHT
+  });
   const [completed, setCompleted] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -308,6 +238,53 @@ export function AdminTraining({ role }: { role: CmsRole }) {
     return () => window.removeEventListener("kb-admin-tour:start", handleStart);
   }, [start, storageKey]);
 
+  useLayoutEffect(() => {
+    if (!isOpen || !popoverRef.current) return;
+
+    const popover = popoverRef.current;
+    const updateSize = () => {
+      const rect = popover.getBoundingClientRect();
+      const nextSize = {
+        width: Math.min(rect.width || POPOVER_WIDTH, window.innerWidth - 24),
+        height: rect.height || POPOVER_HEIGHT
+      };
+
+      setPopoverSize((current) =>
+        Math.abs(current.width - nextSize.width) < 0.5 &&
+        Math.abs(current.height - nextSize.height) < 0.5
+          ? current
+          : nextSize
+      );
+    };
+
+    updateSize();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateSize);
+    observer?.observe(popover);
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const target = document.querySelector(step.target);
+    if (!target) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "center",
+      inline: "nearest"
+    });
+  }, [isOpen, step]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -316,8 +293,8 @@ export function AdminTraining({ role }: { role: CmsRole }) {
       if (!target) {
         setTargetRect(null);
         setPosition({
-          top: Math.max((window.innerHeight - POPOVER_HEIGHT) / 2, 12),
-          left: Math.max((window.innerWidth - Math.min(POPOVER_WIDTH, window.innerWidth - 24)) / 2, 12),
+          top: Math.max((window.innerHeight - popoverSize.height) / 2, 12),
+          left: Math.max((window.innerWidth - popoverSize.width) / 2, 12),
           placement: "bottom"
         });
         return;
@@ -325,16 +302,16 @@ export function AdminTraining({ role }: { role: CmsRole }) {
 
       const rect = toViewportRect(target.getBoundingClientRect());
       setTargetRect(rect);
-      setPosition(getPosition(rect, step.placement));
+      setPosition(
+        getTrainingPopoverPosition(rect, step.placement, popoverSize, {
+          width: window.innerWidth,
+          height: window.innerHeight
+        })
+      );
     };
 
-    const target = document.querySelector(step.target);
-    if (target) {
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center", inline: "nearest" });
-    }
-
-    const updateTimer = window.setTimeout(update, 260);
+    update();
+    const updateTimer = window.setTimeout(update, 320);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     return () => {
@@ -342,7 +319,7 @@ export function AdminTraining({ role }: { role: CmsRole }) {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [isOpen, step]);
+  }, [isOpen, popoverSize, step]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -366,6 +343,14 @@ export function AdminTraining({ role }: { role: CmsRole }) {
     setIsOpen(false);
   };
 
+  const connector =
+    isMounted && targetRect && position
+      ? getTrainingConnectorGeometry(targetRect, position, popoverSize, {
+          width: window.innerWidth,
+          height: window.innerHeight
+        })
+      : null;
+
   const overlay = isMounted && isOpen
     ? createPortal(
         <div className="kb-admin-training-overlay" role="dialog" aria-modal="true" aria-label={`Обучение: ${tour.label}`}>
@@ -384,7 +369,7 @@ export function AdminTraining({ role }: { role: CmsRole }) {
                   height: targetRect.height
                 }}
               />
-              {position ? (
+              {position && connector ? (
                 <svg className="kb-admin-training-arrow" aria-hidden viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}>
                   <defs>
                     <filter id="kb-tour-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -399,7 +384,7 @@ export function AdminTraining({ role }: { role: CmsRole }) {
                     </marker>
                   </defs>
                   <path
-                    d={getArrowPath(targetRect, position)}
+                    d={connector.path}
                     fill="none"
                     filter="url(#kb-tour-glow)"
                     markerEnd="url(#kb-tour-arrowhead)"
