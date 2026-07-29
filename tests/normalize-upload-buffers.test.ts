@@ -4,6 +4,7 @@ import {
   copyToRegularBuffer,
   normalizeUploadBuffers
 } from "@/lib/storage/normalize-upload-buffers";
+import { Media } from "@/payload/collections/Media";
 
 describe("normalize upload buffers", () => {
   it("copies bytes into an ordinary ArrayBuffer", () => {
@@ -46,5 +47,18 @@ describe("normalize upload buffers", () => {
     expect(request.payloadUploadSizes.thumb).not.toBe(originalThumb);
     expect(request.file.data.buffer).toBeInstanceOf(ArrayBuffer);
     expect(request.payloadUploadSizes.thumb.buffer).toBeInstanceOf(ArrayBuffer);
+  });
+
+  it("serves versioned media with an immutable one-year cache", () => {
+    if (!Media.upload || typeof Media.upload !== "object") {
+      throw new Error("Media upload config is missing");
+    }
+    const headers = new Headers();
+
+    const result = Media.upload.modifyResponseHeaders?.({ headers } as never);
+
+    expect(result?.get("cache-control")).toBe(
+      "public, max-age=31536000, immutable"
+    );
   });
 });

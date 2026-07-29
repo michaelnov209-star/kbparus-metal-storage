@@ -30,6 +30,10 @@ export const Media: CollectionConfig = {
   },
   upload: {
     mimeTypes: ["image/*", "video/mp4", "video/webm", "video/quicktime", "application/pdf"],
+    modifyResponseHeaders: ({ headers }) => {
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      return headers;
+    },
     imageSizes: [
       { name: "thumb", width: 320, height: undefined, position: "centre" },
       { name: "medium", width: 800, height: undefined, position: "centre" },

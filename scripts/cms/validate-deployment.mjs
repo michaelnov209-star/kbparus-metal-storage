@@ -182,6 +182,15 @@ function extractOptimizedAsset(html, segment) {
   return value.startsWith("/") ? value : `/${value}`;
 }
 
+function extractCmsMediaAsset(html) {
+  const match = html.match(
+    /(?:src|href)\s*=\s*(?:"([^"]*\/api\/media\/file\/[^"]+)"|'([^']*\/api\/media\/file\/[^']+)')/i
+  );
+  return (match?.[1] || match?.[2] || "")
+    .replaceAll("&amp;", "&")
+    .replaceAll("\\u0026", "&");
+}
+
 function cacheMaxAge(cacheControl) {
   const match = cacheControl.match(/(?:s-maxage|max-age)=(\d+)/i);
   return match ? Number(match[1]) : 0;
@@ -193,14 +202,24 @@ async function checkAsset(label, path, expectedType) {
     return;
   }
 
-  const response = await request(path, { method: "HEAD" });
+  // Payload's protected media route intentionally handles GET/range requests;
+  // Next.js does not synthesize HEAD for this catch-all route. One byte proves
+  // the backing Blob exists without downloading a full image or video.
+  const response = await request(path, {
+    method: "GET",
+    headers: { range: "bytes=0-0" }
+  });
   const contentType = response.headers.get("content-type") || "";
   const cacheControl = response.headers.get("cache-control") || "";
   const cacheIsImmutable =
     cacheControl.toLowerCase().includes("immutable") &&
     cacheMaxAge(cacheControl) >= IMMUTABLE_MAX_AGE;
 
-  record(`${label} returns 200`, response.status === 200, `HTTP ${response.status}`);
+  record(
+    `${label} is readable`,
+    response.status === 200 || response.status === 206,
+    `HTTP ${response.status}`
+  );
   record(
     `${label} has ${expectedType}`,
     contentType.toLowerCase().includes(expectedType),
@@ -421,16 +440,14 @@ async function checkPublicMedia(categoryPath, productPath) {
   record("category page returns 200", category.response.status === 200, categoryPath);
   record("product page returns 200", product.response.status === 200, productPath);
 
-  const categoryAsset = extractOptimizedAsset(
-    category.text,
-    "/assets/images/catalog/optimized/"
-  );
-  const productAsset = extractOptimizedAsset(
-    product.text,
-    "/assets/images/products/optimized/"
-  );
-  await checkAsset("optimized category image", categoryAsset, "image/webp");
-  await checkAsset("optimized product image", productAsset, "image/webp");
+  const categoryAsset =
+    extractOptimizedAsset(category.text, "/assets/images/catalog/optimized/") ||
+    extractCmsMediaAsset(category.text);
+  const productAsset =
+    extractOptimizedAsset(product.text, "/assets/images/products/optimized/") ||
+    extractCmsMediaAsset(product.text);
+  await checkAsset("category image", categoryAsset, "image/");
+  await checkAsset("product image", productAsset, "image/");
 }
 
 async function main() {
