@@ -73,6 +73,13 @@ const nextConfig = {
   // Только server-only пакеты без CSS-импортов. @payloadcms/next/richtext-lexical
   // нельзя externalize — у них есть CSS, которые Node ESM не загружает.
   serverExternalPackages: ["sharp", "drizzle-kit", "drizzle-orm", "pg", "@payloadcms/db-postgres"],
+  outputFileTracingIncludes: {
+    "/*": [
+      "./node_modules/sharp/**/*",
+      "./node_modules/@img/sharp-linux-x64/**/*",
+      "./node_modules/@img/sharp-libvips-linux-x64/**/*"
+    ]
+  },
   images: {
     // WebP заметно быстрее кодируется на холодном CDN, чем AVIF. Карточки
     // каталога используют готовые responsive-варианты и обходят runtime resize.
