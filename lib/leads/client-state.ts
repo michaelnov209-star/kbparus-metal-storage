@@ -36,6 +36,7 @@ export interface StoredCalculatorLead {
     dimensions?: string;
     loadKg?: number;
     shelfCount?: number;
+    rolloutShelfCount?: number;
     towerCount?: number;
     options?: string[];
   };

@@ -37,6 +37,7 @@ const RECOMMENDATION_KEYS = new Set([
   "dimensions",
   "loadKg",
   "shelfCount",
+  "rolloutShelfCount",
   "towerCount",
   "options"
 ]);
@@ -96,6 +97,7 @@ export interface LeadPayload {
     dimensions?: string;
     loadKg?: number;
     shelfCount?: number;
+    rolloutShelfCount?: number;
     towerCount?: number;
     options?: string[];
   };
@@ -275,6 +277,7 @@ function parseRecommendation(value: unknown): LeadPayload["recommendedConfig"] {
     dimensions: stringValue(value.dimensions, "recommendedConfig.dimensions", 120) || undefined,
     loadKg: optionalNumber(value.loadKg, "recommendedConfig.loadKg", 0, 10_000_000),
     shelfCount: optionalNumber(value.shelfCount, "recommendedConfig.shelfCount", 0, 10_000),
+    rolloutShelfCount: optionalNumber(value.rolloutShelfCount, "recommendedConfig.rolloutShelfCount", 0, 10_000),
     towerCount: optionalNumber(value.towerCount, "recommendedConfig.towerCount", 0, 10_000),
     options: parseStringArray(value.options, "recommendedConfig.options", 30, 160)
   };

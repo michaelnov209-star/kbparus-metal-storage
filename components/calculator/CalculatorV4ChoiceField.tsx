@@ -72,7 +72,12 @@ export function CalculatorV4ChoiceField({
           </select>
         </label>
       ) : (
-        <div className={styles.choiceGrid} role="group" aria-label={title}>
+        <div
+          className={styles.choiceGrid}
+          data-count={values.length}
+          role="group"
+          aria-label={title}
+        >
           {values.map((value) => (
             <button
               aria-pressed={active === value}
@@ -145,17 +150,19 @@ export function CalculatorV4ChoiceField({
               })}
             </span>
           )}
-          <span className={styles.rangeLegend} aria-hidden="true">
-            <small>
-              {values[0]?.toLocaleString("ru-RU")} {unit}
-            </small>
-            <output>
-              {active.toLocaleString("ru-RU")} {unit}
-            </output>
-            <small>
-              {values.at(-1)?.toLocaleString("ru-RU")} {unit}
-            </small>
-          </span>
+          {!ruler && (
+            <span className={styles.rangeLegend} aria-hidden="true">
+              <small>
+                {values[0]?.toLocaleString("ru-RU")} {unit}
+              </small>
+              <output>
+                {active.toLocaleString("ru-RU")} {unit}
+              </output>
+              <small>
+                {values.at(-1)?.toLocaleString("ru-RU")} {unit}
+              </small>
+            </span>
+          )}
         </label>
       )}
     </fieldset>

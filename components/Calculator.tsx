@@ -440,6 +440,22 @@ export function Calculator({
     result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel =
     result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
+  const shelfFieldTitle =
+    profile.pricing.kind === "hybrid"
+      ? "Полки под погрузчик"
+      : profile.pricing.kind === "rollout"
+        ? "Выкатные кассеты"
+        : profile.pricing.kind === "forkliftCassette"
+          ? "Кассеты под погрузчик"
+          : "Уровни хранения";
+  const shelfFieldHint =
+    profile.pricing.kind === "hybrid"
+      ? "Количество обычных полок, которые обслуживаются погрузчиком. Выкатные кассеты выбираются отдельным параметром ниже."
+      : profile.pricing.kind === "rollout"
+        ? "Количество выкатных кассет в стеллаже. Каждая кассета выдвигается для доступа к листу или пачке."
+        : profile.pricing.kind === "forkliftCassette"
+          ? "Количество кассетных уровней, рассчитанных на обслуживание погрузчиком."
+          : dimensionHints.shelfCount;
   const storageFormatLabel =
     profile.pricing.kind === "hybrid"
       ? `${input.shelfCount.toLocaleString(
@@ -447,7 +463,11 @@ export function Calculator({
         )} полок под погрузчик + ${input.rolloutShelfCount.toLocaleString(
           "ru-RU"
         )} выкатных кассет`
-      : `${input.shelfCount.toLocaleString("ru-RU")} уровней хранения`;
+      : profile.pricing.kind === "rollout"
+        ? `${input.shelfCount.toLocaleString("ru-RU")} выкатных кассет`
+        : profile.pricing.kind === "forkliftCassette"
+          ? `${input.shelfCount.toLocaleString("ru-RU")} кассет под погрузчик`
+          : `${input.shelfCount.toLocaleString("ru-RU")} уровней хранения`;
   const summaryFacts = [
     storageFormatLabel,
     `До ${input.loadKg.toLocaleString("ru-RU")} кг на уровень`,
@@ -538,6 +558,7 @@ export function Calculator({
         dimensions: result.engineeringSummary.rackDimensionsLabel,
         loadKg: input.loadKg,
         shelfCount: input.shelfCount,
+        rolloutShelfCount: input.rolloutShelfCount,
         towerCount: input.towerCount,
         options: profile.options
           .filter((option) => input.optionIds.includes(option.id))
@@ -1085,12 +1106,8 @@ export function Calculator({
                     </div>
                     <div className={styles.fieldStack}>
                       <ChoiceField
-                        title={
-                          profile.pricing.kind === "hybrid"
-                            ? "Полки под погрузчик"
-                            : "Количество уровней"
-                        }
-                        hint={dimensionHints.shelfCount}
+                        title={shelfFieldTitle}
+                        hint={shelfFieldHint}
                         unit="шт."
                         values={shelfCountOptions}
                         active={input.shelfCount}
@@ -1263,9 +1280,7 @@ export function Calculator({
                   <div className={styles.resultPrice}>
                     <span>Предварительная стоимость</span>
                     <strong className={styles.priceLine}>
-                      <small>от</small>
-                      <span>{safePriceNumber}</span>
-                      <small>₽</small>
+                      {priceLabel}
                     </strong>
                     <p>Точную комплектацию и монтаж проверит инженер</p>
                   </div>
