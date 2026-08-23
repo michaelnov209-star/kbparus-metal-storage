@@ -105,7 +105,7 @@ html[data-theme] .kb-control-center__hero h1 {
 html[data-theme] .kb-control-center__hero > div > p {
   max-width: 680px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--kb-admin-on-dark-muted, #dbe3e9);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -594,6 +594,10 @@ html[data-theme] .kb-admin-training__button:hover {
   cursor: default;
 }
 
+.kb-admin-training-overlay[data-centered] .kb-admin-training-overlay__backdrop {
+  background: rgba(6, 11, 17, 0.76);
+}
+
 .kb-admin-training-spotlight {
   position: fixed;
   z-index: 1;
@@ -680,10 +684,10 @@ html[data-theme] .kb-admin-training__button:hover {
   line-height: 1.16;
 }
 
-.kb-admin-training-popover p {
+html[data-theme] .kb-admin-training-popover p {
   min-height: 58px;
   margin: 0;
-  color: #ccd6df;
+  color: var(--kb-admin-on-dark-muted, #dbe3e9);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -748,10 +752,11 @@ html[data-theme] .kb-admin-training__button:hover {
 }
 
 .kb-admin-training-popover__primary {
-  min-width: 102px;
+  min-width: 126px;
   background: #fc5413;
   border: 1px solid #fc5413;
   box-shadow: 0 10px 22px rgba(252, 84, 19, 0.28);
+  white-space: nowrap;
 }
 
 .kb-admin-training-popover__primary:hover {
@@ -802,7 +807,7 @@ html[data-theme] .kb-admin-training__button:hover {
     font-size: 21px;
   }
 
-  .kb-admin-training-popover p {
+  html[data-theme] .kb-admin-training-popover p {
     min-height: 0;
   }
 }

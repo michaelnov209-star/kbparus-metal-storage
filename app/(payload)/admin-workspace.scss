@@ -8,6 +8,7 @@ html[data-theme] {
   --kb-admin-surface-soft: #f6f8fa;
   --kb-admin-border: #dfe5eb;
   --kb-admin-shadow: 0 18px 50px rgba(22, 31, 41, 0.075);
+  --kb-admin-on-dark-muted: #dbe3e9;
 }
 
 html[data-theme] .kb-admin-workspace-nav {
@@ -1048,7 +1049,7 @@ html[data-theme] .kb-integrations__hero h1 {
 html[data-theme] .kb-integrations__hero p {
   max-width: 760px;
   margin: 0;
-  color: #c7d0d8;
+  color: var(--kb-admin-on-dark-muted);
   font-size: 14px;
   line-height: 1.65;
 }

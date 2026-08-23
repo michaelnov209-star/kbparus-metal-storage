@@ -17,9 +17,16 @@ import {
 } from "lucide-react";
 import type { ServerProps } from "payload";
 import {
+  canManageIntegrations,
   canEditContent,
   canManageMedia,
-  getCmsRole
+  canReadCalculatorProfiles,
+  canReadCatalog,
+  canReadLeads,
+  canReadSeo,
+  canReadSystem,
+  canViewProductsAdmin,
+  isAdminUser
 } from "@/payload/access/rbac";
 import { AdminIntentLink } from "./AdminIntentLink";
 import { AdminNavModeToggle } from "./AdminNavModeToggle";
@@ -77,29 +84,39 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
     return null;
   }
 
-  const canViewSeo = canEditContent(user);
+  const canViewSeo = canReadSeo(user);
+  const canViewContent = canEditContent(user);
   const canViewMedia = canManageMedia(user);
-  const isAdmin = getCmsRole(user) === "admin";
+  const canViewProducts = canViewProductsAdmin(user);
+  const canViewCatalog = canReadCatalog(user);
+  const canViewCalculator = canReadCalculatorProfiles(user);
+  const canViewLeads = canReadLeads(user);
+  const canViewHealth = canReadSystem(user);
+  const canViewIntegrations = canManageIntegrations(user);
+  const isAdmin = isAdminUser(user);
   const contentItems: AdminNavItem[] = [
-    ...(canViewSeo
+    ...(canViewCatalog
       ? [
           {
             href: "/admin/globals/home-content",
             icon: LayoutDashboard,
             label: "Главная страница",
-            description: "Hero и блоки сайта"
+            description: "Hero и блоки сайта",
+            tour: "nav-home"
           },
           {
             href: "/admin/globals/contacts",
             icon: Building2,
             label: "Контакты компании",
-            description: "Телефон и реквизиты"
+            description: "Телефон и реквизиты",
+            tour: "nav-contacts"
           },
           {
             href: "/admin/globals/site-navigation",
             icon: Navigation,
             label: "Меню и подвал",
-            description: "Навигация сайта"
+            description: "Навигация сайта",
+            tour: "nav-navigation"
           }
         ]
       : []),
@@ -109,53 +126,68 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
             href: "/admin/collections/media",
             icon: ImageIcon,
             label: "Медиа-библиотека",
-            description: "Фото, видео и файлы"
+            description: "Фото, видео и файлы",
+            tour: "nav-media"
           }
         ]
       : [])
   ];
-  const catalogItems: AdminNavItem[] = canViewSeo
-    ? [
+  const catalogItems: AdminNavItem[] = [
+    ...(canViewContent
+      ? [
         {
           href: "/admin/collections/categories",
           icon: FolderTree,
           label: "Категории",
-          description: "Разделы каталога"
+          description: "Разделы каталога",
+          tour: "nav-categories"
         },
         {
           href: "/admin/collections/subcategories",
           icon: ListTree,
           label: "Подкатегории",
-          description: "Структура каталога"
+          description: "Структура каталога",
+          tour: "nav-subcategories"
         },
-        {
+      ]
+      : []),
+    ...(canViewProducts
+      ? [{
           href: "/admin/collections/products",
           icon: Package,
           label: "Товары",
-          description: "Карточки оборудования"
-        },
-        {
+          description: "Карточки оборудования",
+          tour: "nav-products"
+        }]
+      : []),
+    ...(canViewCalculator
+      ? [{
           href: "/admin/collections/calculator-profiles",
           icon: Calculator,
           label: "Профили расчёта",
-          description: "Цены калькулятора"
-        }
-      ]
-    : [];
-  const salesItems: AdminNavItem[] = isAdmin
+          description: "Цены калькулятора",
+          tour: "nav-calculator"
+        }]
+      : [])
+  ];
+  const salesItems: AdminNavItem[] = canViewLeads
     ? [
         {
           href: "/admin/collections/leads",
           icon: Inbox,
           label: "Входящие заявки",
-          description: "Клиенты и обработка"
+          description: "Клиенты и обработка",
+          tour: "nav-leads"
         },
-        {
-          href: "/admin/globals/lead-management",
-          icon: SlidersHorizontal,
-          label: "Формы и доставка",
-          description: "Доставка заявок"
-        }
+        ...(canViewIntegrations
+          ? [{
+              href: "/admin/globals/lead-management",
+              icon: SlidersHorizontal,
+              label: "Формы и доставка",
+              description: "Доставка заявок",
+              tour: "nav-forms"
+            }]
+          : [])
       ]
     : [];
   const accessItems: AdminNavItem[] = isAdmin
@@ -164,7 +196,8 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           href: "/admin/collections/users",
           icon: UsersRound,
           label: "Команда и доступы",
-          description: "Роли сотрудников"
+          description: "Роли сотрудников",
+          tour: "nav-users"
         }
       ]
     : [];
@@ -210,10 +243,11 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           <span>SEO, цели и конверсии</span>
         </AdminIntentLink>
       ) : null}
-      {isAdmin ? (
+      {canViewHealth ? (
         <AdminIntentLink
           aria-label="Здоровье и история"
           className="kb-admin-workspace-nav__link"
+          data-tour="nav-system"
           href="/admin/system"
           title="Здоровье и история"
         >
@@ -223,7 +257,7 @@ export function AdminWorkspaceNav({ user }: AdminWorkspaceNavProps) {
           <span>Здоровье и история</span>
         </AdminIntentLink>
       ) : null}
-      {isAdmin ? (
+      {canViewIntegrations ? (
         <AdminIntentLink
           aria-label="Интеграции и статусы"
           className="kb-admin-workspace-nav__link"

@@ -1,0 +1,186 @@
+.kb-account-menu__popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  width: min(360px, calc(100vw - 28px));
+  max-height: calc(100dvh - 82px);
+  gap: 6px;
+  padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: #27313a;
+  background: #fff;
+  border: 1px solid #d8dfe5;
+  border-radius: 17px;
+  box-shadow: 0 24px 58px rgba(18, 25, 31, .18);
+  animation: kb-account-popover-in .13s ease-out;
+}
+
+.kb-account-menu__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: radial-gradient(circle at 100% 0, rgba(252, 84, 19, .16), transparent 38%), #1b232a;
+  border-radius: 12px;
+}
+
+.kb-account-menu__profile > span,
+.kb-account-menu__popover > a span,
+.kb-account-menu__coming-soon > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.kb-account-menu__profile strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-account-menu__profile small { color: #c7ced3; font-size: 11px; }
+.kb-account-menu__profile em {
+  color: #ff8b5d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.kb-account-menu__popover > a {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  color: #28343d;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 11px;
+}
+
+.kb-account-menu__popover > a:hover,
+.kb-account-menu__popover > a:focus-visible {
+  color: #1a1a1a;
+  background: #f4f7f8;
+  border-color: #dde4e9;
+  outline: none;
+}
+
+.kb-account-menu__item-mark,
+.kb-account-menu__coming-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.kb-account-menu__item-mark {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+  background: #fc5413;
+}
+
+.kb-account-menu__popover > a strong,
+.kb-account-menu__coming-soon strong { font-size: 12px; font-weight: 800; }
+.kb-account-menu__popover > a small,
+.kb-account-menu__coming-soon small { color: #74808a; font-size: 10px; }
+
+.kb-account-menu__coming-soon {
+  display: flex;
+  width: 100%;
+  min-height: 61px;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 11px;
+  color: #7b858e;
+  font: inherit;
+  text-align: left;
+  background: #f5f7f8;
+  border: 1px dashed #ccd5dc;
+  border-radius: 11px;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.kb-account-menu__coming-icon {
+  color: #77828b;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid #dce3e8;
+}
+
+.kb-account-menu__coming-soon strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: #53606a;
+}
+
+.kb-account-menu__coming-soon b {
+  padding: 3px 6px;
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: .06em;
+  background: #2b343b;
+  border-radius: 999px;
+}
+
+.kb-account-menu__session-actions {
+  display: grid;
+  grid-template-columns: 1fr .72fr;
+  gap: 6px;
+  padding-top: 3px;
+}
+
+.kb-account-menu__session-actions button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #35414a;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid #dce3e8;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.kb-account-menu__session-actions button:hover:not(:disabled),
+.kb-account-menu__session-actions button:focus-visible {
+  background: #f4f7f8;
+  border-color: #bfc9d0;
+  outline: none;
+}
+
+.kb-account-menu__session-actions button[data-danger] { color: #a62e24; }
+.kb-account-menu__session-actions button:disabled { cursor: wait; opacity: .62; }
+
+@keyframes kb-account-popover-in {
+  from { opacity: 0; transform: translateY(-5px) scale(.985); }
+}
+
+@media (max-width: 760px) {
+  .kb-account-menu__popover {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    width: min(360px, calc(100vw - 20px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-account-menu__popover { animation: none; }
+}

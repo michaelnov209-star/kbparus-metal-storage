@@ -71,14 +71,7 @@ const CALCULATOR_KEYS = new Set([
   "comment"
 ]);
 
-const SYSTEM_IDS = new Set([
-  "auto-sheet-metal",
-  "auto-sort-metal",
-  "rollout-cassette-rack",
-  "forklift-cassette-rack",
-  "two-side-rollout-rack",
-  "hybrid-rollout-rack"
-]);
+const CALCULATOR_PROFILE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MATERIALS = new Set(["sheet", "pipe", "profile", "longProduct", "mixed"]);
 const LOADING_METHODS = new Set(["crane", "forklift", "manual"]);
 const FACILITIES = new Set(["workshop", "warehouse", "outdoor"]);
@@ -308,8 +301,22 @@ function parseCalculatorInput(value: unknown): Record<string, unknown> | undefin
   assertKnownKeys(value, CALCULATOR_KEYS, "calculatorInput");
 
   const result: Record<string, unknown> = {};
+  if (value.systemId !== undefined) {
+    const systemId = stringValue(
+      value.systemId,
+      "calculatorInput.systemId",
+      80,
+      true
+    );
+    if (!CALCULATOR_PROFILE_SLUG.test(systemId)) {
+      throw new LeadValidationError(
+        "invalid_value",
+        "Поле «calculatorInput.systemId» содержит недопустимое значение."
+      );
+    }
+    result.systemId = systemId;
+  }
   const enumFields: Array<[string, Set<string>]> = [
-    ["systemId", SYSTEM_IDS],
     ["material", MATERIALS],
     ["loadingMethod", LOADING_METHODS],
     ["facility", FACILITIES],

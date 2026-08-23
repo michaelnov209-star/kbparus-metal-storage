@@ -15,7 +15,11 @@ export function ProductEditorGuide() {
   const generatedSlug = createProductSlug(title || "название-товара");
 
   return (
-    <section className="product-editor-guide" aria-label="Как заполнить карточку товара">
+    <section
+      className="product-editor-guide"
+      aria-label="Как заполнить карточку товара"
+      data-tour="product-editor-guide"
+    >
       <div className="product-editor-guide__intro">
         <span><Sparkles size={17} /> Новая карточка товара</span>
         <strong>Заполните по порядку — технические поля сайт настроит сам</strong>

@@ -29,6 +29,13 @@ type YandexAnalyticsResponse = {
   text_indicator_to_statistics?: unknown;
 };
 
+type YandexHostsResponse = {
+  hosts?: Array<{
+    host_id?: unknown;
+    verified?: unknown;
+  }>;
+};
+
 type YandexFetchOptions = {
   config: ConfiguredYandexWebmaster;
   startDate: string;
@@ -41,6 +48,42 @@ type YandexFetchOptions = {
 
 const YANDEX_PAGE_SIZE = 500;
 const YANDEX_MAX_PAGES = 20;
+
+export async function checkYandexWebmasterConnection({
+  config,
+  fetchImpl = fetch
+}: {
+  config: ConfiguredYandexWebmaster;
+  fetchImpl?: typeof fetch;
+}): Promise<void> {
+  const endpoint = `https://api.webmaster.yandex.net/v4/user/${encodeURIComponent(
+    config.userId
+  )}/hosts`;
+  const response = await fetchImpl(endpoint, {
+    headers: {
+      authorization: `OAuth ${config.oauthToken}`,
+      accept: "application/json"
+    },
+    signal: AbortSignal.timeout(15_000)
+  });
+
+  if (!response.ok) {
+    throw new SeoProviderError(
+      "Яндекс Вебмастер не подтвердил подключение",
+      response.status
+    );
+  }
+
+  const data = (await response.json()) as YandexHostsResponse;
+  const target = Array.isArray(data.hosts)
+    ? data.hosts.find((host) => host.host_id === config.hostId)
+    : undefined;
+  if (!target || target.verified !== true) {
+    throw new SeoProviderError(
+      "Сайт не найден среди подтверждённых ресурсов Яндекс Вебмастера"
+    );
+  }
+}
 
 function yandexDevice(device: SeoReportDevice): string {
   return device === "all" ? "ALL" : device.toUpperCase();

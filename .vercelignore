@@ -8,7 +8,11 @@ node_modules/
 artifacts/
 tmp/
 output/
+archive/
+doc_qa_source/
 .playwright-cli/
+scripts/proposals/
+mossklad_logo.jpg
 
 # Local side-work artifacts: not part of kbparus-metal-storage deploy
 .claude/

@@ -35,7 +35,9 @@ describe("Yandex Metrika admin route", () => {
     );
     expect(unauthorized.status).toBe(401);
 
-    mocks.auth.mockResolvedValueOnce({ user: { role: "photographer" } });
+    mocks.auth.mockResolvedValueOnce({
+      user: { invitationStatus: "active", role: "photographer" }
+    });
     const forbidden = await GET(
       new Request("https://example.test/api/admin/seo/metrika?period=30")
     );
@@ -44,7 +46,9 @@ describe("Yandex Metrika admin route", () => {
   });
 
   it("validates the period before calling the provider", async () => {
-    mocks.auth.mockResolvedValueOnce({ user: { role: "editor" } });
+    mocks.auth.mockResolvedValueOnce({
+      user: { invitationStatus: "active", role: "editor" }
+    });
     const response = await GET(
       new Request("https://example.test/api/admin/seo/metrika?period=031")
     );
@@ -54,7 +58,9 @@ describe("Yandex Metrika admin route", () => {
   });
 
   it("returns a private authenticated report", async () => {
-    mocks.auth.mockResolvedValueOnce({ user: { role: "admin" } });
+    mocks.auth.mockResolvedValueOnce({
+      user: { invitationStatus: "active", role: "admin" }
+    });
     mocks.getReport.mockResolvedValueOnce({
       status: "not_configured",
       period: 90,
@@ -82,7 +88,9 @@ describe("Yandex Metrika admin route", () => {
   });
 
   it("forwards an authenticated refresh request without weakening no-store", async () => {
-    mocks.auth.mockResolvedValueOnce({ user: { role: "admin" } });
+    mocks.auth.mockResolvedValueOnce({
+      user: { invitationStatus: "active", role: "admin" }
+    });
     mocks.getReport.mockResolvedValueOnce({
       status: "not_configured",
       period: 30,

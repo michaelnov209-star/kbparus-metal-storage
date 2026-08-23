@@ -21,9 +21,18 @@ import {
 } from "lucide-react";
 
 import {
+  canCreateProducts,
+  canManageIntegrations,
   canEditContent,
   canManageMedia,
+  canReadCalculatorProfiles,
+  canReadCatalog,
+  canReadLeads,
+  canReadSeo,
+  canReadSystem,
+  canViewProductsAdmin,
   getCmsRole,
+  getCmsRoleLabel,
   type CmsRole
 } from "@/payload/access/rbac";
 import { AdminIntentLink } from "./AdminIntentLink";
@@ -43,7 +52,15 @@ type WorkspaceItem = {
   description: string;
   href: string;
   icon: typeof Package;
-  access: "admin" | "content" | "media";
+  access:
+    | "calculator"
+    | "content"
+    | "integrations"
+    | "leads"
+    | "media"
+    | "products"
+    | "seo"
+    | "system";
   accent?: boolean;
 };
 
@@ -60,7 +77,7 @@ const workspaceItems: WorkspaceItem[] = [
     description: "Карточки оборудования, цены, изображения и публикация.",
     href: "/admin/collections/products",
     icon: Package,
-    access: "content",
+    access: "products",
     accent: true
   },
   {
@@ -68,14 +85,14 @@ const workspaceItems: WorkspaceItem[] = [
     description: "Размеры, нагрузки, коэффициенты, цены и дополнительные опции.",
     href: "/admin/collections/calculator-profiles",
     icon: Calculator,
-    access: "content"
+    access: "calculator"
   },
   {
     title: "Заявки",
     description: "Обращения с сайта и параметры расчёта клиента.",
     href: "/admin/collections/leads",
     icon: Inbox,
-    access: "admin",
+    access: "leads",
     accent: true
   },
   {
@@ -100,14 +117,14 @@ const systemItems: WorkspaceItem[] = [
     description: "Позиции, поисковые запросы, цели и динамика.",
     href: "/admin/seo",
     icon: BarChart3,
-    access: "content"
+    access: "seo"
   },
   {
     title: "Здоровье и изменения",
     description: "Сервисы сайта, последние изменения и контроль рисков.",
     href: "/admin/system",
     icon: CircleGauge,
-    access: "admin",
+    access: "system",
     accent: true
   },
   {
@@ -115,7 +132,7 @@ const systemItems: WorkspaceItem[] = [
     description: "Telegram, Яндекс Почта, Метрика и Bitrix24.",
     href: "/admin/integrations",
     icon: Settings2,
-    access: "admin"
+    access: "integrations"
   }
 ];
 
@@ -124,17 +141,15 @@ const dashboardCache = new Map<
   { expiresAt: number; pending?: Promise<DashboardCounts>; value?: DashboardCounts }
 >();
 
-function canOpen(item: WorkspaceItem, role: CmsRole | null): boolean {
-  if (item.access === "admin") return role === "admin";
-  if (item.access === "content") return role === "admin" || role === "editor";
-  return role === "admin" || role === "editor" || role === "photographer";
-}
-
-function roleLabel(role: CmsRole | null): string {
-  if (role === "admin") return "Администратор";
-  if (role === "editor") return "Редактор контента";
-  if (role === "photographer") return "Медиа-менеджер";
-  return "Ограниченный доступ";
+function canOpen(item: WorkspaceItem, user: unknown): boolean {
+  if (item.access === "calculator") return canReadCalculatorProfiles(user);
+  if (item.access === "content") return canEditContent(user);
+  if (item.access === "integrations") return canManageIntegrations(user);
+  if (item.access === "leads") return canReadLeads(user);
+  if (item.access === "media") return canManageMedia(user);
+  if (item.access === "products") return canViewProductsAdmin(user);
+  if (item.access === "seo") return canReadSeo(user);
+  return canReadSystem(user);
 }
 
 type DashboardUser = {
@@ -174,20 +189,22 @@ function userDisplayName(user: unknown): string {
 
 async function readDashboardCounts(
   payload: Payload,
-  role: CmsRole | null
+  user: unknown
 ): Promise<DashboardCounts> {
   try {
-    const hasContentAccess = role === "admin" || role === "editor";
-    const hasMediaAccess = canManageMedia({ role });
-    const hasLeadAccess = role === "admin";
+    const hasCatalogAccess = canReadCatalog(user);
+    const hasProductAccess = canViewProductsAdmin(user);
+    const hasCalculatorAccess = canReadCalculatorProfiles(user);
+    const hasMediaAccess = canManageMedia(user);
+    const hasLeadAccess = canReadLeads(user);
     const [categories, products, calculatorProfiles, media, leads] = await Promise.all([
-      hasContentAccess
+      hasCatalogAccess
         ? payload.count({ collection: "categories", overrideAccess: true })
         : null,
-      hasContentAccess
+      hasProductAccess
         ? payload.count({ collection: "products", overrideAccess: true })
         : null,
-      hasContentAccess
+      hasCalculatorAccess
         ? payload.count({ collection: "calculator-profiles", overrideAccess: true })
         : null,
       hasMediaAccess
@@ -219,7 +236,8 @@ async function readDashboardCounts(
 
 async function getDashboardCounts(
   payload: Payload,
-  role: CmsRole | null
+  role: CmsRole | null,
+  user: unknown
 ): Promise<DashboardCounts> {
   const key = role ?? "restricted";
   const now = Date.now();
@@ -227,7 +245,7 @@ async function getDashboardCounts(
   if (cached?.value && cached.expiresAt > now) return cached.value;
   if (cached?.pending) return cached.pending;
 
-  const pending = readDashboardCounts(payload, role);
+  const pending = readDashboardCounts(payload, user);
   dashboardCache.set(key, {
     expiresAt: cached?.expiresAt ?? 0,
     pending,
@@ -250,12 +268,14 @@ function CountSkeleton() {
 
 async function DashboardMetrics({
   payload,
-  role
+  role,
+  user
 }: {
   payload: Payload;
   role: CmsRole | null;
+  user: unknown;
 }) {
-  const counts = await getDashboardCounts(payload, role);
+  const counts = await getDashboardCounts(payload, role, user);
   const metrics = [
     {
       label: "Категорий",
@@ -347,9 +367,13 @@ export async function AdminDashboard({
   }
 
   const role = getCmsRole(authenticatedUser);
-  const canEdit = canEditContent(authenticatedUser);
-  const visibleWorkspace = workspaceItems.filter((item) => canOpen(item, role));
-  const visibleSystem = systemItems.filter((item) => canOpen(item, role));
+  const canCreateProduct = canCreateProducts(authenticatedUser);
+  const visibleWorkspace = workspaceItems.filter((item) =>
+    canOpen(item, authenticatedUser)
+  );
+  const visibleSystem = systemItems.filter((item) =>
+    canOpen(item, authenticatedUser)
+  );
   const integrationsConfigured = [
     Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
     Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
@@ -369,14 +393,14 @@ export async function AdminDashboard({
               <strong>{displayName}</strong>
               <small>
                 <ShieldCheck size={13} aria-hidden />
-                {roleLabel(role)}
+                {getCmsRoleLabel(role)}
               </small>
             </span>
           </div>
           <h1>Центр управления сайтом</h1>
           <p>Главное на одном экране: контент, заявки, расчёты и состояние сервисов.</p>
           <div className="kb-control-center__quick-actions" data-tour="quick-actions">
-            {canEdit ? (
+            {canCreateProduct ? (
               <AdminIntentLink
                 className="kb-control-center__action kb-control-center__action--primary"
                 href="/admin/collections/products/create"
@@ -391,7 +415,7 @@ export async function AdminDashboard({
                 Загрузить файл
               </AdminIntentLink>
             ) : null}
-            {role === "admin" ? (
+            {canReadLeads(authenticatedUser) ? (
               <AdminIntentLink className="kb-control-center__action" href="/admin/collections/leads">
                 <Inbox size={16} aria-hidden />
                 Открыть заявки
@@ -409,7 +433,7 @@ export async function AdminDashboard({
             <span style={{ width: `${(integrationsConfigured / 3) * 100}%` }} />
           </div>
           <p>Telegram, почта и аналитика подключены через защищённые настройки.</p>
-          {role === "admin" ? (
+          {canReadSystem(authenticatedUser) ? (
             <AdminIntentLink href="/admin/system">
               Проверить здоровье
               <ArrowRight size={14} aria-hidden />
@@ -419,7 +443,11 @@ export async function AdminDashboard({
       </header>
 
       <Suspense fallback={<CountSkeleton />}>
-        <DashboardMetrics payload={initPageResult.req.payload} role={role} />
+        <DashboardMetrics
+          payload={initPageResult.req.payload}
+          role={role}
+          user={authenticatedUser}
+        />
       </Suspense>
 
       <div className="kb-control-center__layout">
@@ -456,7 +484,11 @@ export async function AdminDashboard({
         ) : null}
       </div>
 
-      {role ? <AdminTraining role={role} /> : null}
+      {role &&
+      (typeof authenticatedUser.id === "string" ||
+        typeof authenticatedUser.id === "number") ? (
+        <AdminTraining role={role} userId={authenticatedUser.id} />
+      ) : null}
 
       <footer className="kb-control-center__footer">
         <ShieldCheck size={16} aria-hidden />

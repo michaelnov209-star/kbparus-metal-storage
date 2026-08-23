@@ -16,7 +16,13 @@ const privateHeaders = {
 };
 
 export async function GET(request: Request) {
-  const auth = await authenticateCmsRequest(request, ["admin", "editor"]);
+  const auth = await authenticateCmsRequest(request, [
+    "admin",
+    "director",
+    "general_director",
+    "editor",
+    "seo_marketer"
+  ]);
   if (!auth.ok) {
     const error =
       auth.status === 503

@@ -239,7 +239,7 @@ export async function POST(request: Request) {
     ? calculateStorageSystem(calculatorInput, calculatorProfile)
     : undefined;
   const fromPrice = result?.fromPrice ?? payload.preliminaryPriceFrom;
-  const selectedOptions = payload.recommendedConfig?.options?.filter(Boolean) ?? result?.selectedOptions;
+  const selectedOptions = result?.selectedOptions;
   const acceptedAt = new Date().toISOString();
   const requestOrigin = new URL(request.url).origin;
   const utm = {
@@ -261,8 +261,9 @@ export async function POST(request: Request) {
     sourceUrl,
     sourceTitle: sourceTitle || undefined,
     sourceImageUrl,
-    recommendationTitle:
-      sourceTitle || payload.recommendedConfig?.title || result?.recommendation.title,
+    recommendationTitle: isConfiguratorLead
+      ? result?.recommendation.title
+      : sourceTitle || undefined,
     fromPriceLabel: fromPrice ? `от ${formatRoundedRub(fromPrice)}` : undefined,
     calculatorInput,
     selectedOptions

@@ -17,8 +17,12 @@ describe("admin streaming boundaries", () => {
     expect(view).toContain("async function readSystemSummary");
     expect(view).toContain("async function readSystemHistory");
     expect(view).toContain("const [profileResult, leadDelivery] = await Promise.all");
-    expect(view).toContain("<SystemScore summaryPromise={summaryPromise}");
-    expect(view).toContain("<SystemHealth summaryPromise={summaryPromise}");
+    expect(view).toMatch(
+      /<SystemScore\s[\s\S]*?summaryPromise=\{summaryPromise\}[\s\S]*?\/>/
+    );
+    expect(view).toMatch(
+      /<SystemHealth\s[\s\S]*?summaryPromise=\{summaryPromise\}[\s\S]*?\/>/
+    );
     expect(view).toContain("<SystemHistory historyPromise={historyPromise}");
     expect(view).toContain("<SystemCalculator summaryPromise={summaryPromise}");
     expect(view).toContain("<SystemScoreSkeleton");

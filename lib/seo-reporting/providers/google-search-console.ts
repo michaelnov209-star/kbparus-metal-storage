@@ -26,6 +26,23 @@ type GoogleAccessTokenResponse = {
   expires_in?: unknown;
 };
 
+type GoogleSiteResponse = {
+  siteUrl?: unknown;
+  permissionLevel?: unknown;
+};
+
+type GoogleApiErrorResponse = {
+  error?: {
+    errors?: Array<{
+      reason?: unknown;
+    }>;
+    details?: Array<{
+      reason?: unknown;
+    }>;
+    status?: unknown;
+  };
+};
+
 type GoogleFetchOptions = {
   config: ConfiguredGoogleSearchConsole;
   window: SeoDateWindow;
@@ -51,6 +68,11 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_SEARCH_SCOPE =
   "https://www.googleapis.com/auth/webmasters.readonly";
 const GOOGLE_PAGE_SIZE = 25_000;
+const GOOGLE_READABLE_PERMISSION_LEVELS = new Set([
+  "siteOwner",
+  "siteFullUser",
+  "siteRestrictedUser"
+]);
 
 let tokenCache:
   | {
@@ -197,6 +219,85 @@ function googleFilters(device: SeoReportDevice, query: string) {
   return filters;
 }
 
+async function readGoogleErrorReason(response: Response): Promise<string | null> {
+  try {
+    const data = (await response.clone().json()) as GoogleApiErrorResponse;
+    const nestedReason = data.error?.errors?.find(
+      (item) => typeof item.reason === "string" && item.reason
+    )?.reason;
+    if (typeof nestedReason === "string") return nestedReason;
+    const detailReason = data.error?.details?.find(
+      (item) => typeof item.reason === "string" && item.reason
+    )?.reason;
+    if (typeof detailReason === "string") return detailReason;
+    return typeof data.error?.status === "string" ? data.error.status : null;
+  } catch {
+    return null;
+  }
+}
+
+async function verifyGooglePropertyAccess({
+  config,
+  token,
+  fetchImpl
+}: {
+  config: ConfiguredGoogleSearchConsole;
+  token: string;
+  fetchImpl: typeof fetch;
+}): Promise<string> {
+  const endpoint = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+    config.siteUrl
+  )}`;
+  const response = await fetchImpl(endpoint, {
+    headers: {
+      authorization: `Bearer ${token}`
+    },
+    signal: AbortSignal.timeout(15_000)
+  });
+
+  if (!response.ok) {
+    throw new SeoProviderError(
+      "Google Search Console не подтвердил доступ к ресурсу",
+      response.status,
+      await readGoogleErrorReason(response)
+    );
+  }
+
+  const data = (await response.json()) as GoogleSiteResponse;
+  if (typeof data.permissionLevel !== "string") {
+    throw new SeoProviderError(
+      "Google Search Console вернул некорректный уровень доступа"
+    );
+  }
+
+  const permissionLevel = data.permissionLevel.trim();
+  if (!GOOGLE_READABLE_PERMISSION_LEVELS.has(permissionLevel)) {
+    throw new SeoProviderError(
+      "Google Search Console не предоставил доступ к данным ресурса",
+      403,
+      "insufficientPermission"
+    );
+  }
+
+  return permissionLevel;
+}
+
+export async function checkGoogleSearchConsoleConnection({
+  config,
+  fetchImpl = fetch
+}: {
+  config: ConfiguredGoogleSearchConsole;
+  fetchImpl?: typeof fetch;
+}): Promise<{ permissionLevel: string }> {
+  const token = await getGoogleAccessToken(config, fetchImpl);
+  const permissionLevel = await verifyGooglePropertyAccess({
+    config,
+    token,
+    fetchImpl
+  });
+  return { permissionLevel };
+}
+
 async function runGoogleQuery({
   config,
   token,
@@ -247,7 +348,8 @@ async function runGoogleQuery({
   if (!response.ok) {
     throw new SeoProviderError(
       "Google Search Console не вернул отчёт",
-      response.status
+      response.status,
+      await readGoogleErrorReason(response)
     );
   }
 
@@ -298,6 +400,11 @@ export async function fetchGoogleSearchConsoleDataset({
   fetchImpl = fetch
 }: GoogleFetchOptions): Promise<SeoSourceDataset> {
   const token = await getGoogleAccessToken(config, fetchImpl);
+  const providerAccessLevel = await verifyGooglePropertyAccess({
+    config,
+    token,
+    fetchImpl
+  });
   const includeComparison = period !== 365;
   const emptyResult = Promise.resolve({
     rows: [] as GoogleSearchAnalyticsRow[],
@@ -489,6 +596,7 @@ export async function fetchGoogleSearchConsoleDataset({
     queryRows,
     pageRows,
     countryRows,
+    providerAccessLevel,
     actualStart: dates[0] ?? null,
     actualEnd: dates.at(-1) ?? null,
     truncated:

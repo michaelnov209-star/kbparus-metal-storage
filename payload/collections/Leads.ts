@@ -1,6 +1,61 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionConfig, Field, FieldAccess } from "payload";
+import { booleanStatusAdmin } from "../admin/boolean-status";
+import { adminSectionHero, adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
-import { adminOnly, adminUiOnly } from "../access/rbac";
+import {
+  adminOnly,
+  getCmsRole,
+  leadManagersOnly,
+  leadReadersOnly,
+  leadsAdminUi
+} from "../access/rbac";
+
+const salesEditableLeadFields = new Set(["managerComment", "status"]);
+
+const leadFieldUpdateAccess =
+  (fieldName: string): FieldAccess =>
+  ({ req }) => {
+    const role = getCmsRole(req.user);
+    return (
+      role === "admin" ||
+      (role === "sales_manager" && salesEditableLeadFields.has(fieldName))
+    );
+  };
+
+function applyLeadRoleAccess(fields: Field[]): Field[] {
+  return fields.map((field) => {
+    if (field.type === "ui") return field;
+
+    if ("name" in field && typeof field.name === "string") {
+      return {
+        ...field,
+        access: {
+          ...field.access,
+          update: leadFieldUpdateAccess(field.name)
+        }
+      } as Field;
+    }
+
+    if (field.type === "tabs") {
+      return {
+        ...field,
+        tabs: field.tabs.map((tab) => ({
+          ...tab,
+          fields: applyLeadRoleAccess(tab.fields)
+        }))
+      };
+    }
+
+    if ("fields" in field && Array.isArray(field.fields)) {
+      return {
+        ...field,
+        fields: applyLeadRoleAccess(field.fields)
+      } as Field;
+    }
+
+    return field;
+  });
+}
 
 export const Leads: CollectionConfig = {
   slug: "leads",
@@ -11,6 +66,9 @@ export const Leads: CollectionConfig = {
   },
   admin: {
     group: adminGroups.leads,
+    components: {
+      beforeList: [adminSectionHero("leads")]
+    },
     useAsTitle: "title",
     defaultColumns: ["title", "status", "leadType", "phone", "city", "sourceTitle", "createdAt"],
     listSearchableFields: ["title", "name", "phone", "email", "city", "sourceTitle", "sourceUrl", "comment"],
@@ -21,13 +79,14 @@ export const Leads: CollectionConfig = {
     pagination: { defaultLimit: 20, limits: [10, 20, 50, 100] }
   },
   access: {
-    admin: adminUiOnly,
-    read: adminOnly,
+    admin: leadsAdminUi,
+    read: leadReadersOnly,
     create: adminOnly,
-    update: adminOnly,
+    update: leadManagersOnly,
     delete: adminOnly
   },
-  fields: [
+  fields: applyLeadRoleAccess([
+    adminSectionHeroField("leads"),
     {
       type: "tabs",
       tabs: [
@@ -103,11 +162,38 @@ export const Leads: CollectionConfig = {
               type: "row",
               fields: [
                 { name: "sourceTitle", label: { ru: "Страница/товар", en: "Source title" }, type: "text", admin: { width: "50%" } },
-                { name: "sourceUrl", label: { ru: "URL источника", en: "Source URL" }, type: "text", admin: { width: "50%" } }
+                {
+                  name: "sourceUrl",
+                  label: { ru: "Страница, откуда пришла заявка", en: "Source page" },
+                  type: "text",
+                  admin: {
+                    width: "50%",
+                    description: {
+                      ru: "Ссылка помогает быстро открыть страницу клиента и проверить контекст обращения."
+                    }
+                  }
+                }
               ]
             },
             { name: "source", label: { ru: "Описание источника", en: "Source" }, type: "text" },
-            { name: "utm", label: { ru: "UTM-метки", en: "UTM" }, type: "json" }
+            {
+              type: "collapsible",
+              label: { ru: "Дополнительные данные источника", en: "Additional source details" },
+              admin: { initCollapsed: true },
+              fields: [
+                {
+                  name: "utm",
+                  label: { ru: "Метки рекламной кампании", en: "Campaign tags" },
+                  type: "json",
+                  admin: {
+                    readOnly: true,
+                    description: {
+                      ru: "Заполняются сайтом автоматически и нужны для аналитики рекламы."
+                    }
+                  }
+                }
+              ]
+            }
           ]
         },
         {
@@ -121,30 +207,59 @@ export const Leads: CollectionConfig = {
               ]
             },
             { name: "calculatorSummary", label: { ru: "Краткая конфигурация", en: "Configuration summary" }, type: "textarea" },
-            { name: "calculatorInput", label: { ru: "Полные параметры калькулятора", en: "Calculator input" }, type: "json" }
+            {
+              type: "collapsible",
+              label: { ru: "Подробности расчёта", en: "Calculation details" },
+              admin: { initCollapsed: true },
+              fields: [
+                {
+                  name: "calculatorInput",
+                  label: { ru: "Все выбранные параметры", en: "All selected parameters" },
+                  type: "json",
+                  admin: {
+                    readOnly: true,
+                    description: {
+                      ru: "Полный снимок расчёта. Обычно менеджеру достаточно краткой конфигурации выше."
+                    }
+                  }
+                }
+              ]
+            }
           ]
         },
         {
           label: { ru: "Доставка", en: "Delivery" },
           fields: [
             {
-              type: "row",
+              type: "collapsible",
+              label: { ru: "Служебный статус доставки", en: "Delivery status details" },
+              admin: { initCollapsed: true },
               fields: [
-                { name: "emailDelivered", label: { ru: "Email", en: "Email" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
-                { name: "telegramDelivered", label: { ru: "Telegram", en: "Telegram" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
-                { name: "bitrix24Delivered", label: { ru: "Bitrix24 webhook", en: "Bitrix24 webhook" }, type: "checkbox", defaultValue: false, admin: { width: "25%" } },
-                { name: "cmsStored", label: { ru: "Сохранено в CMS", en: "Stored in CMS" }, type: "checkbox", defaultValue: true, admin: { width: "25%", readOnly: true } }
+                {
+                  type: "row",
+                  fields: [
+                    { name: "emailDelivered", label: { ru: "Отправлено на почту", en: "Email delivered" }, type: "checkbox", defaultValue: false, admin: { width: "25%", ...booleanStatusAdmin({ trueLabel: "Доставлено", falseLabel: "Не доставлено", falseTone: "warning" }) } },
+                    { name: "telegramDelivered", label: { ru: "Отправлено в Telegram", en: "Telegram delivered" }, type: "checkbox", defaultValue: false, admin: { width: "25%", ...booleanStatusAdmin({ trueLabel: "Доставлено", falseLabel: "Не доставлено", falseTone: "warning" }) } },
+                    { name: "bitrix24Delivered", label: { ru: "Передано в Bitrix24", en: "Bitrix24 delivered" }, type: "checkbox", defaultValue: false, admin: { width: "25%", ...booleanStatusAdmin({ trueLabel: "Доставлено", falseLabel: "Не доставлено", falseTone: "warning" }) } },
+                    { name: "cmsStored", label: { ru: "Заявка сохранена", en: "Lead stored" }, type: "checkbox", defaultValue: true, admin: { width: "25%", readOnly: true, ...booleanStatusAdmin({ trueLabel: "Сохранено", falseLabel: "Не сохранено", falseTone: "negative" }) } }
+                  ]
+                },
+                {
+                  name: "deliveryErrors",
+                  label: { ru: "Что помешало доставке", en: "Delivery issue" },
+                  type: "textarea",
+                  admin: {
+                    readOnly: true,
+                    description: {
+                      ru: "Заполняется автоматически, если один из каналов не принял заявку."
+                    }
+                  }
+                }
               ]
-            },
-            {
-              name: "deliveryErrors",
-              label: { ru: "Ошибки доставки", en: "Delivery errors" },
-              type: "textarea",
-              admin: { description: { ru: "Заполняется, если внешний канал не принял заявку." } }
             }
           ]
         }
       ]
     }
-  ]
+  ])
 };

@@ -1,4 +1,6 @@
 import type { GlobalConfig } from "payload";
+import { businessRowLabel } from "../admin/array-row-label";
+import { adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
 import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
@@ -31,6 +33,7 @@ export const HomeContent: GlobalConfig = {
     }
   },
   fields: [
+    adminSectionHeroField("home"),
     {
       type: "tabs",
       tabs: [
@@ -133,8 +136,21 @@ export const HomeContent: GlobalConfig = {
                 {
                   name: "metrics",
                   label: { ru: "Метрики (3 цифры в hero)", en: "Hero metrics" },
+                  labels: {
+                    singular: { ru: "Показатель первого экрана", en: "Hero metric" },
+                    plural: { ru: "Показатели первого экрана", en: "Hero metrics" }
+                  },
                   type: "array",
                   maxRows: 4,
+                  admin: {
+                    components: {
+                      RowLabel: businessRowLabel({
+                        fallback: "Новый показатель",
+                        primaryFields: ["label", "value"],
+                        secondaryFields: ["value"]
+                      })
+                    }
+                  },
                   fields: [
                     { type: "row", fields: [
                       { name: "value", label: { ru: "Значение (напр. «500+»)", en: "Value" }, type: "text", required: true, admin: { width: "40%" } },
@@ -145,12 +161,23 @@ export const HomeContent: GlobalConfig = {
                 {
                   name: "actions",
                   label: { ru: "Кнопки призыва к действию (под заголовком)", en: "Hero CTAs" },
+                  labels: {
+                    singular: { ru: "Кнопка первого экрана", en: "Hero button" },
+                    plural: { ru: "Кнопки первого экрана", en: "Hero buttons" }
+                  },
                   type: "array",
                   maxRows: 3,
                   admin: {
                     description: {
                       ru: "Кнопки под главным заголовком. Если оставить пустым — показываются стандартные «Рассчитать стоимость» и «Получить КП». Рекомендуем 1–2 кнопки. В поле «Куда ведёт» можно указать якорь раздела: #calculator (калькулятор) или #request (форма заявки).",
                       en: "Buttons under the main headline. Empty = default CTAs."
+                    },
+                    components: {
+                      RowLabel: businessRowLabel({
+                        fallback: "Новая кнопка",
+                        primaryFields: ["label", "href"],
+                        secondaryFields: ["href"]
+                      })
                     }
                   },
                   fields: [
@@ -174,7 +201,19 @@ export const HomeContent: GlobalConfig = {
             {
               name: "advantages",
               label: { ru: "Карточки преимуществ", en: "Advantage cards" },
+              labels: {
+                singular: { ru: "Преимущество", en: "Advantage" },
+                plural: { ru: "Преимущества", en: "Advantages" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новое преимущество",
+                    primaryFields: ["title"]
+                  })
+                }
+              },
               fields: [
                 { name: "title", label: { ru: "Заголовок", en: "Title" }, type: "text", required: true },
                 { name: "icon", label: { ru: "Иконка карточки", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "badge-check" },
@@ -189,7 +228,19 @@ export const HomeContent: GlobalConfig = {
             {
               name: "storedMaterials",
               label: { ru: "Материалы (карточки)", en: "Stored materials" },
+              labels: {
+                singular: { ru: "Материал или сценарий", en: "Stored material" },
+                plural: { ru: "Материалы и сценарии", en: "Stored materials" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый материал",
+                    primaryFields: ["title", "label"]
+                  })
+                }
+              },
               fields: [
                 { name: "title", label: { ru: "Название", en: "" }, type: "text", required: true },
                 { name: "label", label: { ru: "Короткая подпись на визуале", en: "Visual label" }, type: "text" },
@@ -211,7 +262,35 @@ export const HomeContent: GlobalConfig = {
                 { name: "title", label: { ru: "Заголовок", en: "" }, type: "text" },
                 { name: "text", label: { ru: "Короткое описание", en: "Text" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" },
-                { name: "points", label: { ru: "Тезисы", en: "" }, type: "array", fields: [{ name: "value", type: "text" }] }
+                {
+                  name: "points",
+                  label: { ru: "Тезисы", en: "Points" },
+                  labels: {
+                    singular: { ru: "Проблема до внедрения", en: "Before point" },
+                    plural: { ru: "Проблемы до внедрения", en: "Before points" }
+                  },
+                  type: "array",
+                  admin: {
+                    components: {
+                      RowLabel: businessRowLabel({
+                        fallback: "Новая проблема",
+                        primaryFields: ["value"]
+                      })
+                    }
+                  },
+                  fields: [
+                    {
+                      name: "value",
+                      label: { ru: "Проблема до внедрения", en: "Before point" },
+                      type: "text",
+                      admin: {
+                        description: {
+                          ru: "Один конкретный недостаток прежнего способа работы."
+                        }
+                      }
+                    }
+                  ]
+                }
               ]
             },
             {
@@ -222,7 +301,35 @@ export const HomeContent: GlobalConfig = {
                 { name: "title", label: { ru: "Заголовок", en: "" }, type: "text" },
                 { name: "text", label: { ru: "Короткое описание", en: "Text" }, type: "textarea" },
                 { name: "image", label: { ru: "Фото", en: "" }, type: "upload", relationTo: "media" },
-                { name: "points", label: { ru: "Тезисы", en: "" }, type: "array", fields: [{ name: "value", type: "text" }] }
+                {
+                  name: "points",
+                  label: { ru: "Тезисы", en: "Points" },
+                  labels: {
+                    singular: { ru: "Результат после внедрения", en: "After point" },
+                    plural: { ru: "Результаты после внедрения", en: "After points" }
+                  },
+                  type: "array",
+                  admin: {
+                    components: {
+                      RowLabel: businessRowLabel({
+                        fallback: "Новый результат",
+                        primaryFields: ["value"]
+                      })
+                    }
+                  },
+                  fields: [
+                    {
+                      name: "value",
+                      label: { ru: "Результат после внедрения", en: "After point" },
+                      type: "text",
+                      admin: {
+                        description: {
+                          ru: "Одно понятное улучшение, которое получил клиент."
+                        }
+                      }
+                    }
+                  ]
+                }
               ]
             }
           ]
@@ -233,7 +340,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "cases",
               label: { ru: "Кейсы клиентов", en: "Cases" },
+              labels: {
+                singular: { ru: "Кейс клиента", en: "Case" },
+                plural: { ru: "Кейсы клиентов", en: "Cases" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый кейс",
+                    primaryFields: ["title", "customer"],
+                    secondaryFields: ["customer"]
+                  })
+                }
+              },
               fields: [
                 { name: "customer", label: { ru: "Клиент / отрасль", en: "Customer" }, type: "text" },
                 { name: "title", label: { ru: "Название проекта", en: "Title" }, type: "text", required: true },
@@ -244,7 +364,20 @@ export const HomeContent: GlobalConfig = {
                 {
                   name: "metrics",
                   label: { ru: "Цифры (опционально)", en: "Metrics" },
+                  labels: {
+                    singular: { ru: "Результат в цифрах", en: "Case metric" },
+                    plural: { ru: "Результаты в цифрах", en: "Case metrics" }
+                  },
                   type: "array",
+                  admin: {
+                    components: {
+                      RowLabel: businessRowLabel({
+                        fallback: "Новый результат в цифрах",
+                        primaryFields: ["label", "value"],
+                        secondaryFields: ["value"]
+                      })
+                    }
+                  },
                   fields: [
                     { type: "row", fields: [
                       { name: "value", label: { ru: "Значение", en: "" }, type: "text", admin: { width: "40%" } },
@@ -262,7 +395,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "geoProjects",
               label: { ru: "Города и проекты на карте", en: "Cities" },
+              labels: {
+                singular: { ru: "Город поставки", en: "Delivery city" },
+                plural: { ru: "Города поставок", en: "Delivery cities" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый город поставки",
+                    primaryFields: ["city"],
+                    secondaryFields: ["project"]
+                  })
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "city", label: { ru: "Город", en: "" }, type: "text", required: true, admin: { width: "40%" } },
@@ -278,7 +424,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "reviews",
               label: { ru: "Отзывы клиентов", en: "Reviews" },
+              labels: {
+                singular: { ru: "Отзыв клиента", en: "Review" },
+                plural: { ru: "Отзывы клиентов", en: "Reviews" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый отзыв",
+                    primaryFields: ["name"],
+                    secondaryFields: ["role"]
+                  })
+                }
+              },
               fields: [
                 { name: "name", label: { ru: "Имя", en: "Name" }, type: "text", required: true },
                 { name: "role", label: { ru: "Должность / компания", en: "Role" }, type: "text" },
@@ -294,8 +453,21 @@ export const HomeContent: GlobalConfig = {
             {
               name: "partners",
               label: { ru: "Логотипы партнёров", en: "Partner logos" },
+              labels: {
+                singular: { ru: "Партнёр", en: "Partner" },
+                plural: { ru: "Партнёры", en: "Partners" }
+              },
               type: "array",
-              admin: { description: { ru: "Загрузите логотип каждого партнёра. Они будут показаны в слайдере на главной.", en: "" } },
+              admin: {
+                description: { ru: "Загрузите логотип каждого партнёра. Они будут показаны в слайдере на главной.", en: "" },
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый партнёр",
+                    primaryFields: ["name"],
+                    secondaryFields: ["url"]
+                  })
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "name", label: { ru: "Название партнёра", en: "Name" }, type: "text", required: true, admin: { width: "40%" } },
@@ -312,8 +484,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "shipmentSteps",
               label: { ru: "Этапы отгрузки", en: "Steps" },
+              labels: {
+                singular: { ru: "Этап отгрузки", en: "Shipment step" },
+                plural: { ru: "Этапы отгрузки", en: "Shipment steps" }
+              },
               type: "array",
               maxRows: 5,
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый этап отгрузки",
+                    primaryFields: ["title"]
+                  })
+                }
+              },
               fields: [
                 { name: "title", label: { ru: "Заголовок шага", en: "Title" }, type: "text", required: true },
                 { name: "icon", label: { ru: "Иконка", en: "Icon" }, type: "select", options: iconOptions, defaultValue: "route" },
@@ -330,8 +514,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "aboutFeatures",
               label: { ru: "Короткие факты под текстом", en: "Feature chips" },
+              labels: {
+                singular: { ru: "Факт о компании", en: "Company fact" },
+                plural: { ru: "Факты о компании", en: "Company facts" }
+              },
               type: "array",
               maxRows: 6,
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый факт о компании",
+                    primaryFields: ["label"]
+                  })
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "label", label: { ru: "Факт", en: "Label" }, type: "text", admin: { width: "70%" } },
@@ -342,7 +538,20 @@ export const HomeContent: GlobalConfig = {
             {
               name: "aboutMetrics",
               label: { ru: "Метрики о компании", en: "Metrics" },
+              labels: {
+                singular: { ru: "Показатель компании", en: "Company metric" },
+                plural: { ru: "Показатели компании", en: "Company metrics" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый показатель компании",
+                    primaryFields: ["label", "value"],
+                    secondaryFields: ["value"]
+                  })
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "value", label: { ru: "Значение", en: "" }, type: "text", admin: { width: "40%" } },
@@ -383,7 +592,19 @@ export const HomeContent: GlobalConfig = {
             {
               name: "faq",
               label: { ru: "Вопросы и ответы", en: "FAQ" },
+              labels: {
+                singular: { ru: "Вопрос клиента", en: "FAQ item" },
+                plural: { ru: "Вопросы клиентов", en: "FAQ items" }
+              },
               type: "array",
+              admin: {
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый вопрос",
+                    primaryFields: ["question"]
+                  })
+                }
+              },
               fields: [
                 { name: "question", label: { ru: "Вопрос", en: "Question" }, type: "text", required: true },
                 { name: "answer", label: { ru: "Ответ", en: "Answer" }, type: "textarea", required: true }

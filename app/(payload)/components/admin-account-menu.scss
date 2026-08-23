@@ -1,0 +1,74 @@
+.app-header__account { display: none !important; }
+
+.kb-account-menu {
+  position: relative;
+  z-index: 80;
+}
+
+.kb-account-menu__trigger {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 9px 4px 5px;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #dce3e8;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.kb-account-menu__trigger:hover,
+.kb-account-menu__trigger[data-open] {
+  border-color: rgba(252, 84, 19, .58);
+  background: #fff8f5;
+}
+
+.kb-account-menu__trigger:focus-visible {
+  outline: 3px solid rgba(252, 84, 19, .25);
+  outline-offset: 2px;
+}
+
+.kb-account-menu__identity {
+  display: grid;
+  width: clamp(118px, 12vw, 178px);
+  min-width: 0;
+}
+
+.kb-account-menu__identity > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-account-menu__identity strong {
+  color: #1a1a1a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.kb-account-menu__identity small {
+  color: #737f89;
+  font-size: 10px;
+}
+
+.kb-account-menu__chevron {
+  color: #6e7982;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.kb-account-menu__trigger[data-open] .kb-account-menu__chevron {
+  transform: rotate(180deg);
+}
+
+html[data-kb-cms-role="editor"] .collection-edit--users .collection-edit__auth,
+html[data-kb-cms-role="photographer"] .collection-edit--users .collection-edit__auth {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .kb-account-menu__trigger { min-height: 52px; padding: 3px; }
+  .kb-account-menu__identity,
+  .kb-account-menu__chevron { display: none; }
+}

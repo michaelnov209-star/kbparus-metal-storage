@@ -1,4 +1,6 @@
 import type { GlobalConfig } from "payload";
+import { businessRowLabel } from "../admin/array-row-label";
+import { adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups } from "../admin/structure";
 import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
@@ -54,6 +56,7 @@ export const SiteNavigation: GlobalConfig = {
     }
   },
   fields: [
+    adminSectionHeroField("navigation"),
     {
       type: "tabs",
       tabs: [
@@ -86,20 +89,42 @@ export const SiteNavigation: GlobalConfig = {
             {
               name: "headerLinks",
               label: { ru: "Основные ссылки в шапке", en: "Header links" },
+              labels: {
+                singular: { ru: "Ссылка в шапке", en: "Header link" },
+                plural: { ru: "Ссылки в шапке", en: "Header links" }
+              },
               type: "array",
               admin: {
                 description: { ru: "Порядок строк равен порядку ссылок на сайте." },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая ссылка в шапке",
+                    primaryFields: ["label", "href"],
+                    secondaryFields: ["href"]
+                  })
+                }
               },
               fields: linkFields
             },
             {
               name: "detailPageLinks",
               label: { ru: "Ссылки на страницах категорий и товаров", en: "Detail page links" },
+              labels: {
+                singular: { ru: "Ссылка внутренней страницы", en: "Detail page link" },
+                plural: { ru: "Ссылки внутренних страниц", en: "Detail page links" }
+              },
               type: "array",
               admin: {
                 description: { ru: "Используются в компактной шапке внутренних страниц каталога после кнопки возврата." },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая ссылка внутренней страницы",
+                    primaryFields: ["label", "href"],
+                    secondaryFields: ["href"]
+                  })
+                }
               },
               fields: linkFields
             },
@@ -134,17 +159,41 @@ export const SiteNavigation: GlobalConfig = {
             {
               name: "footerLinks",
               label: { ru: "Навигация в футере", en: "Footer links" },
+              labels: {
+                singular: { ru: "Ссылка в футере", en: "Footer link" },
+                plural: { ru: "Ссылки в футере", en: "Footer links" }
+              },
               type: "array",
-              admin: { initCollapsed: true },
+              admin: {
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая ссылка в футере",
+                    primaryFields: ["label", "href"],
+                    secondaryFields: ["href"]
+                  })
+                }
+              },
               fields: linkFields
             },
             {
               name: "legalLinks",
               label: { ru: "Юридические и служебные ссылки", en: "Legal links" },
+              labels: {
+                singular: { ru: "Юридическая ссылка", en: "Legal link" },
+                plural: { ru: "Юридические ссылки", en: "Legal links" }
+              },
               type: "array",
               admin: {
                 description: { ru: "Политика конфиденциальности, реквизиты, документы. Если пусто — блок не выводится." },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая юридическая ссылка",
+                    primaryFields: ["label", "href"],
+                    secondaryFields: ["href"]
+                  })
+                }
               },
               fields: linkFields
             },

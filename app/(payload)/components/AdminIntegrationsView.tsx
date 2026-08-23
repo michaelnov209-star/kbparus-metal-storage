@@ -17,7 +17,7 @@ import {
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { getCachedAdminValue } from "@/lib/admin/server-cache";
-import { getCmsRole } from "@/payload/access/rbac";
+import { canManageIntegrations } from "@/payload/access/rbac";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
 import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
@@ -176,7 +176,7 @@ async function IntegrationGrid({
   ];
 
   return (
-    <div className="kb-integrations__grid">
+    <div className="kb-integrations__grid" data-tour="integrations-grid">
       {cards.map((card) => <IntegrationCardView card={card} key={card.title} />)}
     </div>
   );
@@ -214,11 +214,11 @@ export async function AdminIntegrationsView({
     redirect("/admin/login?redirect=%2Fadmin%2Fintegrations");
   }
 
-  const isAdmin = getCmsRole(authenticatedUser) === "admin";
+  const hasIntegrationAccess = canManageIntegrations(authenticatedUser);
   const smtpConfigured = isSmtpConfigured(smtpSettingsFromEnv(process.env));
   const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
 
-  const content = !isAdmin ? (
+  const content = !hasIntegrationAccess ? (
     <AdminAccessDenied
       description="У этого аккаунта нет прав на просмотр служебных подключений."
       icon={CircleMinus}
@@ -226,7 +226,7 @@ export async function AdminIntegrationsView({
     />
   ) : (
     <section className="kb-integrations" aria-label="Интеграции сайта">
-      <header className="kb-integrations__hero">
+      <header className="kb-integrations__hero" data-tour="integrations-hero">
         <div>
           <span className="kb-integrations__eyebrow"><Settings2 size={15} aria-hidden />Системный контур</span>
           <h1>Интеграции и доставка заявок</h1>
@@ -246,7 +246,7 @@ export async function AdminIntegrationsView({
         />
       </Suspense>
 
-      <div className="kb-integrations__note">
+      <div className="kb-integrations__note" data-tour="integrations-note">
         <CheckCircle2 size={17} aria-hidden />
         <span>Пароли и токены хранятся в закрытых переменных Vercel и никогда не показываются в админке. Галочка «доставка подтверждена» берётся из реально сохранённой заявки.</span>
       </div>

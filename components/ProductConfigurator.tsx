@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, ClipboardCheck, Info, Ruler, Send, ShieldCheck } from "lucide-react";
-import { getCalculatorProfile, type CalculatorProfile, type CalculatorProfileId } from "@/data/storageSystems/excelCalculator";
+import type { CalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem } from "@/lib/calculator/pricing";
 import { formatRoundedRub } from "@/lib/calculator/format";
 import type { CalculatorInput } from "@/lib/calculator/types";
@@ -11,14 +11,12 @@ import { captureLeadUtm, getStoredLeadUtm, saveLastCalculatorLead } from "@/lib/
 import { createLeadConsent } from "@/lib/leads/contract";
 
 function buildInput(
-  profileId: CalculatorProfileId,
-  profileOverride?: CalculatorProfile
+  profile: CalculatorProfile
 ): CalculatorInput {
-  const profile = profileOverride ?? getCalculatorProfile(profileId);
   const defaults = profile.defaultValues;
 
   return {
-    systemId: profileId,
+    systemId: profile.id,
     material: profile.productType === "automated" ? "sheet" : "mixed",
     materialLengthMm: defaults.lengthMm,
     sheetWidthMm: defaults.widthMm,
@@ -49,22 +47,20 @@ function buildInput(
 }
 
 interface ProductConfiguratorProps {
-  profileId: CalculatorProfileId;
-  profileData?: CalculatorProfile;
+  profileData: CalculatorProfile;
   productTitle?: string;
   productUrl?: string;
   productImage?: string;
 }
 
-export function ProductConfigurator({ profileId, profileData, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
-  const profile = profileData ?? getCalculatorProfile(profileId);
+export function ProductConfigurator({ profileData: profile, productTitle, productUrl, productImage }: ProductConfiguratorProps) {
   const shelfCountOptions =
     profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount
       ? profile.shelfCountOptions.filter(
           (value) => value + (profile.defaultValues.rolloutShelfCount ?? 0) <= profile.maxCombinedShelfCount!
         )
       : profile.shelfCountOptions;
-  const [input, setInput] = useState<CalculatorInput>(() => buildInput(profileId, profile));
+  const [input, setInput] = useState<CalculatorInput>(() => buildInput(profile));
   const [contact, setContact] = useState({ name: "", phone: "" });
   const [status, setStatus] = useState("");
   const [hpUrl, setHpUrl] = useState("");

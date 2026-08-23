@@ -1,4 +1,4 @@
-import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
+import { calculatorProfiles } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorInput } from "@/lib/calculator";
 
 export type LeadMessageType = "contact" | "configurator";
@@ -59,7 +59,10 @@ function selectedOptionLabels(lead: TelegramLead): string[] {
   const input = lead.calculatorInput;
   if (!input?.optionIds?.length) return [];
 
-  const profile = getCalculatorProfile(input.systemId);
+  const profile = calculatorProfiles.find(
+    (candidate) => candidate.id === input.systemId
+  );
+  if (!profile) return [];
   return input.optionIds
     .map((optionId) => profile.options.find((option) => option.id === optionId)?.title)
     .filter((title): title is string => Boolean(title));
@@ -67,10 +70,16 @@ function selectedOptionLabels(lead: TelegramLead): string[] {
 
 function buildConfiguratorMessage(lead: TelegramLead): string {
   const input = lead.calculatorInput;
-  const profile = input ? getCalculatorProfile(input.systemId) : undefined;
+  const profile = input
+    ? calculatorProfiles.find((candidate) => candidate.id === input.systemId)
+    : undefined;
   const phoneClean = lead.phone.replace(/[\s\-()]/g, "");
   const options = selectedOptionLabels(lead);
-  const equipmentTitle = lead.recommendationTitle || profile?.title || "Не указано";
+  const equipmentTitle =
+    lead.recommendationTitle ||
+    profile?.title ||
+    input?.systemId ||
+    "Не указано";
   const lines: string[] = [
     "<b>Заявка с конфигуратора</b>",
     "",

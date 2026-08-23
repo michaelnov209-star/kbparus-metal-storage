@@ -119,6 +119,34 @@ describe("lead request validation", () => {
     });
     expect(parsed.recommendedConfig?.options).toEqual(["Весы"]);
   });
+
+  it("accepts a safe CMS profile slug and rejects unsafe calculator identifiers", () => {
+    const parsed = parseLeadPayload({
+      ...validPayload(),
+      leadType: "configurator",
+      calculatorInput: {
+        systemId: "custom-sheet-storage-v2"
+      }
+    });
+
+    expect(parsed.calculatorInput?.systemId).toBe(
+      "custom-sheet-storage-v2"
+    );
+
+    expect(() =>
+      parseLeadPayload({
+        ...validPayload(),
+        leadType: "configurator",
+        calculatorInput: {
+          systemId: "__proto__"
+        }
+      })
+    ).toThrowError(
+      expect.objectContaining<Partial<LeadValidationError>>({
+        code: "invalid_value"
+      })
+    );
+  });
 });
 
 describe("lead request body limits", () => {

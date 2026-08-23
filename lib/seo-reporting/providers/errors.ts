@@ -1,10 +1,16 @@
 export class SeoProviderError extends Error {
   readonly status: number | null;
+  readonly reason: string | null;
 
-  constructor(message: string, status: number | null = null) {
+  constructor(
+    message: string,
+    status: number | null = null,
+    reason: string | null = null
+  ) {
     super(message);
     this.name = "SeoProviderError";
     this.status = status;
+    this.reason = reason;
   }
 }
 
@@ -29,8 +35,24 @@ export function publicSeoProviderError(
       if (error.status === 401) {
         return "Google не принял токен доступа. Обновите отчёт; если ошибка повторится, проверьте service account.";
       }
+      if (
+        error.reason === "accessNotConfigured" ||
+        error.reason === "serviceDisabled" ||
+        error.reason === "SERVICE_DISABLED" ||
+        error.reason === "API_DISABLED"
+      ) {
+        return "Search Console API выключен в Google Cloud-проекте service account. Включите API, дождитесь применения настройки и обновите отчёт.";
+      }
+      if (
+        error.reason === "rateLimitExceeded" ||
+        error.reason === "userRateLimitExceeded" ||
+        error.reason === "dailyLimitExceeded" ||
+        error.reason === "quotaExceeded"
+      ) {
+        return "Google временно ограничил запросы Search Console API. Повторите обновление позже.";
+      }
       if (error.status === 403) {
-        return "Service account не имеет доступа к выбранному ресурсу Search Console. Добавьте его email в список пользователей ресурса.";
+        return "Доступ к ресурсу Search Console не подтверждён. Добавьте служебный email пользователем именно этого ресурса с правом чтения и проверьте точный адрес ресурса.";
       }
       if (error.status === 404) {
         return "Ресурс Search Console не найден. Проверьте точное значение GOOGLE_SEARCH_CONSOLE_SITE_URL.";

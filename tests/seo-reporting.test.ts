@@ -164,7 +164,18 @@ describe("SEO provider errors", () => {
         "Google Search Console",
         new SeoProviderError("Google Search Console не вернул отчёт", 403)
       )
-    ).toContain("не имеет доступа");
+    ).toContain("Доступ к ресурсу");
+
+    expect(
+      publicSeoProviderError(
+        "Google Search Console",
+        new SeoProviderError(
+          "Google Search Console не подтвердил доступ к ресурсу",
+          403,
+          "SERVICE_DISABLED"
+        )
+      )
+    ).toContain("API выключен");
   });
 });
 
@@ -263,6 +274,7 @@ describe("SEO reporting aggregation", () => {
           ],
           actualStart: "2026-07-10",
           actualEnd: "2026-07-10",
+          providerAccessLevel: "siteRestrictedUser",
           truncated: false
         }
       }
@@ -277,6 +289,7 @@ describe("SEO reporting aggregation", () => {
       impressions: 90,
       position: 6
     });
+    expect(report.googlePermissionLevel).toBe("siteRestrictedUser");
   });
 
   it("reports zero actual coverage when Yandex returned no rows", () => {

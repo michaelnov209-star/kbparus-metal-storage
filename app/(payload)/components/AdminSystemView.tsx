@@ -26,10 +26,15 @@ import { getBitrix24RuntimeConfig } from "@/lib/leads/bitrix24-config";
 import { isSmtpConfigured, smtpSettingsFromEnv } from "@/lib/email/smtp-config";
 import { getCachedAdminValue } from "@/lib/admin/server-cache";
 import { calculatorProfileSeeds } from "@/lib/calculator/profile-seed";
-import { getCmsRole } from "@/payload/access/rbac";
+import { canReadSystem, isAdminUser } from "@/payload/access/rbac";
+import {
+  normalizeAvatarPreset,
+  type AvatarVisualPreset
+} from "@/payload/admin/avatar-presets";
 import { AdminAccessDenied } from "./AdminAccessDenied";
 import { AdminIntentLink } from "./AdminIntentLink";
 import { AdminRouteStylesheet } from "./AdminRouteStylesheet";
+import { AdminUserAvatar } from "./AdminUserAvatar";
 import {
   LazyCalculatorProfileSyncButton,
   LazyCmsCurrentStateSyncButton
@@ -48,6 +53,11 @@ type HealthItem = {
 };
 
 type HistoryItem = {
+  actor: {
+    avatarPreset: AvatarVisualPreset;
+    name: string;
+    tooltip: string;
+  };
   date: string;
   entity: string;
   href: string;
@@ -66,6 +76,22 @@ type SystemSummaryData = {
   profileCount: number;
 };
 
+type VersionActorLike =
+  | number
+  | string
+  | {
+      avatarPreset?: AvatarVisualPreset | null;
+      displayName?: string | null;
+      email?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+      name?: string | null;
+      position?: string | null;
+      role?: "admin" | "editor" | "photographer" | null;
+    }
+  | null
+  | undefined;
+
 type VersionLike = {
   createdAt?: string;
   id?: string;
@@ -76,6 +102,10 @@ type VersionLike = {
     shortTitle?: string;
     slug?: string;
     title?: string;
+    updatedBy?: VersionActorLike;
+    updatedByAvatarPreset?: string | null;
+    updatedByName?: string | null;
+    updatedByRole?: string | null;
   };
 };
 
@@ -104,14 +134,67 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
+function actorRole(value: unknown): string {
+  return value === "admin"
+    ? "Администратор"
+    : value === "editor"
+      ? "Редактор контента"
+      : value === "photographer"
+        ? "Медиа-менеджер"
+        : "Сотрудник";
+}
+
+function versionActor(
+  version: NonNullable<VersionLike["version"]>
+): HistoryItem["actor"] {
+  const snapshotName = version.updatedByName?.trim();
+  if (snapshotName) {
+    const role = actorRole(version.updatedByRole);
+    return {
+      avatarPreset: normalizeAvatarPreset(version.updatedByAvatarPreset),
+      name: snapshotName,
+      tooltip: `${snapshotName} · ${role}`
+    };
+  }
+
+  const value = version.updatedBy;
+  if (value && typeof value === "object") {
+    const firstName = value.firstName?.trim();
+    const lastName = value.lastName?.trim();
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
+    const name =
+      fullName ||
+      value.displayName?.trim() ||
+      value.name?.trim() ||
+      value.email?.trim() ||
+      "Сотрудник";
+    const role = actorRole(value.role);
+    const detail = value.position?.trim() || role;
+
+    return {
+      avatarPreset: value.avatarPreset || "ember",
+      name,
+      tooltip: `${name} · ${detail}`
+    };
+  }
+
+  return {
+    avatarPreset: "system",
+    name: "Системное или старое изменение",
+    tooltip: "Автор не был зафиксирован в этой версии"
+  };
+}
+
 async function readVersionHistory(payload: Payload): Promise<HistoryItem[]> {
   const groups = await Promise.all(
     historyCollections.map(async ({ slug, entity }) => {
       try {
         const response = await payload.findVersions({
           collection: slug,
-          depth: 0,
-          limit: 5,
+          depth: 1,
+          // Each collection can contain all of the newest global entries.
+          // Fetch the final display limit per source, then merge and trim.
+          limit: 14,
           overrideAccess: true,
           pagination: false,
           sort: "-updatedAt"
@@ -126,7 +209,8 @@ async function readVersionHistory(payload: Payload): Promise<HistoryItem[]> {
             title: version.shortTitle || version.title || version.slug || `${entity} #${parent}`,
             date: item.updatedAt || item.createdAt || new Date(0).toISOString(),
             href: parent ? `/admin/collections/${slug}/${parent}` : `/admin/collections/${slug}`,
-            state: version._status === "draft" ? "draft" : "published"
+            state: version._status === "draft" ? "draft" : "published",
+            actor: versionActor(version)
           } satisfies HistoryItem;
         });
       } catch (error) {
@@ -234,7 +318,10 @@ function HealthCard({ item }: { item: HealthItem }) {
   return item.href ? <AdminIntentLink href={item.href}>{card}</AdminIntentLink> : card;
 }
 
-function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
+function buildHealthItems(
+  leadDelivery: LeadDelivery,
+  canManageSystem: boolean
+): HealthItem[] {
   const smtpConfigured = isSmtpConfigured(smtpSettingsFromEnv(process.env));
   const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
   const storageConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
@@ -255,7 +342,7 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       status: storageConfigured ? "Подключено" : "Нужно внимание",
       state: storageConfigured ? "healthy" : "attention",
       icon: HardDrive,
-      href: "/admin/collections/media"
+      href: canManageSystem ? "/admin/collections/media" : undefined
     },
     {
       label: "Telegram",
@@ -267,7 +354,7 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       status: leadDelivery.telegram ? "Доставка подтверждена" : telegramConfigured ? "Настроен" : "Не настроен",
       state: leadDelivery.telegram ? "healthy" : telegramConfigured ? "configured" : "disabled",
       icon: MessageCircle,
-      href: "/admin/integrations"
+      href: canManageSystem ? "/admin/integrations" : undefined
     },
     {
       label: "Яндекс Почта",
@@ -279,7 +366,7 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       status: leadDelivery.email ? "Доставка подтверждена" : smtpConfigured ? "Настроена" : "Не настроена",
       state: leadDelivery.email ? "healthy" : smtpConfigured ? "configured" : "disabled",
       icon: MailCheck,
-      href: "/admin/integrations"
+      href: canManageSystem ? "/admin/integrations" : undefined
     },
     {
       label: "Яндекс Метрика",
@@ -297,7 +384,7 @@ function buildHealthItems(leadDelivery: LeadDelivery): HealthItem[] {
       status: bitrix.enabled ? "Работает" : "Не используется",
       state: bitrix.enabled ? "healthy" : "disabled",
       icon: Cloud,
-      href: "/admin/integrations",
+      href: canManageSystem ? "/admin/integrations" : undefined,
       required: false
     }
   ];
@@ -410,13 +497,15 @@ function SystemContentSync() {
 
 async function SystemScore({
   summaryPromise,
-  deploySha
+  deploySha,
+  canManageSystem
 }: {
   summaryPromise: Promise<SystemSummaryData>;
   deploySha: string;
+  canManageSystem: boolean;
 }) {
   const { leadDelivery } = await summaryPromise;
-  const healthItems = buildHealthItems(leadDelivery);
+  const healthItems = buildHealthItems(leadDelivery, canManageSystem);
   const requiredItems = healthItems.filter((item) => item.required !== false);
   const healthyCount = requiredItems.filter((item) => item.state === "healthy").length;
   const attentionCount = requiredItems.filter(
@@ -433,15 +522,17 @@ async function SystemScore({
 }
 
 async function SystemHealth({
-  summaryPromise
+  summaryPromise,
+  canManageSystem
 }: {
   summaryPromise: Promise<SystemSummaryData>;
+  canManageSystem: boolean;
 }) {
   const { leadDelivery } = await summaryPromise;
-  const healthItems = buildHealthItems(leadDelivery);
+  const healthItems = buildHealthItems(leadDelivery, canManageSystem);
 
   return (
-    <section className="kb-system__section">
+    <section className="kb-system__section" data-tour="system-health">
       <div className="kb-system__section-head">
         <div><span>Текущий снимок</span><h2>Ключевые системы</h2></div>
         <Activity size={20} aria-hidden />
@@ -461,7 +552,10 @@ async function SystemHistory({
   const history = await historyPromise;
 
   return (
-    <section className="kb-system__section kb-system__history">
+    <section
+      className="kb-system__section kb-system__history"
+      data-tour="system-history"
+    >
       <div className="kb-system__section-head">
         <div><span>История CMS</span><h2>Последние изменения</h2></div>
         <FileClock size={20} aria-hidden />
@@ -472,6 +566,17 @@ async function SystemHistory({
             <AdminIntentLink href={item.href} className="kb-system__timeline-row" key={item.id}>
               <span className="kb-system__timeline-dot" data-state={item.state} />
               <div><strong>{item.title}</strong><small>{item.entity}</small></div>
+              <span
+                aria-label={`Автор изменения: ${item.actor.name}`}
+                className="kb-system__timeline-actor"
+                title={item.actor.tooltip}
+              >
+                <AdminUserAvatar
+                  preset={item.actor.avatarPreset}
+                  size={30}
+                />
+                <b>{item.actor.name}</b>
+              </span>
               <div className="kb-system__timeline-meta">
                 <span data-state={item.state}>{item.state === "draft" ? "Черновик" : "Опубликовано"}</span>
                 <time>{formatDate(item.date)}</time>
@@ -519,35 +624,49 @@ async function SystemCalculator({
 function SystemContent({
   historyPromise,
   summaryPromise,
-  deploySha
+  deploySha,
+  canManageSystem
 }: {
   historyPromise: Promise<HistoryItem[]>;
   summaryPromise: Promise<SystemSummaryData>;
   deploySha: string;
+  canManageSystem: boolean;
 }) {
   return (
     <section className="kb-system" aria-label="Здоровье сайта и история изменений">
-      <header className="kb-system__hero">
+      <header className="kb-system__hero" data-tour="system-hero">
         <div>
           <span className="kb-system__eyebrow"><Gauge size={15} aria-hidden />Системный контроль</span>
           <h1>Здоровье сайта и история изменений</h1>
           <p>Быстрый снимок ключевых сервисов, доставок заявок, профилей калькулятора и последних правок контента.</p>
         </div>
         <Suspense fallback={<SystemScoreSkeleton deploySha={deploySha} />}>
-          <SystemScore summaryPromise={summaryPromise} deploySha={deploySha} />
+          <SystemScore
+            canManageSystem={canManageSystem}
+            summaryPromise={summaryPromise}
+            deploySha={deploySha}
+          />
         </Suspense>
       </header>
       <Suspense fallback={<SystemHealthSkeleton />}>
-        <SystemHealth summaryPromise={summaryPromise} />
+        <SystemHealth
+          canManageSystem={canManageSystem}
+          summaryPromise={summaryPromise}
+        />
       </Suspense>
-      <SystemContentSync />
-      <div className="kb-system__columns">
+      {canManageSystem ? <SystemContentSync /> : null}
+      <div
+        className="kb-system__columns"
+        data-read-only={canManageSystem ? undefined : "true"}
+      >
         <Suspense fallback={<SystemHistorySkeleton />}>
           <SystemHistory historyPromise={historyPromise} />
         </Suspense>
-        <Suspense fallback={<SystemCalculatorSkeleton />}>
-          <SystemCalculator summaryPromise={summaryPromise} />
-        </Suspense>
+        {canManageSystem ? (
+          <Suspense fallback={<SystemCalculatorSkeleton />}>
+            <SystemCalculator summaryPromise={summaryPromise} />
+          </Suspense>
+        ) : null}
       </div>
     </section>
   );
@@ -565,24 +684,26 @@ export async function AdminSystemView({
     redirect("/admin/login?redirect=%2Fadmin%2Fsystem");
   }
 
-  const isAdmin = getCmsRole(authenticatedUser) === "admin";
+  const hasSystemAccess = canReadSystem(authenticatedUser);
+  const canManageSystem = isAdminUser(authenticatedUser);
   const payload = initPageResult.req.payload;
   const deploySha =
     process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
     (process.env.VERCEL_ENV === "production" ? "production" : "локальная сборка");
   const content = (() => {
-    if (!isAdmin) {
+    if (!hasSystemAccess) {
       return (
         <AdminAccessDenied
           description="У этого аккаунта нет прав на статусы сервисов и историю изменений."
           icon={ShieldCheck}
-          title="Системный контроль доступен администратору"
+          title="Системный контроль недоступен для этой роли"
         />
       );
     }
 
     return (
       <SystemContent
+        canManageSystem={canManageSystem}
         deploySha={deploySha}
         historyPromise={readSystemHistory(payload)}
         summaryPromise={readSystemSummary(payload)}

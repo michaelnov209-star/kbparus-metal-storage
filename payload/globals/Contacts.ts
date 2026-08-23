@@ -1,4 +1,6 @@
 import type { GlobalConfig } from "payload";
+import { businessRowLabel } from "../admin/array-row-label";
+import { adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
 import { canEditContent, contentManagersOnly, publicRead } from "../access/rbac";
 
@@ -14,6 +16,7 @@ export const Contacts: GlobalConfig = {
     }
   },
   fields: [
+    adminSectionHeroField("contacts"),
     {
       type: "tabs",
       tabs: [
@@ -23,10 +26,21 @@ export const Contacts: GlobalConfig = {
             {
               name: "phones",
               label: { ru: "Телефоны продаж и консультаций", en: "Phones" },
+              labels: {
+                singular: { ru: "Телефон", en: "Phone" },
+                plural: { ru: "Телефоны", en: "Phones" }
+              },
               type: "array",
               admin: {
                 description: {
                   ru: "Показываются в шапке, футере и контактных блоках. Первый номер обычно считается основным."
+                },
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый телефон",
+                    primaryFields: ["label", "number"],
+                    secondaryFields: ["number"]
+                  })
                 }
               },
               fields: [
@@ -84,10 +98,28 @@ export const Contacts: GlobalConfig = {
             {
               name: "socials",
               label: { ru: "Каналы связи", en: "Socials" },
+              labels: {
+                singular: { ru: "Канал связи", en: "Contact channel" },
+                plural: { ru: "Каналы связи", en: "Contact channels" }
+              },
               type: "array",
               admin: {
                 description: {
                   ru: "Telegram/MAX/WhatsApp и другие ссылки, которые показываются рядом с контактами."
+                },
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый канал связи",
+                    primaryFields: ["platform"],
+                    secondaryFields: ["url"],
+                    valueLabels: {
+                      email: "Email",
+                      max: "MAX",
+                      telegram: "Telegram",
+                      vk: "ВКонтакте",
+                      whatsapp: "WhatsApp"
+                    }
+                  })
                 }
               },
               fields: [

@@ -5,9 +5,28 @@ html[data-theme] .template-default.global-edit {
 }
 
 html[data-theme] .template-default__wrap {
-  background:
+  background-color: #f2f5f7;
+  background-image:
     radial-gradient(circle at 92% 0, rgba(252, 84, 19, 0.045), transparent 25%),
     linear-gradient(180deg, #f5f7f9 0%, #eef2f5 100%);
+  background-size: cover;
+}
+
+/*
+ * The expanded desktop workspace already contains a large branded home link.
+ * Payload's second logo in the top breadcrumb is redundant there; on mobile it
+ * remains available while the navigation drawer is closed.
+ */
+@media (min-width: 1024px) {
+  html[data-theme] .template-default__wrap {
+    background-image:
+      linear-gradient(rgba(245, 247, 249, 0.82), rgba(238, 242, 245, 0.9)),
+      url("/assets/admin/workspace-bg-v1.webp");
+  }
+
+  html[data-theme] .step-nav__home {
+    display: none;
+  }
 }
 
 html[data-theme] main.collection-edit,
@@ -55,7 +74,7 @@ html[data-theme] main.collection-edit .document-fields__sidebar-fields > .render
 
 html[data-theme] main.collection-edit .doc-controls {
   position: sticky;
-  z-index: 30;
+  z-index: 20;
   top: 0;
   background: rgba(246, 248, 250, 0.94);
   border-bottom: 1px solid rgba(210, 218, 225, 0.92);
@@ -251,6 +270,12 @@ html[data-theme] .template-default__wrap > .collection-list .btn:focus-visible {
 }
 
 @media (max-width: 1023px) {
+  html[data-theme] main.collection-edit .doc-controls,
+  html[data-theme] .global-edit .doc-controls {
+    background: #f6f8fa;
+    backdrop-filter: none;
+  }
+
   html[data-theme] main.collection-edit .collection-edit__main-wrapper {
     display: block;
   }

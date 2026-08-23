@@ -1,6 +1,32 @@
 import type { CollectionConfig, NumberFieldSingleValidation } from "payload";
+import { prepareCalculatorProfile } from "../../lib/calculator/profile-admin-validation";
+import { booleanStatusAdmin } from "../admin/boolean-status";
+import { adminSectionHero } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
-import { contentAdminUi, contentManagersOnly } from "../access/rbac";
+import {
+  calculatorAdminUi,
+  calculatorManagersOnly,
+  calculatorReadersOnly
+} from "../access/rbac";
+import {
+  revalidateCalculatorProfileAfterChange,
+  revalidateCalculatorProfileAfterDelete
+} from "../hooks/revalidateCalculatorProfiles";
+import {
+  stampUpdatedBy,
+  updatedByField,
+  updatedBySnapshotFields
+} from "../hooks/stampUpdatedBy";
+
+const CALCULATOR_ROW_LABEL = {
+  path: "@/app/(payload)/components/CalculatorProfileRowLabel",
+  exportName: "CalculatorProfileRowLabel"
+} as const;
+
+function kindIs(...kinds: string[]) {
+  return (_: unknown, siblingData: Record<string, unknown>) =>
+    kinds.includes(String(siblingData.kind ?? ""));
+}
 
 function requiredHybridNumber(label: string, allowZero = false): NumberFieldSingleValidation {
   return (value, { siblingData }) => {
@@ -34,17 +60,28 @@ export const CalculatorProfiles: CollectionConfig = {
   },
   admin: {
     group: adminGroups.calculator,
+    components: {
+      beforeList: [adminSectionHero("calculator")]
+    },
     description: {
       ru: `${adminHints.calculator} Здесь редактируются цены, коэффициенты и опции, которые влияют на расчёт и Telegram-заявку.`,
       en: "All prices and coefficients from the Excel «Админка» sheet."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "kind", "shortTitle"],
+    defaultColumns: ["title", "kind", "sortOrder", "shortTitle"],
     listSearchableFields: ["title", "shortTitle", "slug"],
     pagination: { defaultLimit: 12, limits: [6, 12, 24] }
   },
+  hooks: {
+    afterChange: [revalidateCalculatorProfileAfterChange],
+    afterDelete: [revalidateCalculatorProfileAfterDelete],
+    beforeChange: [stampUpdatedBy],
+    beforeValidate: [prepareCalculatorProfile]
+  },
   versions: { drafts: true },
   fields: [
+    updatedByField(),
+    ...updatedBySnapshotFields(),
     {
       name: "calculatorGuide",
       type: "ui",
@@ -58,41 +95,90 @@ export const CalculatorProfiles: CollectionConfig = {
       }
     },
     {
+      name: "calculatorBuilder",
+      type: "ui",
+      admin: {
+        components: {
+          Field: {
+            path: "@/app/(payload)/components/CalculatorProfileBuilder",
+            exportName: "CalculatorProfileBuilder"
+          }
+        }
+      }
+    },
+    {
+      name: "slug",
+      label: { ru: "Внутренний адрес системы", en: "Profile key" },
+      type: "text",
+      required: true,
+      unique: true,
+      admin: {
+        hidden: true,
+        description: {
+          ru: "Создаётся автоматически из названия и после первого сохранения не меняется.",
+          en: "Generated automatically and kept stable."
+        }
+      }
+    },
+    {
       type: "row",
       fields: [
         {
-          name: "slug",
-          label: { ru: "Системный ключ профиля", en: "Profile key" },
+          name: "kind",
+          label: { ru: "Как рассчитывать стоимость", en: "Pricing kind" },
           type: "select",
           required: true,
-          unique: true,
+          defaultValue: "automatic",
           options: [
-            { label: "Автоматический склад листового металла", value: "auto-sheet-metal" },
-            { label: "Автоматический склад сорт./трубного проката", value: "auto-sort-metal" },
-            { label: "Стеллаж с выкатными кассетами", value: "rollout-cassette-rack" },
-            { label: "Кассетный стеллаж под погрузчик", value: "forklift-cassette-rack" },
-            { label: "Двухсторонний выкатной стеллаж", value: "two-side-rollout-rack" },
-            { label: "Гибридный стеллаж", value: "hybrid-rollout-rack" }
+            { label: "Автоматическая система с подъёмным модулем", value: "automatic" },
+            { label: "Кассеты с обслуживанием погрузчиком", value: "forkliftCassette" },
+            { label: "Система с выкатными полками", value: "rollout" },
+            { label: "Комбинация погрузчика и выкатных полок", value: "hybrid" }
           ],
           admin: {
-            description: { ru: "Связан с расчётной логикой сайта. Менять только после согласования с разработчиком и проверки расчёта.", en: "" },
-            width: "60%"
+            description: {
+              ru: "Выберите механику, которая соответствует конструкции. После публикации менять модель без повторной проверки расчёта нельзя.",
+              en: ""
+            },
+            width: "50%"
           }
         },
         {
-          name: "kind",
-          label: { ru: "Тип расчётной модели", en: "Pricing kind" },
+          name: "iconKey",
+          label: { ru: "Пиктограмма в калькуляторе", en: "Calculator icon" },
           type: "select",
           required: true,
+          defaultValue: "automation",
           options: [
-            { label: "Автоматический склад", value: "automatic" },
-            { label: "Кассеты под погрузчик", value: "forkliftCassette" },
-            { label: "Выкатные кассеты", value: "rollout" },
-            { label: "Гибрид", value: "hybrid" }
+            { label: "Автоматизация", value: "automation" },
+            { label: "Трубы и длинномер", value: "long-products" },
+            { label: "Выкатные полки", value: "rollout" },
+            { label: "Погрузчик", value: "forklift" },
+            { label: "Двусторонний доступ", value: "two-sided" },
+            { label: "Комбинированная система", value: "hybrid" }
           ],
           admin: {
-            description: { ru: "Определяет, какая модель расчёта применяется к профилю.", en: "" },
-            width: "40%"
+            description: {
+              ru: "Помогает быстро отличить систему в списке вариантов.",
+              en: ""
+            },
+            width: "30%"
+          }
+        },
+        {
+          name: "sortOrder",
+          label: { ru: "Порядок показа", en: "Sort order" },
+          type: "number",
+          required: true,
+          defaultValue: 100,
+          min: 0,
+          max: 10_000,
+          admin: {
+            description: {
+              ru: "Меньшее число показывается раньше.",
+              en: ""
+            },
+            width: "20%"
           }
         }
       ]
@@ -105,6 +191,18 @@ export const CalculatorProfiles: CollectionConfig = {
       ]
     },
     { name: "description", label: { ru: "Описание для калькулятора", en: "Description" }, type: "textarea", required: true },
+    {
+      name: "bestFor",
+      label: { ru: "Для каких задач подходит лучше всего", en: "Best for" },
+      type: "textarea",
+      required: true,
+      admin: {
+        description: {
+          ru: "Коротко объясните клиенту сценарий применения: материал, частота доступа, способ загрузки или ограничение площади.",
+          en: ""
+        }
+      }
+    },
     { name: "image", label: { ru: "Иконка/фото профиля в калькуляторе", en: "Profile image" }, type: "upload", relationTo: "media" },
 
     // ============== РАБОЧЕЕ ПОЛЕ ПОЛКИ ==============
@@ -117,10 +215,20 @@ export const CalculatorProfiles: CollectionConfig = {
           fields: [
             {
               name: "heightOptions",
-              label: { ru: "Высота (мм) и коэффициент", en: "Height options" },
+              label: { ru: "Полезная высота", en: "Height options" },
+              labels: {
+                singular: { ru: "Вариант высоты", en: "Height option" },
+                plural: { ru: "Варианты высоты", en: "Height options" }
+              },
               type: "array",
               minRows: 1,
-              admin: { description: { ru: "Например: 70 → 1.0, 100 → 1.10, 120 → 1.15…", en: "" } },
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Добавьте доступные значения в миллиметрах. Коэффициент 1 — базовая цена; 1,2 увеличивает зависимую часть цены на 20%.",
+                  en: ""
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "value", label: { ru: "Значение, мм", en: "Value" }, type: "number", required: true, admin: { width: "50%" } },
@@ -130,9 +238,20 @@ export const CalculatorProfiles: CollectionConfig = {
             },
             {
               name: "widthOptions",
-              label: { ru: "Ширина (мм) и коэффициент", en: "Width options" },
+              label: { ru: "Рабочая ширина", en: "Width options" },
+              labels: {
+                singular: { ru: "Вариант ширины", en: "Width option" },
+                plural: { ru: "Варианты ширины", en: "Width options" }
+              },
               type: "array",
               minRows: 1,
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Можно выбрать значения из скопированной системы или добавить собственную ширину и коэффициент.",
+                  en: ""
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "value", label: { ru: "Значение, мм", en: "Value" }, type: "number", required: true, admin: { width: "50%" } },
@@ -142,9 +261,20 @@ export const CalculatorProfiles: CollectionConfig = {
             },
             {
               name: "lengthOptions",
-              label: { ru: "Длина (мм) и коэффициент", en: "Length options" },
+              label: { ru: "Рабочая длина", en: "Length options" },
+              labels: {
+                singular: { ru: "Вариант длины", en: "Length option" },
+                plural: { ru: "Варианты длины", en: "Length options" }
+              },
               type: "array",
               minRows: 1,
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Задайте все длины, которые клиент сможет выбрать в калькуляторе.",
+                  en: ""
+                }
+              },
               fields: [
                 { type: "row", fields: [
                   { name: "value", label: { ru: "Значение, мм", en: "Value" }, type: "number", required: true, admin: { width: "50%" } },
@@ -160,35 +290,196 @@ export const CalculatorProfiles: CollectionConfig = {
           fields: [
             {
               name: "loadOptions",
-              label: { ru: "Нагрузка (кг), цена полки (₽), коэффициент", en: "Load → price → factor" },
+              label: { ru: "Нагрузка и цена одного уровня", en: "Load and level price" },
+              labels: {
+                singular: { ru: "Вариант нагрузки", en: "Load option" },
+                plural: { ru: "Варианты нагрузки", en: "Load options" }
+              },
               type: "array",
               minRows: 1,
               admin: {
-                description: { ru: "Например: 1500 кг → 75 000 ₽ → 1.0; 2000 → 90 000 → 1.2…", en: "" }
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Укажите прямую цену уровня для каждой нагрузки. Скрытый технический коэффициент не используется в расчёте.",
+                  en: ""
+                }
               },
               fields: [
                 { type: "row", fields: [
-                  { name: "value", label: { ru: "Нагрузка, кг", en: "Load" }, type: "number", required: true, admin: { width: "33%" } },
-                  { name: "price", label: { ru: "Цена полки, ₽", en: "Price" }, type: "number", required: true, admin: { width: "34%" } },
-                  { name: "factor", label: { ru: "Коэффициент", en: "Factor" }, type: "number", admin: { width: "33%" } }
+                  { name: "value", label: { ru: "Нагрузка, кг", en: "Load" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  { name: "price", label: { ru: "Цена уровня, ₽", en: "Price" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  {
+                    name: "factor",
+                    type: "number",
+                    admin: {
+                      hidden: true
+                    }
+                  }
                 ]}
+              ]
+            },
+            {
+              name: "rolloutLoadOptions",
+              label: {
+                ru: "Нагрузка и цена выкатного уровня",
+                en: "Rollout load and level price"
+              },
+              labels: {
+                singular: { ru: "Вариант выкатной нагрузки", en: "Rollout load option" },
+                plural: { ru: "Варианты выкатной нагрузки", en: "Rollout load options" }
+              },
+              type: "array",
+              admin: {
+                condition: kindIs("hybrid"),
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Только для комбинированной системы: отдельная цена выкатной кассеты для каждой нагрузки.",
+                  en: ""
+                }
+              },
+              fields: [
+                {
+                  type: "row",
+                  fields: [
+                    {
+                      name: "value",
+                      label: { ru: "Нагрузка, кг", en: "Load" },
+                      type: "number",
+                      required: true,
+                      min: 1,
+                      admin: { width: "50%" }
+                    },
+                    {
+                      name: "price",
+                      label: { ru: "Цена выкатного уровня, ₽", en: "Price" },
+                      type: "number",
+                      required: true,
+                      min: 1,
+                      admin: { width: "50%" }
+                    }
+                  ]
+                }
               ]
             }
           ]
         },
         {
-          label: { ru: "Цены башен и количество полок", en: "Tower prices" },
+          label: { ru: "Уровни, секции и несущая конструкция", en: "Counts and structure" },
           fields: [
+            {
+              name: "shelfCountOptions",
+              label: {
+                ru: "Доступное количество уровней",
+                en: "Shelf count options"
+              },
+              labels: {
+                singular: { ru: "Количество уровней", en: "Shelf count" },
+                plural: { ru: "Варианты количества уровней", en: "Shelf counts" }
+              },
+              type: "array",
+              minRows: 1,
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Каждое число станет отдельным вариантом в калькуляторе.",
+                  en: ""
+                }
+              },
+              fields: [
+                {
+                  name: "value",
+                  label: { ru: "Количество уровней", en: "Count" },
+                  type: "number",
+                  required: true,
+                  min: 1
+                }
+              ]
+            },
+            {
+              name: "rolloutShelfCountOptions",
+              label: {
+                ru: "Доступное количество выкатных уровней",
+                en: "Rollout shelf count options"
+              },
+              labels: {
+                singular: { ru: "Количество выкатных уровней", en: "Rollout count" },
+                plural: { ru: "Варианты выкатных уровней", en: "Rollout counts" }
+              },
+              type: "array",
+              admin: {
+                condition: kindIs("hybrid"),
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Только для комбинированной системы: сколько выкатных кассет можно добавить отдельно от полок под погрузчик.",
+                  en: ""
+                }
+              },
+              fields: [
+                {
+                  name: "value",
+                  label: { ru: "Количество выкатных уровней", en: "Count" },
+                  type: "number",
+                  required: true,
+                  min: 1
+                }
+              ]
+            },
+            {
+              name: "towerCountOptions",
+              label: {
+                ru: "Доступное количество секций",
+                en: "Section count options"
+              },
+              labels: {
+                singular: { ru: "Количество секций", en: "Section count" },
+                plural: { ru: "Варианты количества секций", en: "Section counts" }
+              },
+              type: "array",
+              minRows: 1,
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Секции также могут называться башнями — клиент увидит понятное слово «секции».",
+                  en: ""
+                }
+              },
+              fields: [
+                {
+                  name: "value",
+                  label: { ru: "Количество секций", en: "Count" },
+                  type: "number",
+                  required: true,
+                  min: 1
+                }
+              ]
+            },
             {
               name: "towerByShelfCount",
               label: { ru: "Цена башни в зависимости от количества полок", en: "Tower price by shelf count" },
+              labels: {
+                singular: { ru: "Цена несущей секции", en: "Structure price" },
+                plural: { ru: "Цены несущей секции", en: "Structure prices" }
+              },
               type: "array",
-              admin: { description: { ru: "10 полок → 1 500 000 ₽, 15 → 1 800 000 ₽, и т.д.", en: "" } },
+              admin: {
+                condition: kindIs("automatic"),
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Для каждого количества уровней выше задайте прямую цену несущей секции.",
+                  en: ""
+                }
+              },
               fields: [
                 { type: "row", fields: [
-                  { name: "shelfCount", label: { ru: "Кол-во полок", en: "Shelves" }, type: "number", required: true, admin: { width: "33%" } },
-                  { name: "price", label: { ru: "Цена башни, ₽", en: "Price" }, type: "number", required: true, admin: { width: "34%" } },
-                  { name: "factor", label: { ru: "Коэффициент", en: "Factor" }, type: "number", admin: { width: "33%" } }
+                  { name: "shelfCount", label: { ru: "Количество уровней", en: "Shelves" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  { name: "price", label: { ru: "Цена секции, ₽", en: "Price" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  {
+                    name: "factor",
+                    type: "number",
+                    admin: {
+                      hidden: true
+                    }
+                  }
                 ]}
               ]
             },
@@ -197,14 +488,24 @@ export const CalculatorProfiles: CollectionConfig = {
               label: { ru: "Базовая цена башни, ₽", en: "Base tower price" },
               type: "number",
               min: 0,
-              validate: requiredHybridNumber("Базовая цена башни")
+              validate: requiredHybridNumber("Базовая цена башни"),
+              admin: {
+                condition: kindIs("forkliftCassette", "rollout", "hybrid"),
+                description: {
+                  ru: "Стоимость несущей секции при базовом количестве уровней.",
+                  en: ""
+                }
+              }
             },
             {
               name: "baseShelfCount",
               label: { ru: "Базовое число полок", en: "Base shelf count" },
               type: "number",
               min: 0,
-              validate: requiredHybridNumber("Базовое число полок")
+              validate: requiredHybridNumber("Базовое число полок"),
+              admin: {
+                condition: kindIs("forkliftCassette", "rollout", "hybrid")
+              }
             },
             {
               name: "extraShelfFactor",
@@ -213,8 +514,9 @@ export const CalculatorProfiles: CollectionConfig = {
               min: 0,
               validate: requiredHybridNumber("Коэффициент за каждую полку сверх базы", true),
               admin: {
+                condition: kindIs("forkliftCassette", "rollout", "hybrid"),
                 description: {
-                  ru: "В Excel: коэффициент при количестве полок больше базового — 0,1.",
+                  ru: "Например 0,1: каждый дополнительный уровень сверх базы увеличивает цену несущей секции на 10%.",
                   en: ""
                 }
               }
@@ -239,14 +541,94 @@ export const CalculatorProfiles: CollectionConfig = {
         {
           label: { ru: "Консоль / ворота", en: "Console / gates" },
           fields: [
-            { name: "consoleBasePrice", label: { ru: "Базовая цена консоли, ₽", en: "Console base price" }, type: "number" },
-            { name: "consoleLongFactor", label: { ru: "Коэффициент длинной полки (>3100 мм)", en: "Long shelf factor" }, type: "number", defaultValue: 1.2 },
+            {
+              name: "consoleBasePrice",
+              label: {
+                ru: "Цена подъёмного модуля, ₽",
+                en: "Console base price"
+              },
+              type: "number",
+              min: 1,
+              admin: {
+                condition: kindIs("automatic"),
+                description: {
+                  ru: "Базовая стоимость подъёмного модуля автоматической системы.",
+                  en: ""
+                }
+              }
+            },
+            {
+              type: "row",
+              fields: [
+                {
+                  name: "consoleLongFromMm",
+                  label: {
+                    ru: "С какой длины считать систему длинной, мм",
+                    en: "Long system threshold"
+                  },
+                  type: "number",
+                  defaultValue: 3100,
+                  min: 1,
+                  admin: {
+                    condition: kindIs("automatic"),
+                    width: "50%"
+                  }
+                },
+                {
+                  name: "consoleLongFactor",
+                  label: {
+                    ru: "Коэффициент подъёмного модуля для длинной системы",
+                    en: "Long system factor"
+                  },
+                  type: "number",
+                  defaultValue: 1.2,
+                  min: 0.01,
+                  admin: {
+                    condition: kindIs("automatic"),
+                    description: {
+                      ru: "Например 1,2 увеличивает цену подъёмного модуля на 20%.",
+                      en: ""
+                    },
+                    width: "50%"
+                  }
+                }
+              ]
+            },
             {
               name: "gateBasePrice",
-              label: { ru: "Цена распашных ворот, ₽", en: "Gate base price" },
+              label: { ru: "Цена защитных ворот, ₽", en: "Gate base price" },
               type: "number",
               min: 0,
-              validate: requiredHybridNumber("Цена распашных ворот")
+              validate: requiredHybridNumber("Цена распашных ворот"),
+              admin: {
+                condition: kindIs("rollout", "hybrid"),
+                description: {
+                  ru: "Используется для выкатной части системы.",
+                  en: ""
+                }
+              }
+            },
+            {
+              name: "supportsTwoSided",
+              label: {
+                ru: "Разрешить выкат с двух сторон",
+                en: "Allow two-sided rollout"
+              },
+              type: "checkbox",
+              defaultValue: false,
+              admin: {
+                condition: kindIs("rollout"),
+                description: {
+                  ru: "Включите только если конструкция действительно предусматривает доступ с двух сторон.",
+                  en: ""
+                },
+                ...booleanStatusAdmin({
+                  trueLabel: "Двусторонний выкат доступен",
+                  falseLabel: "Только односторонний выкат",
+                  trueTone: "accent",
+                  falseTone: "neutral"
+                })
+              }
             }
           ]
         },
@@ -256,15 +638,40 @@ export const CalculatorProfiles: CollectionConfig = {
             {
               name: "options",
               label: { ru: "Дополнительные опции с ценами", en: "Options" },
+              labels: {
+                singular: { ru: "Дополнительная опция", en: "Option" },
+                plural: { ru: "Дополнительные опции", en: "Options" }
+              },
               type: "array",
-              admin: { description: { ru: "Например: весы 90 000 ₽, ИК-ограждения 80 000 ₽, вакуумный захват 450 000 ₽…", en: "" } },
+              admin: {
+                components: { RowLabel: CALCULATOR_ROW_LABEL },
+                description: {
+                  ru: "Добавьте оборудование, которое клиент сможет включить в расчёт. Системный ключ создаётся автоматически.",
+                  en: ""
+                }
+              },
               fields: [
                 { type: "row", fields: [
-                  { name: "optionId", label: { ru: "Системный ключ опции", en: "Option key" }, type: "text", required: true, admin: { width: "30%" } },
-                  { name: "title", label: { ru: "Название", en: "Title" }, type: "text", required: true, admin: { width: "40%" } },
-                  { name: "price", label: { ru: "Цена, ₽", en: "Price" }, type: "number", required: true, admin: { width: "30%" } }
+                  {
+                    name: "optionId",
+                    type: "text",
+                    required: true,
+                    admin: { hidden: true }
+                  },
+                  { name: "title", label: { ru: "Название для клиента", en: "Title" }, type: "text", required: true, admin: { width: "65%" } },
+                  { name: "price", label: { ru: "Доплата, ₽", en: "Price" }, type: "number", required: true, min: 0, admin: { width: "35%" } }
                 ]},
-                { name: "defaultSelected", label: { ru: "По умолчанию выбрана", en: "Default" }, type: "checkbox" }
+                {
+                  name: "defaultSelected",
+                  label: { ru: "По умолчанию выбрана", en: "Default" },
+                  type: "checkbox",
+                  admin: booleanStatusAdmin({
+                    trueLabel: "Выбрана по умолчанию",
+                    falseLabel: "Не выбрана",
+                    trueTone: "accent",
+                    falseTone: "neutral"
+                  })
+                }
               ]
             }
           ]
@@ -288,7 +695,19 @@ export const CalculatorProfiles: CollectionConfig = {
                   { name: "shelfCount", label: { ru: "Полок", en: "" }, type: "number", admin: { width: "33%" } },
                   { name: "towerCount", label: { ru: "Башен", en: "" }, type: "number", admin: { width: "34%" } }
                 ]},
-                { name: "rolloutShelfCount", label: { ru: "Выкатных полок (если применимо)", en: "" }, type: "number" },
+                {
+                  name: "rolloutShelfCount",
+                  label: { ru: "Выкатных полок", en: "" },
+                  type: "number",
+                  min: 1,
+                  admin: {
+                    condition: kindIs("hybrid"),
+                    description: {
+                      ru: "Выберите одно из значений, добавленных в разделе уровней.",
+                      en: ""
+                    }
+                  }
+                },
                 {
                   name: "rolloutSide",
                   label: { ru: "Сторона (для выкатных)", en: "" },
@@ -296,7 +715,14 @@ export const CalculatorProfiles: CollectionConfig = {
                   options: [
                     { label: { ru: "Односторонний", en: "" }, value: "one" },
                     { label: { ru: "Двусторонний", en: "" }, value: "two" }
-                  ]
+                  ],
+                  admin: {
+                    condition: kindIs("rollout"),
+                    description: {
+                      ru: "Двусторонний вариант доступен только если он разрешён в разделе «Консоль / ворота».",
+                      en: ""
+                    }
+                  }
                 }
               ]
             }
@@ -306,11 +732,11 @@ export const CalculatorProfiles: CollectionConfig = {
     }
   ],
   access: {
-    admin: contentAdminUi,
-    create: contentManagersOnly,
-    delete: contentManagersOnly,
-    read: contentManagersOnly,
-    readVersions: contentManagersOnly,
-    update: contentManagersOnly
+    admin: calculatorAdminUi,
+    create: calculatorManagersOnly,
+    delete: calculatorManagersOnly,
+    read: calculatorReadersOnly,
+    readVersions: calculatorReadersOnly,
+    update: calculatorManagersOnly
   }
 };

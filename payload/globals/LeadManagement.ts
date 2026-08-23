@@ -1,4 +1,6 @@
 import type { GlobalConfig } from "payload";
+import { businessRowLabel } from "../admin/array-row-label";
+import { adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
 import { adminOnly, isAdminUser } from "../access/rbac";
 
@@ -9,11 +11,12 @@ export const LeadManagement: GlobalConfig = {
     group: adminGroups.leads,
     hidden: ({ user }) => !isAdminUser(user),
     description: {
-      ru: `${adminHints.leads} Этот раздел не хранит секреты и не заменяет переменные окружения Vercel.`,
+      ru: `${adminHints.leads} Здесь задаются понятные названия форм, ответственные и рабочий статус каналов доставки.`,
       en: "Operational notes for lead forms and integrations."
     }
   },
   fields: [
+    adminSectionHeroField("lead-management"),
     {
       type: "tabs",
       tabs: [
@@ -23,10 +26,21 @@ export const LeadManagement: GlobalConfig = {
             {
               name: "forms",
               label: { ru: "Точки сбора заявок", en: "Lead sources" },
+              labels: {
+                singular: { ru: "Форма заявки", en: "Lead form" },
+                plural: { ru: "Формы заявок", en: "Lead forms" }
+              },
               type: "array",
               admin: {
                 description: {
-                  ru: "Список помогает менеджерам понимать, откуда приходят заявки. Сам endpoint `/api/leads` остаётся единым."
+                  ru: "Список помогает менеджерам понимать, откуда приходит обращение и кто его обрабатывает."
+                },
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая форма заявки",
+                    primaryFields: ["title", "sourcePath"],
+                    secondaryFields: ["owner", "sourcePath"]
+                  })
                 }
               },
               fields: [
@@ -75,16 +89,10 @@ export const LeadManagement: GlobalConfig = {
               type: "group",
               admin: {
                 description: {
-                  ru: "Токен и chat id хранятся только в Vercel env. Здесь фиксируется операционный статус для команды."
+                  ru: "Здесь отображается рабочий статус канала. Данные подключения защищены и не показываются."
                 }
               },
               fields: [
-                {
-                  name: "enabled",
-                  label: { ru: "Telegram-уведомления включены в окружении", en: "Enabled" },
-                  type: "checkbox",
-                  defaultValue: true
-                },
                 {
                   name: "channelName",
                   label: { ru: "Название рабочего чата", en: "Channel name" },
@@ -92,13 +100,26 @@ export const LeadManagement: GlobalConfig = {
                   admin: { placeholder: "Заявки сайта КБ Парус" }
                 },
                 {
-                  name: "lastManualCheck",
-                  label: { ru: "Дата последней ручной проверки", en: "Last manual check" },
-                  type: "date",
-                  admin: {
-                    date: { pickerAppearance: "dayOnly" },
-                    description: { ru: "Обновляйте после тестовой заявки или проверки менеджером." }
-                  }
+                  type: "collapsible",
+                  label: { ru: "Состояние канала", en: "Channel status" },
+                  admin: { initCollapsed: true },
+                  fields: [
+                    {
+                      name: "enabled",
+                      label: { ru: "Отправлять уведомления в Telegram", en: "Send notifications" },
+                      type: "checkbox",
+                      defaultValue: true
+                    },
+                    {
+                      name: "lastManualCheck",
+                      label: { ru: "Дата последней ручной проверки", en: "Last manual check" },
+                      type: "date",
+                      admin: {
+                        date: { pickerAppearance: "dayOnly" },
+                        description: { ru: "Обновляйте после тестовой заявки или проверки менеджером." }
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -134,7 +155,7 @@ export const LeadManagement: GlobalConfig = {
                   label: { ru: "Что нужно подготовить", en: "Notes" },
                   type: "textarea",
                   admin: {
-                    placeholder: "Поля сделки, ответственные менеджеры, источник заявки, права вебхука"
+                    placeholder: "Поля заявки, ответственные менеджеры и правила обработки"
                   }
                 }
               ]

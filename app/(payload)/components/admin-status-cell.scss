@@ -1,0 +1,71 @@
+html[data-theme] .kb-admin-status-cell {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 26px;
+  gap: 7px;
+  align-items: center;
+  padding: 4px 9px;
+  color: #52606d;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.15;
+  white-space: nowrap;
+  background: #f1f4f7;
+  border: 1px solid #dce3ea;
+  border-radius: 999px;
+}
+
+html[data-theme] .kb-admin-status-cell i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  background: #8b98a5;
+  border-radius: 50%;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="positive"] {
+  color: #0d6b3b;
+  background: #eefaf3;
+  border-color: #bce6cc;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="positive"] i {
+  background: #159455;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="accent"] {
+  color: #9b3a12;
+  background: #fff3ed;
+  border-color: #ffd0bc;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="accent"] i {
+  background: #fc5413;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="warning"] {
+  color: #875300;
+  background: #fff8e8;
+  border-color: #f3d79a;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="warning"] i {
+  background: #c77a00;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="negative"] {
+  color: #9f2828;
+  background: #fff2f2;
+  border-color: #efc1c1;
+}
+
+html[data-theme] .kb-admin-status-cell[data-tone="negative"] i {
+  background: #c53030;
+}
+
+@media (max-width: 720px) {
+  html[data-theme] .kb-admin-status-cell {
+    white-space: normal;
+  }
+}

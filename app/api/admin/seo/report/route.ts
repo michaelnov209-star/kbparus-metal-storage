@@ -7,9 +7,6 @@ import {
   parseSeoReportInput,
   readSeoReportingConfig
 } from "@/lib/seo-reporting";
-import {
-  getGoogleServiceAccountEmailForAdmin
-} from "@/lib/seo-reporting/admin-connection";
 import { getTrackedSeoProperty } from "@/lib/seo-reporting/property";
 import { buildSeoReportResponse } from "@/lib/seo-reporting/report";
 import { readYandexHistoryDataset } from "@/lib/seo-reporting/yandex-history";
@@ -24,7 +21,13 @@ const privateHeaders = {
 };
 
 export async function GET(request: Request) {
-  const auth = await authenticateCmsRequest(request, ["admin", "editor"]);
+  const auth = await authenticateCmsRequest(request, [
+    "admin",
+    "director",
+    "general_director",
+    "editor",
+    "seo_marketer"
+  ]);
   if (!auth.ok) {
     const error =
       auth.status === 503
@@ -50,13 +53,6 @@ export async function GET(request: Request) {
 
   const input = parsed.value;
   const config = readSeoReportingConfig();
-  const googleServiceAccountEmail =
-    input.provider === "google"
-      ? getGoogleServiceAccountEmailForAdmin(auth.role)
-      : null;
-  const adminConnectionDetails = googleServiceAccountEmail
-    ? { googleServiceAccountEmail }
-    : {};
 
   if (input.provider === "yandex") {
     if (config.yandex.configured && isYandexHistoryEnabled()) {
@@ -87,7 +83,6 @@ export async function GET(request: Request) {
         return NextResponse.json(
           {
             ...report,
-            ...adminConnectionDetails,
             trackedProperty: getTrackedSeoProperty(config, input.provider)
           },
           { headers: privateHeaders }
@@ -107,7 +102,6 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       ...report,
-      ...adminConnectionDetails,
       trackedProperty: getTrackedSeoProperty(
         config,
         input.provider

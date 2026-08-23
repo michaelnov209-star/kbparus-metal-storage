@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
-  Copy,
   Download,
   ExternalLink,
   FileText,
@@ -482,6 +481,20 @@ function exportCsv(report: SeoReportResponse) {
 }
 
 type SeoReportView = "visibility" | "goals";
+type ProviderConnectionState =
+  | "checking"
+  | "connected"
+  | "error"
+  | "unavailable";
+
+type ProviderConnectionsResponse = Record<
+  SeoProvider,
+  {
+    connected: boolean;
+    stale?: boolean;
+    transient?: boolean;
+  }
+>;
 
 export type SeoReportsInitialState = {
   activeView: SeoReportView;
@@ -509,7 +522,12 @@ export function SeoReportsClient({
   const [loading, setLoading] = useState(true);
   const [goalsLoading, setGoalsLoading] = useState(false);
   const [goalsRefreshKey, setGoalsRefreshKey] = useState(0);
-  const [copiedGoogleEmail, setCopiedGoogleEmail] = useState(false);
+  const [providerConnections, setProviderConnections] = useState<
+    Record<SeoProvider, ProviderConnectionState>
+  >({
+    google: "checking",
+    yandex: "checking"
+  });
 
   const loadReport = useCallback(
     async (signal?: AbortSignal, forceRefresh = false) => {
@@ -564,6 +582,47 @@ export function SeoReportsClient({
   }, [activeView, loadReport]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const loadConnections = async () => {
+      try {
+        const response = await fetch("/api/admin/seo/connections", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error("connection-check-failed");
+        const payload = (await response.json()) as ProviderConnectionsResponse;
+        setProviderConnections({
+          google: payload.google?.connected
+            ? "connected"
+            : payload.google?.transient
+              ? "unavailable"
+              : "error",
+          yandex: payload.yandex?.connected
+            ? "connected"
+            : payload.yandex?.transient
+              ? "unavailable"
+              : "error"
+        });
+      } catch (requestError) {
+        if (
+          requestError instanceof DOMException &&
+          requestError.name === "AbortError"
+        ) {
+          return;
+        }
+        setProviderConnections({
+          google: "unavailable",
+          yandex: "unavailable"
+        });
+      }
+    };
+    void loadConnections();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     params.set("view", activeView);
     params.set("period", String(period));
@@ -587,10 +646,6 @@ export function SeoReportsClient({
     );
   }, [activeView, device, period, provider, query]);
 
-  useEffect(() => {
-    setCopiedGoogleEmail(false);
-  }, [report?.googleServiceAccountEmail]);
-
   const handleGoalsLoadingChange = useCallback((value: boolean) => {
     setGoalsLoading(value);
   }, []);
@@ -602,17 +657,6 @@ export function SeoReportsClient({
     }
     void loadReport(undefined, true);
   }, [activeView, loadReport]);
-
-  const handleCopyGoogleEmail = useCallback(async () => {
-    const email = report?.googleServiceAccountEmail;
-    if (!email) return;
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopiedGoogleEmail(true);
-    } catch {
-      setCopiedGoogleEmail(false);
-    }
-  }, [report?.googleServiceAccountEmail]);
 
   const queryStats = useMemo(() => {
     const rows = report?.queries || [];
@@ -644,7 +688,7 @@ export function SeoReportsClient({
           : "SEO-отчёты и позиции"
       }
     >
-      <header className="kb-seo-view__header">
+      <header className="kb-seo-view__header" data-tour="seo-hero">
         <div>
           <span className="kb-seo-view__eyebrow">
             {activeView === "goals" ? (
@@ -682,6 +726,7 @@ export function SeoReportsClient({
 
       <div
         className="kb-seo-tabs"
+        data-tour="seo-tabs"
         role="tablist"
         aria-label="Разделы аналитики"
       >
@@ -716,6 +761,7 @@ export function SeoReportsClient({
           activeView === "goals" ? "kb-seo-controls--period-only" : ""
         }`}
         aria-label="Фильтры отчёта"
+        data-tour="seo-controls"
       >
         <div className="kb-seo-control-group">
           <span>Период</span>
@@ -744,8 +790,34 @@ export function SeoReportsClient({
                 type="button"
                 key={item.value}
                 onClick={() => setProvider(item.value)}
+                title={
+                  providerConnections[item.value] === "connected"
+                    ? `${item.label}: подключено`
+                    : providerConnections[item.value] === "error"
+                      ? `${item.label}: требуется проверка`
+                      : providerConnections[item.value] === "unavailable"
+                        ? `${item.label}: временно не удалось проверить`
+                        : `${item.label}: проверяю подключение`
+                }
               >
                 {item.label}
+                {providerConnections[item.value] === "connected" ? (
+                  <span
+                    className="kb-seo-provider-status is-connected"
+                    aria-label="Подключено"
+                    role="status"
+                  >
+                    <CheckCircle2 size={14} aria-hidden />
+                  </span>
+                ) : providerConnections[item.value] === "error" ? (
+                  <span
+                    className="kb-seo-provider-status is-error"
+                    aria-label="Требуется проверка"
+                    role="status"
+                  >
+                    <AlertCircle size={14} aria-hidden />
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -791,39 +863,13 @@ export function SeoReportsClient({
       </div>
 
       <div
+        data-tour="seo-report"
         id="kb-seo-panel-visibility"
         role="tabpanel"
         aria-labelledby="kb-seo-tab-visibility"
         aria-busy={activeView === "visibility" && loading}
         hidden={activeView !== "visibility"}
       >
-        {provider === "google" && report?.googleServiceAccountEmail ? (
-          <aside
-            className="kb-seo-service-account"
-            aria-label="Доступ Google Search Console"
-          >
-            <div>
-              <span>Доступ Google Search Console</span>
-              <strong>
-                {report.status === "error"
-                  ? "Добавьте служебный адрес пользователем ресурса с правом чтения"
-                  : "Подключено: служебный доступ только на чтение"}
-              </strong>
-              <code>{report.googleServiceAccountEmail}</code>
-            </div>
-            <button type="button" onClick={() => void handleCopyGoogleEmail()}>
-              {copiedGoogleEmail ? (
-                <CheckCircle2 size={16} aria-hidden />
-              ) : (
-                <Copy size={16} aria-hidden />
-              )}
-              <span aria-live="polite">
-                {copiedGoogleEmail ? "Скопировано" : "Копировать email"}
-              </span>
-            </button>
-          </aside>
-        ) : null}
-
       {loading && !report ? (
         <div className="kb-seo-state">
           <LoaderCircle className="is-spinning" size={28} aria-hidden />
@@ -860,22 +906,64 @@ export function SeoReportsClient({
           <h2>Подключите {providerLabel}</h2>
           <p>
             {provider === "google"
-              ? "Интерфейс готов. Создайте service account, добавьте его email пользователем ресурса Search Console с доступом только на чтение и сохраните три переменные в Vercel."
+              ? "Данные ещё не подключены. Попросите администратора завершить доступ к Search Console — после этого отчёты появятся здесь автоматически."
               : "Интерфейс готов. Для реальных отчётов нужно выдать сайту доступ только на чтение к данным поисковой системы."}
           </p>
           <ul>
-            {(report.setup || []).map((item) => (
+            {(provider === "google"
+              ? [
+                  "Подтвердить владельца сайта",
+                  "Разрешить чтение данных Search Console",
+                  "Проверить первый отчёт"
+                ]
+              : report.setup || []
+            ).map((item) => (
               <li key={item}>
                 <CheckCircle2 size={16} aria-hidden />
-                <span>
-                  {provider === "google"
-                    ? setupLabel(item, provider)
-                    : item}
-                  <code>{item}</code>
-                </span>
+                <span>{item}</span>
               </li>
             ))}
           </ul>
+          {provider === "google" && (report.setup || []).length > 0 ? (
+            <details className="kb-seo-developer-details">
+              <summary>Технические детали для разработчика</summary>
+              <ul>
+                {(report.setup || []).map((item) => (
+                  <li key={item}>
+                    <span>
+                      {setupLabel(item, provider)}
+                      <code>{item}</code>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </div>
+      ) : null}
+
+      {report?.status === "ready" || report?.status === "empty" ? (
+        <div className="kb-seo-coverage">
+          <div className="kb-seo-coverage__context">
+            <span>
+              <CheckCircle2 size={16} aria-hidden />
+              {report.coverageDays > 0 ? (
+                <>
+                  {providerLabel}: данные с {formatDate(report.dateRange.start)} по{" "}
+                  {formatDate(report.dateRange.end)}
+                </>
+              ) : (
+                <>{providerLabel}: подключено, данные накапливаются</>
+              )}
+            </span>
+          </div>
+          <strong>
+            {provider === "yandex"
+              ? `Накоплено ${report.coverageDays} из ${report.requestedDays} дней истории`
+              : report.coverageDays > 0
+                ? `Покрытие ${report.coverageDays} из ${report.requestedDays} дней`
+                : "Ожидаем первые показы в поиске"}
+          </strong>
         </div>
       ) : null}
 
@@ -887,36 +975,11 @@ export function SeoReportsClient({
             {report.notices[0] ??
               "Поисковая система ещё не зафиксировала показов сайта за этот период."}
           </p>
-          {report.trackedProperty ? (
-            <small>
-              Проверен ресурс: <strong>{report.trackedProperty}</strong>
-            </small>
-          ) : null}
         </div>
       ) : null}
 
       {report?.status === "ready" && summary ? (
         <>
-          <div className="kb-seo-coverage">
-            <div className="kb-seo-coverage__context">
-              <span>
-                <CheckCircle2 size={16} aria-hidden />
-                {providerLabel}: данные с {formatDate(report.dateRange.start)} по{" "}
-                {formatDate(report.dateRange.end)}
-              </span>
-              {report.trackedProperty ? (
-                <small>
-                  Отслеживаемый сайт: <strong>{report.trackedProperty}</strong>
-                </small>
-              ) : null}
-            </div>
-            <strong>
-              {provider === "yandex"
-                ? `Накоплено ${report.coverageDays} из ${report.requestedDays} дней истории`
-                : `Покрытие ${report.coverageDays} из ${report.requestedDays} дней`}
-            </strong>
-          </div>
-
           <div className="kb-seo-kpis">
             <article>
               <span>Клики</span>

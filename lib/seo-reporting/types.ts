@@ -49,6 +49,11 @@ export type SeoSourceDataset = {
   queryRows: SeoObservation[];
   pageRows: SeoObservation[];
   countryRows?: SeoCountryObservation[];
+  /**
+   * Provider-confirmed access level. Present only after the upstream API has
+   * verified that the configured account can read the tracked property.
+   */
+  providerAccessLevel?: string;
   actualStart: string | null;
   actualEnd: string | null;
   truncated: boolean;
@@ -150,8 +155,8 @@ export type SeoReportingConfig = {
 
 export type SeoReportResponse = {
   provider: SeoProvider;
-  /** Visible only to an authenticated administrator; never contains a key. */
-  googleServiceAccountEmail?: string;
+  /** Search Console permission returned by Sites.get after a successful check. */
+  googlePermissionLevel?: string;
   trackedProperty?: string | null;
   status: "ready" | "empty" | "not_configured" | "error";
   requestedDays: SeoReportPeriod;

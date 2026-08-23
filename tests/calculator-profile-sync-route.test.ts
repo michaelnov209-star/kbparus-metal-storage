@@ -48,7 +48,9 @@ describe("calculator profile sync route", () => {
     mocks.create.mockReset();
     mocks.find.mockReset();
     mocks.update.mockReset();
-    mocks.auth.mockResolvedValue({ user: { role: "admin" } });
+    mocks.auth.mockResolvedValue({
+      user: { invitationStatus: "active", role: "admin" }
+    });
   });
 
   it("publishes a draft-only base profile instead of skipping or duplicating it", async () => {

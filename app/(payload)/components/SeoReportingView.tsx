@@ -2,7 +2,7 @@ import type { AdminViewServerProps } from "payload";
 import { DefaultTemplate } from "@payloadcms/next/templates";
 import { LockKeyhole } from "lucide-react";
 import { redirect } from "next/navigation";
-import { canEditContent } from "@/payload/access/rbac";
+import { canReadSeo } from "@/payload/access/rbac";
 import type {
   SeoProvider,
   SeoReportDevice,
@@ -67,7 +67,7 @@ export function SeoReportingView({
     redirect("/admin/login?redirect=%2Fadmin%2Fseo");
   }
 
-  const content = !canEditContent(authenticatedUser) ? (
+  const content = !canReadSeo(authenticatedUser) ? (
     <AdminAccessDenied
       description="Раздел открыт администраторам и редакторам контента."
       icon={LockKeyhole}

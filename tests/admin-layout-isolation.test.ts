@@ -59,7 +59,8 @@ describe("admin layout isolation", () => {
 
     expect(seoNav).toContain("@payloadcms/ui/elements/Link");
     expect(seoNav).not.toContain('<a className="kb-admin-seo-nav"');
-    expect(trainingNav).toContain('router.push("/admin?tour=1")');
+    expect(trainingNav).toContain('"kb-admin-tour:start"');
+    expect(trainingNav).toContain("window.dispatchEvent");
     expect(trainingNav).not.toContain("window.location.assign");
   });
 

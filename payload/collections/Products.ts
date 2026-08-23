@@ -1,23 +1,198 @@
-import type { CollectionBeforeValidateHook, CollectionConfig, Field } from "payload";
+import type {
+  CollectionBeforeChangeHook,
+  CollectionBeforeValidateHook,
+  CollectionConfig,
+  Field,
+  FieldAccess
+} from "payload";
 import { createProductSlug } from "../../lib/cms/product-slug";
+import { businessRowLabel } from "../admin/array-row-label";
+import { adminSectionHero } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
-import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
+import {
+  BOOLEAN_STATUS_CELL,
+  type BooleanStatusLabels
+} from "../admin/boolean-status";
+import {
+  canReadProductDrafts,
+  getCmsRole,
+  productCreatorsOnly,
+  productEditorsOnly,
+  productsAdminUi,
+  publicReadProducts
+} from "../access/rbac";
 import {
   revalidateProductAfterChange,
   revalidateProductAfterDelete
 } from "../hooks/revalidateProduct";
 import { normalizeProductGallery } from "../hooks/normalizeProductGallery";
+import {
+  stampUpdatedBy,
+  updatedByField,
+  updatedBySnapshotFields
+} from "../hooks/stampUpdatedBy";
 
 const HELP_LABEL = {
   path: "@/app/(payload)/components/AdminHelpLabel",
   exportName: "AdminHelpLabel"
 } as const;
 
-function help(text: string, width?: string) {
+type ProductFieldArea =
+  | "content"
+  | "media"
+  | "pricing"
+  | "publishing"
+  | "restricted"
+  | "seo"
+  | "technical";
+
+const productFieldAreas: Readonly<Record<string, ProductFieldArea>> = {
+  applications: "technical",
+  badge: "content",
+  calculatorProfile: "pricing",
+  category: "content",
+  description: "content",
+  documents: "media",
+  draft: "restricted",
+  featured: "publishing",
+  gallery: "media",
+  image: "media",
+  includes: "technical",
+  installationEnvironments: "technical",
+  keywords: "seo",
+  legacyGalleryPaths: "restricted",
+  legacyImagePath: "restricted",
+  loadingMethods: "technical",
+  maxLoadKg: "technical",
+  modelName: "technical",
+  noIndex: "seo",
+  ogImage: "seo",
+  operationMode: "technical",
+  overallDimensions: "technical",
+  pageMode: "pricing",
+  priceFrom: "pricing",
+  priceLabel: "pricing",
+  priceMode: "pricing",
+  priceTo: "pricing",
+  referenceUrl: "restricted",
+  seoDescription: "seo",
+  seoTitle: "seo",
+  shortTitle: "content",
+  sku: "content",
+  slug: "content",
+  sortOrder: "publishing",
+  specs: "technical",
+  storageMaterials: "technical",
+  subcategory: "content",
+  summary: "content",
+  title: "content",
+  warrantyMonths: "technical"
+};
+
+export function canUpdateProductField(
+  user: unknown,
+  area: ProductFieldArea
+): boolean {
+  const role = getCmsRole(user);
+  if (role === "admin" || role === "editor") return true;
+  if (role === "engineer") {
+    return area === "pricing" || area === "technical";
+  }
+  if (role === "seo_marketer") {
+    return (
+      area === "content" ||
+      area === "media" ||
+      area === "publishing" ||
+      area === "seo"
+    );
+  }
+  return false;
+}
+
+const productFieldUpdateAccess =
+  (area: ProductFieldArea): FieldAccess =>
+  ({ req }) =>
+    canUpdateProductField(req.user, area);
+
+function applyProductRoleAccess(fields: Field[]): Field[] {
+  return fields.map((field) => {
+    if (field.type === "ui") return field;
+
+    if ("name" in field && typeof field.name === "string") {
+      if (field.access?.update) return field;
+
+      return {
+        ...field,
+        access: {
+          ...field.access,
+          update: productFieldUpdateAccess(
+            productFieldAreas[field.name] ?? "restricted"
+          )
+        }
+      } as Field;
+    }
+
+    if (field.type === "tabs") {
+      return {
+        ...field,
+        tabs: field.tabs.map((tab) => ({
+          ...tab,
+          fields: applyProductRoleAccess(tab.fields)
+        }))
+      };
+    }
+
+    if ("fields" in field && Array.isArray(field.fields)) {
+      return {
+        ...field,
+        fields: applyProductRoleAccess(field.fields)
+      } as Field;
+    }
+
+    return field;
+  });
+}
+
+const protectProductPublishingFromEngineer: CollectionBeforeChangeHook = ({
+  data,
+  operation,
+  originalDoc,
+  req
+}) => {
+  if (
+    operation !== "update" ||
+    getCmsRole(req.user) !== "engineer" ||
+    !data
+  ) {
+    return data;
+  }
+
+  if (
+    "_status" in data &&
+    data._status !== undefined &&
+    data._status !== originalDoc?._status
+  ) {
+    delete data._status;
+  }
+
+  return data;
+};
+
+function help(
+  text: string,
+  width?: string,
+  booleanStatus?: BooleanStatusLabels
+) {
   return {
     ...(width ? { width } : {}),
-    components: { Label: HELP_LABEL },
-    custom: { helpText: text }
+    components: {
+      Label: HELP_LABEL,
+      ...(booleanStatus ? { Cell: BOOLEAN_STATUS_CELL } : {})
+    },
+    custom: {
+      helpText: text,
+      ...(booleanStatus ? { booleanStatus } : {})
+    }
   };
 }
 
@@ -87,7 +262,13 @@ const documentsField: Field = {
       ru: "Загрузите паспорт, инструкцию, каталог или чертёж в PDF. На странице товара появится понятная кнопка скачивания.",
       en: "Upload product PDFs for visitors."
     },
-    initCollapsed: true
+    initCollapsed: true,
+    components: {
+      RowLabel: businessRowLabel({
+        fallback: "Новый документ",
+        primaryFields: ["title"]
+      })
+    }
   },
   fields: [
     {
@@ -128,6 +309,9 @@ export const Products: CollectionConfig = {
   },
   admin: {
     group: adminGroups.catalog,
+    components: {
+      beforeList: [adminSectionHero("products")]
+    },
     description: {
       ru: `${adminHints.catalog} Для новой карточки достаточно пройти пять понятных вкладок; адрес и технические поля сайт заполнит сам.`,
       en: "Concrete equipment models within categories."
@@ -140,10 +324,13 @@ export const Products: CollectionConfig = {
   hooks: {
     afterChange: [revalidateProductAfterChange],
     afterDelete: [revalidateProductAfterDelete],
+    beforeChange: [protectProductPublishingFromEngineer, stampUpdatedBy],
     beforeValidate: [createUniqueProductSlug, normalizeProductGallery]
   },
   versions: { drafts: true },
-  fields: [
+  fields: applyProductRoleAccess([
+    updatedByField(),
+    ...updatedBySnapshotFields(),
     {
       name: "productEditorGuide",
       type: "ui",
@@ -316,7 +503,12 @@ export const Products: CollectionConfig = {
                   ru: "Здесь находятся дополнительные фото: другие ракурсы, важные узлы и оборудование в работе. Не добавляйте сюда обложку категории и не повторяйте главное фото. Все изображения сразу видны миниатюрами в предпросмотре; порядок можно менять перетаскиванием.",
                   en: "Additional product images."
                 },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Дополнительное фото"
+                  })
+                }
               },
               fields: [
                 {
@@ -342,8 +534,20 @@ export const Products: CollectionConfig = {
             {
               name: "legacyGalleryPaths",
               label: { ru: "Служебные пути галереи", en: "Legacy gallery paths" },
+              labels: {
+                singular: { ru: "Служебный путь фото", en: "Legacy photo path" },
+                plural: { ru: "Служебные пути фото", en: "Legacy photo paths" }
+              },
               type: "array",
-              admin: { hidden: true },
+              admin: {
+                hidden: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Служебный путь фото",
+                    primaryFields: ["path"]
+                  })
+                }
+              },
               fields: [{ name: "path", type: "text", required: true }]
             }
           ]
@@ -569,7 +773,13 @@ export const Products: CollectionConfig = {
               type: "array",
               admin: {
                 description: { ru: "Один сценарий в каждой строке.", en: "One use case per row." },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый сценарий применения",
+                    primaryFields: ["value"]
+                  })
+                }
               },
               fields: [
                 {
@@ -597,7 +807,14 @@ export const Products: CollectionConfig = {
                   ru: "Слева — название параметра, справа — значение с единицей измерения.",
                   en: "Parameter and value pairs."
                 },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая характеристика",
+                    primaryFields: ["label"],
+                    secondaryFields: ["value"]
+                  })
+                }
               },
               fields: [
                 {
@@ -629,7 +846,13 @@ export const Products: CollectionConfig = {
                   ru: "Что клиент получит или что инженер проверит перед предложением.",
                   en: "Deliverables and checks."
                 },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новый пункт подбора",
+                    primaryFields: ["value"]
+                  })
+                }
               },
               fields: [
                 {
@@ -714,7 +937,13 @@ export const Products: CollectionConfig = {
                   ru: "Не влияют на ранжирование напрямую; помогают планировать текст страницы.",
                   en: "Editorial search themes."
                 },
-                initCollapsed: true
+                initCollapsed: true,
+                components: {
+                  RowLabel: businessRowLabel({
+                    fallback: "Новая поисковая тема",
+                    primaryFields: ["value"]
+                  })
+                }
               },
               fields: [
                 {
@@ -749,7 +978,16 @@ export const Products: CollectionConfig = {
                   label: { ru: "Показывать первым в своей категории", en: "Featured" },
                   type: "checkbox",
                   defaultValue: false,
-                  admin: help("Включённый товар поднимается выше обычных. Не отмечайте все товары: приоритет должен помогать клиенту выбрать.")
+                  admin: help(
+                    "Включённый товар поднимается выше обычных. Не отмечайте все товары: приоритет должен помогать клиенту выбрать.",
+                    undefined,
+                    {
+                      trueLabel: "Показывается первым",
+                      falseLabel: "Обычный порядок",
+                      trueTone: "accent",
+                      falseTone: "neutral"
+                    }
+                  )
                 },
                 {
                   name: "sortOrder",
@@ -765,7 +1003,16 @@ export const Products: CollectionConfig = {
               label: { ru: "Временно скрыть страницу от поисковиков", en: "No index" },
               type: "checkbox",
               defaultValue: false,
-              admin: help("Используйте для незавершённой или служебной страницы. Обычный опубликованный товар должен оставаться доступным поиску.")
+              admin: help(
+                "Используйте для незавершённой или служебной страницы. Обычный опубликованный товар должен оставаться доступным поиску.",
+                undefined,
+                {
+                  trueLabel: "Скрыта от поиска",
+                  falseLabel: "Доступна поиску",
+                  trueTone: "warning",
+                  falseTone: "positive"
+                }
+              )
             },
             {
               name: "draft",
@@ -778,13 +1025,13 @@ export const Products: CollectionConfig = {
         }
       ]
     }
-  ],
+  ]),
   access: {
-    admin: contentAdminUi,
-    create: contentManagersOnly,
-    delete: contentManagersOnly,
-    read: publicReadPublished,
-    readVersions: contentManagersOnly,
-    update: contentManagersOnly
+    admin: productsAdminUi,
+    create: productCreatorsOnly,
+    delete: productCreatorsOnly,
+    read: publicReadProducts,
+    readVersions: ({ req }) => canReadProductDrafts(req.user),
+    update: productEditorsOnly
   }
 };

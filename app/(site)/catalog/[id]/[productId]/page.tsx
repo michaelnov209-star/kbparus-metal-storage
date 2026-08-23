@@ -275,10 +275,11 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         </section>
       ) : null}
 
-      {product.pageMode === "configurator" && product.calculatorProfileId ? (
+      {product.pageMode === "configurator" &&
+      product.calculatorProfileId &&
+      calculatorProfile ? (
         <div id="product-configurator">
           <ProductConfigurator
-            profileId={product.calculatorProfileId}
             profileData={calculatorProfile}
             productTitle={product.title}
             productUrl={productUrl}

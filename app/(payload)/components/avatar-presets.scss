@@ -1,0 +1,42 @@
+.kb-user-avatar {
+  display: inline-grid;
+  width: var(--kb-avatar-size);
+  height: var(--kb-avatar-size);
+  flex: none;
+  overflow: hidden;
+  color: #27313a;
+  background-color: #27313a;
+  background-position: center;
+  background-size: cover;
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 31%;
+  box-shadow: 0 3px 10px rgba(16, 24, 32, .12);
+}
+
+.kb-user-avatar[data-preset="ember"] { background-image: url("/assets/admin/avatars-v2/ember.webp"); }
+.kb-user-avatar[data-preset="graphite"] { background-image: url("/assets/admin/avatars-v2/graphite.webp"); }
+.kb-user-avatar[data-preset="steel"] { background-image: url("/assets/admin/avatars-v2/steel.webp"); }
+.kb-user-avatar[data-preset="copper"] { background-image: url("/assets/admin/avatars-v2/copper.webp"); }
+.kb-user-avatar[data-preset="carbon"] { background-image: url("/assets/admin/avatars-v2/carbon.webp"); }
+.kb-user-avatar[data-preset="sand"] { background-image: url("/assets/admin/avatars-v2/sand.webp"); }
+.kb-user-avatar[data-preset="smoke"] { background-image: url("/assets/admin/avatars-v2/smoke.webp"); }
+.kb-user-avatar[data-preset="signal"] { background-image: url("/assets/admin/avatars-v2/signal.webp"); }
+.kb-user-avatar[data-preset="hare"] { background-image: url("/assets/admin/avatars-v2/hare.webp"); }
+.kb-user-avatar[data-preset="dog"] { background-image: url("/assets/admin/avatars-v2/dog.webp"); }
+.kb-user-avatar[data-preset="squirrel"] { background-image: url("/assets/admin/avatars-v2/squirrel.webp"); }
+.kb-user-avatar[data-preset="badger"] { background-image: url("/assets/admin/avatars-v2/badger.webp"); }
+.kb-user-avatar[data-preset="moose"] { background-image: url("/assets/admin/avatars-v2/moose.webp"); }
+.kb-user-avatar[data-preset="cat"] { background-image: url("/assets/admin/avatars-v2/cat.webp"); }
+.kb-user-avatar[data-preset="hedgehog"] { background-image: url("/assets/admin/avatars-v2/hedgehog.webp"); }
+.kb-user-avatar[data-preset="raven"] { background-image: url("/assets/admin/avatars-v2/raven.webp"); }
+
+.kb-user-avatar[data-preset="system"] {
+  color: #27313a;
+  background: #e6eaed;
+  border-radius: 50%;
+}
+
+.kb-user-avatar svg { display: block; width: 100%; height: 100%; }
+.kb-user-avatar__detail { fill: #8b949c; opacity: .72; }
+.kb-user-avatar__system { fill: currentColor; }
+.kb-user-avatar__system { fill-rule: evenodd; }

@@ -6,17 +6,11 @@ import sharp from "sharp";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { Users } from "./payload/collections/Users";
-import { Media } from "./payload/collections/Media";
-import { Categories } from "./payload/collections/Categories";
-import { Subcategories } from "./payload/collections/Subcategories";
-import { Products } from "./payload/collections/Products";
-import { CalculatorProfiles } from "./payload/collections/CalculatorProfiles";
-import { Leads } from "./payload/collections/Leads";
-import { Contacts } from "./payload/globals/Contacts";
-import { HomeContent } from "./payload/globals/HomeContent";
-import { LeadManagement } from "./payload/globals/LeadManagement";
-import { SiteNavigation } from "./payload/globals/SiteNavigation";
+import {
+  payloadCollections,
+  payloadGlobals,
+  Users
+} from "./payload/admin/config-registry";
 import { canManageMedia } from "./payload/access/rbac";
 import {
   getDirectPostgresConnectionString,
@@ -70,6 +64,18 @@ export default buildConfig({
       importMapFile: path.resolve(dirname, "app/(payload)/admin/importMap.ts")
     },
     components: {
+      actions: [
+        {
+          path: "@/app/(payload)/components/AdminAccountMenu",
+          exportName: "AdminAccountMenu"
+        }
+      ],
+      providers: [
+        {
+          path: "@/app/(payload)/components/AdminTrainingProvider",
+          exportName: "AdminTrainingProvider"
+        }
+      ],
       graphics: {
         Logo: {
           path: "@/app/(payload)/components/Logo",
@@ -147,8 +153,8 @@ export default buildConfig({
     fallbackLanguage: "ru",
     supportedLanguages: { ru }
   },
-  collections: [Users, Media, Categories, Subcategories, Products, CalculatorProfiles, Leads],
-  globals: [HomeContent, Contacts, LeadManagement, SiteNavigation],
+  collections: payloadCollections,
+  globals: payloadGlobals,
   email: payloadEmail,
   onInit: (payload) => {
     if (

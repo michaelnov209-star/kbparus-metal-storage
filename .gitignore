@@ -3,6 +3,9 @@ node_modules/
 dist/
 coverage/
 output/playwright/
+output/
+archive/
+doc_qa_source/
 artifacts/
 tmp/
 .env
@@ -19,8 +22,14 @@ payload-types.ts
 # graphify knowledge graph artifacts (rebuild with /graphify .)
 graphify-out/
 
+# Local proposal / document QA artifacts, not part of the site
+scripts/proposals/
+mossklad_catalog_2025.pdf
+mossklad_logo.jpg
+
 # Сторонние проекты в той же рабочей папке — НЕ часть kbparus (см. CLAUDE.md)
 3x-ui/
 3x-ui-telegram-bot/
 technokam-payroll/
 vedomost-audit/
+.env*.local

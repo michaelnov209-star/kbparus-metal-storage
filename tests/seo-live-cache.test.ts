@@ -42,6 +42,18 @@ describe("live SEO report cache", () => {
             }
           );
         }
+        if (String(input).includes("www.googleapis.com/webmasters/v3/sites/")) {
+          return new Response(
+            JSON.stringify({
+              siteUrl: "sc-domain:force-refresh.example.test",
+              permissionLevel: "siteRestrictedUser"
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" }
+            }
+          );
+        }
 
         return new Response(JSON.stringify({ rows: [] }), {
           status: 200,

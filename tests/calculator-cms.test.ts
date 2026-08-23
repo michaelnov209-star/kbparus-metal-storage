@@ -8,6 +8,7 @@ import { calculatorProfiles } from "@/data/storageSystems/excelCalculator";
 import { calculateStorageSystem, normalizeCalculatorInput } from "@/lib/calculator";
 import { toCalculatorProfileSeed } from "@/lib/calculator/profile-seed";
 import { mergeCmsCalculatorProfile } from "@/lib/calculator/cms-profile";
+import type { RuntimeCmsCalculatorProfile } from "@/lib/calculator/cms-profile";
 import { resolvePublishedCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { CalculatorProfiles } from "@/payload/collections/CalculatorProfiles";
 import type { CalculatorProfile as CmsCalculatorProfile } from "@/payload-types";
@@ -55,6 +56,94 @@ function cmsDocFromRuntime(profile: (typeof calculatorProfiles)[number], index: 
 }
 
 describe("CMS calculator profile parity", () => {
+  it("maps a valid non-canonical published profile and calculates without a shelf-count 10 anchor", () => {
+    const customDoc = {
+      id: 101,
+      slug: "custom-sheet-storage",
+      kind: "automatic",
+      title: "Специальная система хранения листа",
+      shortTitle: "Система Custom",
+      description: "Профиль, полностью созданный в CMS.",
+      bestFor: "нестандартных производственных задач.",
+      iconKey: "automation",
+      sortOrder: 90,
+      image: null,
+      heightOptions: [{ value: 100, factor: 1 }],
+      widthOptions: [{ value: 1500, factor: 1 }],
+      lengthOptions: [{ value: 4000, factor: 1.2 }],
+      loadOptions: [{ value: 2000, price: 80_000 }],
+      shelfCountOptions: [{ value: 12 }],
+      towerCountOptions: [{ value: 1 }, { value: 2 }],
+      towerByShelfCount: [{ shelfCount: 12, price: 1_250_000 }],
+      consoleBasePrice: 500_000,
+      consoleLongFactor: 1.1,
+      consoleLongFromMm: 4_000,
+      options: [
+        {
+          optionId: "custom-option",
+          title: "Проверенная опция",
+          price: 25_000,
+          defaultSelected: true
+        }
+      ],
+      defaultValues: {
+        heightMm: 100,
+        widthMm: 1500,
+        lengthMm: 4000,
+        loadKg: 2000,
+        shelfCount: 12,
+        towerCount: 1
+      },
+      createdAt: "2026-07-30T00:00:00.000Z",
+      updatedAt: "2026-07-30T00:00:00.000Z",
+      _status: "published"
+    } as unknown as RuntimeCmsCalculatorProfile;
+
+    const profiles = resolvePublishedCalculatorProfiles([customDoc]);
+    expect(profiles).toHaveLength(1);
+    expect(profiles[0]).toMatchObject({
+      id: "custom-sheet-storage",
+      title: "Специальная система хранения листа",
+      bestFor: "нестандартных производственных задач.",
+      iconKey: "automation"
+    });
+
+    const input = normalizeCalculatorInput(
+      { systemId: "custom-sheet-storage" },
+      profiles[0]
+    );
+    const result = calculateStorageSystem(input, profiles[0]);
+    expect(result.profileId).toBe("custom-sheet-storage");
+    expect(result.preliminaryPrice).toBeGreaterThan(0);
+    expect(Number.isFinite(result.preliminaryPrice)).toBe(true);
+    expect(Number.isFinite(result.factors.shelvesPerTowerFactor)).toBe(true);
+  });
+
+  it("isolates one invalid custom profile instead of taking published profiles offline", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const validCanonical = cmsDocFromRuntime(calculatorProfiles[0], 0);
+    const invalidCustom = {
+      ...validCanonical,
+      id: 404,
+      slug: "broken-custom-profile",
+      title: "Неполный профиль",
+      heightOptions: []
+    } as unknown as RuntimeCmsCalculatorProfile;
+
+    const profiles = resolvePublishedCalculatorProfiles([
+      invalidCustom,
+      validCanonical
+    ]);
+
+    expect(profiles.map((profile) => profile.id)).toEqual([
+      "auto-sheet-metal"
+    ]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("broken-custom-profile")
+    );
+    warn.mockRestore();
+  });
+
   it("does not resurrect an unpublished profile from the static seed", () => {
     const published = cmsDocFromRuntime(calculatorProfiles[1], 1);
     const profiles = resolvePublishedCalculatorProfiles([published]);

@@ -1,6 +1,20 @@
 import type { CollectionConfig } from "payload";
+import { createStableCollectionSlug } from "../../lib/cms/stable-collection-slug";
+import { businessRowLabel } from "../admin/array-row-label";
+import { booleanStatusAdmin } from "../admin/boolean-status";
+import { adminSectionHero, adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
-import { contentAdminUi, contentManagersOnly, publicReadPublished } from "../access/rbac";
+import {
+  catalogAdminUi,
+  catalogReadersOnly,
+  contentManagersOnly,
+  publicReadCatalog
+} from "../access/rbac";
+import {
+  stampUpdatedBy,
+  updatedByField,
+  updatedBySnapshotFields
+} from "../hooks/stampUpdatedBy";
 
 export const Categories: CollectionConfig = {
   slug: "categories",
@@ -10,17 +24,27 @@ export const Categories: CollectionConfig = {
   },
   admin: {
     group: adminGroups.catalog,
+    components: {
+      beforeList: [adminSectionHero("categories")]
+    },
     description: {
       ru: `${adminHints.catalog} Верхний уровень каталога: карточки на главной странице, меню и страницы /catalog/<slug>.`,
       en: "17 top-level catalog categories shown on home and nav."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "slug", "featured", "sortOrder"],
+    defaultColumns: ["title", "featured", "sortOrder"],
     listSearchableFields: ["title", "slug", "summary"],
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
+  hooks: {
+    beforeChange: [stampUpdatedBy],
+    beforeValidate: [createStableCollectionSlug("categories")]
+  },
   versions: { drafts: true },
   fields: [
+    updatedByField(),
+    ...updatedBySnapshotFields(),
+    adminSectionHeroField("categories"),
     {
       type: "row",
       fields: [
@@ -31,9 +55,10 @@ export const Categories: CollectionConfig = {
           required: true,
           unique: true,
           admin: {
+            hidden: true,
             description: {
-              ru: "Используется в URL: /catalog/<адрес>. Менять только если уверены — может сломать внешние ссылки и SEO.",
-              en: "Used in URL: /catalog/<slug>"
+              ru: "Создаётся автоматически из названия и сохраняется при последующих изменениях.",
+              en: "Generated from the title and preserved after creation."
             },
             width: "40%"
           }
@@ -45,7 +70,7 @@ export const Categories: CollectionConfig = {
           defaultValue: 0,
           admin: {
             description: { ru: "Меньшее число = выше в списке.", en: "Lower = higher." },
-            width: "20%"
+            width: "50%"
           }
         },
         {
@@ -54,7 +79,13 @@ export const Categories: CollectionConfig = {
           type: "checkbox",
           admin: {
             description: { ru: "Показать как «рекомендуемую».", en: "Show as featured." },
-            width: "20%"
+            width: "50%",
+            ...booleanStatusAdmin({
+              trueLabel: "Выделяется",
+              falseLabel: "Обычная",
+              trueTone: "accent",
+              falseTone: "neutral"
+            })
           }
         }
       ]
@@ -83,7 +114,7 @@ export const Categories: CollectionConfig = {
       relationTo: "media",
       admin: {
         description: {
-          ru: "Основное изображение из медиа-библиотеки. Если пока не загружено, сайт использует временный путь из поля ниже.",
+          ru: "Основное изображение из медиа-библиотеки. Для старых материалов резервное изображение подставляется автоматически.",
           en: "Primary image from media library."
         }
       }
@@ -93,6 +124,7 @@ export const Categories: CollectionConfig = {
       label: { ru: "Текущий путь к изображению на сайте", en: "Legacy image path" },
       type: "text",
       admin: {
+        hidden: true,
         description: {
           ru: "Временное поле миграции. Используется для текущих изображений из /assets, пока менеджер не заменит их файлом из медиа-библиотеки.",
           en: "Temporary migration field for existing static images."
@@ -116,23 +148,52 @@ export const Categories: CollectionConfig = {
         {
           name: "keywords",
           label: { ru: "Ключевые слова", en: "Keywords" },
+          labels: {
+            singular: { ru: "Поисковая тема", en: "Keyword" },
+            plural: { ru: "Поисковые темы", en: "Keywords" }
+          },
           type: "array",
-          fields: [{ name: "value", type: "text" }]
+          admin: {
+            components: {
+              RowLabel: businessRowLabel({
+                fallback: "Новая поисковая тема",
+                primaryFields: ["value"]
+              })
+            }
+          },
+          fields: [
+            {
+              name: "value",
+              label: { ru: "Поисковая фраза", en: "Search phrase" },
+              type: "text",
+              admin: {
+                description: {
+                  ru: "Короткая фраза, по которой клиент может искать эту категорию."
+                }
+              }
+            }
+          ]
         },
         {
           name: "noIndex",
           label: { ru: "Скрыть от поисковиков", en: "No-index" },
-          type: "checkbox"
+          type: "checkbox",
+          admin: booleanStatusAdmin({
+            trueLabel: "Скрыта от поиска",
+            falseLabel: "Доступна поиску",
+            trueTone: "warning",
+            falseTone: "positive"
+          })
         }
       ]
     }
   ],
   access: {
-    admin: contentAdminUi,
+    admin: catalogAdminUi,
     create: contentManagersOnly,
     delete: contentManagersOnly,
-    read: publicReadPublished,
-    readVersions: contentManagersOnly,
+    read: publicReadCatalog,
+    readVersions: catalogReadersOnly,
     update: contentManagersOnly
   }
 };

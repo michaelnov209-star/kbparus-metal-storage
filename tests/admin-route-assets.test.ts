@@ -19,7 +19,7 @@ describe("admin route assets", () => {
     expect(globalStyles).toContain('@use "./admin-polish"');
   });
 
-  it("builds bounded, cacheable stylesheets for special admin screens", () => {
+  it("builds bounded, safely cached assets for special admin screens", () => {
     const assets = [
       ["public/assets/admin/control-center.css", 20_000],
       ["public/assets/admin/seo-reports.css", 28_000],
@@ -33,9 +33,27 @@ describe("admin route assets", () => {
       expect(statSync(absolutePath).size).toBeLessThan(byteBudget);
     }
 
-    const vercel = source("vercel.json");
-    expect(vercel).toContain('"/assets/admin/(.*)"');
-    expect(vercel).toContain('"public, max-age=31536000, immutable"');
+    const vercel = JSON.parse(source("vercel.json")) as {
+      headers: Array<{
+        source: string;
+        headers: Array<{ key: string; value: string }>;
+      }>;
+    };
+    const adminAssets = vercel.headers.find(
+      (rule) => rule.source === "/assets/admin/(.*)"
+    );
+    const workspaceBackground = vercel.headers.find(
+      (rule) => rule.source === "/assets/admin/workspace-bg-v1.webp"
+    );
+
+    expect(adminAssets?.headers).toContainEqual({
+      key: "Cache-Control",
+      value: "public, max-age=0, must-revalidate"
+    });
+    expect(workspaceBackground?.headers).toContainEqual({
+      key: "Cache-Control",
+      value: "public, max-age=31536000, immutable"
+    });
   });
 
   it("loads each special stylesheet only from its matching server view", () => {

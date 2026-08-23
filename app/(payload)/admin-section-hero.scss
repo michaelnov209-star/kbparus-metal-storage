@@ -1,0 +1,112 @@
+html[data-theme] .kb-admin-section-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto 18px;
+  padding: 20px 22px;
+  overflow: hidden;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(252, 84, 19, 0.2), transparent 32%),
+    linear-gradient(124deg, #121a22 0%, #1d2832 70%, #26333e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(22, 31, 39, 0.12);
+  animation: kb-admin-section-enter 180ms ease-out both;
+}
+
+html[data-theme] .kb-admin-section-hero::after {
+  position: absolute;
+  right: -44px;
+  bottom: -72px;
+  width: 210px;
+  height: 160px;
+  content: "";
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  transform: rotate(-12deg);
+}
+
+html[data-theme] .kb-admin-section-hero__icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: #fc5413;
+  background: rgba(252, 84, 19, 0.1);
+  border: 1px solid rgba(252, 84, 19, 0.32);
+  border-radius: 15px;
+}
+
+html[data-theme] .kb-admin-section-hero > div {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+html[data-theme] .kb-admin-section-hero__eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: #ff8a5d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+html[data-theme] .kb-admin-section-hero h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(20px, 2.2vw, 29px);
+  line-height: 1.08;
+}
+
+html[data-theme] .kb-admin-section-hero > div > p {
+  max-width: 760px;
+  margin: 7px 0 0;
+  color: var(--kb-admin-on-dark-muted, #dbe3e9);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@keyframes kb-admin-section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-theme] .kb-admin-section-hero {
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 16px;
+    border-radius: 15px;
+  }
+
+  html[data-theme] .kb-admin-section-hero__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  html[data-theme] .kb-admin-section-hero > div > p {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] .kb-admin-section-hero {
+    animation: none;
+  }
+}

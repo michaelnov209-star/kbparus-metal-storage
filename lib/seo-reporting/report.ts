@@ -311,6 +311,13 @@ export function buildSeoReportResponse({
   ).sort();
   const readyBase = {
     ...base,
+    ...(input.provider === "google" &&
+    execution.dataset.providerAccessLevel
+      ? {
+          googlePermissionLevel:
+            execution.dataset.providerAccessLevel
+        }
+      : {}),
     coverageDays: currentDates.length,
     dateRange:
       currentDates.length > 0

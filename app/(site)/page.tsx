@@ -6,6 +6,7 @@ import { LeadForm } from "@/components/LeadForm";
 import { MobileMenu } from "@/components/MobileMenu";
 import { HeaderScroll } from "@/components/HeaderScroll";
 import { SliderControls } from "@/components/SliderControls";
+import { SocialPlaceholderButtons } from "@/components/SocialPlaceholderButtons";
 import { visualAssets } from "@/data/storageSystems/visualAssets";
 import { getCatalogCategories } from "@/lib/cms/catalog";
 import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
@@ -14,7 +15,6 @@ import { getHomePageContent } from "@/lib/cms/home-content";
 import { getSiteNavigation, type SiteLink } from "@/lib/cms/site-navigation";
 import "@/styles/line-page.css";
 import "@/styles/public-conversion.css";
-import "@/styles/calculator-v3.css";
 
 /**
  * ISR: страница пересобирается каждые 60 секунд. Когда маркетолог
@@ -38,7 +38,6 @@ import {
   PackageCheck,
   PhoneCall,
   Route,
-  Send,
   ShieldCheck,
   Sparkles,
   Star,
@@ -721,26 +720,26 @@ export default async function Home() {
           </article>
           <article className="contact-card reveal">
             <span><Sparkles size={20} />Социальные сети</span>
-            <div className="social-row">
+            <div className="social-channel-grid">
               <a
                 aria-label={contacts.socials.telegram ? "Написать в Telegram" : "Написать по электронной почте"}
-                className={contacts.socials.telegram ? "telegram" : "contact-fallback"}
+                className={`social-channel ${contacts.socials.telegram ? "social-channel-telegram" : "social-channel-email"}`}
                 href={contacts.socials.telegram || contacts.email.href}
                 data-metrika-goal={contacts.socials.telegram ? "messenger_click" : "email_click"}
               >
-                {contacts.socials.telegram ? <Send size={30} /> : <Mail size={30} />}
+                <span className="social-channel-icon" aria-hidden="true">
+                  {contacts.socials.telegram ? (
+                    <img alt="" decoding="async" height={34} src="/assets/icons/telegram.svg" width={34} />
+                  ) : (
+                    <Mail size={28} />
+                  )}
+                </span>
+                <span className="social-channel-copy">
+                  <strong>{contacts.socials.telegram ? "Telegram" : "Email"}</strong>
+                  <small>{contacts.socials.telegram ? "Открыть чат" : "Написать нам"}</small>
+                </span>
               </a>
-              <a
-                aria-label={contacts.socials.whatsapp ? "Написать в WhatsApp" : "Позвонить в отдел продаж"}
-                className={contacts.socials.whatsapp ? "whatsapp" : "contact-fallback"}
-                href={contacts.socials.whatsapp || contacts.phones[0].href}
-                data-metrika-goal={contacts.socials.whatsapp ? "messenger_click" : "phone_click"}
-              >
-                {contacts.socials.whatsapp ? <MessageCircle size={30} /> : <PhoneCall size={30} />}
-              </a>
-              {contacts.socials.vk ? (
-                <a className="vk" href={contacts.socials.vk} target="_blank" rel="noreferrer">VK</a>
-              ) : null}
+              <SocialPlaceholderButtons />
             </div>
           </article>
         </div>

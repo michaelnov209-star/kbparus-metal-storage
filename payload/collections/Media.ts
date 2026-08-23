@@ -1,6 +1,8 @@
 import type { CollectionConfig } from "payload";
 import { MEDIA_UPLOAD_MIME_TYPES } from "../../lib/storage/media-upload-policy";
 import { normalizeUploadBuffersBeforeCloudStorage } from "../../lib/storage/normalize-upload-buffers";
+import { booleanStatusAdmin } from "../admin/boolean-status";
+import { adminSectionHero, adminSectionHeroField } from "../admin/section-hero";
 import { adminGroups, adminHints } from "../admin/structure";
 import {
   mediaAdminUi,
@@ -32,6 +34,9 @@ export const Media: CollectionConfig = {
   },
   admin: {
     group: adminGroups.media,
+    components: {
+      beforeList: [adminSectionHero("media")]
+    },
     description: {
       ru: `${adminHints.media} Загружайте обычный JPG, PNG, WebP или AVIF: сайт сам ограничит слишком большой оригинал и создаст быстрые WebP-версии для телефона, планшета и компьютера. Максимальный размер файла — 64 МБ.`,
       en: "Business asset library with automatic responsive WebP processing."
@@ -123,6 +128,7 @@ export const Media: CollectionConfig = {
     formatOptions: webp(82)
   },
   fields: [
+    adminSectionHeroField("media"),
     {
       name: "publiclyAvailable",
       label: {
@@ -137,7 +143,13 @@ export const Media: CollectionConfig = {
           ru: "Отключение убирает запись из публичного API и подборщиков, но не закрывает прямую ссылку Vercel Blob. Загружайте сюда только материалы, которые допустимо публиковать; конфиденциальные документы храните вне этой библиотеки.",
           en: "This hides the API record but does not make the underlying public Blob private."
         },
-        position: "sidebar"
+        position: "sidebar",
+        ...booleanStatusAdmin({
+          trueLabel: "Доступен на сайте",
+          falseLabel: "Скрыт из API",
+          trueTone: "positive",
+          falseTone: "warning"
+        })
       }
     },
     {

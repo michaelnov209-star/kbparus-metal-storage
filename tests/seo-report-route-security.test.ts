@@ -82,7 +82,7 @@ describe("Google Search Console report credential boundary", () => {
     vi.unstubAllEnvs();
   });
 
-  it("does not return the service-account email to an editor", async () => {
+  it("does not return Google credentials to an editor", async () => {
     mocks.authenticate.mockResolvedValue({
       ok: true,
       cms: {},
@@ -103,7 +103,7 @@ describe("Google Search Console report credential boundary", () => {
     expect(serialized).not.toContain(privateKey);
   });
 
-  it("returns only the copyable email to an administrator", async () => {
+  it("does not return Google credentials to an administrator", async () => {
     mocks.authenticate.mockResolvedValue({
       ok: true,
       cms: {},
@@ -116,7 +116,8 @@ describe("Google Search Console report credential boundary", () => {
     const serialized = JSON.stringify(body);
 
     expect(response.status).toBe(200);
-    expect(body.googleServiceAccountEmail).toBe(serviceAccountEmail);
+    expect(body.googleServiceAccountEmail).toBeUndefined();
+    expect(serialized).not.toContain(serviceAccountEmail);
     expect(serialized).not.toContain(privateKey);
     expect(serialized).not.toContain("GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY");
   });
