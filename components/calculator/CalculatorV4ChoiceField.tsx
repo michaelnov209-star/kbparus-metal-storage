@@ -98,7 +98,14 @@ export function CalculatorV4ChoiceField({
       )}
 
       {values.length > 1 && (
-        <label className={rangeClassName}>
+        <label
+          className={rangeClassName}
+          style={
+            {
+              "--range-progress": `${progress}%`
+            } as CSSProperties
+          }
+        >
           <span className={styles.visuallyHidden}>{title}</span>
           <input
             aria-label={`${title}: ${active.toLocaleString("ru-RU")} ${unit}`}
@@ -106,11 +113,6 @@ export function CalculatorV4ChoiceField({
             max={values.length - 1}
             min={0}
             step={1}
-            style={
-              {
-                "--range-progress": `${progress}%`
-              } as CSSProperties
-            }
             type="range"
             value={activeIndex}
             onChange={(event) =>
