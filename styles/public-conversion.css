@@ -1335,25 +1335,25 @@
 
 /* Category pages: product-first flow and cleaner lead capture. */
 .category-detail-v2 .assortment-section-first {
-  padding-top: clamp(24px, 4vw, 48px) !important;
+  padding-top: clamp(16px, 2.6vw, 30px) !important;
 }
 
 .category-detail-v2 .category-fast-headline {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.28fr);
-  gap: clamp(18px, 3vw, 34px);
-  align-items: end;
-  margin-bottom: clamp(24px, 4vw, 42px);
-  padding-bottom: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.24fr);
+  gap: clamp(16px, 2.4vw, 28px);
+  align-items: center;
+  margin-bottom: clamp(18px, 2.8vw, 28px);
+  padding-bottom: 18px;
   border-bottom: 1px solid rgba(142, 156, 171, 0.35);
 }
 
 .category-detail-v2 .category-fast-headline h1 {
   max-width: 1180px;
-  margin: 8px 0 10px;
+  margin: 6px 0 8px;
   color: #1b242d;
-  font-size: clamp(42px, 5.6vw, 78px);
-  line-height: 0.98;
+  font-size: clamp(36px, 4.5vw, 62px);
+  line-height: 1.02;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -1362,7 +1362,7 @@
   max-width: 850px;
   margin: 0;
   color: #46535f !important;
-  font-size: clamp(17px, 1.5vw, 21px);
+  font-size: clamp(16px, 1.35vw, 19px);
   line-height: 1.45;
 }
 
@@ -1370,8 +1370,8 @@
   position: relative;
   display: grid;
   gap: 4px;
-  min-height: 156px;
-  padding: 22px;
+  min-height: 126px;
+  padding: 18px;
   color: #fff;
   background:
     radial-gradient(circle at 88% 18%, rgba(252, 84, 19, 0.52), transparent 34%),
@@ -1403,7 +1403,7 @@
 
 .category-fast-stat strong {
   color: #fff;
-  font-size: 58px;
+  font-size: 48px;
   line-height: 0.9;
 }
 
