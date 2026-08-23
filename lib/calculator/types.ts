@@ -48,6 +48,11 @@ export interface CalculatorResult {
   selectedOptions: string[];
   engineeringSummary: {
     dimensionsLabel: string;
+    workingCellDimensionsLabel: string;
+    rackDimensionsLabel: string;
+    rackLengthMm: number;
+    rackWidthMm: number;
+    rackHeightMm: number;
     totalStoredWeightKg: number;
     rackWeightWithoutLoadKg: number;
     rackWeightWithLoadKg: number;

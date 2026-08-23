@@ -74,7 +74,7 @@ describe("calculator lead form semantics", () => {
   const source = readFileSync("components/Calculator.tsx", "utf8");
 
   it("uses native form validation before sending a lead", () => {
-    expect(source).toContain('className="calculator-lead-form"');
+    expect(source).toContain("className={styles.leadForm}");
     expect(source).toContain("onSubmit={handleLeadSubmit}");
     expect(source).toContain('data-testid="calculator-phone"');
     expect(source).toContain('data-testid="calculator-consent"');
@@ -83,7 +83,26 @@ describe("calculator lead form semantics", () => {
   });
 
   it("exposes one universal calculator without role-specific modes", () => {
-    expect(source).toContain('data-ui="calculator-v3"');
+    expect(source).toContain('data-ui="calculator-v4"');
     expect(source).not.toMatch(/режим менеджера|режим клиента/i);
+  });
+
+  it("keeps object conditions visible and uses semantic condition icons", () => {
+    expect(source).toContain(
+      '<section className={styles.conditionsSection}>'
+    );
+    expect(source).toContain("const siteConditions");
+    expect(source).toContain("const ConditionIcon = condition.icon");
+    expect(source).toContain("<ConditionIcon");
+    expect(source).toContain("Свой вариант");
+  });
+
+  it("opens the exact system list by default and explains every variant", () => {
+    expect(source).toContain(
+      '<details className={styles.systemPicker} open>'
+    );
+    expect(source).toContain("const systemIcons");
+    expect(source).toContain("<SystemIcon");
+    expect(source).toContain("<b>Лучше подойдёт:</b>");
   });
 });

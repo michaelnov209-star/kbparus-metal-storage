@@ -1,12 +1,18 @@
 import type { ProductType } from "./types";
 
-export type CalculatorProfileId =
+export type BuiltInCalculatorProfileId =
   | "auto-sheet-metal"
   | "auto-sort-metal"
   | "rollout-cassette-rack"
   | "forklift-cassette-rack"
   | "two-side-rollout-rack"
   | "hybrid-rollout-rack";
+
+/**
+ * Calculator profiles are CMS-managed. The built-in union above remains useful
+ * for verified seed data, while published profiles may use any validated slug.
+ */
+export type CalculatorProfileId = string;
 
 export interface FactorOption {
   value: number;
@@ -34,6 +40,9 @@ export interface CalculatorProfile {
   sourceSheet: string;
   productType: ProductType;
   description: string;
+  bestFor?: string;
+  iconKey?: string;
+  sortOrder?: number;
   image?: string;
   imageAlt?: string;
   heightOptions: readonly FactorOption[];
@@ -60,6 +69,7 @@ export interface CalculatorProfile {
         towerPricesByShelfCount: Readonly<Record<number, number>>;
         consoleBasePrice: number;
         consoleLongFactor: number;
+        consoleLongFromMm?: number;
       }
     | {
         kind: "forkliftCassette";
@@ -158,11 +168,13 @@ const rolloutOptions = [
   { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 }
 ] satisfies CalculatorOption[];
 
-export const calculatorProfiles: CalculatorProfile[] = [
+export const calculatorProfiles: Array<
+  CalculatorProfile & { id: BuiltInCalculatorProfileId }
+> = [
   {
     id: "auto-sheet-metal",
-    title: "Автоматизированный склад листового металла",
-    shortTitle: "Автоматический склад листа",
+    title: "Автоматический стеллаж листового металла",
+    shortTitle: "Автоматический стеллаж листового металла",
     sourceSheet: "Авт. скл. лист. металл",
     productType: "automated",
     description: "Башенная система для листового металла с подъемным модулем, опциями безопасности и выдачи.",
@@ -193,8 +205,8 @@ export const calculatorProfiles: CalculatorProfile[] = [
   },
   {
     id: "auto-sort-metal",
-    title: "Автоматизированный склад сортового и трубного металлопроката",
-    shortTitle: "Автоматический склад сортового металла",
+    title: "Автоматический стеллаж сортового и трубного металлопроката",
+    shortTitle: "Автоматический стеллаж сортового металла",
     sourceSheet: "Авт. скл. сорт. металл",
     productType: "automated",
     description: "Автоматизированная система для труб, профиля, балок и сортового проката.",
@@ -373,7 +385,7 @@ export const calculatorProfiles: CalculatorProfile[] = [
   }
 ];
 
-export const defaultCalculatorProfileId: CalculatorProfileId = "auto-sheet-metal";
+export const defaultCalculatorProfileId: BuiltInCalculatorProfileId = "auto-sheet-metal";
 
 export function getCalculatorProfile(
   id?: string,

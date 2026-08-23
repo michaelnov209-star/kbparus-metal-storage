@@ -3,11 +3,11 @@ import type { CalculatorProfile, FactorOption, PriceOption } from "@/data/storag
 import type { CalculatorInput, CalculatorResult, RecommendedConfig } from "./types";
 
 function findFactor(options: readonly FactorOption[], value: number) {
-  return options.find((option) => option.value === value)?.factor ?? options[0].factor;
+  return options.find((option) => option.value === value)?.factor ?? options[0]?.factor ?? 1;
 }
 
 function findPrice(options: readonly PriceOption[], value: number) {
-  return options.find((option) => option.value === value)?.price ?? options[0].price;
+  return options.find((option) => option.value === value)?.price ?? options[0]?.price ?? 0;
 }
 
 function roundMoney(value: number) {
@@ -16,6 +16,54 @@ function roundMoney(value: number) {
 
 function progressiveFactor(count: number, baseCount: number, extraFactor: number) {
   return count > baseCount ? 1 + extraFactor * (count - baseCount) : 1;
+}
+
+function formatDimensions(lengthMm: number, widthMm: number, heightMm: number) {
+  return `${lengthMm.toLocaleString("ru-RU")}×${widthMm.toLocaleString("ru-RU")}×${heightMm.toLocaleString("ru-RU")} мм`;
+}
+
+function calculateRackDimensions({
+  profile,
+  lengthMm,
+  widthMm,
+  heightMm,
+  shelfCount,
+  rolloutShelfCount,
+  towerCount
+}: {
+  profile: CalculatorProfile;
+  lengthMm: number;
+  widthMm: number;
+  heightMm: number;
+  shelfCount: number;
+  rolloutShelfCount: number;
+  towerCount: number;
+}) {
+  const levels =
+    profile.pricing.kind === "hybrid" ? shelfCount + rolloutShelfCount : shelfCount;
+  const towerGapMm =
+    profile.pricing.kind === "automatic" ? 550 : 350;
+  const serviceLengthMm =
+    profile.pricing.kind === "automatic"
+      ? 1800
+      : profile.pricing.kind === "forkliftCassette"
+        ? 900
+        : 1100;
+  const serviceWidthMm =
+    profile.pricing.kind === "automatic"
+      ? 1800
+      : profile.pricing.kind === "forkliftCassette"
+        ? 700
+        : 900;
+  const topReserveMm =
+    profile.pricing.kind === "automatic" ? 1600 : 900;
+
+  return {
+    rackLengthMm:
+      lengthMm * towerCount + serviceLengthMm + Math.max(0, towerCount - 1) * towerGapMm,
+    rackWidthMm: widthMm + serviceWidthMm,
+    rackHeightMm: heightMm * levels + topReserveMm
+  };
 }
 
 function nearestAllowed(value: number, allowed: readonly number[]) {
@@ -69,14 +117,44 @@ export function calculateStorageSystem(
     const shelfPriceByLoad = findPrice(profile.loadOptions, loadKg);
     const shelfUnit = shelfPriceByLoad * dimensionFactor;
     const shelvesPrice = shelfUnit * shelfCount * towerCount;
-    const towerPrice = (profile.pricing.towerPricesByShelfCount[shelfCount] ?? profile.pricing.towerPricesByShelfCount[10]) * towerCount;
+    const towerPriceEntries = Object.entries(
+      profile.pricing.towerPricesByShelfCount
+    )
+      .map(([count, price]) => [Number(count), price] as const)
+      .filter(
+        ([count, price]) =>
+          Number.isFinite(count) &&
+          count > 0 &&
+          Number.isFinite(price) &&
+          price > 0
+      )
+      .sort(([left], [right]) => left - right);
+    const defaultTowerPrice =
+      profile.pricing.towerPricesByShelfCount[10] ??
+      towerPriceEntries[0]?.[1] ??
+      0;
+    const selectedTowerPrice =
+      profile.pricing.towerPricesByShelfCount[shelfCount] ??
+      towerPriceEntries.reduce(
+        (nearest, entry) =>
+          Math.abs(entry[0] - shelfCount) < Math.abs(nearest[0] - shelfCount)
+            ? entry
+            : nearest,
+        towerPriceEntries[0] ?? ([shelfCount, defaultTowerPrice] as const)
+      )[1];
+    const towerPrice = selectedTowerPrice * towerCount;
     const consolePrice =
       profile.pricing.consoleBasePrice *
       (shelfPriceByLoad / profile.loadOptions[0].price) *
-      (lengthMm > 3100 ? profile.pricing.consoleLongFactor : 1);
+      (lengthMm > (profile.pricing.consoleLongFromMm ?? 3100)
+        ? profile.pricing.consoleLongFactor
+        : 1);
 
     loadFactor = shelfPriceByLoad / profile.loadOptions[0].price;
-    shelvesPerTowerFactor = towerPrice / towerCount / profile.pricing.towerPricesByShelfCount[10];
+    shelvesPerTowerFactor =
+      towerCount > 0 && defaultTowerPrice > 0
+        ? towerPrice / towerCount / defaultTowerPrice
+        : 1;
 
     lineItems.push(
       { label: "Полки по выбранным размерам и нагрузке", amount: shelvesPrice },
@@ -155,6 +233,21 @@ export function calculateStorageSystem(
       : loadKg * shelfCount * towerCount;
   const rackWeightWithLoadKg = rackWeightWithoutLoadKg + totalStoredWeightKg;
   const supportLoadKg = Math.round(rackWeightWithLoadKg / 4);
+  const rackDimensions = calculateRackDimensions({
+    profile,
+    lengthMm,
+    widthMm,
+    heightMm,
+    shelfCount,
+    rolloutShelfCount,
+    towerCount
+  });
+  const workingCellDimensionsLabel = formatDimensions(lengthMm, widthMm, heightMm);
+  const rackDimensionsLabel = formatDimensions(
+    rackDimensions.rackLengthMm,
+    rackDimensions.rackWidthMm,
+    rackDimensions.rackHeightMm
+  );
 
   const recommendation: RecommendedConfig = {
     productType: profile.productType,
@@ -164,7 +257,8 @@ export function calculateStorageSystem(
       "Расчет сделан по фиксированным ходовым вариантам: длина, ширина, высота, нагрузка, количество полок, башен и опций."
     ],
     keyParameters: [
-      `Д×Ш×В: ${lengthMm}×${widthMm}×${heightMm} мм`,
+      `Рабочая ячейка: ${workingCellDimensionsLabel}`,
+      `Ориентировочный габарит системы: ${rackDimensionsLabel}`,
       `Нагрузка на полку: ${loadKg} кг`,
       `Полки: ${shelfCount}`,
       `Башни: ${towerCount}`
@@ -185,6 +279,9 @@ export function calculateStorageSystem(
     selectedOptions: selectedOptions.map((option) => option.title),
     engineeringSummary: {
       dimensionsLabel: `${lengthMm}×${widthMm}×${heightMm} мм`,
+      workingCellDimensionsLabel,
+      rackDimensionsLabel,
+      ...rackDimensions,
       totalStoredWeightKg,
       rackWeightWithoutLoadKg,
       rackWeightWithLoadKg,

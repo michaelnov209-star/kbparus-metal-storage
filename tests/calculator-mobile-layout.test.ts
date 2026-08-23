@@ -1,7 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync("styles/calculator-v3.css", "utf8");
+const css = readFileSync(
+  "components/calculator/CalculatorV4.module.css",
+  "utf8"
+);
+const component = readFileSync("components/Calculator.tsx", "utf8");
+const choiceField = readFileSync(
+  "components/calculator/CalculatorV4ChoiceField.tsx",
+  "utf8"
+);
 
 function rules(selector: string) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -13,51 +21,62 @@ function rules(selector: string) {
   return matches.map((match) => match[1]).join("\n");
 }
 
-describe("calculator mobile layout contract", () => {
-  it("keeps the mobile price control attached to the viewport", () => {
-    const root = rules('#calculator[data-ui="calculator-v3"]');
-    const mobileBar = rules(
-      '#calculator[data-ui="calculator-v3"] .mobile-summary-bar'
+describe("calculator v4 responsive layout contract", () => {
+  it("isolates the calculator from legacy global calc classes", () => {
+    expect(component).toContain(
+      'import styles from "@/components/calculator/CalculatorV4.module.css"'
     );
+    expect(component).toContain('data-ui="calculator-v4"');
+    expect(component).not.toMatch(/className="calc-/);
+    expect(component).not.toContain('className="primary-button"');
+  });
 
-    expect(root).toContain("transform: none");
-    expect(root).toContain("overflow: clip");
+  it("keeps the mobile quote action attached to the viewport", () => {
+    const root = rules(".root");
+    const mobileBar = rules(".mobileBar");
+
+    expect(root).toContain("overflow-x: clip");
     expect(mobileBar).toContain("position: fixed");
     expect(mobileBar).toContain("left: 8px");
     expect(mobileBar).toContain("right: 8px");
   });
 
-  it("does not lose width to the browser's default details padding", () => {
-    const picker = rules(
-      '#calculator[data-ui="calculator-v3"] .equipment-picker'
-    );
+  it("does not show the wide summary before a safe container width", () => {
+    const summary = rules(".desktopSummary");
 
-    expect(picker).toContain("width: 100%");
-    expect(picker).toContain("min-width: 0");
-    expect(picker).toContain("padding: 0");
+    expect(summary).toContain("display: none");
+    expect(css).toContain("@container calculator (min-width: 1320px)");
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?display: grid/
+    );
   });
 
-  it("contains long system labels inside narrow cards", () => {
-    const tags = rules(
-      '#calculator[data-ui="calculator-v3"] .system-card-tags'
-    );
-    const title = rules(
-      '#calculator[data-ui="calculator-v3"] .system-card > strong'
-    );
+  it("provides touch-sized slider controls and reduced motion", () => {
+    const range = rules(".rangeControl input");
 
-    expect(tags).toContain("min-width: 0");
-    expect(tags).toContain("max-width: 100%");
-    expect(tags).toContain("overflow: hidden");
-    expect(title).toContain("overflow-wrap: anywhere");
-    expect(title).toContain("overflow: hidden");
+    expect(range).toContain("min-height: 44px");
+    expect(choiceField).toContain('type="range"');
+    expect(choiceField).toContain("aria-valuetext");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
-  it("resets legacy content padding inside the compact result card", () => {
-    const copy = rules(
-      '#calculator[data-ui="calculator-v3"] .solution-copy'
-    );
+  it("shows parameter help as a hover/focus tooltip", () => {
+    expect(choiceField).toContain("aria-describedby={hintId}");
+    expect(choiceField).toContain('role="tooltip"');
+    expect(choiceField).not.toContain("closeOnOutsideClick");
+    expect(choiceField).not.toContain("aria-expanded={helpOpen}");
+    expect(css).toContain(".fieldHelpPanel");
+    expect(css).toMatch(/\.fieldHelpPanel\s*\{[^}]*position:\s*absolute/);
+    expect(css).toContain(".fieldHelp:hover .fieldHelpPanel");
+    expect(css).toContain(".fieldHelp:focus-within .fieldHelpPanel");
+  });
 
-    expect(copy).toContain("min-width: 0");
-    expect(copy).toContain("padding: 0 !important");
+  it("collapses complex grids to one column on phones", () => {
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.factGrid,[\s\S]*?\.contactGrid\s*\{[\s\S]*?grid-template-columns: 1fr/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.optionGrid,[\s\S]*?\.conditionGrid\s*\{[\s\S]*?grid-template-columns: 1fr/
+    );
   });
 });
