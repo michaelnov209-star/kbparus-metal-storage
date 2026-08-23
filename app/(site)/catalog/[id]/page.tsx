@@ -129,30 +129,32 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
         <span>{item.title}</span>
       </div>
 
-      <section className={isPilotCategory ? "catalog-detail-hero is-assortment" : "catalog-detail-hero"}>
-        <div>
-          <span className="line-kicker">Раздел каталога</span>
-          <h1>{item.title}</h1>
-          <p>{item.summary}</p>
-          <p>{item.scenario}</p>
-          <div className="catalog-detail-actions">
-            <a className="line-primary" href={isPilotCategory ? "#assortment" : "/#calculator"}>
-              {isPilotCategory ? "Смотреть ассортимент" : "Рассчитать стоимость"} <ArrowRight size={18} />
-            </a>
-            <a className="line-secondary" href="#category-request">Связаться с инженером</a>
+      {!isPilotCategory ? (
+        <section className="catalog-detail-hero">
+          <div>
+            <span className="line-kicker">Раздел каталога</span>
+            <h1>{item.title}</h1>
+            <p>{item.summary}</p>
+            <p>{item.scenario}</p>
+            <div className="catalog-detail-actions">
+              <a className="line-primary" href="/#calculator">
+                Рассчитать стоимость <ArrowRight size={18} />
+              </a>
+              <a className="line-secondary" href="#category-request">Связаться с инженером</a>
+            </div>
           </div>
-        </div>
-        <ImageLightbox
-          src={item.imageMedium ?? item.image}
-          srcSet={categoryImageSrcSet}
-          sizes="(max-width: 760px) calc(100vw - 24px), (max-width: 1180px) calc(100vw - 40px), 480px"
-          largeSrc={item.imageLarge ?? item.image}
-          alt={item.title}
-          className="catalog-detail-image"
-        />
-      </section>
+          <ImageLightbox
+            src={item.imageMedium ?? item.image}
+            srcSet={categoryImageSrcSet}
+            sizes="(max-width: 760px) calc(100vw - 24px), (max-width: 1180px) calc(100vw - 40px), 480px"
+            largeSrc={item.imageLarge ?? item.image}
+            alt={item.title}
+            className="catalog-detail-image"
+          />
+        </section>
+      ) : null}
 
-      {guide ? (
+      {!isPilotCategory && guide ? (
         <section
           className="category-expertise"
           aria-labelledby="category-expertise-title"
@@ -200,11 +202,18 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
 
       {isPilotCategory ? (
         <>
-          <section className="assortment-section" id="assortment">
-            <div className="assortment-headline">
-              <span className="line-kicker">Ассортимент</span>
-              <h2>{item.title}</h2>
-              <p>Выберите готовое решение или оставьте заявку — инженер подберёт конфигурацию под ваши размеры, нагрузку и способ загрузки.</p>
+          <section className="assortment-section assortment-section-first" id="assortment">
+            <div className="assortment-headline category-fast-headline">
+              <div>
+                <span className="line-kicker">Каталог раздела</span>
+                <h1>{item.title}</h1>
+                <p>{item.summary}</p>
+              </div>
+              <div className="category-fast-stat" aria-label="Количество товаров в разделе">
+                <strong>{products.length}</strong>
+                <span>товара в разделе</span>
+                <a href="#category-request">Не нашли нужную модель?</a>
+              </div>
             </div>
             <div className="assortment-grid">
               {products.map((product) => {
@@ -238,6 +247,52 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               })}
             </div>
           </section>
+
+          {guide ? (
+            <section
+              className="category-expertise category-expertise-after"
+              aria-labelledby="category-expertise-after-title"
+            >
+              <div className="category-expertise__heading">
+                <span className="line-kicker">Как выбрать</span>
+                <h2 id="category-expertise-after-title">На что смотрит инженер при подборе</h2>
+                <div className="category-expertise__intro">
+                  {guide.intro.slice(0, 1).map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+
+              <div className="category-expertise__grid">
+                <article className="category-expertise__card">
+                  <h3>Критерии подбора</h3>
+                  <ul>
+                    {guide.selectionCriteria.slice(0, 4).map((criterion) => (
+                      <li key={criterion}>{criterion}</li>
+                    ))}
+                  </ul>
+                </article>
+
+                <article className="category-expertise__card">
+                  <h3>Где применяется</h3>
+                  <ul>
+                    {guide.suitableFor.slice(0, 4).map((scenario) => (
+                      <li key={scenario}>{scenario}</li>
+                    ))}
+                  </ul>
+                </article>
+
+                <article className="category-expertise__card">
+                  <h3>Что уточнить</h3>
+                  <ul>
+                    {guide.integrationNotes.slice(0, 4).map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </article>
+              </div>
+            </section>
+          ) : null}
         </>
       ) : (
         <section className="catalog-detail-content" id="category-request">
@@ -282,17 +337,19 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
       )}
 
       {isPilotCategory && (
-        <section className="catalog-detail-content" id="category-request">
-          <aside className="catalog-detail-card">
-            <h2>Что получает инженер</h2>
-            <ul>
-              <li><PackageCheck size={18} /> выбранную товарную позицию или конфигурацию;</li>
-              <li><Ruler size={18} /> габариты, нагрузку, количество полок и башен;</li>
-              <li><ShieldCheck size={18} /> опции, город поставки и комментарий клиента.</li>
-            </ul>
+        <section className="category-help-strip" id="category-request">
+          <aside className="category-help-card">
+            <span className="line-kicker">Инженерный подбор</span>
+            <h2>Не нашли точную модель?</h2>
+            <p>Оставьте задачу по разделу. Инженер увидит источник заявки и быстрее поймет, что нужно подобрать.</p>
+            <div className="category-help-grid">
+              <span><PackageCheck size={18} /> что храните</span>
+              <span><Ruler size={18} /> размеры и вес</span>
+              <span><ShieldCheck size={18} /> город и условия склада</span>
+            </div>
           </aside>
           <LeadForm
-            title="Не нашли нужную систему в разделе?"
+            title="Получить подбор по разделу"
             sourceTitle={item.title}
             sourceUrl={categoryUrl}
             sourceImage={item.image}

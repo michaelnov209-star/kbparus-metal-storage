@@ -114,7 +114,7 @@ export function LeadForm({
         Имя
         <input
           name="name"
-          placeholder="Как к вам обращаться"
+          placeholder="Ваше имя"
           autoComplete="name"
           maxLength={120}
         />

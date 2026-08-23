@@ -143,6 +143,13 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
   const productGallery = getProductGallerySlots(product).map((slot) =>
     toProductGalleryImage(slot.source, product, slot.index, slot.isMain)
   );
+  const productCalculatorProfile =
+    product.pageMode === "configurator" &&
+      product.calculatorProfileId &&
+      calculatorProfile
+      ? calculatorProfile
+      : undefined;
+  const hasProductConfigurator = Boolean(productCalculatorProfile);
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
   const breadcrumb = breadcrumbSchema([
@@ -206,8 +213,8 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
             ) : (
               <strong>{getProductPriceLabel(product)}</strong>
             )}
-            <a className="line-primary" href={product.pageMode === "configurator" ? "#product-configurator" : "#product-request"}>
-              {product.pageMode === "configurator" ? "Настроить параметры" : "Оставить заявку"}
+            <a className="line-primary" href={hasProductConfigurator ? "#product-configurator" : "#product-request"}>
+              {hasProductConfigurator ? "Настроить параметры" : "Оставить заявку"}
             </a>
           </div>
         </div>
@@ -275,38 +282,38 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         </section>
       ) : null}
 
-      {product.pageMode === "configurator" &&
-      product.calculatorProfileId &&
-      calculatorProfile ? (
+      {productCalculatorProfile ? (
         <div id="product-configurator">
           <ProductConfigurator
-            profileData={calculatorProfile}
+            profileData={productCalculatorProfile}
             productTitle={product.title}
             productUrl={productUrl}
             productImage={product.image}
           />
         </div>
       ) : (
-        <section className="standard-product-cta" id="product-request">
-          <div>
-            <Ruler size={26} />
-            <h2>Подберем исполнение под ваш склад</h2>
-            <p>Инженер уточнит габариты, нагрузку, способ загрузки, покрытие и монтаж, чтобы подготовить предложение без лишней переписки.</p>
-          </div>
-          <div>
-            <ShieldCheck size={26} />
-            <h3>Нужны исходные данные</h3>
-            <p>Размер помещения, что храните, вес пачки, способ загрузки и город поставки.</p>
-          </div>
-        </section>
-      )}
+        <>
+          <section className="standard-product-cta" id="product-request">
+            <div>
+              <Ruler size={26} />
+              <h2>Подберем исполнение под ваш склад</h2>
+              <p>Инженер уточнит габариты, нагрузку, способ загрузки, покрытие и монтаж, чтобы подготовить предложение без лишней переписки.</p>
+            </div>
+            <div>
+              <ShieldCheck size={26} />
+              <h3>Нужны исходные данные</h3>
+              <p>Размер помещения, что храните, вес пачки, способ загрузки и город поставки.</p>
+            </div>
+          </section>
 
-      <LeadForm
-        title="Получить предложение по товару"
-        sourceTitle={product.title}
-        sourceUrl={productUrl}
-        sourceImage={product.image}
-      />
+          <LeadForm
+            title="Получить предложение по товару"
+            sourceTitle={product.title}
+            sourceUrl={productUrl}
+            sourceImage={product.image}
+          />
+        </>
+      )}
     </main>
   );
 }

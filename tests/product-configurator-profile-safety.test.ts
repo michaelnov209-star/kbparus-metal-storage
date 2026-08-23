@@ -19,8 +19,9 @@ describe("product configurator profile safety", () => {
       "utf8"
     );
 
-    expect(page).toContain("calculatorProfile ?");
-    expect(page).toContain("profileData={calculatorProfile}");
+    expect(page).toContain("const productCalculatorProfile =");
+    expect(page).toContain("calculatorProfile");
+    expect(page).toContain("profileData={productCalculatorProfile}");
     expect(configurator).toContain("profileData: CalculatorProfile");
     expect(configurator).not.toContain("getCalculatorProfile");
   });

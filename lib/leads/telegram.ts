@@ -44,6 +44,10 @@ function sourceLine(lead: TelegramLead): string | undefined {
     return `<b>Источник:</b> <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceUrl)}</a>`;
   }
 
+  if (lead.sourceTitle) {
+    return `<b>Источник:</b> ${escapeHtml(lead.sourceTitle)}`;
+  }
+
   if (lead.source) {
     return `<b>Источник:</b> ${escapeHtml(lead.source)}`;
   }
@@ -129,6 +133,8 @@ function buildContactMessage(lead: TelegramLead): string {
 
   if (lead.name) lines.push(`<b>Имя:</b> ${escapeHtml(lead.name)}`);
   lines.push(`<b>Телефон:</b> <a href="tel:${escapeHtml(phoneClean)}">${escapeHtml(lead.phone)}</a>`);
+  if (lead.email) lines.push(`<b>Email:</b> ${escapeHtml(lead.email)}`);
+  if (clean(lead.city)) lines.push(`<b>Город/регион:</b> ${escapeHtml(clean(lead.city))}`);
 
   if (clean(lead.comment)) {
     lines.push("", "<b>Комментарий:</b>", escapeHtml(clean(lead.comment)));

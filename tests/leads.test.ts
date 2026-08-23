@@ -44,7 +44,7 @@ describe("Telegram lead messages", () => {
     expect(message).not.toContain("{");
   });
 
-  it("keeps ordinary contact messages short", () => {
+  it("includes useful contact context for managers without calculator noise", () => {
     const message = buildTelegramMessage({
       leadType: "contact",
       name: "Анна",
@@ -61,10 +61,10 @@ describe("Telegram lead messages", () => {
     expect(message).toContain("Телефон");
     expect(message).toContain("Комментарий");
     expect(message).toContain("Источник");
+    expect(message).toContain("anna@example.com");
+    expect(message).toContain("Казань");
     expect(message).not.toContain("Тип системы");
     expect(message).not.toContain("Предварительная стоимость");
-    expect(message).not.toContain("anna@example.com");
-    expect(message).not.toContain("Казань");
   });
 });
 
