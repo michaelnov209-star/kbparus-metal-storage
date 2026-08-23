@@ -1407,6 +1407,20 @@
   line-height: 0.9;
 }
 
+.category-detail-v2 .assortment-visual {
+  background:
+    radial-gradient(circle at 50% 42%, #fff 0, #fff 50%, #eef3f7 100%) !important;
+}
+
+.category-detail-v2 .assortment-visual::before {
+  opacity: 0.35;
+}
+
+.category-detail-v2 .assortment-visual img {
+  object-fit: contain;
+  mix-blend-mode: multiply !important;
+}
+
 .category-fast-stat span {
   color: rgba(255, 255, 255, 0.78);
   font-size: 14px;
