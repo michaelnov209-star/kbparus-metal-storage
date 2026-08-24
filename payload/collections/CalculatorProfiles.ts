@@ -351,7 +351,7 @@ export const CalculatorProfiles: CollectionConfig = {
                     },
                     {
                       name: "price",
-                      label: { ru: "Цена выкатного уровня, ₽", en: "Price" },
+                  label: { ru: "Цена выкатной кассеты, ₽", en: "Price" },
                       type: "number",
                       required: true,
                       min: 1,
@@ -364,17 +364,17 @@ export const CalculatorProfiles: CollectionConfig = {
           ]
         },
         {
-          label: { ru: "Уровни, секции и несущая конструкция", en: "Counts and structure" },
+          label: { ru: "Полки, кассеты, башни и несущая конструкция", en: "Counts and structure" },
           fields: [
             {
               name: "shelfCountOptions",
               label: {
-                ru: "Доступное количество уровней",
+                ru: "Доступное количество полок или кассет",
                 en: "Shelf count options"
               },
               labels: {
-                singular: { ru: "Количество уровней", en: "Shelf count" },
-                plural: { ru: "Варианты количества уровней", en: "Shelf counts" }
+                singular: { ru: "Количество полок или кассет", en: "Shelf count" },
+                plural: { ru: "Варианты количества полок или кассет", en: "Shelf counts" }
               },
               type: "array",
               minRows: 1,
@@ -388,7 +388,7 @@ export const CalculatorProfiles: CollectionConfig = {
               fields: [
                 {
                   name: "value",
-                  label: { ru: "Количество уровней", en: "Count" },
+                  label: { ru: "Количество полок или кассет", en: "Count" },
                   type: "number",
                   required: true,
                   min: 1
@@ -398,12 +398,12 @@ export const CalculatorProfiles: CollectionConfig = {
             {
               name: "rolloutShelfCountOptions",
               label: {
-                ru: "Доступное количество выкатных уровней",
+                ru: "Доступное количество выкатных кассет",
                 en: "Rollout shelf count options"
               },
               labels: {
-                singular: { ru: "Количество выкатных уровней", en: "Rollout count" },
-                plural: { ru: "Варианты выкатных уровней", en: "Rollout counts" }
+                singular: { ru: "Количество выкатных кассет", en: "Rollout count" },
+                plural: { ru: "Варианты выкатных кассет", en: "Rollout counts" }
               },
               type: "array",
               admin: {
@@ -417,7 +417,7 @@ export const CalculatorProfiles: CollectionConfig = {
               fields: [
                 {
                   name: "value",
-                  label: { ru: "Количество выкатных уровней", en: "Count" },
+                  label: { ru: "Количество выкатных кассет", en: "Count" },
                   type: "number",
                   required: true,
                   min: 1
@@ -427,26 +427,26 @@ export const CalculatorProfiles: CollectionConfig = {
             {
               name: "towerCountOptions",
               label: {
-                ru: "Доступное количество секций",
+                ru: "Доступное количество башен",
                 en: "Section count options"
               },
               labels: {
-                singular: { ru: "Количество секций", en: "Section count" },
-                plural: { ru: "Варианты количества секций", en: "Section counts" }
+                singular: { ru: "Количество башен", en: "Section count" },
+                plural: { ru: "Варианты количества башен", en: "Section counts" }
               },
               type: "array",
               minRows: 1,
               admin: {
                 components: { RowLabel: CALCULATOR_ROW_LABEL },
                 description: {
-                  ru: "Секции также могут называться башнями — клиент увидит понятное слово «секции».",
+                  ru: "Для Compact и Logic обычно одна башня. Для Spider и Cross можно разрешить несколько башен.",
                   en: ""
                 }
               },
               fields: [
                 {
                   name: "value",
-                  label: { ru: "Количество секций", en: "Count" },
+                  label: { ru: "Количество башен", en: "Count" },
                   type: "number",
                   required: true,
                   min: 1
@@ -465,14 +465,14 @@ export const CalculatorProfiles: CollectionConfig = {
                 condition: kindIs("automatic"),
                 components: { RowLabel: CALCULATOR_ROW_LABEL },
                 description: {
-                  ru: "Для каждого количества уровней выше задайте прямую цену несущей секции.",
+                  ru: "Для каждого количества полок выше задайте прямую цену башни.",
                   en: ""
                 }
               },
               fields: [
                 { type: "row", fields: [
-                  { name: "shelfCount", label: { ru: "Количество уровней", en: "Shelves" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
-                  { name: "price", label: { ru: "Цена секции, ₽", en: "Price" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  { name: "shelfCount", label: { ru: "Количество полок", en: "Shelves" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
+                  { name: "price", label: { ru: "Цена башни, ₽", en: "Price" }, type: "number", required: true, min: 1, admin: { width: "50%" } },
                   {
                     name: "factor",
                     type: "number",
@@ -492,7 +492,7 @@ export const CalculatorProfiles: CollectionConfig = {
               admin: {
                 condition: kindIs("forkliftCassette", "rollout", "hybrid"),
                 description: {
-                  ru: "Стоимость несущей секции при базовом количестве уровней.",
+                  ru: "Стоимость несущей башни при базовом количестве полок или кассет.",
                   en: ""
                 }
               }
@@ -516,7 +516,7 @@ export const CalculatorProfiles: CollectionConfig = {
               admin: {
                 condition: kindIs("forkliftCassette", "rollout", "hybrid"),
                 description: {
-                  ru: "Например 0,1: каждый дополнительный уровень сверх базы увеличивает цену несущей секции на 10%.",
+                  ru: "Например 0,1: каждая дополнительная полка или кассета сверх базы увеличивает цену башни на 10%.",
                   en: ""
                 }
               }

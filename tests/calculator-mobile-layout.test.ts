@@ -50,26 +50,26 @@ describe("calculator v4 responsive layout contract", () => {
     expect(linePageCss).toMatch(/\.line-page\{[^}]*overflow:visible/);
     expect(linePageCss).not.toMatch(/\.line-page\{[^}]*overflow:hidden/);
     expect(summary).toContain("display: none");
-    expect(css).toContain("@container calculator (min-width: 1320px)");
+    expect(css).toContain("@container calculator (min-width: 1180px)");
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?display: grid/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?display: grid/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 20px/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 20px/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: visible/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: visible/
     );
     expect(css).not.toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overscroll-behavior: contain/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overscroll-behavior: contain/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.summaryFacts\s*\{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?overflow: visible/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.summaryFacts\s*\{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?overflow: visible/
     );
-    expect(image).toContain("height: clamp(320px, 25vw, 390px)");
+    expect(image).toContain("height: clamp(320px, 36vh, 430px)");
     expect(css).toMatch(
       /\.summaryFacts span,\s*[\r\n]+\.modalFacts span\s*\{[\s\S]*?font-size: 14px/
     );
@@ -98,7 +98,7 @@ describe("calculator v4 responsive layout contract", () => {
     expect(css).not.toMatch(/--v4-accent-(?:dark|action|text):/);
   });
 
-  it("keeps every live specification card equal and the price readable", () => {
+  it("keeps all live specification cards visually equal", () => {
     const specification = rules(".liveSpecification");
     const priceParts = rules(".liveSpecification .priceValue > span");
 
@@ -116,7 +116,11 @@ describe("calculator v4 responsive layout contract", () => {
 
     expect(choiceButton).toContain("min-height: 48px");
     expect(choiceField).not.toContain('type="range"');
+    expect(choiceField).not.toContain("ruler");
     expect(choiceField).toContain('role="group"');
+    expect(css).not.toContain(".rulerRange");
+    expect(css).toContain('.choiceGrid[data-count="20"]');
+    expect(css).toContain("grid-template-columns: repeat(5, minmax(0, 1fr))");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
@@ -131,12 +135,15 @@ describe("calculator v4 responsive layout contract", () => {
     expect(css).toContain(".fieldHelp:focus-within .fieldHelpPanel");
   });
 
-  it("collapses complex grids to one column on phones", () => {
+  it("keeps compact visual options in two columns and forms readable on phones", () => {
     expect(css).toMatch(
       /@media \(max-width: 767px\)[\s\S]*?\.factGrid,[\s\S]*?\.contactGrid\s*\{[\s\S]*?grid-template-columns: 1fr/
     );
     expect(css).toMatch(
-      /@media \(max-width: 767px\)[\s\S]*?\.optionGrid,[\s\S]*?\.conditionGrid\s*\{[\s\S]*?grid-template-columns: 1fr/
+      /@media \(max-width: 767px\)[\s\S]*?\.optionGrid\s*\{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.conditionGrid\s*\{[\s\S]*?grid-template-columns: 1fr/
     );
   });
 });

@@ -18,7 +18,7 @@ export function CalculatorV4Progress({
 
   return (
     <nav className={styles.progress} aria-label="Этапы подбора">
-      <div className={styles.stepList}>
+      <div className={styles.stepList} data-count={steps.length}>
         {steps.map((label, index) => {
           const isActive = currentStep === index;
           const isComplete = index < currentStep;

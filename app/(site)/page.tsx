@@ -400,20 +400,6 @@ export default async function Home() {
             <h2>Разделы для хранения металла и складской логистики</h2>
           </div>
         </div>
-        <div className="catalog-summary reveal">
-          <article>
-            <strong>17 разделов</strong>
-            <span>от листового металла до складской логистики и ERP</span>
-          </article>
-          <article>
-            <strong>Подбор по задаче</strong>
-            <span>лист, трубы, профиль, паллеты, кабель, складская техника и учет</span>
-          </article>
-          <article>
-            <strong>Наглядный подбор</strong>
-            <span>изображения и характеристики помогают быстро выбрать подходящий тип системы</span>
-          </article>
-        </div>
         <CatalogGrid items={catalogCategories} />
       </section>
 

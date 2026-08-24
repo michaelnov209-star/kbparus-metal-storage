@@ -3,6 +3,7 @@ import type {
   CalculatorProfile as RuntimeCalculatorProfile
 } from "@/data/storageSystems/excelCalculator";
 import { calculatorProfiles } from "@/data/storageSystems/excelCalculator";
+import { interpolateTierPrice } from "@/lib/calculator/pricing";
 
 export type CalculatorProfileSeed = ReturnType<typeof toCalculatorProfileSeed>;
 
@@ -64,12 +65,33 @@ export function toCalculatorProfileSeed(
   const pricing = profile.pricing;
   const presentation = builtInProfilePresentation[profile.id];
 
-  const towerByShelfCount = pricing.kind === "automatic"
-    ? Object.entries(pricing.towerPricesByShelfCount).map(([shelfCount, price]) => ({
-        shelfCount: Number(shelfCount),
-        price
-      }))
-    : [];
+  const towerByShelfCount =
+    pricing.kind === "automatic"
+      ? (() => {
+          const priceTiers = Object.entries(
+            pricing.towerPricesByShelfCount
+          )
+            .map(([shelfCount, price]) => [Number(shelfCount), price] as const)
+            .filter(
+              ([shelfCount, price]) =>
+                Number.isFinite(shelfCount) &&
+                shelfCount > 0 &&
+                Number.isFinite(price) &&
+                price > 0
+            )
+            .sort(([left], [right]) => left - right);
+          const fallbackPrice = priceTiers[0]?.[1] ?? 0;
+
+          return profile.shelfCountOptions.map((shelfCount) => ({
+            shelfCount,
+            price: interpolateTierPrice(
+              priceTiers,
+              shelfCount,
+              fallbackPrice
+            )
+          }));
+        })()
+      : [];
 
   const towerBasePrice = pricing.kind === "forkliftCassette" || pricing.kind === "rollout" || pricing.kind === "hybrid"
     ? pricing.towerBasePrice

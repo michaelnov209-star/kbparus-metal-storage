@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
 const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
-const baseURL = externalBaseUrl || "http://127.0.0.1:3210";
+const baseURL = externalBaseUrl || "http://localhost:3210";
 
 export default defineConfig({
   testDir: "./e2e",

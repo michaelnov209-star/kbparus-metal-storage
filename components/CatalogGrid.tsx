@@ -6,7 +6,7 @@ import { ArrowRight, Maximize2, X } from "lucide-react";
 import type { ExcelHomeCatalogItem } from "@/data/storageSystems/excelCatalog";
 
 const CATALOG_CARD_SIZES =
-  "(max-width: 640px) 38vw, (max-width: 900px) calc(50vw - 28px), (max-width: 1180px) calc(33.333vw - 32px), calc(25vw - 32px)";
+  "(max-width: 640px) calc(50vw - 18px), (max-width: 900px) calc(50vw - 28px), (max-width: 1180px) calc(33.333vw - 32px), calc(25vw - 32px)";
 
 function hasResponsiveCatalogImageVariants(
   item: ExcelHomeCatalogItem

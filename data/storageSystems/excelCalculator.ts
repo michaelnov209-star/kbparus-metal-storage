@@ -1,4 +1,5 @@
 import type { ProductType } from "./types";
+import { calculatorOptionPresentation } from "./calculatorOptionPresentation";
 
 export type BuiltInCalculatorProfileId =
   | "auto-sheet-metal"
@@ -31,6 +32,9 @@ export interface CalculatorOption {
   title: string;
   price: number;
   defaultSelected?: boolean;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
 }
 
 export interface CalculatorProfile {
@@ -45,6 +49,15 @@ export interface CalculatorProfile {
   sortOrder?: number;
   image?: string;
   imageAlt?: string;
+  rackDimensionModel?: {
+    kind: "excel-automatic-sheet";
+    lengthReserveMm: number;
+    widthReserveMm: number;
+    widthMultiplier: number;
+    baseHeightMm: number;
+    shelfConstructionHeightMm: number;
+    towerHeightReserveMm: number;
+  };
   heightOptions: readonly FactorOption[];
   widthOptions: readonly FactorOption[];
   lengthOptions: readonly FactorOption[];
@@ -154,18 +167,36 @@ const automaticTowerPrices = {
   25: 2250000
 } as const;
 
+const automaticShelfCountOptions = Array.from(
+  { length: 20 },
+  (_, index) => index + 6
+);
+
+function createCalculatorOption(id: string, price: number): CalculatorOption {
+  const presentation = calculatorOptionPresentation[id];
+
+  return {
+    id,
+    price,
+    title: presentation?.title ?? id,
+    description: presentation?.description,
+    image: presentation?.image,
+    imageAlt: presentation?.imageAlt
+  };
+}
+
 const automaticOptions = [
-  { id: "scale", title: "Весы на распалетчик", price: 90000 },
-  { id: "infrared-safety", title: "Инфракрасные ограждения", price: 80000 },
-  { id: "vacuum-grip", title: "Вакуумный захват", price: 450000 },
-  { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 },
-  { id: "warehouse-accounting", title: "Интеграция со складским учетом", price: 350000 }
+  createCalculatorOption("scale", 90000),
+  createCalculatorOption("infrared-safety", 80000),
+  createCalculatorOption("vacuum-grip", 450000),
+  createCalculatorOption("swing-crane", 500000),
+  createCalculatorOption("warehouse-accounting", 350000)
 ] satisfies CalculatorOption[];
 
 const rolloutOptions = [
-  { id: "scale", title: "Весы на распалетчик", price: 90000 },
-  { id: "vacuum-grip", title: "Вакуумный захват", price: 450000 },
-  { id: "swing-crane", title: "Консольно-поворотный кран", price: 500000 }
+  createCalculatorOption("scale", 90000),
+  createCalculatorOption("vacuum-grip", 450000),
+  createCalculatorOption("swing-crane", 500000)
 ] satisfies CalculatorOption[];
 
 export const calculatorProfiles: Array<
@@ -180,9 +211,18 @@ export const calculatorProfiles: Array<
     description: "Башенная система для листового металла с подъемным модулем, опциями безопасности и выдачи.",
     image: "/assets/images/catalog/01-auto-sheet-metal.jpg",
     imageAlt: "Автоматизированная система хранения листового металла",
+    rackDimensionModel: {
+      kind: "excel-automatic-sheet",
+      lengthReserveMm: 800,
+      widthReserveMm: 1100,
+      widthMultiplier: 2,
+      baseHeightMm: 1400,
+      shelfConstructionHeightMm: 60,
+      towerHeightReserveMm: 500
+    },
     ...sheetGeometry,
     loadOptions: automaticLoadOptions,
-    shelfCountOptions: [10, 15, 20, 25],
+    shelfCountOptions: automaticShelfCountOptions,
     towerCountOptions: [1, 2, 3, 4, 5, 6],
     defaultValues: {
       heightMm: 70,
@@ -233,7 +273,7 @@ export const calculatorProfiles: Array<
       { value: 12100, factor: 2.2 }
     ],
     loadOptions: automaticLoadOptions,
-    shelfCountOptions: [8, 15, 20, 25],
+    shelfCountOptions: automaticShelfCountOptions,
     towerCountOptions: [1, 2, 3, 4, 5, 6],
     defaultValues: {
       heightMm: 400,

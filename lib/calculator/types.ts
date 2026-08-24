@@ -50,13 +50,15 @@ export interface CalculatorResult {
     dimensionsLabel: string;
     workingCellDimensionsLabel: string;
     rackDimensionsLabel: string;
-    rackLengthMm: number;
-    rackWidthMm: number;
-    rackHeightMm: number;
+    rackDimensionStatus: "calculated" | "engineering-check";
+    rackLengthMm?: number;
+    rackWidthMm?: number;
+    rackHeightMm?: number;
+    loadDistributionStatus: "calculated" | "engineering-check";
     totalStoredWeightKg: number;
-    rackWeightWithoutLoadKg: number;
-    rackWeightWithLoadKg: number;
-    supportLoadKg: number;
+    rackWeightWithoutLoadKg?: number;
+    rackWeightWithLoadKg?: number;
+    supportLoadKg?: number;
   };
   factors: {
     heightFactor: number;

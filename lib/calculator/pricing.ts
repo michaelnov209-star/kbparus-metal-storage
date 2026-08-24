@@ -1,5 +1,6 @@
 import { getCalculatorProfile } from "@/data/storageSystems/excelCalculator";
 import type { CalculatorProfile, FactorOption, PriceOption } from "@/data/storageSystems/excelCalculator";
+import { calculatorOptionPresentation } from "@/data/storageSystems/calculatorOptionPresentation";
 import type { CalculatorInput, CalculatorResult, RecommendedConfig } from "./types";
 
 function findFactor(options: readonly FactorOption[], value: number) {
@@ -19,7 +20,36 @@ function progressiveFactor(count: number, baseCount: number, extraFactor: number
 }
 
 function formatDimensions(lengthMm: number, widthMm: number, heightMm: number) {
-  return `${lengthMm.toLocaleString("ru-RU")}×${widthMm.toLocaleString("ru-RU")}×${heightMm.toLocaleString("ru-RU")} мм`;
+  return `${lengthMm.toLocaleString("ru-RU")}×${widthMm.toLocaleString("ru-RU")}×${heightMm.toLocaleString("ru-RU")}\u00a0мм`;
+}
+
+function loadTargetLabel(profile: CalculatorProfile) {
+  if (profile.pricing.kind === "forkliftCassette") return "кассету";
+  if (profile.pricing.kind === "rollout") return "выкатную кассету";
+  if (profile.pricing.kind === "hybrid") return "полку или кассету";
+  return "полку";
+}
+
+export function interpolateTierPrice(
+  entries: ReadonlyArray<readonly [number, number]>,
+  selectedCount: number,
+  fallbackPrice: number
+) {
+  if (entries.length === 0) return fallbackPrice;
+
+  const exact = entries.find(([count]) => count === selectedCount);
+  if (exact) return exact[1];
+  if (selectedCount <= entries[0][0]) return entries[0][1];
+  if (selectedCount >= entries[entries.length - 1][0]) {
+    return entries[entries.length - 1][1];
+  }
+
+  const upperIndex = entries.findIndex(([count]) => count > selectedCount);
+  const lower = entries[upperIndex - 1];
+  const upper = entries[upperIndex];
+  const progress = (selectedCount - lower[0]) / (upper[0] - lower[0]);
+
+  return Math.round(lower[1] + (upper[1] - lower[1]) * progress);
 }
 
 function calculateRackDimensions({
@@ -28,7 +58,6 @@ function calculateRackDimensions({
   widthMm,
   heightMm,
   shelfCount,
-  rolloutShelfCount,
   towerCount
 }: {
   profile: CalculatorProfile;
@@ -36,33 +65,23 @@ function calculateRackDimensions({
   widthMm: number;
   heightMm: number;
   shelfCount: number;
-  rolloutShelfCount: number;
   towerCount: number;
 }) {
-  const levels =
-    profile.pricing.kind === "hybrid" ? shelfCount + rolloutShelfCount : shelfCount;
-  const towerGapMm =
-    profile.pricing.kind === "automatic" ? 550 : 350;
-  const serviceLengthMm =
-    profile.pricing.kind === "automatic"
-      ? 1800
-      : profile.pricing.kind === "forkliftCassette"
-        ? 900
-        : 1100;
-  const serviceWidthMm =
-    profile.pricing.kind === "automatic"
-      ? 1800
-      : profile.pricing.kind === "forkliftCassette"
-        ? 700
-        : 900;
-  const topReserveMm =
-    profile.pricing.kind === "automatic" ? 1600 : 900;
+  const model = profile.rackDimensionModel;
+  if (!model || model.kind !== "excel-automatic-sheet") {
+    return {
+      rackDimensionStatus: "engineering-check" as const
+    };
+  }
 
   return {
-    rackLengthMm:
-      lengthMm * towerCount + serviceLengthMm + Math.max(0, towerCount - 1) * towerGapMm,
-    rackWidthMm: widthMm + serviceWidthMm,
-    rackHeightMm: heightMm * levels + topReserveMm
+    rackDimensionStatus: "calculated" as const,
+    rackLengthMm: model.lengthReserveMm + lengthMm,
+    rackWidthMm: model.widthReserveMm + model.widthMultiplier * widthMm,
+    rackHeightMm:
+      model.baseHeightMm +
+      shelfCount * (heightMm + model.shelfConstructionHeightMm) +
+      model.towerHeightReserveMm * towerCount
   };
 }
 
@@ -133,15 +152,11 @@ export function calculateStorageSystem(
       profile.pricing.towerPricesByShelfCount[10] ??
       towerPriceEntries[0]?.[1] ??
       0;
-    const selectedTowerPrice =
-      profile.pricing.towerPricesByShelfCount[shelfCount] ??
-      towerPriceEntries.reduce(
-        (nearest, entry) =>
-          Math.abs(entry[0] - shelfCount) < Math.abs(nearest[0] - shelfCount)
-            ? entry
-            : nearest,
-        towerPriceEntries[0] ?? ([shelfCount, defaultTowerPrice] as const)
-      )[1];
+    const selectedTowerPrice = interpolateTierPrice(
+      towerPriceEntries,
+      shelfCount,
+      defaultTowerPrice
+    );
     const towerPrice = selectedTowerPrice * towerCount;
     const consolePrice =
       profile.pricing.consoleBasePrice *
@@ -222,32 +237,45 @@ export function calculateStorageSystem(
   }
 
   selectedOptions.forEach((option) => {
-    lineItems.push({ label: option.title, amount: option.price });
+    lineItems.push({
+      label: calculatorOptionPresentation[option.id]?.title ?? option.title,
+      amount: option.price
+    });
   });
 
   const preliminaryPrice = roundMoney(lineItems.reduce((sum, item) => sum + item.amount, 0));
-  const rackWeightWithoutLoadKg = profile.pricing.kind === "automatic" ? 3500 + 300 * shelfCount : 8500 + 100 * shelfCount;
   const totalStoredWeightKg =
     profile.pricing.kind === "hybrid"
       ? loadKg * (shelfCount + rolloutShelfCount) * towerCount
       : loadKg * shelfCount * towerCount;
-  const rackWeightWithLoadKg = rackWeightWithoutLoadKg + totalStoredWeightKg;
-  const supportLoadKg = Math.round(rackWeightWithLoadKg / 4);
+  const hasVerifiedLoadDistribution = Boolean(profile.rackDimensionModel);
+  const rackWeightWithoutLoadKg = hasVerifiedLoadDistribution
+    ? (3500 + 300 * shelfCount) * towerCount
+    : undefined;
+  const rackWeightWithLoadKg =
+    rackWeightWithoutLoadKg === undefined
+      ? undefined
+      : rackWeightWithoutLoadKg + totalStoredWeightKg;
+  const supportLoadKg = hasVerifiedLoadDistribution
+    ? Math.round((3500 + 300 * shelfCount + loadKg * shelfCount) / 4)
+    : undefined;
   const rackDimensions = calculateRackDimensions({
     profile,
     lengthMm,
     widthMm,
     heightMm,
     shelfCount,
-    rolloutShelfCount,
     towerCount
   });
   const workingCellDimensionsLabel = formatDimensions(lengthMm, widthMm, heightMm);
-  const rackDimensionsLabel = formatDimensions(
-    rackDimensions.rackLengthMm,
-    rackDimensions.rackWidthMm,
-    rackDimensions.rackHeightMm
-  );
+  const rackDimensionsLabel =
+    rackDimensions.rackDimensionStatus === "calculated"
+      ? formatDimensions(
+          rackDimensions.rackLengthMm,
+          rackDimensions.rackWidthMm,
+          rackDimensions.rackHeightMm
+        )
+      : "Уточняется после компоновки объекта";
 
   const recommendation: RecommendedConfig = {
     productType: profile.productType,
@@ -258,8 +286,10 @@ export function calculateStorageSystem(
     ],
     keyParameters: [
       `Рабочая ячейка: ${workingCellDimensionsLabel}`,
-      `Ориентировочный габарит системы: ${rackDimensionsLabel}`,
-      `Нагрузка на полку: ${loadKg} кг`,
+      rackDimensions.rackDimensionStatus === "calculated"
+        ? `Ориентировочный габарит системы: ${rackDimensionsLabel}`
+        : "Габарит системы: уточнит инженер после компоновки объекта",
+      `Нагрузка на ${loadTargetLabel(profile)}: ${loadKg} кг`,
       `Полки: ${shelfCount}`,
       `Башни: ${towerCount}`
     ],
@@ -276,12 +306,17 @@ export function calculateStorageSystem(
     fromPrice: preliminaryPrice,
     profileId: profile.id,
     sourceSheet: profile.sourceSheet,
-    selectedOptions: selectedOptions.map((option) => option.title),
+    selectedOptions: selectedOptions.map(
+      (option) => calculatorOptionPresentation[option.id]?.title ?? option.title
+    ),
     engineeringSummary: {
       dimensionsLabel: `${lengthMm}×${widthMm}×${heightMm} мм`,
       workingCellDimensionsLabel,
       rackDimensionsLabel,
       ...rackDimensions,
+      loadDistributionStatus: hasVerifiedLoadDistribution
+        ? "calculated"
+        : "engineering-check",
       totalStoredWeightKg,
       rackWeightWithoutLoadKg,
       rackWeightWithLoadKg,

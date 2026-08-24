@@ -30,6 +30,7 @@ export async function openPublicPage(page: Page, path: string) {
 export async function dismissAnalyticsPrompt(page: Page) {
   const prompt = page.getByTestId("cookie-consent");
 
+  await prompt.waitFor({ state: "visible", timeout: 1_500 }).catch(() => undefined);
   if (await prompt.isVisible()) {
     await page.getByTestId("cookie-reject").click();
     await expect(prompt).toBeHidden();

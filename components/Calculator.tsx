@@ -23,6 +23,7 @@ import {
   GalleryHorizontalEnd,
   Info,
   Layers3,
+  Mail,
   MapPin,
   MessageSquareText,
   MoveHorizontal,
@@ -31,6 +32,8 @@ import {
   Ruler,
   Send,
   ShieldCheck,
+  Phone,
+  UserRound,
   Warehouse,
   Weight,
   Workflow,
@@ -42,6 +45,7 @@ import {
   defaultCalculatorProfileId,
   getCalculatorProfile
 } from "@/data/storageSystems/excelCalculator";
+import { calculatorOptionPresentation } from "@/data/storageSystems/calculatorOptionPresentation";
 import type {
   CalculatorProfile,
   CalculatorProfileId
@@ -77,6 +81,8 @@ export interface CalculatorProductContext {
   url: string;
   image?: string;
   imageAlt?: string;
+  towerCountOptions?: readonly number[];
+  defaultTowerCount?: number;
 }
 
 const profileCopy: Record<
@@ -145,14 +151,6 @@ const profileCopy: Record<
   }
 };
 
-const optionCopy: Record<string, string> = {
-  scale: "Весы на распалетчик",
-  "infrared-safety": "Инфракрасные ограждения безопасности",
-  "vacuum-grip": "Вакуумный захват",
-  "swing-crane": "Консольно-поворотный кран",
-  "warehouse-accounting": "Передача данных в складской учёт"
-};
-
 const dimensionHints = {
   heightMm:
     "Высота ячейки или полезного пространства под материал. Выберите ближайший ходовой вариант.",
@@ -162,11 +160,11 @@ const dimensionHints = {
   loadKg:
     "Расчётная нагрузка на одну полку или кассету. Финальный запас проверит инженер.",
   shelfCount:
-    "Количество уровней хранения в одной башне или секции системы.",
+    "Количество полок в одной башне. Для автоматических систем доступны ходовые значения от 6 до 25 полок.",
   rolloutShelfCount:
     "Количество выкатных кассет для прямого доступа к материалу.",
   towerCount:
-    "Количество башен или секций. Больше секций — выше вместимость."
+    "Количество башен системы. Для Compact и Logic оно фиксировано, для Spider и Cross можно добавить башни."
 };
 
 const guidedChoices: Array<{
@@ -342,13 +340,25 @@ export function Calculator({
   profiles?: readonly CalculatorProfile[];
   productContext?: CalculatorProductContext;
 }) {
-  const [step, setStep] = useState(0);
-  const [input, setInput] = useState<CalculatorInput>(() =>
-    buildInputForProfile(
+  const firstVisibleStep = productContext ? 1 : 0;
+  const visibleSteps = productContext ? steps.slice(1) : steps;
+  const [step, setStep] = useState(firstVisibleStep);
+  const [input, setInput] = useState<CalculatorInput>(() => {
+    const initialInput = buildInputForProfile(
       profiles[0]?.id ?? defaultCalculatorProfileId,
       profiles
-    )
-  );
+    );
+    const preferredTowerCount = productContext?.defaultTowerCount;
+
+    if (!preferredTowerCount) return initialInput;
+
+    return {
+      ...initialInput,
+      towerCount: preferredTowerCount,
+      totalStorageWeightKg:
+        initialInput.loadKg * initialInput.shelfCount * preferredTowerCount
+    };
+  });
   const [contact, setContact] = useState({
     name: "",
     phone: "",
@@ -360,10 +370,12 @@ export function Calculator({
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [submittingLead, setSubmittingLead] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [mobileSummaryVisible, setMobileSummaryVisible] = useState(false);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [customCondition, setCustomCondition] = useState("");
   const formStartedAt = useRef<number>(Date.now());
   const calculatorStarted = useRef(false);
+  const calculatorRootRef = useRef<HTMLElement>(null);
   const leadFormRef = useRef<HTMLFormElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const mobileSummaryTriggerRef = useRef<HTMLButtonElement>(null);
@@ -374,6 +386,10 @@ export function Calculator({
     () => getCalculatorProfile(input.systemId, profiles),
     [input.systemId, profiles]
   );
+  const towerCountOptions =
+    productContext?.towerCountOptions?.length
+      ? productContext.towerCountOptions
+      : profile.towerCountOptions;
   const shelfCountOptions =
     profile.pricing.kind === "hybrid" && profile.maxCombinedShelfCount
       ? profile.shelfCountOptions.filter(
@@ -475,7 +491,7 @@ export function Calculator({
   const storedWeightLabel =
     result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel =
-    result.engineeringSummary.supportLoadKg.toLocaleString("ru-RU");
+    result.engineeringSummary.supportLoadKg?.toLocaleString("ru-RU");
   const shelfFieldTitle =
     profile.pricing.kind === "hybrid"
       ? "Полки под погрузчик"
@@ -483,7 +499,7 @@ export function Calculator({
         ? "Выкатные кассеты"
         : profile.pricing.kind === "forkliftCassette"
           ? "Кассеты под погрузчик"
-          : "Уровни хранения";
+          : "Кол-во полок";
   const shelfFieldHint =
     profile.pricing.kind === "hybrid"
       ? "Количество обычных полок, которые обслуживаются погрузчиком. Выкатные кассеты выбираются отдельным параметром ниже."
@@ -492,6 +508,22 @@ export function Calculator({
         : profile.pricing.kind === "forkliftCassette"
           ? "Количество кассетных уровней, рассчитанных на обслуживание погрузчиком."
           : dimensionHints.shelfCount;
+  const loadFieldTitle =
+    profile.pricing.kind === "forkliftCassette"
+      ? "Нагрузка на кассету"
+      : profile.pricing.kind === "rollout"
+        ? "Нагрузка на выкатную кассету"
+        : profile.pricing.kind === "hybrid"
+          ? "Нагрузка на полку / кассету"
+          : "Нагрузка на полку";
+  const loadFactLabel =
+    profile.pricing.kind === "forkliftCassette"
+      ? "кг на кассету"
+      : profile.pricing.kind === "rollout"
+        ? "кг на выкатную кассету"
+        : profile.pricing.kind === "hybrid"
+          ? "кг на полку / кассету"
+          : "кг на полку";
   const storageFormatLabel =
     profile.pricing.kind === "hybrid"
       ? `${input.shelfCount.toLocaleString(
@@ -503,10 +535,10 @@ export function Calculator({
         ? `${input.shelfCount.toLocaleString("ru-RU")} выкатных кассет`
         : profile.pricing.kind === "forkliftCassette"
           ? `${input.shelfCount.toLocaleString("ru-RU")} кассет под погрузчик`
-          : `${input.shelfCount.toLocaleString("ru-RU")} уровней хранения`;
+          : `${input.shelfCount.toLocaleString("ru-RU")} полок`;
   const summaryFacts = [
     storageFormatLabel,
-    `До ${input.loadKg.toLocaleString("ru-RU")} кг на уровень`,
+    `До ${input.loadKg.toLocaleString("ru-RU")} ${loadFactLabel}`,
     `Габарит системы: ${result.engineeringSummary.rackDimensionsLabel}`,
     `Рабочая ячейка: ${result.engineeringSummary.workingCellDimensionsLabel}`
   ];
@@ -514,15 +546,33 @@ export function Calculator({
     { label: "Вместимость", value: storageFormatLabel },
     {
       label: "Нагрузка",
-      value: `${input.loadKg.toLocaleString("ru-RU")} кг на уровень`
+      value: `${input.loadKg.toLocaleString("ru-RU")} ${loadFactLabel}`
     },
     {
       label: "Габарит системы",
-      value: result.engineeringSummary.rackDimensionsLabel
+      value:
+        result.engineeringSummary.rackDimensionStatus === "calculated" &&
+        typeof result.engineeringSummary.rackHeightMm === "number" &&
+        typeof result.engineeringSummary.rackLengthMm === "number" &&
+        typeof result.engineeringSummary.rackWidthMm === "number" ? (
+        <DimensionsValue
+          heightMm={result.engineeringSummary.rackHeightMm}
+          lengthMm={result.engineeringSummary.rackLengthMm}
+          widthMm={result.engineeringSummary.rackWidthMm}
+        />
+      ) : (
+        "Уточнит инженер после компоновки объекта"
+      )
     },
     {
       label: "Рабочая ячейка",
-      value: result.engineeringSummary.workingCellDimensionsLabel
+      value: (
+        <DimensionsValue
+          heightMm={input.heightMm}
+          lengthMm={input.lengthMm}
+          widthMm={input.widthMm}
+        />
+      )
     }
   ];
 
@@ -552,6 +602,31 @@ export function Calculator({
 
   useEffect(() => {
     captureLeadUtm();
+  }, []);
+
+  useEffect(() => {
+    const root = calculatorRootRef.current;
+    if (!root) return;
+
+    let frame = 0;
+    const updateVisibility = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = root.getBoundingClientRect();
+        const isVisible = rect.bottom > 72 && rect.top < window.innerHeight - 32;
+        setMobileSummaryVisible(isVisible);
+        if (!isVisible) setMobileSummaryOpen(false);
+      });
+    };
+
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -598,7 +673,10 @@ export function Calculator({
         towerCount: input.towerCount,
         options: profile.options
           .filter((option) => input.optionIds.includes(option.id))
-          .map((option) => optionCopy[option.id] ?? option.title)
+          .map(
+            (option) =>
+              calculatorOptionPresentation[option.id]?.title ?? option.title
+          )
       },
       preliminaryPriceFrom: result.fromPrice,
       sourceTitle: leadSourceTitle,
@@ -623,7 +701,10 @@ export function Calculator({
   }
 
   function goToStep(nextStep: number, source: string) {
-    const normalizedStep = Math.max(0, Math.min(nextStep, steps.length - 1));
+    const normalizedStep = Math.max(
+      firstVisibleStep,
+      Math.min(nextStep, steps.length - 1)
+    );
     if (normalizedStep === step) return;
 
     markCalculatorStarted(source);
@@ -761,7 +842,8 @@ export function Calculator({
             rolloutShelfCount: input.rolloutShelfCount,
             towerCount: input.towerCount,
             options: selectedOptions.map(
-              (option) => optionCopy[option.id] ?? option.title
+              (option) =>
+                calculatorOptionPresentation[option.id]?.title ?? option.title
             )
           },
           preliminaryPriceFrom: result.fromPrice,
@@ -843,7 +925,8 @@ export function Calculator({
 
   return (
     <section
-      className={styles.root}
+      ref={calculatorRootRef}
+      className={`${styles.root}${productContext ? ` ${styles.productCalculator}` : ""}`}
       data-character={profile.productType}
       data-testid="calculator"
       data-ui="calculator-v4"
@@ -858,35 +941,35 @@ export function Calculator({
         {priceLabel}
       </output>
       <div className={styles.inner}>
-        <header className={styles.header}>
-          <span className={styles.eyebrow}>
-            {productContext ? "Калькулятор модели" : "Предварительный подбор"}
-          </span>
-          <h2>
-            {productContext
-              ? "Настройте комплектацию и получите ориентир по цене"
-              : "Система хранения и ориентир по цене за 3 шага"}
-          </h2>
-          <p>
-            {productContext
-              ? "Калькулятор уже настроен для выбранной модели. Укажите рабочие параметры — стоимость обновится сразу, а инженер проверит результат."
-              : "Выберите оборудование и рабочие параметры. Калькулятор сразу пересчитает бюджет, а инженер проверит конфигурацию перед предложением."}
-          </p>
-          <div className={styles.trustRow} aria-label="Преимущества расчёта">
-            <span>
-              <Gauge size={16} /> Цена обновляется сразу
-            </span>
-            <span>
-              <ShieldCheck size={16} /> Итог проверит инженер
-            </span>
-          </div>
-        </header>
+        {productContext ? (
+          <h2 className={styles.visuallyHidden}>Параметры комплектации</h2>
+        ) : (
+          <header className={styles.header}>
+            <span className={styles.eyebrow}>Предварительный подбор</span>
+            <h2>Система хранения и ориентир по цене за 3 шага</h2>
+            <p>
+              Выберите оборудование и рабочие параметры. Калькулятор сразу
+              пересчитает бюджет, а инженер проверит конфигурацию перед
+              предложением.
+            </p>
+            <div className={styles.trustRow} aria-label="Преимущества расчёта">
+              <span>
+                <Gauge size={16} /> Цена обновляется сразу
+              </span>
+              <span>
+                <ShieldCheck size={16} /> Итог проверит инженер
+              </span>
+            </div>
+          </header>
+        )}
 
         <CalculatorV4Progress
-          currentStep={step}
-          steps={steps}
+          currentStep={step - firstVisibleStep}
+          steps={visibleSteps}
           price={priceNumber}
-          onStepChange={(nextStep) => goToStep(nextStep, "step_tab")}
+          onStepChange={(nextStep) =>
+            goToStep(nextStep + firstVisibleStep, "step_tab")
+          }
         />
 
         <div className={styles.layout}>
@@ -1058,7 +1141,9 @@ export function Calculator({
                 <div className={styles.panelHeading}>
                   <Ruler aria-hidden="true" size={22} />
                   <div>
-                    <span>Шаг 2 из 3</span>
+                    <span>
+                      {productContext ? "Шаг 1 из 2" : "Шаг 2 из 3"}
+                    </span>
                     <h3>Параметры системы</h3>
                     <p>
                       Выбирайте ближайшие рабочие значения — расчёт обновляется
@@ -1073,11 +1158,36 @@ export function Calculator({
                 >
                   <div>
                     <span>Рабочая ячейка</span>
-                    <strong>{result.engineeringSummary.workingCellDimensionsLabel}</strong>
+                    <strong>
+                      <DimensionsValue
+                        heightMm={input.heightMm}
+                        lengthMm={input.lengthMm}
+                        widthMm={input.widthMm}
+                      />
+                    </strong>
                   </div>
                   <div>
                     <span>Габарит системы</span>
-                    <strong>{result.engineeringSummary.rackDimensionsLabel}</strong>
+                    <strong>
+                      {result.engineeringSummary.rackDimensionStatus ===
+                        "calculated" &&
+                      typeof result.engineeringSummary.rackHeightMm ===
+                        "number" &&
+                      typeof result.engineeringSummary.rackLengthMm ===
+                        "number" &&
+                      typeof result.engineeringSummary.rackWidthMm ===
+                        "number" ? (
+                        <DimensionsValue
+                          heightMm={result.engineeringSummary.rackHeightMm}
+                          lengthMm={result.engineeringSummary.rackLengthMm}
+                          widthMm={result.engineeringSummary.rackWidthMm}
+                        />
+                      ) : (
+                        <span className={styles.engineeringValue}>
+                          Уточнит инженер
+                        </span>
+                      )}
+                    </strong>
                   </div>
                   <div>
                     <span>Нагрузка</span>
@@ -1105,7 +1215,7 @@ export function Calculator({
                         title="Длина"
                         hint={dimensionHints.lengthMm}
                         unit="мм"
-                        ruler
+                        layout="dimension"
                         values={profile.lengthOptions.map(
                           (option) => option.value
                         )}
@@ -1118,7 +1228,7 @@ export function Calculator({
                         title="Ширина"
                         hint={dimensionHints.widthMm}
                         unit="мм"
-                        ruler
+                        layout="dimension"
                         values={profile.widthOptions.map(
                           (option) => option.value
                         )}
@@ -1131,7 +1241,7 @@ export function Calculator({
                         title="Полезная высота"
                         hint={dimensionHints.heightMm}
                         unit="мм"
-                        ruler
+                        layout="dimension"
                         values={profile.heightOptions.map(
                           (option) => option.value
                         )}
@@ -1141,7 +1251,7 @@ export function Calculator({
                         }
                       />
                       <ChoiceField
-                        title="Вес на уровень"
+                        title={loadFieldTitle}
                         hint={dimensionHints.loadKg}
                         unit="кг"
                         values={profile.loadOptions.map(
@@ -1160,7 +1270,7 @@ export function Calculator({
                       <span>02</span>
                       <div>
                         <h4>Вместимость и доступ</h4>
-                        <p>Количество уровней и секций системы.</p>
+                        <p>Настройте вместимость и количество башен.</p>
                       </div>
                     </div>
                     <div className={styles.fieldStack}>
@@ -1175,10 +1285,14 @@ export function Calculator({
                         }
                       />
                       <ChoiceField
-                        title="Секции системы"
-                        hint={dimensionHints.towerCount}
+                        title="Кол-во башен"
+                        hint={
+                          towerCountOptions.length === 1
+                            ? "Для этой модели количество башен фиксировано."
+                            : dimensionHints.towerCount
+                        }
                         unit="шт."
-                        values={profile.towerCountOptions}
+                        values={towerCountOptions}
                         active={input.towerCount}
                         onSelect={(value) =>
                           setNumberField("towerCount", value)
@@ -1237,6 +1351,9 @@ export function Calculator({
                   <div className={styles.optionGrid}>
                     {profile.options.map((option) => {
                       const active = input.optionIds.includes(option.id);
+                      const presentation =
+                        calculatorOptionPresentation[option.id];
+                      const optionImage = presentation?.image ?? option.image;
                       return (
                         <button
                           aria-pressed={active}
@@ -1249,14 +1366,39 @@ export function Calculator({
                           type="button"
                           onClick={() => toggleOption(option.id)}
                         >
-                          <span className={styles.optionCheck}>
-                            <Check aria-hidden="true" size={15} />
-                          </span>
-                          <span>
+                          {optionImage ? (
+                            <span className={styles.optionVisual}>
+                              <img
+                                alt={
+                                  presentation?.imageAlt ??
+                                  option.imageAlt ??
+                                  option.title
+                                }
+                                decoding="async"
+                                height={720}
+                                loading="lazy"
+                                src={optionImage}
+                                width={720}
+                              />
+                              <span className={styles.optionCheck}>
+                                <Check aria-hidden="true" size={15} />
+                              </span>
+                            </span>
+                          ) : (
+                            <span className={styles.optionCheck}>
+                              <Check aria-hidden="true" size={15} />
+                            </span>
+                          )}
+                          <span className={styles.optionCopy}>
                             <strong>
-                              {optionCopy[option.id] ?? option.title}
+                              {presentation?.title ?? option.title}
                             </strong>
                             <small>+ {formatRub(option.price)}</small>
+                            <span>
+                              {presentation?.description ??
+                                option.description ??
+                                "Оснащение добавляется в выбранную комплектацию."}
+                            </span>
                           </span>
                         </button>
                       );
@@ -1359,9 +1501,11 @@ export function Calculator({
                   <div>
                     <strong>Что проверит инженер</strong>
                     <p>
-                      Нагрузку {storedWeightLabel} кг, ориентир на опору{" "}
-                      {supportLoadLabel} кг, основание, способ загрузки,
-                      безопасность монтажа и доставку.
+                      {supportLoadLabel
+                        ? `Нагрузку ${storedWeightLabel} кг и ориентир ${supportLoadLabel} кг на опору, `
+                        : `Нагрузку ${storedWeightLabel} кг и распределение по опорам, `}
+                      основание, способ загрузки, безопасность монтажа и
+                      доставку.
                     </p>
                   </div>
                 </div>
@@ -1382,7 +1526,9 @@ export function Calculator({
 
                   <div className={styles.contactGrid}>
                     <label className={styles.formField}>
-                      <span>Ваше имя</span>
+                      <span>
+                        <UserRound size={15} /> Ваше имя
+                      </span>
                       <input
                         autoComplete="name"
                         data-testid="calculator-name"
@@ -1395,11 +1541,13 @@ export function Calculator({
                             name: event.target.value
                           }))
                         }
-                        placeholder="Иван Смирнов"
+                        placeholder="Например, Иван Смирнов"
                       />
                     </label>
                     <label className={styles.formField}>
-                      <span>Телефон *</span>
+                      <span>
+                        <Phone size={15} /> Телефон *
+                      </span>
                       <input
                         autoComplete="tel"
                         data-testid="calculator-phone"
@@ -1415,11 +1563,13 @@ export function Calculator({
                             phone: event.target.value
                           }))
                         }
-                        placeholder="+7 (999) 999-99-99"
+                        placeholder="+7 (___) ___-__-__"
                       />
                     </label>
                     <label className={styles.formField}>
-                      <span>Почта</span>
+                      <span>
+                        <Mail size={15} /> Электронная почта
+                      </span>
                       <input
                         autoComplete="email"
                         maxLength={254}
@@ -1432,7 +1582,7 @@ export function Calculator({
                             email: event.target.value
                           }))
                         }
-                        placeholder="name@company.ru"
+                        placeholder="Например, name@company.ru"
                       />
                     </label>
                     <label className={styles.formField}>
@@ -1451,7 +1601,7 @@ export function Calculator({
                             city: event.target.value
                           }))
                         }
-                        placeholder="Начните вводить город"
+                        placeholder="Например, Ногинск"
                       />
                       <datalist id="calculator-city-suggestions">
                         {citySuggestions.map((city) => (
@@ -1460,7 +1610,9 @@ export function Calculator({
                       </datalist>
                     </label>
                     <label className={styles.formField}>
-                      <span>Адрес объекта</span>
+                      <span>
+                        <Warehouse size={15} /> Адрес объекта
+                      </span>
                       <input
                         autoComplete="street-address"
                         maxLength={240}
@@ -1472,7 +1624,7 @@ export function Calculator({
                             address: event.target.value
                           }))
                         }
-                        placeholder="Адрес или ориентир"
+                        placeholder="Улица, дом или ориентир для подъезда"
                       />
                     </label>
                     <label
@@ -1491,7 +1643,7 @@ export function Calculator({
                             comment: event.target.value
                           }))
                         }
-                        placeholder="Особенности загрузки, монтажа или сроков"
+                        placeholder="Например: загрузка кран-балкой, нужен монтаж до сентября"
                       />
                     </label>
                   </div>
@@ -1573,7 +1725,7 @@ export function Calculator({
             )}
 
             <div className={styles.controls}>
-              {step > 0 && (
+              {step > firstVisibleStep && (
                 <button
                   className={styles.backButton}
                   type="button"
@@ -1586,6 +1738,7 @@ export function Calculator({
               {step < steps.length - 1 && (
                 <button
                   className={styles.nextButton}
+                  data-testid="calculator-next"
                   type="button"
                   onClick={() => goToStep(step + 1, "next_button")}
                 >
@@ -1652,29 +1805,35 @@ export function Calculator({
         </div>
       </div>
 
-      <div className={styles.mobileBar} aria-label="Краткий итог расчёта">
-        <button
-          className={styles.mobilePrice}
-          ref={mobileSummaryTriggerRef}
-          type="button"
-          onClick={() => setMobileSummaryOpen(true)}
+      {mobileSummaryVisible && (
+        <div
+          className={styles.mobileBar}
+          aria-label="Краткий итог расчёта"
+          data-testid="calculator-mobile-bar"
         >
-          <strong>{renderPrice()}</strong>
-          <small>{display.shortTitle}</small>
-        </button>
-        <button
-          className={styles.mobileAction}
-          type="button"
-          onClick={() =>
-            step < steps.length - 1
-              ? goToStep(step + 1, "mobile_next")
-              : focusLeadForm()
-          }
-        >
-          {step < steps.length - 1 ? "Далее" : "К заявке"}
-          <ArrowRight size={16} />
-        </button>
-      </div>
+          <button
+            className={styles.mobilePrice}
+            ref={mobileSummaryTriggerRef}
+            type="button"
+            onClick={() => setMobileSummaryOpen(true)}
+          >
+            <strong>{renderPrice()}</strong>
+            <small>{display.shortTitle}</small>
+          </button>
+          <button
+            className={styles.mobileAction}
+            type="button"
+            onClick={() =>
+              step < steps.length - 1
+                ? goToStep(step + 1, "mobile_next")
+                : focusLeadForm()
+            }
+          >
+            {step < steps.length - 1 ? "Далее" : "К заявке"}
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      )}
 
       {mobileSummaryOpen && (
         <div
@@ -1737,6 +1896,24 @@ export function Calculator({
         </div>
       )}
     </section>
+  );
+}
+
+function DimensionsValue({
+  heightMm,
+  lengthMm,
+  widthMm
+}: {
+  heightMm: number;
+  lengthMm: number;
+  widthMm: number;
+}) {
+  return (
+    <span className={styles.dimensionsValue}>
+      <span>{lengthMm.toLocaleString("ru-RU")}</span>
+      <span>× {widthMm.toLocaleString("ru-RU")}</span>
+      <span>× {heightMm.toLocaleString("ru-RU")} мм</span>
+    </span>
   );
 }
 

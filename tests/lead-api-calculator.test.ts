@@ -139,7 +139,9 @@ describe("calculator lead server integrity", () => {
     };
     const telegramMessage = telegramBody.text ?? telegramBody.caption ?? "";
 
-    expect(telegramMessage).toContain("Весы на распалетчик");
+    expect(telegramMessage).toContain(
+      "Контроль веса на загрузочной станции"
+    );
     expect(telegramMessage).toContain("Вакуумный захват");
     expect(telegramMessage).not.toContain(forgedLabel);
     expect(telegramMessage).toContain(serverResult.recommendation.title);

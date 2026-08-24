@@ -10,7 +10,7 @@ export function CalculatorV4ChoiceField({
   unit,
   values,
   active,
-  ruler = false,
+  layout = "standard",
   onSelect
 }: {
   title: string;
@@ -18,7 +18,7 @@ export function CalculatorV4ChoiceField({
   unit: string;
   values: readonly number[];
   active: number;
-  ruler?: boolean;
+  layout?: "standard" | "dimension";
   onSelect: (value: number) => void;
 }) {
   const hintId = useId();
@@ -52,7 +52,7 @@ export function CalculatorV4ChoiceField({
       <div
         className={styles.choiceGrid}
         data-count={values.length}
-        data-layout={ruler ? "dimension" : "standard"}
+        data-layout={layout}
         role="group"
         aria-label={title}
       >

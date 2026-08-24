@@ -60,6 +60,10 @@ export interface CatalogProduct extends SeoOverrides {
    * - pageMode "configurator": product page renders a calculator bound to this profile.
    */
   calculatorProfileId?: CalculatorProfileId;
+  /** Допустимое количество башен именно для этой товарной модели. */
+  calculatorTowerCountOptions?: readonly number[];
+  /** Начальное количество башен на странице товара. */
+  calculatorDefaultTowerCount?: number;
   priceMode: ProductPriceMode;
   /** Минимальная цена «от X». Используется в Schema.org Product Offer. */
   priceFrom?: number;
@@ -161,6 +165,8 @@ export const catalogProducts: CatalogProduct[] = [
     ],
     pageMode: "configurator",
     calculatorProfileId: "auto-sheet-metal",
+    calculatorTowerCountOptions: [1],
+    calculatorDefaultTowerCount: 1,
     priceMode: "request",
     badge: "Товар",
     summary: "Компактная автоматизированная система для хранения листового металла формата 3000x1500.",
@@ -200,6 +206,8 @@ export const catalogProducts: CatalogProduct[] = [
     ],
     pageMode: "configurator",
     calculatorProfileId: "auto-sheet-metal",
+    calculatorTowerCountOptions: [1],
+    calculatorDefaultTowerCount: 1,
     priceMode: "request",
     badge: "Товар",
     summary: "Стандартное решение для автоматизированного хранения листового металла и подачи в производство.",
@@ -239,6 +247,8 @@ export const catalogProducts: CatalogProduct[] = [
     ],
     pageMode: "configurator",
     calculatorProfileId: "auto-sheet-metal",
+    calculatorTowerCountOptions: [2, 3, 4, 5, 6],
+    calculatorDefaultTowerCount: 2,
     priceMode: "request",
     badge: "Товар",
     summary: "Гибкая автоматизированная система хранения листового металла для сложных производственных сценариев.",
@@ -277,6 +287,8 @@ export const catalogProducts: CatalogProduct[] = [
     ],
     pageMode: "configurator",
     calculatorProfileId: "auto-sheet-metal",
+    calculatorTowerCountOptions: [2, 3, 4, 5, 6],
+    calculatorDefaultTowerCount: 2,
     priceMode: "request",
     badge: "Товар",
     summary: "Автоматизированная система для хранения листового металла с удобной подачей и организацией складского потока.",

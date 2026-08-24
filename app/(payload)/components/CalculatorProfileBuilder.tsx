@@ -266,8 +266,8 @@ export function CalculatorProfileBuilder() {
         <div className="kb-calc-builder__selection">
           <CheckCircle2 size={16} aria-hidden />
           <span>
-            Будут скопированы размеры, нагрузки, цены, количества уровней,
-            секций и опции. <b>{kindLabel(selectedProfile.kind)}</b>.
+            Будут скопированы размеры, нагрузки, цены, количество полок,
+            кассет, башен и опции. <b>{kindLabel(selectedProfile.kind)}</b>.
           </span>
         </div>
       ) : null}

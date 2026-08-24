@@ -191,31 +191,42 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         <span>{product.title}</span>
       </div>
 
-      <section className="product-hero product-first-fold">
+      <section
+        className={`product-hero product-first-fold${hasProductCalculator ? " is-configurator" : ""}`}
+      >
         <ProductGallery
           badge={product.badge}
           images={productGallery}
           title={product.title}
         />
         <div className="product-hero-copy product-title-strip">
-          <span className="line-kicker">Карточка оборудования</span>
+          <span className="line-kicker">
+            {hasProductCalculator ? "Система хранения" : "Оборудование"}
+          </span>
           <h1>{product.title}</h1>
           <p>{product.summary}</p>
-          <div className="product-hero-points" aria-label="Что учтем при подборе">
-            <span><Ruler size={16} /> Размеры склада</span>
-            <span><ShieldCheck size={16} /> Рабочую нагрузку</span>
-            <span><PackageCheck size={16} /> Способ загрузки</span>
-          </div>
-          <div className="product-price-row">
-            {product.pageMode === "configurator" ? (
-              <strong>Стоимость рассчитывается ниже</strong>
-            ) : (
-              <strong>{getProductPriceLabel(product)}</strong>
-            )}
-            <a className="line-primary" href={hasProductCalculator ? "#product-configurator" : "#product-request"}>
-              {hasProductCalculator ? "Настроить параметры" : "Оставить заявку"}
-            </a>
-          </div>
+          {hasProductCalculator ? (
+            <div className="product-price-row">
+              <strong>Рассчитайте свою комплектацию</strong>
+              <a className="line-primary" href="#product-configurator">
+                К параметрам
+              </a>
+            </div>
+          ) : (
+            <>
+              <div className="product-hero-points" aria-label="Что учтем при подборе">
+                <span><Ruler size={16} /> Размеры склада</span>
+                <span><ShieldCheck size={16} /> Рабочую нагрузку</span>
+                <span><PackageCheck size={16} /> Способ загрузки</span>
+              </div>
+              <div className="product-price-row">
+                <strong>{getProductPriceLabel(product)}</strong>
+                <a className="line-primary" href="#product-request">
+                  Оставить заявку
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -227,7 +238,9 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
               title: product.title,
               url: productUrl,
               image: product.image,
-              imageAlt: product.imageAlt
+              imageAlt: product.imageAlt,
+              towerCountOptions: product.calculatorTowerCountOptions,
+              defaultTowerCount: product.calculatorDefaultTowerCount
             }}
           />
         </div>

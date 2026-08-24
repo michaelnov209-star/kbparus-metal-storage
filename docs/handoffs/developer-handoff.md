@@ -37,13 +37,13 @@ npm run build                   # production-сборка Next.js
 | Next.js | 16.2.x | App Router, SSG/ISR, API Routes |
 | React | 19.2.x | UI |
 | TypeScript | 5.9 (strict) | Типизация |
-| Payload CMS | 3.84.x | Headless CMS, админка `/admin` |
-| `@payloadcms/db-postgres` + Drizzle | 3.84.x | Postgres-адаптер |
+| Payload CMS | 3.88.x | Headless CMS, админка `/admin` |
+| `@payloadcms/db-postgres` + Drizzle | 3.88.x | Postgres-адаптер |
 | Neon Postgres | — | База данных через Vercel Marketplace |
 | Vercel Blob | — | Хранилище медиа (через `@payloadcms/storage-vercel-blob`) |
 | lucide-react | 1.x | Иконки |
 | Vitest | 4.x | Юнит-тесты |
-| Node | `22.x` (exact pin) | Runtime |
+| Node | `24.x` (exact pin) | Runtime |
 
 Принципы: чистый CSS (нет Tailwind), нет CSS-in-JS, ESM-пакет (`"type": "module"`).
 
@@ -133,11 +133,11 @@ npm run build                   # production-сборка Next.js
 │
 ├── docs/                               # Документация (см. docs/README.md)
 ├── .env.example
-├── .nvmrc                              # 22
+├── .nvmrc                              # 24
 ├── next.config.mjs                     # security headers + withPayload
 ├── payload.config.ts                   # Главная конфигурация Payload
 ├── vercel.json                         # buildCommand + cache headers
-├── package.json                        # engines.node = "22.x", "type": "module"
+├── package.json                        # engines.node = "24.x", "type": "module"
 ├── tsconfig.json
 └── vitest.config.ts
 ```
@@ -150,7 +150,7 @@ npm run build                   # production-сборка Next.js
 
 1. **Каталог** — 17 категорий промышленных систем хранения металла.
 2. **Калькулятор** — единый 3-шаговый интерфейс: профиль → параметры → ориентировочная цена. На товарной странице профиль закреплён за конкретной моделью, но остальные функции совпадают с главной.
-3. **Лиды** — `POST /api/leads` принимает заявку, шлёт в Bitrix24 (или mock) и Telegram-чат менеджеров.
+3. **Лиды** — `POST /api/leads` валидирует и повторно рассчитывает заявку, затем сохраняет/доставляет её в настроенные реальные каналы.
 4. **Доверие** — описания, фото, FAQ, контакты, кейсы, география.
 
 ### Правило калькулятора
@@ -169,11 +169,11 @@ npm run build                   # production-сборка Next.js
   utm?: { source, medium, campaign, content, term }
 }
 
-// Mock-режим (нет BITRIX24_WEBHOOK_URL и TELEGRAM_BOT_TOKEN)
-{ ok: true, mode: "mock", payload: { ... } }
-
 // Реальная доставка
-{ ok: true, bitrix24Id: 123 }
+{ ok: true, mode: "accepted" }
+
+// Ни один канал не принял заявку
+{ ok: false, code: "delivery_unavailable" } // HTTP 503
 ```
 
 Защита: rate-limit 5 req/min/IP (in-memory), honeypot, speed-trap (≥2 сек на форму), серверная валидация телефона/email, anti-double-submit на клиенте.
@@ -226,7 +226,7 @@ next build
 
 ### Что делает каждый шаг
 
-1. **`cms:check`** — 13 assertions: env vars (`PAYLOAD_SECRET≥32`, DB URL, unpooled URL, BLOB token), наличие файлов, контент `importMap.ts` (должен содержать VercelBlobClientUploadHandler + Lexical), `next.config.mjs` (serverExternalPackages + withPayload), Node major = 22. Любая failed (не warn) → build aborts.
+1. **`cms:check`** — проверяет env vars (`PAYLOAD_SECRET≥32`, DB URL, unpooled URL, BLOB token), обязательные файлы, importMap, Next/Payload-конфигурацию и Node major = 24. Любая failed (не warn) → build aborts.
 2. **`cms:generate-importmap`** — на Linux/Mac запускает `npx payload generate:importmap`, который перезаписывает `app/(payload)/admin/importMap.ts`. На Windows — graceful skip с использованием закоммиченного fallback.
 3. **`cms:check`** (повторно) — на случай, если шаг 2 повёл себя странно.
 4. **`next build`** — стандартная сборка. DDL здесь запрещён.
@@ -262,11 +262,11 @@ npm run cms:admin-smoke -- <url>                        # авторизован
 | `DATABASE_URL_UNPOOLED` / `POSTGRES_URL_NON_POOLING` | Да | Direct connection к Neon (для DDL/schema push) |
 | `DATABASE_URL` / `POSTGRES_URL` | Да | Pooled connection (runtime queries) |
 | `BLOB_READ_WRITE_TOKEN` | Да | Vercel Blob storage |
-| `BITRIX24_WEBHOOK_URL` | Нет | Доставка лидов в CRM (без неё — mock) |
+| `BITRIX24_WEBHOOK_URL` | Нет | Опциональная доставка лидов в CRM |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Нет | Уведомления о новых заявках |
 | `CMS_ADMIN_SMOKE_TRANSPORT` | Нет | `fetch` (default) или `vercel-curl` для smoke |
 
-Без `BITRIX24_WEBHOOK_URL` API всё равно принимает заявки, логирует в Vercel Functions, возвращает `mode: "mock"`.
+Без Bitrix24 заявка может быть принята через CMS, email или Telegram. Если ни один реальный канал не доступен, API возвращает `503` и не показывает клиенту ложный успех.
 
 ---
 
@@ -296,7 +296,7 @@ ESM resolution в tsx loader. Фикс — `package.json` должен имет�
 
 ### Vercel выбрал Node 24 (несовместимый)
 
-`engines.node` должен быть **exact pin** (`"22.x"`), не range типа `">=22.0.0 <25.0.0"`. На range Vercel берёт максимальную версию из диапазона. `.nvmrc` тоже должен содержать `22`.
+`engines.node` должен быть **exact pin** (`"24.x"`), а `.nvmrc` — содержать `24`. Не менять runtime на диапазон без отдельной проверки Payload/Next build pipeline.
 
 ### Schema push падает с `ECONNREFUSED` или таймаутом
 
@@ -304,7 +304,7 @@ ESM resolution в tsx loader. Фикс — `package.json` должен имет�
 
 ### Bitrix24 не получает заявки
 
-`BITRIX24_WEBHOOK_URL` не задан в Vercel env vars или вебхук не имеет прав `crm.deal.add`. Проверь `/api/leads` в режиме mock — он возвращает `mode: "mock"`. Подробности — `docs/operations/cms-setup.md` и `docs/operations/telegram-bot.md`.
+`BITRIX24_WEBHOOK_URL` не задан в Vercel env vars или вебхук не имеет прав `crm.deal.add`. Проверяй структуру payload unit-тестами, а доставку — только в согласованном тестовом канале. Не отправляй реальную production-заявку без разрешения. Подробности — `docs/operations/cms-setup.md` и `docs/operations/telegram-bot.md`.
 
 ---
 

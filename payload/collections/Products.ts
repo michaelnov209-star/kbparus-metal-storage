@@ -863,7 +863,7 @@ export const Products: CollectionConfig = {
                   label: { ru: "Параметр", en: "Parameter" },
                   type: "text",
                   required: true,
-                  admin: { placeholder: "Нагрузка на уровень", ...help("Короткое и понятное название без двоеточия.") }
+                  admin: { placeholder: "Нагрузка на полку или кассету", ...help("Короткое и понятное название без двоеточия.") }
                 },
                 {
                   name: "value",

@@ -20,6 +20,14 @@ describe("Excel-based storage calculator", () => {
     expect(result.sourceSheet).toBe("Авт. скл. лист. металл");
     expect(result.fromPrice).toBe(7408000);
     expect(result.factors.dimensionFactor).toBeCloseTo(1.21);
+    expect(result.engineeringSummary).toMatchObject({
+      rackDimensionStatus: "calculated",
+      rackDimensionsLabel: "3 900×4 300×4 500 мм",
+      rackLengthMm: 3900,
+      rackWidthMm: 4300,
+      rackHeightMm: 4500,
+      loadDistributionStatus: "calculated"
+    });
     expect(result.engineeringSummary.supportLoadKg).toBe(12375);
   });
 
@@ -39,6 +47,13 @@ describe("Excel-based storage calculator", () => {
 
     expect(result.fromPrice).toBe(21387840);
     expect(result.factors.dimensionFactor).toBeCloseTo(2.662);
+    expect(result.engineeringSummary).toMatchObject({
+      rackDimensionStatus: "engineering-check",
+      rackDimensionsLabel: "Уточняется после компоновки объекта",
+      loadDistributionStatus: "engineering-check"
+    });
+    expect(result.engineeringSummary.rackLengthMm).toBeUndefined();
+    expect(result.engineeringSummary.supportLoadKg).toBeUndefined();
   });
 
   it("matches rollout cassette rack pricing from Excel", () => {
@@ -170,7 +185,7 @@ describe("Excel-based storage calculator", () => {
     );
 
     expect(result.engineeringSummary.dimensionsLabel).toBe("3100×1600×120 мм");
-    expect(result.engineeringSummary.totalStoredWeightKg).toBe(2000 * 20 * 5);
+    expect(result.engineeringSummary.totalStoredWeightKg).toBe(2000 * 18 * 5);
     expect(result.factors).toMatchObject({
       heightFactor: 1.15,
       widthFactor: 1.1,

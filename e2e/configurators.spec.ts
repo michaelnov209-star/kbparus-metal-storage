@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   CONFIGURATOR_PRODUCT_PATH,
   dismissAnalyticsPrompt,
+  expectNoHorizontalOverflow,
   openPublicPage
 } from "./helpers";
 
@@ -131,14 +132,13 @@ test("товарный калькулятор использует полный 
   const initialPrice = await price.textContent();
 
   await expectPriceOnOneLine(price);
-  await expect(calculator.getByText("Выбранная модель", { exact: true })).toBeVisible();
+  await expect(
+    calculator.getByRole("button", { name: "Параметры", exact: true })
+  ).toHaveAttribute("aria-current", "step");
   await expect(
     calculator.getByText("Выбрать точный тип системы", { exact: true })
   ).toHaveCount(0);
 
-  await calculator
-    .getByRole("button", { name: "Параметры", exact: true })
-    .click();
   await expect(calculator.getByText("Условия объекта", { exact: true })).toBeVisible();
   await calculator
     .getByRole("group", { name: "Длина" })
@@ -178,6 +178,7 @@ test("колесо мыши над правой сводкой прокручи�
   page
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280");
+  await page.route("**/api/leads", (route) => route.abort("blockedbyclient"));
   await page.setViewportSize({ width: 1600, height: 900 });
 
   for (const path of ["/#calculator", CONFIGURATOR_PRODUCT_PATH]) {
@@ -190,30 +191,29 @@ test("колесо мыши над правой сводкой прокручи�
 test("все товарные калькуляторы используют единую визуальную систему", async ({
   page
 }) => {
+  await page.route("**/api/leads", (route) => route.abort("blockedbyclient"));
+
   for (const path of calculatorProductPaths) {
     await openPublicPage(page, path);
     await dismissAnalyticsPrompt(page);
 
     const configurator = page.getByTestId("product-configurator");
     const calculator = configurator.getByTestId("calculator");
-    const primaryAction = calculator
-      .locator("button:visible")
-      .filter({ hasText: /^(Перейти к параметрам|Далее)$/ })
-      .last();
+    const primaryAction = calculator.getByTestId("calculator-next");
 
     await expect(configurator, `Нет калькулятора на ${path}`).toBeVisible();
     await expect(
       calculator.getByRole("button", { name: "Назад" }),
       `На первом шаге ${path} показана неактивная кнопка «Назад»`
     ).toHaveCount(0);
+    await expect(
+      calculator.getByRole("button", { name: "Параметры", exact: true })
+    ).toHaveAttribute("aria-current", "step");
     await expect(primaryAction).toHaveCSS(
       "background-color",
       "rgb(252, 84, 19)"
     );
-
-    await calculator
-      .getByRole("button", { name: "Параметры", exact: true })
-      .click();
+    await expectNoHorizontalOverflow(page);
 
     const specification = calculator.getByTestId(
       "calculator-live-specification"
@@ -266,4 +266,67 @@ test("все товарные калькуляторы используют ед
       `Характеристики должны находиться ниже калькулятора на ${path}`
     ).toBe(true);
   }
+});
+
+test("товарные профили ограничивают башни и показывают проверенные опции", async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280");
+  await page.route("**/api/leads", (route) => route.abort("blockedbyclient"));
+
+  const towerRules = [
+    ["/catalog/auto-sheet-metal/compact-3000x1500", 1],
+    ["/catalog/auto-sheet-metal/logic-sheet-metal-storage", 1],
+    ["/catalog/auto-sheet-metal/spider-sheet-metal-storage", 5],
+    ["/catalog/auto-sheet-metal/cross-sheet-metal-storage", 5]
+  ] as const;
+
+  for (const [path, expectedTowerChoices] of towerRules) {
+    await openPublicPage(page, path);
+    await dismissAnalyticsPrompt(page);
+
+    const calculator = page.getByTestId("calculator");
+    const towers = calculator.getByRole("group", { name: "Кол-во башен" });
+    await expect(towers.locator(":scope > button")).toHaveCount(
+      expectedTowerChoices
+    );
+  }
+
+  await openPublicPage(page, "/catalog/auto-sheet-metal/compact-3000x1500");
+  await dismissAnalyticsPrompt(page);
+  const optionImages = page
+    .getByTestId("calculator")
+    .locator('img[src*="/assets/images/calculator/options/"]');
+  await expect(optionImages).toHaveCount(5);
+
+  const imageStatus = await optionImages.evaluateAll((images) =>
+    images.map((image) => ({
+      complete: (image as HTMLImageElement).complete,
+      height: (image as HTMLImageElement).naturalHeight,
+      width: (image as HTMLImageElement).naturalWidth
+    }))
+  );
+  expect(
+    imageStatus.every(
+      (image) => image.complete && image.width > 0 && image.height > 0
+    )
+  ).toBe(true);
+});
+
+test("мобильный итог появляется только рядом с калькулятором", async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390");
+  await page.route("**/api/leads", (route) => route.abort("blockedbyclient"));
+  await openPublicPage(page, "/");
+  await dismissAnalyticsPrompt(page);
+
+  const mobileBar = page.getByTestId("calculator-mobile-bar");
+  await expect(mobileBar).toHaveCount(0);
+
+  await page.getByTestId("calculator").scrollIntoViewIfNeeded();
+  await expect(mobileBar).toBeVisible();
+
+  await page.locator("footer").scrollIntoViewIfNeeded();
+  await expect(mobileBar).toHaveCount(0);
 });

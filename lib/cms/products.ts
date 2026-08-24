@@ -549,6 +549,8 @@ export function normalizeCmsProduct(doc: CmsProductLike): CatalogProduct | null 
     galleryAlts: getGalleryAlts(doc, fallback, title),
     pageMode: asString(doc.pageMode) === "configurator" ? "configurator" : "standard",
     calculatorProfileId: calculatorProfileId as CatalogProduct["calculatorProfileId"] | undefined,
+    calculatorTowerCountOptions: fallback?.calculatorTowerCountOptions,
+    calculatorDefaultTowerCount: fallback?.calculatorDefaultTowerCount,
     modelName: asString(doc.modelName) ?? fallback?.modelName,
     operationMode:
       (asString(doc.operationMode) as CatalogProduct["operationMode"]) ??

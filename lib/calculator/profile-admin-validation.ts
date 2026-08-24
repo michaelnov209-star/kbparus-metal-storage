@@ -367,27 +367,37 @@ export function validatePublishedCalculatorProfile(
     profile.loadOptions,
     "loadOptions",
     kind === "hybrid"
-      ? "Нагрузка полок под погрузчик"
-      : "Нагрузка на уровень",
+      ? "Нагрузка на полку или кассету"
+      : kind === "forkliftCassette"
+        ? "Нагрузка на кассету"
+        : kind === "rollout"
+          ? "Нагрузка на выкатную кассету"
+          : "Нагрузка на полку",
     errors
   );
 
   const shelfCounts = validateCountRows(
     profile.shelfCountOptions,
     "shelfCountOptions",
-    kind === "hybrid" ? "Полки под погрузчик" : "Количество уровней",
+    kind === "hybrid"
+      ? "Полки под погрузчик"
+      : kind === "forkliftCassette"
+        ? "Количество кассет"
+        : kind === "rollout"
+          ? "Количество выкатных кассет"
+          : "Количество полок",
     errors
   );
   const towerCounts = validateCountRows(
     profile.towerCountOptions,
     "towerCountOptions",
-    "Количество секций",
+    "Количество башен",
     errors
   );
   const rolloutCounts = validateCountRows(
     profile.rolloutShelfCountOptions,
     "rolloutShelfCountOptions",
-    "Количество выкатных полок",
+    "Количество выкатных кассет",
     errors,
     kind === "hybrid"
   );
@@ -435,13 +445,13 @@ export function validatePublishedCalculatorProfile(
     requiredPositive(
       profile,
       "baseShelfCount",
-      "Базовое количество уровней",
+      "Базовое количество полок или кассет",
       errors
     );
     requiredPositive(
       profile,
       "extraShelfFactor",
-      "Коэффициент дополнительного уровня",
+      "Коэффициент дополнительной полки или кассеты",
       errors,
       true
     );
@@ -460,7 +470,7 @@ export function validatePublishedCalculatorProfile(
     validatePriceRows(
       profile.rolloutLoadOptions,
       "rolloutLoadOptions",
-      "Нагрузка выкатных полок",
+      "Нагрузка выкатных кассет",
       errors
     );
     requiredPositive(
@@ -512,7 +522,7 @@ export function validatePublishedCalculatorProfile(
     "shelfCount",
     new Set(shelfCounts),
     "shelfCount",
-    "Количество уровней",
+    "Количество полок или кассет",
     errors
   );
   requireDefault(
@@ -520,7 +530,7 @@ export function validatePublishedCalculatorProfile(
     "towerCount",
     new Set(towerCounts),
     "towerCount",
-    "Количество секций",
+    "Количество башен",
     errors
   );
 
@@ -533,7 +543,7 @@ export function validatePublishedCalculatorProfile(
       "rolloutShelfCount",
       new Set(rolloutCounts),
       "rolloutShelfCount",
-      "Количество выкатных полок",
+      "Количество выкатных кассет",
       errors
     );
     const maxCombined = profile.maxCombinedShelfCount;
