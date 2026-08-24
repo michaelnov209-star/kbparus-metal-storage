@@ -14,6 +14,8 @@ export function CalculatorV4Progress({
   price: string;
   onStepChange: (step: number) => void;
 }) {
+  const safePrice = price.replace(/\s/g, "\u00a0");
+
   return (
     <nav className={styles.progress} aria-label="Этапы подбора">
       <div className={styles.stepList}>
@@ -46,7 +48,7 @@ export function CalculatorV4Progress({
 
       <div className={styles.progressPrice} aria-label={`Ориентир по цене: от ${price} рублей`}>
         <span>Ориентир</span>
-        <strong>от {price} ₽</strong>
+        <strong>{`от\u00a0${safePrice}\u00a0₽`}</strong>
       </div>
 
       <div className={styles.progressLine} aria-hidden="true">

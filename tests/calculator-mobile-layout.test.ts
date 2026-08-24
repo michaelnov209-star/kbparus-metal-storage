@@ -86,6 +86,31 @@ describe("calculator v4 responsive layout contract", () => {
     expect(conditionNote).toContain("font-size: 13px");
   });
 
+  it("uses the approved orange for active actions without legacy red tokens", () => {
+    expect(css).toContain("--v4-accent: #fc5413");
+    expect(css).toMatch(
+      /\.nextButton,[\s\S]*?\.mobileAction\s*\{[\s\S]*?background: var\(--v4-accent\)/
+    );
+    expect(css).toMatch(
+      /\.nextButton,[\s\S]*?\.mobileAction\s*\{[\s\S]*?color: var\(--v4-ink\)/
+    );
+    expect(css).not.toMatch(/#(?:d83d06|c83a07|b93405)/i);
+    expect(css).not.toMatch(/--v4-accent-(?:dark|action|text):/);
+  });
+
+  it("keeps every live specification card equal and the price readable", () => {
+    const specification = rules(".liveSpecification");
+    const priceParts = rules(".liveSpecification .priceValue > span");
+
+    expect(specification).toContain(
+      "grid-template-columns: repeat(4, minmax(0, 1fr))"
+    );
+    expect(css).toContain(".liveSpecification > div > span");
+    expect(css).not.toContain(".liveSpecification span {");
+    expect(priceParts).toContain("font-size: inherit");
+    expect(priceParts).toContain("white-space");
+  });
+
   it("provides touch-sized value chips without noisy sliders", () => {
     const choiceButton = rules(".choiceButton");
 

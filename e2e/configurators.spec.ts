@@ -42,6 +42,15 @@ async function expectPriceOnOneLine(price: ReturnType<Page["locator"]>) {
   await expect(price.locator(":scope > span").last()).toHaveText("₽");
 }
 
+const calculatorProductPaths = [
+  "/catalog/auto-sheet-metal/compact-3000x1500",
+  "/catalog/manual-sheet-metal/forklift-cassette-rack",
+  "/catalog/manual-sheet-metal/rollout-cassette-rack",
+  "/catalog/manual-sheet-metal/hybrid-rollout-rack",
+  "/catalog/manual-sheet-metal/two-side-rollout-rack",
+  "/catalog/sort-and-pipe-storage/automated-long-goods-tower"
+] as const;
+
 test("главный калькулятор меняет расчет и отправляет конфигурацию", async ({
   page
 }) => {
@@ -147,4 +156,85 @@ test("товарный калькулятор использует полный 
       title: "Кассетный стеллаж под погрузчик"
     }
   });
+});
+
+test("все товарные калькуляторы используют единую визуальную систему", async ({
+  page
+}) => {
+  for (const path of calculatorProductPaths) {
+    await openPublicPage(page, path);
+    await dismissAnalyticsPrompt(page);
+
+    const configurator = page.getByTestId("product-configurator");
+    const calculator = configurator.getByTestId("calculator");
+    const primaryAction = calculator
+      .locator("button:visible")
+      .filter({ hasText: /^(Перейти к параметрам|Далее)$/ })
+      .last();
+
+    await expect(configurator, `Нет калькулятора на ${path}`).toBeVisible();
+    await expect(
+      calculator.getByRole("button", { name: "Назад" }),
+      `На первом шаге ${path} показана неактивная кнопка «Назад»`
+    ).toHaveCount(0);
+    await expect(primaryAction).toHaveCSS(
+      "background-color",
+      "rgb(252, 84, 19)"
+    );
+
+    await calculator
+      .getByRole("button", { name: "Параметры", exact: true })
+      .click();
+
+    const specification = calculator.getByTestId(
+      "calculator-live-specification"
+    );
+    const cards = specification.locator(":scope > div");
+    const widths = await cards.evaluateAll((items) =>
+      items.map((item) => Math.round(item.getBoundingClientRect().width))
+    );
+    const valueFontSizes = await cards.locator(":scope > strong").evaluateAll(
+      (items) => items.map((item) => Number.parseFloat(getComputedStyle(item).fontSize))
+    );
+    const priceParts = cards
+      .last()
+      .locator(":scope > strong > span > span");
+    const pricePartFontSizes = await priceParts.evaluateAll((items) =>
+      items.map((item) => Number.parseFloat(getComputedStyle(item).fontSize))
+    );
+
+    expect(
+      Math.max(...widths) - Math.min(...widths),
+      `Сводные карточки имеют разную ширину на ${path}: ${widths.join(", ")}`
+    ).toBeLessThanOrEqual(2);
+    expect(new Set(valueFontSizes).size).toBe(1);
+    expect(pricePartFontSizes).toEqual([
+      valueFontSizes.at(-1),
+      valueFontSizes.at(-1),
+      valueFontSizes.at(-1)
+    ]);
+    await expectPriceOnOneLine(
+      calculator
+        .getByTestId("calculator-summary-price")
+        .locator(":scope > span")
+    );
+
+    const order = await page.evaluate(() => {
+      const configuratorElement = document.querySelector(
+        '[data-testid="product-configurator"]'
+      );
+      const detailsElement = document.querySelector(
+        '[data-testid="product-details"]'
+      );
+
+      return configuratorElement && detailsElement
+        ? configuratorElement.compareDocumentPosition(detailsElement)
+        : 0;
+    });
+
+    expect(
+      Boolean(order & 4),
+      `Характеристики должны находиться ниже калькулятора на ${path}`
+    ).toBe(true);
+  }
 });

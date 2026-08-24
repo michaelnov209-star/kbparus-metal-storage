@@ -219,7 +219,43 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
         </div>
       </section>
 
-      <section className="product-info-grid">
+      {productCalculatorProfile ? (
+        <div id="product-configurator" data-testid="product-configurator">
+          <Calculator
+            profiles={[productCalculatorProfile]}
+            productContext={{
+              title: product.title,
+              url: productUrl,
+              image: product.image,
+              imageAlt: product.imageAlt
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          <section className="standard-product-cta" id="product-request">
+            <div>
+              <Ruler size={26} />
+              <h2>Подберем исполнение под ваш склад</h2>
+              <p>Инженер уточнит габариты, нагрузку, способ загрузки, покрытие и монтаж, чтобы подготовить предложение без лишней переписки.</p>
+            </div>
+            <div>
+              <ShieldCheck size={26} />
+              <h3>Нужны исходные данные</h3>
+              <p>Размер помещения, что храните, вес пачки, способ загрузки и город поставки.</p>
+            </div>
+          </section>
+
+          <LeadForm
+            title="Получить предложение по товару"
+            sourceTitle={product.title}
+            sourceUrl={productUrl}
+            sourceImage={product.image}
+          />
+        </>
+      )}
+
+      <section className="product-info-grid" data-testid="product-details">
         <article>
           <h2>Характеристики</h2>
           <div className="product-spec-table">
@@ -270,42 +306,6 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
           </div>
         </section>
       ) : null}
-
-      {productCalculatorProfile ? (
-        <div id="product-configurator" data-testid="product-configurator">
-          <Calculator
-            profiles={[productCalculatorProfile]}
-            productContext={{
-              title: product.title,
-              url: productUrl,
-              image: product.image,
-              imageAlt: product.imageAlt
-            }}
-          />
-        </div>
-      ) : (
-        <>
-          <section className="standard-product-cta" id="product-request">
-            <div>
-              <Ruler size={26} />
-              <h2>Подберем исполнение под ваш склад</h2>
-              <p>Инженер уточнит габариты, нагрузку, способ загрузки, покрытие и монтаж, чтобы подготовить предложение без лишней переписки.</p>
-            </div>
-            <div>
-              <ShieldCheck size={26} />
-              <h3>Нужны исходные данные</h3>
-              <p>Размер помещения, что храните, вес пачки, способ загрузки и город поставки.</p>
-            </div>
-          </section>
-
-          <LeadForm
-            title="Получить предложение по товару"
-            sourceTitle={product.title}
-            sourceUrl={productUrl}
-            sourceImage={product.image}
-          />
-        </>
-      )}
     </main>
   );
 }

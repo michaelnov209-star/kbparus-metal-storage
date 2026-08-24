@@ -1067,7 +1067,10 @@ export function Calculator({
                   </div>
                 </div>
 
-                <div className={styles.liveSpecification}>
+                <div
+                  className={styles.liveSpecification}
+                  data-testid="calculator-live-specification"
+                >
                   <div>
                     <span>Рабочая ячейка</span>
                     <strong>{result.engineeringSummary.workingCellDimensionsLabel}</strong>
@@ -1570,15 +1573,16 @@ export function Calculator({
             )}
 
             <div className={styles.controls}>
-              <button
-                className={styles.backButton}
-                type="button"
-                disabled={step === 0}
-                onClick={() => goToStep(step - 1, "back_button")}
-              >
-                <ArrowLeft size={18} />
-                Назад
-              </button>
+              {step > 0 && (
+                <button
+                  className={styles.backButton}
+                  type="button"
+                  onClick={() => goToStep(step - 1, "back_button")}
+                >
+                  <ArrowLeft size={18} />
+                  Назад
+                </button>
+              )}
               {step < steps.length - 1 && (
                 <button
                   className={styles.nextButton}

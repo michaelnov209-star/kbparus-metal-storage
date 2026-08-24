@@ -1,8 +1,7 @@
 .root {
   --v4-accent: #fc5413;
-  --v4-accent-dark: #d83d06;
-  --v4-accent-action: #c83a07;
-  --v4-accent-text: #b93405;
+  --v4-accent-hover: #e64a0d;
+  --v4-accent-on-dark: #fc5413;
   --v4-accent-soft: #fff2eb;
   --v4-ink: #1a1a1a;
   --v4-copy: #3d3d3d;
@@ -60,7 +59,7 @@
   align-items: center;
   gap: 8px;
   width: fit-content;
-  color: var(--v4-accent-text);
+  color: var(--v4-copy);
   font-size: 11px;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -71,7 +70,7 @@
   width: 28px;
   height: 2px;
   content: "";
-  background: currentColor;
+  background: var(--v4-accent);
 }
 
 .header h2 {
@@ -198,8 +197,8 @@
 
 .stepButton.isActive .stepMarker {
   color: #fff;
-  background: var(--v4-accent-action);
-  border-color: var(--v4-accent-action);
+  background: var(--v4-accent);
+  border-color: var(--v4-accent);
 }
 
 .stepButton.isComplete .stepMarker {
@@ -297,7 +296,7 @@
 
 .panelHeading span,
 .formHeading > span {
-  color: var(--v4-accent-text);
+  color: var(--v4-copy);
   font-size: 10px;
   font-weight: 950;
   letter-spacing: 0.06em;
@@ -501,7 +500,7 @@
 
 .summaryAction {
   flex: 0 0 auto;
-  color: var(--v4-accent-text);
+  color: var(--v4-copy);
   font-size: 12px;
   font-weight: 900;
 }
@@ -554,7 +553,7 @@
 
 .systemType {
   width: fit-content;
-  color: var(--v4-accent-text);
+  color: var(--v4-copy);
   font-size: 9px;
   font-weight: 950;
   letter-spacing: 0.05em;
@@ -622,7 +621,7 @@
 
 .liveSpecification {
   display: grid;
-  grid-template-columns: 1.05fr 1.2fr 0.68fr 0.85fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 14px;
   padding: 8px;
@@ -641,7 +640,7 @@
   border-radius: 11px;
 }
 
-.liveSpecification span {
+.liveSpecification > div > span {
   color: rgba(255, 255, 255, 0.58);
   font-size: 9px;
   font-weight: 850;
@@ -659,7 +658,17 @@
 }
 
 .liveSpecification > div:last-child strong {
-  color: #ff9a6c;
+  color: var(--v4-accent-on-dark);
+}
+
+.liveSpecification .priceValue > span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+  line-height: inherit;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .parameterSections {
@@ -1451,17 +1460,17 @@
 .nextButton,
 .submitButton,
 .mobileAction {
-  color: #fff;
-  background: var(--v4-accent-action);
-  border: 1px solid var(--v4-accent-action);
+  color: var(--v4-ink);
+  background: var(--v4-accent);
+  border: 1px solid var(--v4-accent);
   box-shadow: 0 12px 28px rgba(252, 84, 19, 0.2);
 }
 
 .nextButton:hover,
 .submitButton:hover,
 .mobileAction:hover {
-  background: var(--v4-accent-dark);
-  border-color: var(--v4-accent-dark);
+  background: var(--v4-accent-hover);
+  border-color: var(--v4-accent-hover);
 }
 
 .nextButton {
@@ -1941,6 +1950,10 @@
     color: #fff;
     font-size: 24px;
     line-height: 1.12;
+  }
+
+  .desktopSummary .eyebrow {
+    color: rgba(255, 255, 255, 0.68);
   }
 
   .summaryImageFrame {
