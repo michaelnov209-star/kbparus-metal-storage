@@ -7,7 +7,12 @@ export const metadata: Metadata = {
   title: "Вход в панель управления — КБ Парус",
   description: "Защищённый вход в панель управления сайтом КБ Парус.",
   icons: {
-    icon: [{ url: "/brand/logo-g.png", type: "image/png" }]
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" }
+    ],
+    shortcut: "/icon.svg",
+    apple: "/brand/apple-touch-icon.png"
   },
   robots: {
     index: false,

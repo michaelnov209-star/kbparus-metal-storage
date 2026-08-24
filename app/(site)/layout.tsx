@@ -46,9 +46,13 @@ export const metadata: Metadata = {
     }
   },
   icons: {
-    icon: [{ url: "/brand/logo-g.png", type: "image/png" }],
-    shortcut: "/brand/logo-g.png",
-    apple: "/brand/logo-g.png"
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    shortcut: "/icon.svg",
+    apple: "/brand/apple-touch-icon.png"
   },
   openGraph: {
     title: "Системы хранения металла | КБ Парус",
