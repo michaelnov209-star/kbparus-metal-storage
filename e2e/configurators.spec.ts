@@ -65,6 +65,7 @@ test("главный калькулятор меняет расчет и отп�
   const lengthGroup = calculator.getByRole("group", { name: "Длина" });
   await lengthGroup.locator('button[aria-pressed="false"]').last().click();
   await expect(price).not.toHaveText(initialPrice ?? "");
+  await expectPriceOnOneLine(visibleSummaryPrice);
 
   await calculator
     .getByRole("button", { name: "Расчёт", exact: true })
@@ -116,6 +117,7 @@ test("товарный конфигуратор меняет цену и отп�
   const priceAfterDimensions = await price.textContent();
   await configurator.locator('.product-option[aria-pressed="false"]').first().click();
   await expect(price).not.toHaveText(priceAfterDimensions ?? "");
+  await expectPriceOnOneLine(price);
 
   await configurator.getByTestId("product-lead-name").fill("Автотест");
   await configurator
