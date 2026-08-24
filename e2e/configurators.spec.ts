@@ -42,6 +42,22 @@ async function expectPriceOnOneLine(price: ReturnType<Page["locator"]>) {
   await expect(price.locator(":scope > span").last()).toHaveText("₽");
 }
 
+async function expectPageWheelScrollsOverSummary(page: Page) {
+  const summary = page.getByTestId("calculator-desktop-summary");
+  await expect(summary).toBeVisible();
+  await summary.scrollIntoViewIfNeeded();
+
+  const box = await summary.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const before = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 520);
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(before + 100);
+}
+
 const calculatorProductPaths = [
   "/catalog/auto-sheet-metal/compact-3000x1500",
   "/catalog/manual-sheet-metal/forklift-cassette-rack",
@@ -156,6 +172,19 @@ test("товарный калькулятор использует полный 
       title: "Кассетный стеллаж под погрузчик"
     }
   });
+});
+
+test("колесо мыши над правой сводкой прокручивает страницу", async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280");
+  await page.setViewportSize({ width: 1600, height: 900 });
+
+  for (const path of ["/#calculator", CONFIGURATOR_PRODUCT_PATH]) {
+    await openPublicPage(page, path);
+    await dismissAnalyticsPrompt(page);
+    await expectPageWheelScrollsOverSummary(page);
+  }
 });
 
 test("все товарные калькуляторы используют единую визуальную систему", async ({

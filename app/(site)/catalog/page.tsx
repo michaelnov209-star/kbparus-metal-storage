@@ -17,6 +17,11 @@ import {
   itemListSchema,
   SITE_URL
 } from "@/lib/seo/schema";
+import {
+  SOCIAL_PREVIEW_ALT,
+  SOCIAL_PREVIEW_PATH,
+  SOCIAL_PREVIEW_SIZE
+} from "@/lib/seo/social-preview";
 
 export const revalidate = 60;
 
@@ -35,10 +40,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: `${SITE_URL}/opengraph-image`,
-        width: 1200,
-        height: 630,
-        alt: "Каталог систем хранения металла КБ Парус"
+        url: new URL(SOCIAL_PREVIEW_PATH, SITE_URL).toString(),
+        width: SOCIAL_PREVIEW_SIZE.width,
+        height: SOCIAL_PREVIEW_SIZE.height,
+        alt: SOCIAL_PREVIEW_ALT
       }
     ]
   },
@@ -47,7 +52,7 @@ export const metadata: Metadata = {
     title: "Каталог систем хранения металла | КБ Парус",
     description:
       "Подбор промышленных систем хранения листа, труб, профиля и складских грузов.",
-    images: [`${SITE_URL}/opengraph-image`]
+    images: [new URL(SOCIAL_PREVIEW_PATH, SITE_URL).toString()]
   }
 };
 

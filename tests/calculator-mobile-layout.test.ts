@@ -58,16 +58,16 @@ describe("calculator v4 responsive layout contract", () => {
       /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 96px/
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 20px/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?max-height: calc\(100svh - 120px\)/
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: visible/
+    );
+    expect(css).not.toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overscroll-behavior: contain/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: hidden/
-    );
-    expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.summaryFacts\s*\{[\s\S]*?overflow: auto/
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.summaryFacts\s*\{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?overflow: visible/
     );
     expect(image).toContain("height: clamp(320px, 25vw, 390px)");
     expect(css).toMatch(

@@ -38,7 +38,7 @@ describe("admin layout isolation", () => {
     expect(existsSync(resolve(projectRoot, "app/opengraph-image.tsx"))).toBe(
       false
     );
-    expect(publicLayout).toContain('url: "/opengraph-image"');
+    expect(publicLayout).toContain("url: SOCIAL_PREVIEW_PATH");
   });
 
   it("uses exactly one document root per route group", () => {

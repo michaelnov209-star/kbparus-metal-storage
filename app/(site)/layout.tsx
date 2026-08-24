@@ -5,6 +5,11 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { YandexMetrika } from "@/components/YandexMetrika";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
+import {
+  SOCIAL_PREVIEW_ALT,
+  SOCIAL_PREVIEW_PATH,
+  SOCIAL_PREVIEW_SIZE
+} from "@/lib/seo/social-preview";
 import { buildSearchVerificationMetadata } from "@/lib/seo/verification";
 import { getSiteContacts } from "@/lib/cms/contacts";
 
@@ -61,10 +66,10 @@ export const metadata: Metadata = {
     siteName: "КБ Парус — системы хранения металла",
     images: [
       {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "КБ Парус — системы хранения металла"
+        url: SOCIAL_PREVIEW_PATH,
+        width: SOCIAL_PREVIEW_SIZE.width,
+        height: SOCIAL_PREVIEW_SIZE.height,
+        alt: SOCIAL_PREVIEW_ALT
       }
     ],
     locale: "ru_RU",
@@ -74,7 +79,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Системы хранения металла | КБ Парус",
     description: "Каталог и калькулятор стоимости систем хранения металла.",
-    images: ["/opengraph-image"]
+    images: [SOCIAL_PREVIEW_PATH]
   },
   verification: buildSearchVerificationMetadata()
 };

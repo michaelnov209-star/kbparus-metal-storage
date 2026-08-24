@@ -1596,7 +1596,10 @@ export function Calculator({
             </div>
           </section>
 
-          <aside className={styles.desktopSummary}>
+          <aside
+            className={styles.desktopSummary}
+            data-testid="calculator-desktop-summary"
+          >
             <span className={styles.eyebrow}>Текущая конфигурация</span>
             <h3>{display.shortTitle}</h3>
             <div className={styles.summaryImageFrame}>

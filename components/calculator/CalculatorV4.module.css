@@ -1923,16 +1923,14 @@
 
   .desktopSummary {
     position: sticky;
-    top: 96px;
+    top: 20px;
     align-self: start;
     display: grid;
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-rows: repeat(7, auto);
     gap: 13px;
     width: 100%;
-    max-height: calc(100svh - 120px);
     padding: 18px;
-    overflow: hidden;
-    overscroll-behavior: contain;
+    overflow: visible;
     color: #fff;
     background:
       radial-gradient(circle at 92% 2%, rgba(252, 84, 19, 0.22), transparent 28%),
@@ -1940,8 +1938,6 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 24px;
     box-shadow: 0 28px 72px rgba(17, 29, 40, 0.24);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
   }
 
   .desktopSummary h3 {
@@ -1976,13 +1972,8 @@
   }
 
   .summaryFacts {
-    min-height: 0;
-    max-height: 210px;
-    padding-right: 3px;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
   }
 }
 
