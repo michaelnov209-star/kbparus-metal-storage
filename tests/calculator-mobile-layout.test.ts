@@ -5,6 +5,7 @@ const css = readFileSync(
   "components/calculator/CalculatorV4.module.css",
   "utf8"
 );
+const linePageCss = readFileSync("styles/line-page.css", "utf8");
 const component = readFileSync("components/Calculator.tsx", "utf8");
 const choiceField = readFileSync(
   "components/calculator/CalculatorV4ChoiceField.tsx",
@@ -35,16 +36,19 @@ describe("calculator v4 responsive layout contract", () => {
     const root = rules(".root");
     const mobileBar = rules(".mobileBar");
 
-    expect(root).toContain("overflow-x: clip");
+    expect(root).toContain("overflow: visible");
     expect(mobileBar).toContain("position: fixed");
     expect(mobileBar).toContain("left: 8px");
     expect(mobileBar).toContain("right: 8px");
   });
 
-  it("does not show the wide summary before a safe container width", () => {
+  it("keeps the wide summary sticky without clipped ancestors", () => {
     const summary = rules(".desktopSummary");
     const image = rules(".summaryImageFrame img");
+    const verification = rules(".summaryVerification");
 
+    expect(linePageCss).toMatch(/\.line-page\{[^}]*overflow:visible/);
+    expect(linePageCss).not.toMatch(/\.line-page\{[^}]*overflow:hidden/);
     expect(summary).toContain("display: none");
     expect(css).toContain("@container calculator (min-width: 1320px)");
     expect(css).toMatch(
@@ -54,9 +58,32 @@ describe("calculator v4 responsive layout contract", () => {
       /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 18px/
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 96px/
     );
-    expect(image).toContain("height: clamp(390px, 34vw, 490px)");
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?max-height: calc\(100svh - 120px\)/
+    );
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: hidden/
+    );
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.summaryFacts\s*\{[\s\S]*?overflow: auto/
+    );
+    expect(image).toContain("height: clamp(320px, 25vw, 390px)");
+    expect(css).toMatch(
+      /\.summaryFacts span,\s*[\r\n]+\.modalFacts span\s*\{[\s\S]*?font-size: 14px/
+    );
+    expect(verification).toContain("font-size: 13px");
+  });
+
+  it("keeps object conditions readable enough for buyers", () => {
+    const conditionTitle = rules(".conditionButton strong");
+    const conditionCopy = rules(".conditionButton small");
+    const conditionNote = rules(".conditionsNote");
+
+    expect(conditionTitle).toContain("font-size: 15px");
+    expect(conditionCopy).toContain("font-size: 13px");
+    expect(conditionNote).toContain("font-size: 13px");
   });
 
   it("provides touch-sized value chips without noisy sliders", () => {
