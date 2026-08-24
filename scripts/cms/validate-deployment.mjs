@@ -442,11 +442,15 @@ async function checkPublicMedia(categoryPath, productPath) {
 
   const categoryAsset =
     extractOptimizedAsset(category.text, "/assets/images/catalog/optimized/") ||
+    // Product-first category pages intentionally open with their assortment,
+    // so the first meaningful visual can be a product image rather than a
+    // separate decorative category hero.
+    extractOptimizedAsset(category.text, "/assets/images/products/optimized/") ||
     extractCmsMediaAsset(category.text);
   const productAsset =
     extractOptimizedAsset(product.text, "/assets/images/products/optimized/") ||
     extractCmsMediaAsset(product.text);
-  await checkAsset("category image", categoryAsset, "image/");
+  await checkAsset("category page image", categoryAsset, "image/");
   await checkAsset("product image", productAsset, "image/");
 }
 

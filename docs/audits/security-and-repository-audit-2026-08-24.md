@@ -77,6 +77,21 @@ E2E-проверки покрывают главную, каталог, кате
 визуальную регрессию. Запросы авторизации и заявок изолированы от реальных
 production-сервисов.
 
+## Проверка production
+
+На `https://kbparus-metal-storage.vercel.app` подтверждено:
+
+- deployment имеет статус `READY` и постоянный production alias;
+- `/api/health` возвращает `status=ok`, CMS и обязательные globals читаются;
+- Blob, Telegram, email и Bitrix24 распознаны как настроенные;
+- все 51 URL из sitemap возвращают HTTP 200;
+- hero-видео, poster, изображения категории и товара доступны и получают
+  годовой immutable cache;
+- закрытые users/leads API не читаются без авторизации;
+- cross-origin POST на `/api/leads` отклоняется с HTTP 403;
+- CSP, HSTS, frame protection, MIME protection, Referrer Policy и
+  Permissions Policy присутствуют в ответе главной.
+
 ## Релизный минимум
 
 ```bash
