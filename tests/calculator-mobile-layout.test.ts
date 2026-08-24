@@ -43,20 +43,28 @@ describe("calculator v4 responsive layout contract", () => {
 
   it("does not show the wide summary before a safe container width", () => {
     const summary = rules(".desktopSummary");
+    const image = rules(".summaryImageFrame img");
 
     expect(summary).toContain("display: none");
     expect(css).toContain("@container calculator (min-width: 1320px)");
     expect(css).toMatch(
       /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?display: grid/
     );
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
+    );
+    expect(css).toMatch(
+      /@container calculator \(min-width: 1320px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 18px/
+    );
+    expect(image).toContain("height: clamp(390px, 34vw, 490px)");
   });
 
-  it("provides touch-sized slider controls and reduced motion", () => {
-    const range = rules(".rangeControl input");
+  it("provides touch-sized value chips without noisy sliders", () => {
+    const choiceButton = rules(".choiceButton");
 
-    expect(range).toContain("min-height: 44px");
-    expect(choiceField).toContain('type="range"');
-    expect(choiceField).toContain("aria-valuetext");
+    expect(choiceButton).toContain("min-height: 48px");
+    expect(choiceField).not.toContain('type="range"');
+    expect(choiceField).toContain('role="group"');
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 

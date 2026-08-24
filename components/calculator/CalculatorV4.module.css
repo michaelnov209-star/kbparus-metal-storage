@@ -253,10 +253,12 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+  overflow: visible;
 }
 
 .workspace {
   min-width: 0;
+  overflow: visible;
 }
 
 .panel {
@@ -822,44 +824,83 @@
 
 .choiceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  gap: 8px;
   min-width: 0;
+}
+
+.choiceGrid[data-layout="dimension"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .choiceGrid[data-count="6"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.choiceGrid[data-count="7"] {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.choiceGrid[data-count="7"] .choiceButton:nth-child(-n + 3) {
+  grid-column: span 4;
+}
+
+.choiceGrid[data-count="7"] .choiceButton:nth-child(n + 4) {
+  grid-column: span 3;
+}
+
+.choiceGrid[data-count="20"] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .choiceButton {
   display: grid;
   place-items: center;
   min-width: 0;
-  min-height: 38px;
-  padding: 5px 6px;
+  min-height: 48px;
+  padding: 8px 9px;
   color: #35414b;
   background: #f5f7f9;
   border: 1px solid #d3dde4;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.choiceButton:hover {
+  background: #fff;
+  border-color: #bfcbd4;
+  box-shadow: 0 10px 24px rgba(17, 29, 40, 0.08);
+  transform: translateY(-1px);
 }
 
 .choiceButton strong {
   color: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .choiceButton span {
   color: #78848e;
   font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .choiceButton.isActive {
   color: var(--v4-ink);
   background: var(--v4-accent-soft);
   border-color: rgba(252, 84, 19, 0.64);
-  box-shadow: inset 0 0 0 1px rgba(252, 84, 19, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(252, 84, 19, 0.08),
+    0 12px 30px rgba(252, 84, 19, 0.14);
 }
 
 .valueSelect {
@@ -1489,7 +1530,7 @@
 
 .resultPrice strong {
   color: var(--v4-ink);
-  font-size: clamp(28px, 2.9vw, 44px);
+  font-size: clamp(28px, 2.55vw, 40px);
   font-variant-numeric: tabular-nums;
   line-height: 1;
   white-space: nowrap;
@@ -1498,7 +1539,7 @@
 .priceLine {
   display: block;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
 }
@@ -1829,18 +1870,21 @@
 
 @container calculator (min-width: 1320px) {
   .layout {
-    grid-template-columns: minmax(0, 1fr) minmax(420px, 440px);
+    grid-template-columns: minmax(0, 1fr) minmax(450px, 520px);
+    gap: 22px;
   }
 
   .desktopSummary {
     position: sticky;
-    top: 96px;
+    top: 18px;
+    align-self: start;
     display: grid;
     gap: 13px;
     width: 100%;
-    max-height: calc(100dvh - 104px);
-    padding: 19px;
+    max-height: calc(100dvh - 36px);
+    padding: 18px;
     overflow: auto;
+    overscroll-behavior: contain;
     color: #fff;
     background:
       radial-gradient(circle at 92% 2%, rgba(252, 84, 19, 0.22), transparent 28%),
@@ -1862,7 +1906,7 @@
 
   .summaryImageFrame {
     display: grid;
-    min-height: 330px;
+    min-height: clamp(390px, 34vw, 490px);
     overflow: hidden;
     background:
       radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.95), rgba(232, 238, 242, 0.88) 58%, rgba(210, 220, 228, 0.78)),
@@ -1873,8 +1917,8 @@
 
   .summaryImageFrame img {
     width: 100%;
-    height: 330px;
-    padding: 16px;
+    height: clamp(390px, 34vw, 490px);
+    padding: 10px;
     object-fit: contain;
     filter: drop-shadow(0 18px 22px rgba(17, 29, 40, 0.18));
   }
@@ -2069,6 +2113,16 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .choiceGrid[data-layout="dimension"],
+  .choiceGrid[data-count="7"],
+  .choiceGrid[data-count="20"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .choiceGrid[data-count="7"] .choiceButton:nth-child(n) {
+    grid-column: auto;
+  }
+
   .choiceButton {
     min-height: 47px;
   }
@@ -2112,7 +2166,7 @@
   }
 
   .resultPrice strong {
-    font-size: clamp(30px, 10.5vw, 44px);
+    font-size: clamp(28px, 9vw, 38px);
   }
 
   .leadForm {

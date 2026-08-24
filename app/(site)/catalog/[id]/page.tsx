@@ -12,6 +12,7 @@ import { getLocalProductImageVariants } from "@/lib/cms/product-image-variants";
 import { getCatalogProductsByCategory } from "@/lib/cms/products";
 import { buildImageSrcSet } from "@/lib/media/srcset";
 import { JsonLd, breadcrumbSchema, itemListSchema, SITE_URL } from "@/lib/seo/schema";
+import { pluralRu } from "@/lib/text/russian-plural";
 
 export const revalidate = 60;
 
@@ -211,7 +212,14 @@ export default async function CatalogCategoryPage({ params }: { params: Promise<
               </div>
               <div className="category-fast-stat" aria-label="Количество товаров в разделе">
                 <strong>{products.length}</strong>
-                <span>товара в разделе</span>
+                <span>
+                  {pluralRu(
+                    products.length,
+                    "товар в разделе",
+                    "товара в разделе",
+                    "товаров в разделе"
+                  )}
+                </span>
                 <a href="#category-request">Не нашли нужную модель?</a>
               </div>
             </div>
