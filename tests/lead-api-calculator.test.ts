@@ -241,6 +241,77 @@ describe("calculator lead server integrity", () => {
     expect(message).not.toContain("Подменённая опция");
   });
 
+  it("resolves an exact catalog product and its link on the server", async () => {
+    const productProfile = calculatorProfiles.find(
+      (profile) => profile.id === "forklift-cassette-rack"
+    );
+    expect(productProfile).toBeDefined();
+    const calculatorInput = normalizeCalculatorInput(
+      { systemId: "forklift-cassette-rack" },
+      productProfile
+    );
+    const telegramFetch = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+    );
+    vi.stubGlobal("fetch", telegramFetch);
+
+    const productUrl =
+      "https://kbparus-metal-storage.vercel.app/catalog/manual-sheet-metal/forklift-cassette-rack";
+    const response = await POST(
+      new Request("https://kbparus-metal-storage.vercel.app/api/leads", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://kbparus-metal-storage.vercel.app"
+        },
+        body: JSON.stringify({
+          leadType: "configurator",
+          contact: {
+            name: "Тест",
+            phone: "+7 999 000-00-04",
+            email: ""
+          },
+          city: "",
+          comment: "",
+          calculatorInput,
+          recommendedConfig: { title: "Подменённый товар" },
+          source: "Подменённый источник",
+          sourceTitle: "Подменённый заголовок",
+          sourceUrl: productUrl,
+          hp_url: "",
+          formStartedAt: Date.now() - 5_000,
+          consent: createLeadConsent()
+        })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const savedLead = mocks.saveLeadToCms.mock.calls[0]?.[0];
+    expect(savedLead.recommendationTitle).toBe(
+      "Кассетный стеллаж под погрузчик"
+    );
+    expect(savedLead.sourceTitle).toBe("Кассетный стеллаж под погрузчик");
+    expect(savedLead.sourceUrl).toBe(productUrl);
+
+    const telegramRequest = telegramFetch.mock.calls[0]?.[1] as
+      | RequestInit
+      | undefined;
+    const telegramBody = JSON.parse(String(telegramRequest?.body)) as {
+      text?: string;
+      caption?: string;
+    };
+    const message = telegramBody.text ?? telegramBody.caption ?? "";
+    expect(message).toContain("Кассетный стеллаж под погрузчик");
+    expect(message).toContain("Страница товара");
+    expect(message).toContain(productUrl);
+    expect(message).not.toContain("Подменённый товар");
+    expect(message).not.toContain("Подменённый заголовок");
+  });
+
   it("rejects a syntactically valid but unpublished profile before delivery", async () => {
     mocks.getCalculatorProfiles.mockResolvedValue([]);
 

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   Download,
   FileText,
   PackageCheck,
@@ -10,8 +9,8 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { Calculator } from "@/components/Calculator";
 import { LeadForm } from "@/components/LeadForm";
-import { ProductConfigurator } from "@/components/ProductConfigurator";
 import { ProductGallery, type ProductGalleryImage } from "@/components/ProductGallery";
 import { getSeoForItem, type CatalogProduct } from "@/data/storageSystems/catalogDepth";
 import { getProductGallerySlots } from "@/lib/catalog/product-gallery";
@@ -149,7 +148,7 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       calculatorProfile
       ? calculatorProfile
       : undefined;
-  const hasProductConfigurator = Boolean(productCalculatorProfile);
+  const hasProductCalculator = Boolean(productCalculatorProfile);
 
   const productUrl = `${SITE_URL}/catalog/${id}/${productId}`;
   const breadcrumb = breadcrumbSchema([
@@ -213,24 +212,14 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
             ) : (
               <strong>{getProductPriceLabel(product)}</strong>
             )}
-            <a className="line-primary" href={hasProductConfigurator ? "#product-configurator" : "#product-request"}>
-              {hasProductConfigurator ? "Настроить параметры" : "Оставить заявку"}
+            <a className="line-primary" href={hasProductCalculator ? "#product-configurator" : "#product-request"}>
+              {hasProductCalculator ? "Настроить параметры" : "Оставить заявку"}
             </a>
           </div>
         </div>
       </section>
 
       <section className="product-info-grid">
-        <article>
-          <h2>Назначение</h2>
-          <p>{product.description}</p>
-        </article>
-        <article>
-          <h2>Где применяется</h2>
-          <ul>
-            {product.applications.map((item) => <li key={item}><CheckCircle2 size={18} /> {item}</li>)}
-          </ul>
-        </article>
         <article>
           <h2>Характеристики</h2>
           <div className="product-spec-table">
@@ -283,12 +272,15 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       ) : null}
 
       {productCalculatorProfile ? (
-        <div id="product-configurator">
-          <ProductConfigurator
-            profileData={productCalculatorProfile}
-            productTitle={product.title}
-            productUrl={productUrl}
-            productImage={product.image}
+        <div id="product-configurator" data-testid="product-configurator">
+          <Calculator
+            profiles={[productCalculatorProfile]}
+            productContext={{
+              title: product.title,
+              url: productUrl,
+              image: product.image,
+              imageAlt: product.imageAlt
+            }}
           />
         </div>
       ) : (

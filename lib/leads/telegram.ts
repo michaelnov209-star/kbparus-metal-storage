@@ -14,6 +14,7 @@ export interface TelegramLead {
   sourceUrl?: string;
   sourceTitle?: string;
   sourceImageUrl?: string;
+  sourceKind?: "page" | "product";
   recommendationTitle?: string;
   fromPriceLabel?: string;
   calculatorInput?: CalculatorInput;
@@ -37,21 +38,25 @@ function formatNumber(value: number): string {
   return value.toLocaleString("ru-RU");
 }
 
-function sourceLine(lead: TelegramLead): string | undefined {
+function sourceLine(
+  lead: TelegramLead,
+  label = "Источник"
+): string | undefined {
+  const safeLabel = escapeHtml(label);
   if (lead.sourceUrl && lead.sourceTitle) {
-    return `<b>Источник:</b> <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceTitle)}</a>`;
+    return `<b>${safeLabel}:</b> <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceTitle)}</a>`;
   }
 
   if (lead.sourceUrl) {
-    return `<b>Источник:</b> <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceUrl)}</a>`;
+    return `<b>${safeLabel}:</b> <a href="${escapeHtml(lead.sourceUrl)}">${escapeHtml(lead.sourceUrl)}</a>`;
   }
 
   if (lead.sourceTitle) {
-    return `<b>Источник:</b> ${escapeHtml(lead.sourceTitle)}`;
+    return `<b>${safeLabel}:</b> ${escapeHtml(lead.sourceTitle)}`;
   }
 
   if (lead.source) {
-    return `<b>Источник:</b> ${escapeHtml(lead.source)}`;
+    return `<b>${safeLabel}:</b> ${escapeHtml(lead.source)}`;
   }
 
   return undefined;
@@ -123,7 +128,10 @@ function buildConfiguratorMessage(lead: TelegramLead): string {
     lines.push("", "<b>Комментарий:</b>", escapeHtml(clean(lead.comment)));
   }
 
-  const source = sourceLine(lead);
+  const source = sourceLine(
+    lead,
+    lead.sourceKind === "product" ? "Страница товара" : "Источник"
+  );
   if (source) lines.push("", source);
 
   return lines.join("\n");

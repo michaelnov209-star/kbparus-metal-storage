@@ -67,6 +67,26 @@ describe("Telegram lead messages", () => {
     expect(message).not.toContain("Предварительная стоимость");
   });
 
+  it("shows a direct product-page link for a product calculator lead", () => {
+    const message = buildTelegramMessage({
+      leadType: "configurator",
+      name: "Иван",
+      phone: "+7 999 111-22-33",
+      source: "Калькулятор товара — Кассетный стеллаж под погрузчик",
+      sourceKind: "product",
+      sourceTitle: "Кассетный стеллаж под погрузчик",
+      sourceUrl:
+        "https://example.com/catalog/manual-sheet-metal/forklift-cassette-rack",
+      recommendationTitle: "Кассетный стеллаж под погрузчик"
+    });
+
+    expect(message).toContain("Страница товара");
+    expect(message).toContain("Кассетный стеллаж под погрузчик");
+    expect(message).toContain(
+      "https://example.com/catalog/manual-sheet-metal/forklift-cassette-rack"
+    );
+  });
+
   it("escapes untrusted text before rendering Telegram HTML", () => {
     const message = buildTelegramMessage({
       leadType: "contact",

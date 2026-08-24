@@ -14,15 +14,10 @@ describe("product configurator profile safety", () => {
       ),
       "utf8"
     );
-    const configurator = fs.readFileSync(
-      path.join(root, "components/ProductConfigurator.tsx"),
-      "utf8"
-    );
-
     expect(page).toContain("const productCalculatorProfile =");
     expect(page).toContain("calculatorProfile");
-    expect(page).toContain("profileData={productCalculatorProfile}");
-    expect(configurator).toContain("profileData: CalculatorProfile");
-    expect(configurator).not.toContain("getCalculatorProfile");
+    expect(page).toContain("profiles={[productCalculatorProfile]}");
+    expect(page).toContain("productContext={{");
+    expect(page).not.toContain("@/components/ProductConfigurator");
   });
 });

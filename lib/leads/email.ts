@@ -57,7 +57,7 @@ function formatCalculator(lead: CmsLeadInput): string {
   if (!input) return "";
 
   return rows([
-    ["Система", lead.result?.recommendation.title],
+    ["Система", lead.recommendationTitle || lead.result?.recommendation.title],
     ["Габариты", `${input.lengthMm.toLocaleString("ru-RU")} x ${input.widthMm.toLocaleString("ru-RU")} x ${input.heightMm.toLocaleString("ru-RU")} мм`],
     ["Нагрузка", `${input.loadKg.toLocaleString("ru-RU")} кг на уровень`],
     ["Полки/кассеты", `${input.shelfCount.toLocaleString("ru-RU")} шт.`],
@@ -67,7 +67,12 @@ function formatCalculator(lead: CmsLeadInput): string {
 }
 
 export function buildLeadEmailMessage(lead: CmsLeadInput): LeadEmailMessage {
-  const selectedTitle = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "заявка с сайта";
+  const selectedTitle =
+    lead.recommendationTitle ||
+    lead.result?.recommendation.title ||
+    lead.sourceTitle ||
+    lead.source ||
+    "заявка с сайта";
   const subject = (lead.leadType === "configurator"
     ? `Заявка с конфигуратора: ${selectedTitle}`
     : `Заявка с сайта: ${lead.sourceTitle || lead.phone}`)

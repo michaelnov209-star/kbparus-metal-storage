@@ -22,7 +22,7 @@ Next.js 16 (App Router) · React 19 · TypeScript strict · Payload CMS 3 · Neo
 
 **Контент-слой (CMS-first с fallback):** фронтенд читает через `lib/cms/*` адаптеры (`catalog.ts`, `products.ts`, `home-content.ts`, `contacts.ts`, `site-navigation.ts`) → Payload. Если CMS пуст/недоступен — fallback на `data/storageSystems/*`. ISR `revalidate=60` → правки маркетолога видны за минуту.
 
-**Калькулятор:** `components/Calculator.tsx` + `ProductConfigurator.tsx` → `lib/calculator/pricing.ts` (формулы: automatic/rollout/forklift/hybrid). Данные профилей в `data/storageSystems/excelCalculator.ts`. God-nodes: `CalculatorInput`, `calculateStorageSystem()`, `formatRoundedRub()`, `getCalculatorProfile()`.
+**Калькулятор:** единый `components/Calculator.tsx` используется на главной и товарных страницах → `lib/calculator/pricing.ts` (формулы: automatic/rollout/forklift/hybrid). Товар ограничивает список одним `calculatorProfileId` и передаёт `productContext`; отдельного товарного UI нет. Данные профилей в `data/storageSystems/excelCalculator.ts`. God-nodes: `CalculatorInput`, `calculateStorageSystem()`, `formatRoundedRub()`, `getCalculatorProfile()`.
 
 **Заявки:** `app/api/leads/route.ts` (god-node `POST()`) → параллельно Telegram (`lib/telegram.ts`), email (`lib/email.ts`), Bitrix24 (`lib/bitrix24.ts`), внутренний `leads` collection. Защита: honeypot, rate-limit, валидация.
 

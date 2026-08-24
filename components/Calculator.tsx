@@ -72,6 +72,13 @@ import styles from "@/components/calculator/CalculatorV4.module.css";
 
 const steps = ["Система", "Параметры", "Расчёт"] as const;
 
+export interface CalculatorProductContext {
+  title: string;
+  url: string;
+  image?: string;
+  imageAlt?: string;
+}
+
 const profileCopy: Record<
   string,
   {
@@ -329,9 +336,11 @@ function profileTypeLabel(profile: CalculatorProfile) {
 }
 
 export function Calculator({
-  profiles = fallbackCalculatorProfiles
+  profiles = fallbackCalculatorProfiles,
+  productContext
 }: {
   profiles?: readonly CalculatorProfile[];
+  productContext?: CalculatorProductContext;
 }) {
   const [step, setStep] = useState(0);
   const [input, setInput] = useState<CalculatorInput>(() =>
@@ -389,9 +398,16 @@ export function Calculator({
     const fallback = profileCopy[profile.id];
     return {
       ...fallback,
-      title: fallback?.title || profile.title || "Система хранения металла",
+      title:
+        productContext?.title ||
+        fallback?.title ||
+        profile.title ||
+        "Система хранения металла",
       shortTitle:
-        fallback?.shortTitle || profile.shortTitle || profile.title,
+        productContext?.title ||
+        fallback?.shortTitle ||
+        profile.shortTitle ||
+        profile.title,
       description:
         fallback?.description ||
         profile.description ||
@@ -399,8 +415,13 @@ export function Calculator({
       bestFor:
         fallback?.bestFor || profile.bestFor || defaultBestFor(profile),
       image:
-        profile.image || fallback?.image || defaultProfileImage(profile),
+        productContext?.image ||
+        profile.image ||
+        fallback?.image ||
+        defaultProfileImage(profile),
       imageAlt:
+        productContext?.imageAlt ||
+        productContext?.title ||
         profile.imageAlt ||
         profile.title ||
         fallback?.title ||
@@ -415,9 +436,17 @@ export function Calculator({
     profile.pricing.kind,
     profile.productType,
     profile.shortTitle,
-    profile.title
+    profile.title,
+    productContext
   ]);
   const displayImage = calculatorCardImage(display.image);
+  const leadSourceTitle = productContext?.title || display.title;
+  const leadSourceUrl =
+    productContext?.url ||
+    (typeof window !== "undefined"
+      ? `${window.location.origin}/#calculator`
+      : undefined);
+  const leadSourceImage = productContext?.image || display.image;
   const selectedOptions = profile.options.filter((option) =>
     input.optionIds.includes(option.id)
   );
@@ -561,7 +590,7 @@ export function Calculator({
     saveLastCalculatorLead({
       calculatorInput: input,
       recommendedConfig: {
-        title: display.title,
+        title: leadSourceTitle,
         dimensions: result.engineeringSummary.rackDimensionsLabel,
         loadKg: input.loadKg,
         shelfCount: input.shelfCount,
@@ -572,17 +601,15 @@ export function Calculator({
           .map((option) => optionCopy[option.id] ?? option.title)
       },
       preliminaryPriceFrom: result.fromPrice,
-      sourceTitle: display.title,
-      sourceUrl:
-        typeof window !== "undefined"
-          ? `${window.location.origin}/#calculator`
-          : undefined,
-      sourceImage: display.image
+      sourceTitle: leadSourceTitle,
+      sourceUrl: leadSourceUrl,
+      sourceImage: leadSourceImage
     });
   }, [
-    display.image,
-    display.title,
     input,
+    leadSourceImage,
+    leadSourceTitle,
+    leadSourceUrl,
     profile.options,
     result.engineeringSummary.rackDimensionsLabel,
     result.fromPrice
@@ -727,23 +754,23 @@ export function Calculator({
             .join("\n"),
           calculatorInput: input,
           recommendedConfig: {
-            title: display.title,
+            title: leadSourceTitle,
             dimensions: result.engineeringSummary.rackDimensionsLabel,
             loadKg: input.loadKg,
             shelfCount: input.shelfCount,
+            rolloutShelfCount: input.rolloutShelfCount,
             towerCount: input.towerCount,
             options: selectedOptions.map(
               (option) => optionCopy[option.id] ?? option.title
             )
           },
           preliminaryPriceFrom: result.fromPrice,
-          source: `Калькулятор на главной — ${display.title}`,
-          sourceTitle: display.title,
-          sourceUrl:
-            typeof window !== "undefined"
-              ? `${window.location.origin}/#calculator`
-              : undefined,
-          sourceImage: display.image,
+          source: productContext
+            ? `Калькулятор товара — ${leadSourceTitle}`
+            : `Калькулятор на главной — ${leadSourceTitle}`,
+          sourceTitle: leadSourceTitle,
+          sourceUrl: leadSourceUrl,
+          sourceImage: leadSourceImage,
           hp_url: hpUrl,
           formStartedAt: formStartedAt.current,
           utm: getStoredLeadUtm(),
@@ -832,12 +859,18 @@ export function Calculator({
       </output>
       <div className={styles.inner}>
         <header className={styles.header}>
-          <span className={styles.eyebrow}>Предварительный подбор</span>
-          <h2>Система хранения и ориентир по цене за 3 шага</h2>
+          <span className={styles.eyebrow}>
+            {productContext ? "Калькулятор модели" : "Предварительный подбор"}
+          </span>
+          <h2>
+            {productContext
+              ? "Настройте комплектацию и получите ориентир по цене"
+              : "Система хранения и ориентир по цене за 3 шага"}
+          </h2>
           <p>
-            Выберите оборудование и рабочие параметры. Калькулятор сразу
-            пересчитает бюджет, а инженер проверит конфигурацию перед
-            предложением.
+            {productContext
+              ? "Калькулятор уже настроен для выбранной модели. Укажите рабочие параметры — стоимость обновится сразу, а инженер проверит результат."
+              : "Выберите оборудование и рабочие параметры. Калькулятор сразу пересчитает бюджет, а инженер проверит конфигурацию перед предложением."}
           </p>
           <div className={styles.trustRow} aria-label="Преимущества расчёта">
             <span>
@@ -867,63 +900,68 @@ export function Calculator({
                   <PackageSearch aria-hidden="true" size={22} />
                   <div>
                     <span>Шаг 1 из 3</span>
-                    <h3>Что нужно хранить?</h3>
+                    <h3>
+                      {productContext ? "Выбранная модель" : "Что нужно хранить?"}
+                    </h3>
                     <p>
-                      Начните с материала. При необходимости ниже можно выбрать
-                      точный тип оборудования.
+                      {productContext
+                        ? "Профиль расчёта закреплён за этим товаром. Проверьте модель и переходите к параметрам."
+                        : "Начните с материала. При необходимости ниже можно выбрать точный тип оборудования."}
                     </p>
                   </div>
                 </div>
 
-                <div
-                  className={styles.scenarioGrid}
-                  aria-label="Сценарий хранения"
-                >
-                  {guidedChoices
-                    .filter((choice) =>
-                      profiles.some(
-                        (candidate) => candidate.id === choice.profileId
+                {!productContext && (
+                  <div
+                    className={styles.scenarioGrid}
+                    aria-label="Сценарий хранения"
+                  >
+                    {guidedChoices
+                      .filter((choice) =>
+                        profiles.some(
+                          (candidate) => candidate.id === choice.profileId
+                        )
                       )
-                    )
-                    .map((choice, index) => {
-                      const ChoiceIcon =
-                        index === 0
-                          ? Layers3
-                          : index === 1
-                            ? Warehouse
-                            : PackageSearch;
-                      const active = choice.profileId === input.systemId;
-                      return (
-                        <button
-                          aria-pressed={active}
-                          className={
-                            active
-                              ? `${styles.scenarioCard} ${styles.isActive}`
-                              : styles.scenarioCard
-                          }
-                          key={choice.title}
-                          type="button"
-                          onClick={() =>
-                            selectGuidedChoice(choice.profileId)
-                          }
-                        >
-                          <span className={styles.scenarioIcon}>
-                            <ChoiceIcon size={21} />
-                          </span>
-                          <span>
-                            <strong>{choice.title}</strong>
-                            <small>{choice.text}</small>
-                          </span>
-                          <span
-                            className={styles.selectionMark}
-                            aria-hidden="true"
+                      .map((choice, index) => {
+                        const ChoiceIcon =
+                          index === 0
+                            ? Layers3
+                            : index === 1
+                              ? Warehouse
+                              : PackageSearch;
+                        const active = choice.profileId === input.systemId;
+                        return (
+                          <button
+                            aria-pressed={active}
+                            className={
+                              active
+                                ? `${styles.scenarioCard} ${styles.isActive}`
+                                : styles.scenarioCard
+                            }
+                            key={choice.title}
+                            type="button"
+                            onClick={() =>
+                              selectGuidedChoice(choice.profileId)
+                            }
                           >
-                            <Check size={14} />
-                          </span>
-                        </button>
-                      );
-                    })}
-                </div>
+                            <span className={styles.scenarioIcon}>
+                              <ChoiceIcon size={21} />
+                            </span>
+                            <span>
+                              <strong>{choice.title}</strong>
+                              <small>{choice.text}</small>
+                            </span>
+                            <span
+                              className={styles.selectionMark}
+                              aria-hidden="true"
+                            >
+                              <Check size={14} />
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
 
                 <div className={styles.selectedSystem}>
                   <img
@@ -944,7 +982,7 @@ export function Calculator({
                   </div>
                 </div>
 
-                <details className={styles.systemPicker} open>
+                {!productContext && <details className={styles.systemPicker} open>
                   <summary>
                     <span>
                       <strong>Выбрать точный тип системы</strong>
@@ -1011,7 +1049,7 @@ export function Calculator({
                       );
                     })}
                   </div>
-                </details>
+                </details>}
               </article>
             )}
 

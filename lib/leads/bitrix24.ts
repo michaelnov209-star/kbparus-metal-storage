@@ -11,6 +11,7 @@ export interface Bitrix24Lead {
   source?: string;
   sourceTitle?: string;
   sourceUrl?: string;
+  recommendationTitle?: string;
   utm?: Record<string, string>;
   calculatorInput?: CalculatorInput;
   result?: CalculatorResult;
@@ -54,7 +55,8 @@ function formatCalculatorConfig(lead: Bitrix24Lead): string {
   if (!input) return "";
 
   return compact([
-    lead.result?.recommendation.title && `Система: ${lead.result.recommendation.title}`,
+    (lead.recommendationTitle || lead.result?.recommendation.title) &&
+      `Система: ${lead.recommendationTitle || lead.result?.recommendation.title}`,
     `Габариты: ${input.lengthMm.toLocaleString("ru-RU")} x ${input.widthMm.toLocaleString("ru-RU")} x ${input.heightMm.toLocaleString("ru-RU")} мм`,
     `Нагрузка: ${input.loadKg.toLocaleString("ru-RU")} кг на уровень`,
     `Полки/кассеты: ${input.shelfCount.toLocaleString("ru-RU")} шт.`,
@@ -137,7 +139,12 @@ export function resolveBitrix24WebhookUrl(value: string | undefined): string | u
 
 export function buildBitrix24Payload(lead: Bitrix24Lead, fieldMap: Bitrix24FieldMap = {}): Bitrix24Payload {
   const isConfigurator = lead.leadType === "configurator" || Boolean(lead.calculatorInput);
-  const selectedProduct = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "";
+  const selectedProduct =
+    lead.recommendationTitle ||
+    lead.result?.recommendation.title ||
+    lead.sourceTitle ||
+    lead.source ||
+    "";
   const fromPrice = lead.fromPrice ?? lead.result?.fromPrice;
   const calculatorConfig = formatCalculatorConfig(lead);
   const utmText = formatUtm(lead.utm);

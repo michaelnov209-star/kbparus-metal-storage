@@ -90,7 +90,7 @@ test("главный калькулятор меняет расчет и отп�
   });
 });
 
-test("товарный конфигуратор меняет цену и отправляет заявку", async ({
+test("товарный калькулятор использует полный сценарий и передает страницу товара", async ({
   page
 }) => {
   const lead = await interceptLead(page);
@@ -99,42 +99,52 @@ test("товарный конфигуратор меняет цену и отп�
 
   const configurator = page.getByTestId("product-configurator");
   await expect(configurator).toBeVisible();
-  const price = configurator.locator(
-    ".product-configurator-summary > .product-configurator-price"
-  );
+  const calculator = configurator.getByTestId("calculator");
+  const price = calculator
+    .getByTestId("calculator-summary-price")
+    .locator(":scope > span");
   const initialPrice = await price.textContent();
 
   await expectPriceOnOneLine(price);
+  await expect(calculator.getByText("Выбранная модель", { exact: true })).toBeVisible();
+  await expect(
+    calculator.getByText("Выбрать точный тип системы", { exact: true })
+  ).toHaveCount(0);
 
-  await configurator
-    .locator(".product-chip-row")
-    .first()
+  await calculator
+    .getByRole("button", { name: "Параметры", exact: true })
+    .click();
+  await expect(calculator.getByText("Условия объекта", { exact: true })).toBeVisible();
+  await calculator
+    .getByRole("group", { name: "Длина" })
     .locator('button[aria-pressed="false"]')
     .last()
     .click();
   await expect(price).not.toHaveText(initialPrice ?? "");
-
-  const priceAfterDimensions = await price.textContent();
-  await configurator.locator('.product-option[aria-pressed="false"]').first().click();
-  await expect(price).not.toHaveText(priceAfterDimensions ?? "");
   await expectPriceOnOneLine(price);
 
-  await configurator.getByTestId("product-lead-name").fill("Автотест");
-  await configurator
-    .getByTestId("product-lead-phone")
-    .fill("+7 999 000-00-02");
-  await expect(configurator.getByTestId("product-lead-submit")).toBeDisabled();
-  await configurator.getByTestId("product-lead-consent").check();
-  await configurator.getByTestId("product-lead-submit").click();
+  await calculator
+    .getByRole("button", { name: "Расчёт", exact: true })
+    .click();
+  await expect(calculator.getByRole("button", { name: "Хочу скидку" })).toBeVisible();
+  await calculator.getByTestId("calculator-name").fill("Автотест");
+  await calculator.getByTestId("calculator-phone").fill("+7 999 000-00-02");
+  await calculator.getByTestId("calculator-consent").check();
+  await calculator.getByTestId("calculator-submit").click();
 
-  await expect(configurator.getByTestId("product-lead-status")).toContainText(
-    "Заявка принята"
+  await expect(calculator.getByTestId("calculator-status")).toContainText(
+    "Заявка сформирована"
   );
   expect(lead.getRequests()).toBe(1);
   expect(lead.getPayload()).toMatchObject({
     leadType: "configurator",
     contact: { name: "Автотест", phone: "+7 999 000-00-02" },
+    source: expect.stringContaining("Калькулятор товара"),
+    sourceTitle: "Кассетный стеллаж под погрузчик",
+    sourceUrl: expect.stringContaining(CONFIGURATOR_PRODUCT_PATH),
     calculatorInput: expect.any(Object),
-    recommendedConfig: expect.any(Object)
+    recommendedConfig: {
+      title: "Кассетный стеллаж под погрузчик"
+    }
   });
 });

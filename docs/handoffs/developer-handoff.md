@@ -72,13 +72,12 @@ npm run build                   # production-сборка Next.js
 │
 ├── components/                         # React-компоненты
 │   ├── BrandMark.tsx                   # Логотип
-│   ├── Calculator.tsx                  # 3-шаговый калькулятор
+│   ├── Calculator.tsx                  # Единый 3-шаговый калькулятор главной и товаров
 │   ├── CatalogGrid.tsx                 # Сетка 17 категорий
 │   ├── FaqAccordion.tsx
 │   ├── ImageLightbox.tsx
 │   ├── LeadForm.tsx                    # Форма заявки (honeypot, speed-trap)
 │   ├── LinePageStyles.tsx              # Inline-стили для page.tsx
-│   ├── ProductConfigurator.tsx
 │   ├── ProductGallery.tsx
 │   ├── SliderControls.tsx
 │   └── SolutionsShowcase.tsx
@@ -150,7 +149,7 @@ npm run build                   # production-сборка Next.js
 ### Что делает сайт
 
 1. **Каталог** — 17 категорий промышленных систем хранения металла.
-2. **Калькулятор** — 3-шаговый конфигуратор: профиль → параметры → ориентировочная цена.
+2. **Калькулятор** — единый 3-шаговый интерфейс: профиль → параметры → ориентировочная цена. На товарной странице профиль закреплён за конкретной моделью, но остальные функции совпадают с главной.
 3. **Лиды** — `POST /api/leads` принимает заявку, шлёт в Bitrix24 (или mock) и Telegram-чат менеджеров.
 4. **Доверие** — описания, фото, FAQ, контакты, кейсы, география.
 

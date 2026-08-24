@@ -7,6 +7,7 @@ import {
 import { formatRoundedRub } from "@/lib/calculator/format";
 import { getCalculatorProfiles } from "@/lib/cms/calculator-profiles";
 import { getCmsClient } from "@/lib/cms/client";
+import { getCatalogProductView } from "@/lib/cms/products";
 import {
   LEAD_CONSENT_POLICY_PATH,
   LEAD_CONSENT_VERSION
@@ -131,6 +132,39 @@ function resolveAbsoluteUrl(
   }
 }
 
+async function resolveCatalogProductSource(
+  sourceUrl: string | undefined,
+  calculatorProfileId: string | undefined,
+  request: Request
+) {
+  if (!sourceUrl || !calculatorProfileId) return undefined;
+
+  try {
+    const url = new URL(sourceUrl);
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (segments.length !== 3 || segments[0] !== "catalog") return undefined;
+
+    const categoryId = decodeURIComponent(segments[1]);
+    const productId = decodeURIComponent(segments[2]);
+    const product = await getCatalogProductView(categoryId, productId);
+    if (
+      !product ||
+      product.pageMode !== "configurator" ||
+      product.calculatorProfileId !== calculatorProfileId
+    ) {
+      return undefined;
+    }
+
+    return {
+      title: product.title,
+      url: sourceUrl,
+      imageUrl: resolveAbsoluteUrl(product.image, request, "image")
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export async function POST(request: Request) {
   if (!isOriginAllowed(request)) {
     return NextResponse.json(
@@ -198,8 +232,16 @@ export async function POST(request: Request) {
 
   const { name, phone, email } = payload.contact;
   const { city, comment, source, sourceTitle } = payload;
-  const sourceUrl = resolveAbsoluteUrl(payload.sourceUrl || undefined, request, "page");
-  const sourceImageUrl = resolveAbsoluteUrl(payload.sourceImage || undefined, request, "image");
+  const submittedSourceUrl = resolveAbsoluteUrl(
+    payload.sourceUrl || undefined,
+    request,
+    "page"
+  );
+  const submittedSourceImageUrl = resolveAbsoluteUrl(
+    payload.sourceImage || undefined,
+    request,
+    "image"
+  );
   const rawCalculatorInput = payload.calculatorInput ?? {};
   const hasCalculatorInput = Object.keys(rawCalculatorInput).length > 0;
   const isConfiguratorLead = payload.leadType === "configurator" || hasCalculatorInput;
@@ -225,6 +267,18 @@ export async function POST(request: Request) {
       }
     );
   }
+  const productSource = await resolveCatalogProductSource(
+    submittedSourceUrl,
+    calculatorProfile?.id,
+    request
+  );
+  const effectiveSource = productSource
+    ? `Калькулятор товара — ${productSource.title}`
+    : source || undefined;
+  const effectiveSourceTitle = productSource?.title || sourceTitle || undefined;
+  const effectiveSourceUrl = productSource?.url || submittedSourceUrl;
+  const effectiveSourceImageUrl =
+    productSource?.imageUrl || submittedSourceImageUrl;
   const calculatorInput = isConfiguratorLead
     ? normalizeCalculatorInput(
         {
@@ -257,13 +311,14 @@ export async function POST(request: Request) {
     email,
     city: city || calculatorInput?.city,
     comment,
-    source: source || undefined,
-    sourceUrl,
-    sourceTitle: sourceTitle || undefined,
-    sourceImageUrl,
+    source: effectiveSource,
+    sourceUrl: effectiveSourceUrl,
+    sourceTitle: effectiveSourceTitle,
+    sourceImageUrl: effectiveSourceImageUrl,
+    sourceKind: productSource ? "product" : "page",
     recommendationTitle: isConfiguratorLead
-      ? result?.recommendation.title
-      : sourceTitle || undefined,
+      ? productSource?.title || result?.recommendation.title
+      : effectiveSourceTitle,
     fromPriceLabel: fromPrice ? `от ${formatRoundedRub(fromPrice)}` : undefined,
     calculatorInput,
     selectedOptions
@@ -277,9 +332,11 @@ export async function POST(request: Request) {
     email,
     city: city || calculatorInput?.city,
     comment,
-    source: source || undefined,
-    sourceTitle: sourceTitle || undefined,
-    sourceUrl,
+    source: effectiveSource,
+    sourceTitle: effectiveSourceTitle,
+    sourceUrl: effectiveSourceUrl,
+    recommendationTitle:
+      productSource?.title || result?.recommendation.title,
     utm,
     calculatorInput,
     result,

@@ -10,6 +10,7 @@ export interface CmsLeadInput {
   source?: string;
   sourceTitle?: string;
   sourceUrl?: string;
+  recommendationTitle?: string;
   utm?: Record<string, string>;
   calculatorInput?: CalculatorInput;
   result?: CalculatorResult;
@@ -30,7 +31,8 @@ function buildCalculatorSummary(lead: CmsLeadInput): string {
   if (!input) return "";
 
   return compact([
-    lead.result?.recommendation.title && `Система: ${lead.result.recommendation.title}`,
+    (lead.recommendationTitle || lead.result?.recommendation.title) &&
+      `Система: ${lead.recommendationTitle || lead.result?.recommendation.title}`,
     `Габариты: ${input.lengthMm.toLocaleString("ru-RU")} x ${input.widthMm.toLocaleString("ru-RU")} x ${input.heightMm.toLocaleString("ru-RU")} мм`,
     `Нагрузка: ${input.loadKg.toLocaleString("ru-RU")} кг на уровень`,
     `Полки/кассеты: ${input.shelfCount.toLocaleString("ru-RU")} шт.`,
@@ -43,7 +45,12 @@ export function buildCmsLeadRecord(lead: CmsLeadInput) {
   const isConfigurator = lead.leadType === "configurator" || Boolean(lead.calculatorInput);
   const leadType: "contact" | "configurator" = isConfigurator ? "configurator" : "contact";
   const calculatorInput: Record<string, unknown> | undefined = lead.calculatorInput ? { ...lead.calculatorInput } : undefined;
-  const recommendedTitle = lead.result?.recommendation.title || lead.sourceTitle || lead.source || "";
+  const recommendedTitle =
+    lead.recommendationTitle ||
+    lead.result?.recommendation.title ||
+    lead.sourceTitle ||
+    lead.source ||
+    "";
   const title = isConfigurator
     ? `Заявка с конфигуратора: ${recommendedTitle || lead.phone}`
     : `Заявка с сайта: ${lead.sourceTitle || lead.phone}`;
