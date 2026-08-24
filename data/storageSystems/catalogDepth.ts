@@ -159,7 +159,8 @@ export const catalogProducts: CatalogProduct[] = [
       "/assets/images/products/auto-sheet-metal/1.2.jpg",
       "/assets/images/products/auto-sheet-metal/1.3.jpg"
     ],
-    pageMode: "standard",
+    pageMode: "configurator",
+    calculatorProfileId: "auto-sheet-metal",
     priceMode: "request",
     badge: "Товар",
     summary: "Компактная автоматизированная система для хранения листового металла формата 3000x1500.",
@@ -197,7 +198,8 @@ export const catalogProducts: CatalogProduct[] = [
       "/assets/images/products/auto-sheet-metal/2.3.jpg",
       "/assets/images/products/auto-sheet-metal/2.4.jpg"
     ],
-    pageMode: "standard",
+    pageMode: "configurator",
+    calculatorProfileId: "auto-sheet-metal",
     priceMode: "request",
     badge: "Товар",
     summary: "Стандартное решение для автоматизированного хранения листового металла и подачи в производство.",
@@ -235,7 +237,8 @@ export const catalogProducts: CatalogProduct[] = [
       "/assets/images/products/auto-sheet-metal/3.3.jpg",
       "/assets/images/products/auto-sheet-metal/3.4.jpg"
     ],
-    pageMode: "standard",
+    pageMode: "configurator",
+    calculatorProfileId: "auto-sheet-metal",
     priceMode: "request",
     badge: "Товар",
     summary: "Гибкая автоматизированная система хранения листового металла для сложных производственных сценариев.",
@@ -272,7 +275,8 @@ export const catalogProducts: CatalogProduct[] = [
       "/assets/images/products/auto-sheet-metal/4.2.jpg",
       "/assets/images/products/auto-sheet-metal/4.3.jpg"
     ],
-    pageMode: "standard",
+    pageMode: "configurator",
+    calculatorProfileId: "auto-sheet-metal",
     priceMode: "request",
     badge: "Товар",
     summary: "Автоматизированная система для хранения листового металла с удобной подачей и организацией складского потока.",

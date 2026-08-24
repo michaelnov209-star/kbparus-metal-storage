@@ -9,6 +9,8 @@ import { AdminArrayRowLabel as AdminArrayRowLabel_b89bc449f1b6d68e283d4c99c264fa
 import { ProductEditorGuide as ProductEditorGuide_e559c49271b50f3c90f9b352e5db287e } from '@/app/(payload)/components/ProductEditorGuide'
 import { ProductLivePreview as ProductLivePreview_e16545b58814d9d168e384e64e222e77 } from '@/app/(payload)/components/ProductLivePreview'
 import { AdminHelpLabel as AdminHelpLabel_b8ca60c2e1b98aa673b8b7cbc161c466 } from '@/app/(payload)/components/AdminHelpLabel'
+import { ProductCalculatorProfileCell as ProductCalculatorProfileCell_a35d8144acfb81e26e8ace1cf3ff9398 } from '@/app/(payload)/components/ProductCalculatorProfileCell'
+import { ProductCalculatorBindingStatus as ProductCalculatorBindingStatus_85e4f30259bf1ba18250da6012d592af } from '@/app/(payload)/components/ProductCalculatorBindingStatus'
 import { ProductSeoPreview as ProductSeoPreview_6b715446a42570e8f18534e4d701532b } from '@/app/(payload)/components/ProductSeoPreview'
 import { FeaturedPlacementGuide as FeaturedPlacementGuide_9035595efafad322fae4d9c82440bcc7 } from '@/app/(payload)/components/FeaturedPlacementGuide'
 import { CalculatorProfileGuide as CalculatorProfileGuide_f33b60b88b161660651b289dba7d8988 } from '@/app/(payload)/components/CalculatorProfileGuide'
@@ -40,6 +42,8 @@ export const importMap = {
   "@/app/(payload)/components/ProductEditorGuide#ProductEditorGuide": ProductEditorGuide_e559c49271b50f3c90f9b352e5db287e,
   "@/app/(payload)/components/ProductLivePreview#ProductLivePreview": ProductLivePreview_e16545b58814d9d168e384e64e222e77,
   "@/app/(payload)/components/AdminHelpLabel#AdminHelpLabel": AdminHelpLabel_b8ca60c2e1b98aa673b8b7cbc161c466,
+  "@/app/(payload)/components/ProductCalculatorProfileCell#ProductCalculatorProfileCell": ProductCalculatorProfileCell_a35d8144acfb81e26e8ace1cf3ff9398,
+  "@/app/(payload)/components/ProductCalculatorBindingStatus#ProductCalculatorBindingStatus": ProductCalculatorBindingStatus_85e4f30259bf1ba18250da6012d592af,
   "@/app/(payload)/components/ProductSeoPreview#ProductSeoPreview": ProductSeoPreview_6b715446a42570e8f18534e4d701532b,
   "@/app/(payload)/components/FeaturedPlacementGuide#FeaturedPlacementGuide": FeaturedPlacementGuide_9035595efafad322fae4d9c82440bcc7,
   "@/app/(payload)/components/CalculatorProfileGuide#CalculatorProfileGuide": CalculatorProfileGuide_f33b60b88b161660651b289dba7d8988,

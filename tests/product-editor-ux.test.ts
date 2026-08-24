@@ -30,10 +30,16 @@ describe("product editor field guidance", () => {
       "Как показывать цену",
       "Стоимость от, ₽",
       "Что показать на странице товара",
-      "Какой расчёт использовать"
+      "Калькулятор на странице товара"
     ]) {
       expect(products).toContain(`ru: "${label}"`);
     }
+  });
+
+  it("shows the calculator assignment in the product editor and list", () => {
+    expect(products).toContain('name: "calculatorBindingStatus"');
+    expect(products).toContain("ProductCalculatorBindingStatus");
+    expect(products).toContain("ProductCalculatorProfileCell");
   });
 
   it("uses short complete step hints and allows them to wrap instead of truncating", () => {

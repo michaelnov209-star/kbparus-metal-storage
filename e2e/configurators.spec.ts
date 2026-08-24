@@ -30,6 +30,18 @@ async function interceptLead(page: Page) {
   };
 }
 
+async function expectPriceOnOneLine(price: ReturnType<Page["locator"]>) {
+  const linePositions = await price
+    .locator(":scope > span")
+    .evaluateAll((parts) =>
+      parts.map((part) => Math.round(part.getBoundingClientRect().top))
+    );
+
+  expect(linePositions).toHaveLength(3);
+  expect(new Set(linePositions).size).toBe(1);
+  await expect(price.locator(":scope > span").last()).toHaveText("₽");
+}
+
 test("главный калькулятор меняет расчет и отправляет конфигурацию", async ({
   page
 }) => {
@@ -40,7 +52,12 @@ test("главный калькулятор меняет расчет и отп�
   const calculator = page.getByTestId("calculator");
   await expect(calculator).toBeVisible();
   const price = calculator.getByTestId("calculator-price");
+  const visibleSummaryPrice = calculator
+    .getByTestId("calculator-summary-price")
+    .locator(":scope > span");
   const initialPrice = await price.textContent();
+
+  await expectPriceOnOneLine(visibleSummaryPrice);
 
   await calculator
     .getByRole("button", { name: "Параметры", exact: true })
@@ -81,8 +98,12 @@ test("товарный конфигуратор меняет цену и отп�
 
   const configurator = page.getByTestId("product-configurator");
   await expect(configurator).toBeVisible();
-  const price = configurator.locator(".product-configurator-summary > strong");
+  const price = configurator.locator(
+    ".product-configurator-summary > .product-configurator-price"
+  );
   const initialPrice = await price.textContent();
+
+  await expectPriceOnOneLine(price);
 
   await configurator
     .locator(".product-chip-row")

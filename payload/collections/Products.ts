@@ -317,7 +317,13 @@ export const Products: CollectionConfig = {
       en: "Concrete equipment models within categories."
     },
     useAsTitle: "title",
-    defaultColumns: ["title", "category", "pageMode", "featured", "_status"],
+    defaultColumns: [
+      "title",
+      "category",
+      "pageMode",
+      "calculatorProfile",
+      "_status"
+    ],
     listSearchableFields: ["title", "shortTitle", "slug", "sku", "summary"],
     pagination: { defaultLimit: 20, limits: [10, 20, 50] }
   },
@@ -617,12 +623,47 @@ export const Products: CollectionConfig = {
             },
             {
               name: "calculatorProfile",
-              label: { ru: "Какой расчёт использовать", en: "Calculator profile" },
+              label: {
+                ru: "Калькулятор на странице товара",
+                en: "Product calculator"
+              },
               type: "relationship",
               relationTo: "calculator-profiles",
+              validate: (
+                value: unknown,
+                { siblingData }: { siblingData?: Record<string, unknown> }
+              ) => {
+                const pageMode = (siblingData as { pageMode?: unknown } | undefined)
+                  ?.pageMode;
+                if (pageMode === "configurator" && !value) {
+                  return "Выберите калькулятор, который должен открываться на странице этого товара.";
+                }
+                return true;
+              },
               admin: {
                 condition: (data) => data?.pageMode === "configurator",
-                ...help("Выберите профиль с ценами и коэффициентами именно для этой модели. После выбора обязательно проверьте тестовый расчёт.")
+                components: {
+                  Label: HELP_LABEL,
+                  Cell: {
+                    path: "@/app/(payload)/components/ProductCalculatorProfileCell",
+                    exportName: "ProductCalculatorProfileCell"
+                  }
+                },
+                custom: {
+                  helpText: "Выберите профиль с ценами и коэффициентами именно для этой модели. После выбора обязательно проверьте тестовый расчёт."
+                }
+              }
+            },
+            {
+              name: "calculatorBindingStatus",
+              type: "ui",
+              admin: {
+                components: {
+                  Field: {
+                    path: "@/app/(payload)/components/ProductCalculatorBindingStatus",
+                    exportName: "ProductCalculatorBindingStatus"
+                  }
+                }
               }
             }
           ]

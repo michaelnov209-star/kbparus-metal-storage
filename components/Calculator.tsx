@@ -436,6 +436,13 @@ export function Calculator({
   const priceNumber = roundedPrice.replace(/\s?₽/u, "");
   const safePriceNumber = priceNumber.replace(/\s/g, "\u00a0");
   const priceLabel = `от\u00a0${safePriceNumber}\u00a0₽`;
+  const renderPrice = () => (
+    <span className={styles.priceValue} aria-label={priceLabel}>
+      <span>от</span>
+      <span>{safePriceNumber}</span>
+      <span>₽</span>
+    </span>
+  );
   const storedWeightLabel =
     result.engineeringSummary.totalStoredWeightKg.toLocaleString("ru-RU");
   const supportLoadLabel =
@@ -1039,7 +1046,7 @@ export function Calculator({
                   </div>
                   <div>
                     <span>Предварительно</span>
-                    <strong>{priceLabel}</strong>
+                    <strong>{renderPrice()}</strong>
                   </div>
                 </div>
 
@@ -1291,7 +1298,7 @@ export function Calculator({
                   <div className={styles.resultPrice}>
                     <span>Предварительная стоимость</span>
                     <strong className={styles.priceLine}>
-                      {priceLabel}
+                      {renderPrice()}
                     </strong>
                     <p>Точную комплектацию и монтаж проверит инженер</p>
                   </div>
@@ -1563,8 +1570,11 @@ export function Calculator({
                 height={1024}
               />
             </div>
-            <div className={styles.summaryPrice}>
-              <span>{priceLabel}</span>
+            <div
+              className={styles.summaryPrice}
+              data-testid="calculator-summary-price"
+            >
+              {renderPrice()}
               <small>ориентир до инженерной проверки</small>
             </div>
             <div className={styles.summaryFacts}>
@@ -1604,7 +1614,7 @@ export function Calculator({
           type="button"
           onClick={() => setMobileSummaryOpen(true)}
         >
-          <strong>{priceLabel}</strong>
+          <strong>{renderPrice()}</strong>
           <small>{display.shortTitle}</small>
         </button>
         <button
@@ -1654,7 +1664,7 @@ export function Calculator({
             <h3 id="calculator-mobile-summary-title">
               {display.shortTitle}
             </h3>
-            <div className={styles.modalPrice}>{priceLabel}</div>
+            <div className={styles.modalPrice}>{renderPrice()}</div>
             <div className={styles.modalFacts}>
               {summaryFacts.map((fact) => (
                 <span key={fact}>

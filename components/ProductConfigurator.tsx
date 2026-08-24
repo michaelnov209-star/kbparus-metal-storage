@@ -70,6 +70,10 @@ export function ProductConfigurator({ profileData: profile, productTitle, produc
   const calculatorStarted = useRef(false);
   const result = useMemo(() => calculateStorageSystem(input, profile), [input, profile]);
   const [animatedPrice, setAnimatedPrice] = useState(result.fromPrice);
+  const formattedPrice = formatRoundedRub(animatedPrice);
+  const formattedPriceNumber = formattedPrice
+    .replace(/\s?₽/u, "")
+    .replace(/\s/g, "\u00a0");
 
   useEffect(() => {
     const fromValue = animatedPrice;
@@ -251,7 +255,14 @@ export function ProductConfigurator({ profileData: profile, productTitle, produc
 
       <aside className="product-configurator-summary">
         <span className="summary-label">Предварительно</span>
-        <strong>от {formatRoundedRub(animatedPrice)}</strong>
+        <strong
+          className="product-configurator-price"
+          aria-label={`от ${formattedPriceNumber} ₽`}
+        >
+          <span>от</span>
+          <span>{formattedPriceNumber}</span>
+          <span>₽</span>
+        </strong>
         <p>Ориентир для первичного подбора. Финальная стоимость уточняется после инженерной проверки.</p>
         <div className="product-spec-list">
           <span>ДхШхВ: <b>{result.engineeringSummary.dimensionsLabel}</b></span>
