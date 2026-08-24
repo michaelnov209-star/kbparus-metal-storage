@@ -33,27 +33,18 @@ describe("admin route assets", () => {
       expect(statSync(absolutePath).size).toBeLessThan(byteBudget);
     }
 
-    const vercel = JSON.parse(source("vercel.json")) as {
-      headers: Array<{
-        source: string;
-        headers: Array<{ key: string; value: string }>;
-      }>;
-    };
-    const adminAssets = vercel.headers.find(
-      (rule) => rule.source === "/assets/admin/(.*)"
-    );
-    const workspaceBackground = vercel.headers.find(
-      (rule) => rule.source === "/assets/admin/workspace-bg-v1.webp"
-    );
+    const nextConfig = source("next.config.mjs");
 
-    expect(adminAssets?.headers).toContainEqual({
-      key: "Cache-Control",
-      value: "public, max-age=0, must-revalidate"
-    });
-    expect(workspaceBackground?.headers).toContainEqual({
-      key: "Cache-Control",
-      value: "public, max-age=31536000, immutable"
-    });
+    expect(nextConfig).toContain('source: "/assets/admin/:path*"');
+    expect(nextConfig).toContain(
+      '{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }'
+    );
+    expect(nextConfig).toContain(
+      'source: "/assets/admin/workspace-bg-v1.webp"'
+    );
+    expect(nextConfig).toContain(
+      '{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }'
+    );
   });
 
   it("loads each special stylesheet only from its matching server view", () => {

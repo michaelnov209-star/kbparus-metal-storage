@@ -41,9 +41,9 @@ test.describe("публичные маршруты", () => {
     );
 
     await openPublicPage(page, CATEGORY_PATH);
-    await expect(page.locator(".catalog-detail-hero h1")).toBeVisible();
+    await expect(page.locator("main h1")).toBeVisible();
     await expectNoHorizontalOverflow(page);
-    await expectTextFits(page, ".catalog-detail-hero h1");
+    await expectTextFits(page, "main h1");
 
     await openPublicPage(page, PRODUCT_PATH);
     await expect(page.locator(".product-title-strip h1")).toBeVisible();

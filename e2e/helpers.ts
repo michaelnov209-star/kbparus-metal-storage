@@ -27,6 +27,15 @@ export async function openPublicPage(page: Page, path: string) {
   return response;
 }
 
+export async function dismissAnalyticsPrompt(page: Page) {
+  const prompt = page.getByTestId("cookie-consent");
+
+  if (await prompt.isVisible()) {
+    await page.getByTestId("cookie-reject").click();
+    await expect(prompt).toBeHidden();
+  }
+}
+
 export async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,

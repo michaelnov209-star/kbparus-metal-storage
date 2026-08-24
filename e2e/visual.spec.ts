@@ -1,11 +1,12 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { openPublicPage } from "./helpers";
+import { dismissAnalyticsPrompt, openPublicPage } from "./helpers";
 
 const screenshotStyles = path.join(import.meta.dirname, "screenshot.css");
 
 test("ключевые зоны главной не меняют компоновку", async ({ page }) => {
   await openPublicPage(page, "/");
+  await dismissAnalyticsPrompt(page);
 
   await expect(page.locator(".line-hero-content")).toHaveScreenshot(
     "home-hero-content.png",

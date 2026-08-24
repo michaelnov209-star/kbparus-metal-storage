@@ -1,10 +1,12 @@
 .root {
   --v4-accent: #fc5413;
   --v4-accent-dark: #d83d06;
+  --v4-accent-action: #c83a07;
+  --v4-accent-text: #b93405;
   --v4-accent-soft: #fff2eb;
   --v4-ink: #1a1a1a;
   --v4-copy: #3d3d3d;
-  --v4-muted: #697581;
+  --v4-muted: #53616d;
   --v4-line: #d8e1e8;
   --v4-surface: #ffffff;
   --v4-canvas: #eef3f6;
@@ -58,7 +60,7 @@
   align-items: center;
   gap: 8px;
   width: fit-content;
-  color: var(--v4-accent);
+  color: var(--v4-accent-text);
   font-size: 11px;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -196,8 +198,8 @@
 
 .stepButton.isActive .stepMarker {
   color: #fff;
-  background: var(--v4-accent);
-  border-color: var(--v4-accent);
+  background: var(--v4-accent-action);
+  border-color: var(--v4-accent-action);
 }
 
 .stepButton.isComplete .stepMarker {
@@ -295,7 +297,7 @@
 
 .panelHeading span,
 .formHeading > span {
-  color: var(--v4-accent);
+  color: var(--v4-accent-text);
   font-size: 10px;
   font-weight: 950;
   letter-spacing: 0.06em;
@@ -309,10 +311,10 @@
   line-height: 1.05;
 }
 
-.panelHeading p {
+.root .panelHeading p {
   max-width: 780px;
   margin: 0;
-  color: var(--v4-muted);
+  color: var(--v4-copy);
   font-size: 14px;
   line-height: 1.45;
 }
@@ -499,7 +501,7 @@
 
 .summaryAction {
   flex: 0 0 auto;
-  color: var(--v4-accent);
+  color: var(--v4-accent-text);
   font-size: 12px;
   font-weight: 900;
 }
@@ -552,7 +554,7 @@
 
 .systemType {
   width: fit-content;
-  color: var(--v4-accent);
+  color: var(--v4-accent-text);
   font-size: 9px;
   font-weight: 950;
   letter-spacing: 0.05em;
@@ -1450,8 +1452,8 @@
 .submitButton,
 .mobileAction {
   color: #fff;
-  background: var(--v4-accent);
-  border: 1px solid var(--v4-accent);
+  background: var(--v4-accent-action);
+  border: 1px solid var(--v4-accent-action);
   box-shadow: 0 12px 28px rgba(252, 84, 19, 0.2);
 }
 
@@ -2050,7 +2052,7 @@
     font-size: 24px;
   }
 
-  .panelHeading p {
+  .root .panelHeading p {
     font-size: 12px;
   }
 

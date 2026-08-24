@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## 2026-08-24 — Repository and security hardening
+
+- Payload и синхронные `@payloadcms/*` пакеты обновлены до `3.88.0`; число
+  известных high/critical-уязвимостей production-дерева снижено до нуля.
+- Исправленные версии `dompurify` и `nanoid` закреплены через npm overrides;
+  дерево peer-зависимостей проверено командой `npm ls`.
+- Node-версия CI унифицирована с `.nvmrc` и `package.json`; GitHub Actions
+  больше не содержат отдельную расходящуюся версию runtime.
+- Добавлены Dependabot, `SECURITY.md`, `.editorconfig`, `.gitattributes` и
+  отдельный отчёт аудита безопасности.
+- Заголовки кеширования статических файлов централизованы в Next.js;
+  дублирующая конфигурация удалена из `vercel.json`.
+- Усилено экранирование пользовательских данных перед отправкой в Telegram.
+- Исправлены семантика и контраст главного калькулятора; E2E теперь проверяет
+  обязательное согласие без привязки к способу отображения кнопки.
+- Визуальные тесты изолированы от cookie-баннера, а тест страницы входа — от
+  отсутствующей локальной CMS, поэтому логи не маскируют реальные ошибки.
+- Проверено: 408 unit-тестов, 33 E2E-сценария для mobile/tablet/desktop,
+  TypeScript, production build, Payload import map/types и npm security audit.
+
+Основные затронутые файлы:
+
+- `package.json`, `package-lock.json`
+- `.github/workflows/*`, `.github/dependabot.yml`
+- `next.config.mjs`, `vercel.json`
+- `components/Calculator.tsx`, `components/calculator/CalculatorV4.module.css`
+- `lib/leads/telegram.ts`
+- `e2e/*`, `tests/*`
+- `README.md`, `SECURITY.md`, `docs/audits/*`
+
+Что проверить после публикации:
+
+- `/api/health` возвращает рабочий статус CMS и хранилища.
+- `/admin/login` и `/admin` открываются, существующий пользователь входит.
+- Главная, каталог, калькулятор и `/api/leads` работают на production URL.
+- Статические изображения получают долгий immutable cache, HTML — нет.
+
 ## 2026-08-23 — Product-first category pages and cleaner lead context
 
 - Страницы категорий с товарами перестроены в product-first формат: после хлебных крошек пользователь сразу видит ассортимент раздела, без длинного вводного hero и служебных блоков.

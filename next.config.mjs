@@ -118,6 +118,24 @@ const nextConfig = {
         ],
       },
       {
+        source: "/assets/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=3600, must-revalidate" },
+        ],
+      },
+      {
+        source: "/assets/admin/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/assets/admin/workspace-bg-v1.webp",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
         // Контент-хеш входит в имя каждого файла, поэтому годовой immutable
         // кеш безопасен и не удерживает устаревшую версию после обновления.
         source: "/assets/images/catalog/optimized/:path*",
@@ -145,11 +163,23 @@ const nextConfig = {
         ],
       },
       {
+        source: "/assets/images/home/scenarios/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
         // Новые Blob-загрузки получают addRandomSuffix, поэтому их URL уникален.
         // Повторные визиты и навигация не перекачивают тяжёлые медиа заново.
         source: "/api/media/file/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        source: "/brand/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, must-revalidate" },
         ],
       },
     ];

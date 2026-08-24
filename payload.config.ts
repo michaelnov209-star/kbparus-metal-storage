@@ -145,7 +145,7 @@ export default buildConfig({
     },
     meta: {
       titleSuffix: " — Админка КБ Парус",
-      icons: [{ rel: "icon", type: "image/png", url: "/brand/logo-g.png" }]
+      icons: [{ rel: "icon", type: "image/png", url: "/brand/logo-mark.png" }]
     },
     theme: "light"
   },

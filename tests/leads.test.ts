@@ -66,6 +66,19 @@ describe("Telegram lead messages", () => {
     expect(message).not.toContain("Тип системы");
     expect(message).not.toContain("Предварительная стоимость");
   });
+
+  it("escapes untrusted text before rendering Telegram HTML", () => {
+    const message = buildTelegramMessage({
+      leadType: "contact",
+      name: '<b title="x">Иван</b>',
+      phone: "+7 999 111-22-33",
+      comment: "Цена < 1 & скидка 'срочно'"
+    });
+
+    expect(message).not.toContain('<b title="x">');
+    expect(message).toContain("&lt;b title=&quot;x&quot;&gt;Иван&lt;/b&gt;");
+    expect(message).toContain("Цена &lt; 1 &amp; скидка &#39;срочно&#39;");
+  });
 });
 
 describe("Bitrix24 lead payload", () => {

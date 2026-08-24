@@ -26,7 +26,7 @@ Production-ready B2B-сайт отдельного направления «Си
 git clone https://github.com/michaelnov209-star/kbparus-metal-storage.git
 cd kbparus-metal-storage
 cp .env.example .env.local      # заполнить под локальные нужды
-npm install
+npm ci                          # точная установка из package-lock.json
 npm run dev                     # http://localhost:3000
 ```
 
@@ -36,6 +36,8 @@ npm run dev                     # http://localhost:3000
 npm run lint                    # tsc --noEmit
 npm run test                    # vitest
 npm run build                   # production-сборка Next.js
+npm run security:audit          # high/critical уязвимости production-зависимостей
+npm run quality                 # lint + test + build одной командой
 ```
 
 Полная команда сборки на Vercel — `npm run vercel-build`. Подробнее — [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md).
@@ -90,6 +92,7 @@ Payload admin доступен по `/admin`. Сейчас это не толь�
 - [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md) — onboarding для разработчика (быстрый старт, архитектура, troubleshooting Payload/Drizzle, build pipeline).
 - [`docs/planning/roadmap.md`](docs/planning/roadmap.md) — спринты и приоритеты.
 - [`docs/audits/project-audit.md`](docs/audits/project-audit.md), [`docs/audits/calculator-audit.md`](docs/audits/calculator-audit.md), [`docs/audits/customer-journey-audit.md`](docs/audits/customer-journey-audit.md), [`docs/audits/dependency-audit-2026-05-19.md`](docs/audits/dependency-audit-2026-05-19.md) — независимые аудиты.
+- [`docs/audits/security-and-repository-audit-2026-08-24.md`](docs/audits/security-and-repository-audit-2026-08-24.md) — актуальный аудит безопасности, зависимостей и CI/CD.
 - [`docs/operations/`](docs/README.md#структура) — деплой, CMS setup, валидация, Telegram-бот, Bitrix24.
 - [`docs/architecture/`](docs/README.md#структура) — контекст проекта, процессы, CMS-архитектура.
 - [`docs/reports/report-for-director.md`](docs/reports/report-for-director.md) — отчёт руководству.
@@ -150,6 +153,14 @@ cms:generate-types → cms:generate-importmap → cms:check → next build
 3. Изменение Payload schema — новая проверенная миграция; обычный Vercel build не выполняет DDL, контролируемый Production release требует точного имени миграции и одноразового подтверждения.
 4. Любой non-trivial фикс — отразить в `CHANGELOG.md` или соответствующем `docs/**/*.md`.
 5. Production не ломать: эксперименты — на feature-ветках, cutover в `main` — после smoke на preview.
+
+## Безопасность
+
+- Политика: [`SECURITY.md`](SECURITY.md).
+- Перед релизом: `npm run security:audit` и `npm run quality`.
+- Реальные секреты никогда не добавляются в Git; используются Vercel/GitHub
+  Secrets и локальный `.env.local`.
+- Dependabot еженедельно проверяет npm и ежемесячно GitHub Actions.
 
 ## Лицензия и владение
 

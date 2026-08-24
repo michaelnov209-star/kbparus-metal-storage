@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
-import { CONFIGURATOR_PRODUCT_PATH, openPublicPage } from "./helpers";
+import {
+  CONFIGURATOR_PRODUCT_PATH,
+  dismissAnalyticsPrompt,
+  openPublicPage
+} from "./helpers";
 
 async function interceptLead(page: Page) {
   let payload: Record<string, unknown> | undefined;
@@ -26,15 +30,6 @@ async function interceptLead(page: Page) {
   };
 }
 
-async function dismissAnalyticsPrompt(page: Page) {
-  const prompt = page.getByTestId("cookie-consent");
-
-  if (await prompt.isVisible()) {
-    await page.getByTestId("cookie-reject").click();
-    await expect(prompt).toBeHidden();
-  }
-}
-
 test("главный калькулятор меняет расчет и отправляет конфигурацию", async ({
   page
 }) => {
@@ -44,25 +39,24 @@ test("главный калькулятор меняет расчет и отп�
 
   const calculator = page.getByTestId("calculator");
   await expect(calculator).toBeVisible();
-  const price = calculator.locator(".calc-summary .summary-price .price-line");
+  const price = calculator.getByTestId("calculator-price");
   const initialPrice = await price.textContent();
 
-  await calculator.getByRole("button", { name: /2 Габариты/ }).click();
-  const lengthGroup = calculator
-    .locator(".calc-option-group")
-    .filter({ hasText: "Длина материала" });
-  await lengthGroup.locator("button:not(.is-active)").last().click();
+  await calculator
+    .getByRole("button", { name: "Параметры", exact: true })
+    .click();
+  const lengthGroup = calculator.getByRole("group", { name: "Длина" });
+  await lengthGroup.locator('button[aria-pressed="false"]').last().click();
   await expect(price).not.toHaveText(initialPrice ?? "");
 
-  const priceAfterDimensions = await price.textContent();
-  await calculator.getByRole("button", { name: /3 Доступ/ }).click();
-  await calculator.locator(".option-card:not(.is-active)").first().click();
-  await expect(price).not.toHaveText(priceAfterDimensions ?? "");
-
-  await calculator.getByRole("button", { name: /4 Решение/ }).click();
+  await calculator
+    .getByRole("button", { name: "Расчёт", exact: true })
+    .click();
   await calculator.getByTestId("calculator-name").fill("Автотест");
   await calculator.getByTestId("calculator-phone").fill("+7 999 000-00-01");
-  await expect(calculator.getByTestId("calculator-submit")).toBeDisabled();
+  await calculator.getByTestId("calculator-submit").click();
+  expect(lead.getRequests()).toBe(0);
+  await expect(calculator.getByTestId("calculator-consent")).toBeFocused();
   await calculator.getByTestId("calculator-consent").check();
   await calculator.getByTestId("calculator-submit").click();
 

@@ -815,6 +815,14 @@ export function Calculator({
       data-ui="calculator-v4"
       id="calculator"
     >
+      <output
+        aria-atomic="true"
+        aria-live="polite"
+        className={styles.visuallyHidden}
+        data-testid="calculator-price"
+      >
+        {priceLabel}
+      </output>
       <div className={styles.inner}>
         <header className={styles.header}>
           <span className={styles.eyebrow}>Предварительный подбор</span>
@@ -842,7 +850,10 @@ export function Calculator({
         />
 
         <div className={styles.layout}>
-          <main className={styles.workspace}>
+          <section
+            className={styles.workspace}
+            aria-label="Параметры конфигуратора системы хранения"
+          >
             {step === 0 && (
               <article className={styles.panel}>
                 <div className={styles.panelHeading}>
@@ -1534,7 +1545,7 @@ export function Calculator({
                 </button>
               )}
             </div>
-          </main>
+          </section>
 
           <aside className={styles.desktopSummary}>
             <span className={styles.eyebrow}>Текущая конфигурация</span>

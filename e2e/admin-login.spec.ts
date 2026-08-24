@@ -3,6 +3,14 @@ import { expect, test } from "@playwright/test";
 test("быстрый вход корректен на mobile, tablet и desktop", async ({
   page
 }, testInfo) => {
+  await page.route("**/api/users/me?*", (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ user: null })
+    })
+  );
+
   const response = await page.goto("/admin/login", {
     waitUntil: "domcontentloaded"
   });

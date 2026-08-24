@@ -27,7 +27,8 @@ docs/
 │   ├── project-audit.md            # общий аудит проекта
 │   ├── calculator-audit.md         # детальный аудит калькулятора
 │   ├── customer-journey-audit.md   # путь клиента, точки потери конверсии
-│   └── dependency-audit-2026-05-19.md # npm audit без force-fix
+│   ├── dependency-audit-2026-05-19.md # npm audit без force-fix
+│   └── security-and-repository-audit-2026-08-24.md # безопасность и порядок репозитория
 │
 ├── operations/                     # как эксплуатировать систему
 │   ├── deployment-guide.md         # процесс деплоя

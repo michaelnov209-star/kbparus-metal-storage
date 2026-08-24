@@ -20,6 +20,8 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "vitest run",
+    "quality": "npm run lint && npm run test && npm run build",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
     "perf:admin-bundle": "node scripts/performance/check-admin-bundle.mjs",
     "test:e2e": "npm run build && node e2e/run.mjs",
     "test:e2e:update": "npm run build && node e2e/run.mjs visual.spec.ts --update-snapshots",
@@ -45,16 +47,16 @@
     "cms:generate-types": "node scripts/cms/safe-generate-types.mjs"
   },
   "dependencies": {
-    "@payloadcms/db-postgres": "3.86.0",
-    "@payloadcms/drizzle": "3.86.0",
-    "@payloadcms/email-nodemailer": "3.86.0",
-    "@payloadcms/next": "3.86.0",
-    "@payloadcms/storage-vercel-blob": "3.86.0",
+    "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/drizzle": "3.88.0",
+    "@payloadcms/email-nodemailer": "3.88.0",
+    "@payloadcms/next": "3.88.0",
+    "@payloadcms/storage-vercel-blob": "3.88.0",
     "@vercel/functions": "^3.7.6",
     "lucide-react": "^1.27.0",
     "next": "^16.2.12",
     "nodemailer": "^9.0.3",
-    "payload": "3.86.0",
+    "payload": "3.88.0",
     "pg": "8.22.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -67,13 +69,15 @@
     "@types/nodemailer": "^8.0.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "esbuild": "0.28.2",
     "sass": "^1.77.4",
     "tsx": "^4.19.2",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
   },
   "overrides": {
-    "dompurify": "3.4.12",
+    "dompurify": "3.4.14",
+    "nanoid": "3.3.18",
     "postcss": "8.5.23",
     "sharp": "$sharp"
   }
