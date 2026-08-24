@@ -731,3 +731,64 @@ html{scrollbar-width:thin;scrollbar-color:#fc5413 #111923;-webkit-text-size-adju
           transition:none;
         }
       }
+
+      /* Calculator desktop summary: keep the live result visible while the buyer scrolls parameters. */
+      @media(min-width:1181px) {
+        .calculator-shell,
+        .calculator-product,
+        .calc-workspace,
+        .calc-panel {
+          overflow:visible!important;
+        }
+
+        .calculator-product {
+          align-items:start!important;
+          isolation:isolate;
+        }
+
+        .calc-summary {
+          position:sticky!important;
+          top:88px!important;
+          align-self:start!important;
+          margin-top:0!important;
+          width:100%!important;
+          max-width:400px!important;
+          max-height:calc(100dvh - 104px)!important;
+          height:auto!important;
+          overflow-x:hidden!important;
+          overflow-y:auto!important;
+          overscroll-behavior:contain!important;
+          z-index:30!important;
+        }
+
+        .calc-summary h3 {
+          font-size:26px!important;
+          line-height:1.12!important;
+        }
+
+        .calc-summary>img {
+          height:clamp(280px,26vw,360px)!important;
+        }
+
+        .calc-summary .summary-price {
+          padding:20px!important;
+        }
+
+        .calc-summary .summary-spec-grid {
+          gap:10px!important;
+        }
+
+        .calc-summary .summary-spec-grid span {
+          min-height:62px!important;
+          padding:13px 14px!important;
+          font-size:14px!important;
+          line-height:1.35!important;
+          font-weight:850!important;
+        }
+
+        .calc-summary .summary-spec-grid small,
+        .calc-summary .summary-price small {
+          font-size:12px!important;
+          line-height:1.35!important;
+        }
+      }
