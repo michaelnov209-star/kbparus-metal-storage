@@ -5,7 +5,7 @@ Production: <https://kbparus-metal-storage.vercel.app>
 ## Требования
 
 - Node.js 24.x (точная версия из `.nvmrc`);
-- npm с актуальным `package-lock.json`;
+- npm 11.19.0 (зафиксирован в `packageManager`) с актуальным `package-lock.json`;
 - доступ к GitHub и Vercel-проекту `kbparus-metal-storage`;
 - production-переменные из `.env.example`.
 
@@ -20,10 +20,15 @@ Production: <https://kbparus-metal-storage.vercel.app>
 SMTP, Telegram, Bitrix24 и Upstash подключаются независимо. Заявка считается
 принятой только после успешной доставки хотя бы в один реальный канал.
 
+Production-секреты не должны использоваться в Preview. Для preview-сборок
+нужны отдельные база данных, `PAYLOAD_SECRET`, Blob-хранилище и тестовые
+интеграции; до разделения окружений preview разрешено создавать только из
+доверенных веток.
+
 ## Локальная проверка
 
 ```bash
-npm ci
+npm ci --include=optional --strict-allow-scripts
 npm run lint
 npm test
 npm run build
@@ -40,6 +45,8 @@ npm run security:audit
 Vercel запускает:
 
 ```text
+strict npm ci (только package.json#allowScripts)
+→
 security:audit
 → images:optimize
 → cms:check
@@ -50,6 +57,10 @@ security:audit
 
 Build не меняет production-БД: в Payload установлено `push: false`.
 Миграции не входят ни в preview, ни в production deploy.
+
+Если новая зависимость добавит `preinstall`, `install` или `postinstall`,
+установка завершится ошибкой до сборки. Разрешать такой скрипт можно только
+после проверки пакета и с точной версией `имя@версия` в `allowScripts`.
 
 ## Безопасная публикация
 

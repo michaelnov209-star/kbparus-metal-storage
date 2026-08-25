@@ -1,8 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "fluid": true,
   "regions": ["fra1"],
-  "installCommand": "npm ci --include=optional",
+  "installCommand": "npm ci --include=optional --strict-allow-scripts",
   "buildCommand": "npm run vercel-build",
   "crons": [
     {

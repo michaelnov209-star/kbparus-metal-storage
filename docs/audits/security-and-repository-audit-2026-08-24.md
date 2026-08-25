@@ -14,6 +14,8 @@ Vercel. Критических уязвимостей в коде проекта
 - Транзитивные `dompurify` и `nanoid` закреплены на исправленных версиях.
 - `esbuild` закреплён на совместимой версии, чтобы npm не создавал некорректное
   дерево peer-зависимостей для Vitest/Vite и Drizzle.
+- Vercel и CI используют строгую allowlist-политику install-скриптов: одобрены
+  только точные версии `esbuild`, новые скрипты блокируют установку.
 - GitHub Actions теперь читает Node-версию из `.nvmrc`; локальная среда,
   CI и Vercel используют единый Node 24.x.
 - Кэш-заголовки перенесены в `next.config.mjs`; дублирующий набор удалён из
@@ -61,17 +63,39 @@ Vercel. Критических уязвимостей в коде проекта
 - включён ли distributed rate limit, если нагрузка превысит возможности
 PostgreSQL-счётчика.
 
+## Риски Vercel, выявленные 25 августа 2026
+
+- **Высокий:** production-доступы к PostgreSQL, Payload, Blob, Telegram и
+  Bitrix24 одновременно выданы окружению Preview. До разделения окружений
+  любой preview build следует считать доверенным и не запускать из
+  непроверенной ветки или внешнего pull request. Рекомендуемое исправление:
+  отдельная preview-БД, отдельный `PAYLOAD_SECRET`, отдельное Blob-хранилище и
+  тестовые либо отключённые интеграции уведомлений.
+- **Средний:** ручные preview и production deployment создаются парами и
+  накапливаются. Безопасный процесс: один проверенный preview, затем promotion
+  того же артефакта в production вместо повторной сборки.
+- **Средний:** приложение и функции размещены в `fra1`. Регион основной базы
+  необходимо держать максимально близко, иначе растут задержки и вероятность
+  сетевых ошибок при обращениях к CMS.
+- **Низкий:** строгий `npm audit` требует доступности npm registry во время
+  сборки. Недоступность registry теперь намеренно останавливает публикацию,
+  что безопаснее выпуска непроверенного дерева зависимостей.
+
+Значения секретов во время аудита не читались и не выводились. Изменения
+production-настроек Vercel без отдельного согласования не выполнялись.
+
 ## Проверки
 
 Успешно выполнены:
 
-- `npm ci --include=optional` и `npm ls`;
+- `npm ci --include=optional --strict-allow-scripts` на npm 11.19.0 и `npm ls`;
 - `npm run cms:generate-importmap` и `npm run cms:generate-types`;
 - `npm run lint`, `npm run test`, `npm run build`;
 - `npm run test:e2e`: 33 сценария на mobile, tablet и desktop;
 - `npm run perf:admin-bundle`;
 - `npm run security:audit`: 0 moderate, 0 high, 0 critical и успешный
-  контракт `@esbuild-kit/core-utils` с `esbuild 0.25.12`;
+  контракт `@esbuild-kit/core-utils` с `esbuild 0.25.12`, а также проверка
+  `package.json#allowScripts` против lock-файла;
 - сканирование отслеживаемых Git-файлов на токены, приватные ключи,
   пароли и webhook URL.
 
@@ -98,7 +122,7 @@ production-сервисов.
 ## Релизный минимум
 
 ```bash
-npm ci
+npm ci --include=optional --strict-allow-scripts
 npm run security:audit
 npm run quality
 npm run test:e2e

@@ -33,6 +33,11 @@
 - Перед релизом обязательны `npm run security:audit` и `npm run quality`.
 - `security:audit` проверяет всё дерево сборки с порогом `moderate`; Vercel
   прекращает deployment до публикации при любой найденной уязвимости.
+- Install-скрипты зависимостей запрещены по умолчанию в CI/Vercel. Разрешены
+  только точные проверенные версии из `package.json#allowScripts`; появление
+  нового скрипта останавливает установку до ручного аудита.
+- Production и Preview должны использовать разные секреты, базы данных и
+  интеграции. Production-доступы нельзя выдавать непроверенным preview build.
 - Override `@esbuild-kit/core-utils -> esbuild 0.25.12` удалять только после
   обновления Payload/Drizzle, устраняющего устаревшую зависимость, и повторного
   прохождения контрактной проверки `scripts/security/verify-esbuild-override.mjs`.

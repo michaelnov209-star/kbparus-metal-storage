@@ -2,6 +2,13 @@
 
 ## 2026-08-25 — Строгий аудит зависимостей Vercel
 
+- Install-скрипты зависимостей переведены в fail-closed режим: CI и Vercel
+  разрешают только `esbuild@0.25.12` и `esbuild@0.28.2`, а новый скрипт
+  останавливает установку до публикации.
+- npm закреплён на 11.19.0; добавлена проверка allowlist против lock-файла и
+  Linux/x64/glibc окружения Vercel.
+- Зафиксирован аудит Vercel: проверены production health, CMS, заголовки,
+  область переменных окружения и остаточные риски Preview/Production.
 - Пять moderate-предупреждений npm сведены к одной транзитивной цепочке
   `Payload -> Drizzle Kit -> @esbuild-kit -> esbuild 0.18.20`.
 - Только для устаревшего `@esbuild-kit/core-utils` закреплён безопасный
@@ -15,7 +22,8 @@
 
 - `package.json`, `package-lock.json`
 - `scripts/security/verify-esbuild-override.mjs`
-- `.github/workflows/quality.yml`
+- `scripts/security/verify-install-script-policy.mjs`
+- `vercel.json`, `.github/workflows/quality.yml`
 - `README.md`, `SECURITY.md`
 - `docs/operations/deployment-guide.md`
 - `docs/audits/security-and-repository-audit-2026-08-24.md`

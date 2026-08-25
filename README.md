@@ -26,7 +26,7 @@ Production-ready B2B-сайт отдельного направления «Си
 git clone https://github.com/michaelnov209-star/kbparus-metal-storage.git
 cd kbparus-metal-storage
 cp .env.example .env.local      # заполнить под локальные нужды
-npm ci                          # точная установка из package-lock.json
+npm ci --include=optional --strict-allow-scripts # точная и закрытая установка
 npm run dev                     # http://localhost:3000
 ```
 
@@ -176,6 +176,9 @@ cms:generate-types → cms:generate-importmap → cms:check → next build
   npm override безопасный `esbuild 0.25.12`. Команда `security:audit`
   дополнительно проверяет совместимость sync/async TypeScript transform и
   блокирует Vercel build при любом новом риске уровня moderate и выше.
+- CI и Vercel разрешают install-скрипты только для точных проверенных версий
+  из `package.json#allowScripts`; новая транзитивная зависимость со скриптом
+  останавливает установку до ручного аудита.
 
 ## Лицензия и владение
 
