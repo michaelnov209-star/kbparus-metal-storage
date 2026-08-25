@@ -9,6 +9,8 @@
   Linux/x64/glibc окружения Vercel.
 - Зафиксирован аудит Vercel: проверены production health, CMS, заголовки,
   область переменных окружения и остаточные риски Preview/Production.
+- Post-deploy smoke больше не создаёт ложные ошибки на защищённых Preview;
+  автоматическая проверка ограничена Production и ручным доверенным запуском.
 - Пять moderate-предупреждений npm сведены к одной транзитивной цепочке
   `Payload -> Drizzle Kit -> @esbuild-kit -> esbuild 0.18.20`.
 - Только для устаревшего `@esbuild-kit/core-utils` закреплён безопасный

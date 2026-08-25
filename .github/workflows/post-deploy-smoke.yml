@@ -26,15 +26,17 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.deployment_status.state == 'success' &&
-      github.event.deployment_status.environment_url != '')
+      github.event.deployment_status.environment_url != '' &&
+      (github.event.deployment.environment == 'Production' ||
+      github.event.deployment.environment == 'production'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       DEPLOYMENT_URL: ${{ github.event.deployment_status.environment_url || inputs.deployment_url }}
       DEPLOYMENT_ENVIRONMENT: ${{ github.event.deployment.environment }}
       MANUAL_PRODUCTION: ${{ inputs.production }}
-      # This workflow deliberately receives no Vercel bypass secret: a preview
-      # deployment can originate from untrusted branch code.
+      # Protected Preview is deliberately skipped: passing a Vercel bypass
+      # secret to code checked out from an untrusted branch would expose it.
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
