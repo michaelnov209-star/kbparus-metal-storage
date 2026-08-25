@@ -5,7 +5,7 @@ Production: <https://kbparus-metal-storage.vercel.app>
 ## Требования
 
 - Node.js 24.x (точная версия из `.nvmrc`);
-- npm 11.19.0 (зафиксирован в `packageManager`) с актуальным `package-lock.json`;
+- npm 11.17+ (локально и в CI закреплён 11.19.0) с актуальным `package-lock.json`;
 - доступ к GitHub и Vercel-проекту `kbparus-metal-storage`;
 - production-переменные из `.env.example`.
 
@@ -45,7 +45,7 @@ npm run security:audit
 Vercel запускает:
 
 ```text
-strict npm ci (только package.json#allowScripts)
+strict npm ci (явная allow/deny policy из package.json#allowScripts)
 →
 security:audit
 → images:optimize
@@ -59,8 +59,8 @@ Build не меняет production-БД: в Payload установлено `push
 Миграции не входят ни в preview, ни в production deploy.
 
 Если новая зависимость добавит `preinstall`, `install` или `postinstall`,
-установка завершится ошибкой до сборки. Разрешать такой скрипт можно только
-после проверки пакета и с точной версией `имя@версия` в `allowScripts`.
+установка завершится ошибкой до сборки. После проверки пакет нужно явно
+разрешить или запретить с точной версией `имя@версия` в `allowScripts`.
 
 ## Безопасная публикация
 

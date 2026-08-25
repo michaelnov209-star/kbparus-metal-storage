@@ -176,9 +176,10 @@ cms:generate-types → cms:generate-importmap → cms:check → next build
   npm override безопасный `esbuild 0.25.12`. Команда `security:audit`
   дополнительно проверяет совместимость sync/async TypeScript transform и
   блокирует Vercel build при любом новом риске уровня moderate и выше.
-- CI и Vercel разрешают install-скрипты только для точных проверенных версий
-  из `package.json#allowScripts`; новая транзитивная зависимость со скриптом
-  останавливает установку до ручного аудита.
+- CI и Vercel используют точную политику install-скриптов из
+  `package.json#allowScripts`: скрипты `esbuild` разрешены, macOS-only
+  `fsevents` явно запрещены; новая зависимость со скриптом останавливает
+  установку до ручного аудита.
 
 ## Лицензия и владение
 
