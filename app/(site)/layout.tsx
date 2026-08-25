@@ -4,6 +4,7 @@ import { AnalyticsEvents } from "@/components/AnalyticsEvents";
 import { CookieConsent } from "@/components/CookieConsent";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { YandexMetrika } from "@/components/YandexMetrika";
+import { ScrollMotion } from "@/components/ScrollMotion";
 import { JsonLd, organizationSchema, websiteSchema, SITE_URL } from "@/lib/seo/schema";
 import {
   SOCIAL_PREVIEW_ALT,
@@ -107,6 +108,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <JsonLd data={websiteSchema()} />
       </head>
       <body>
+        <ScrollMotion />
         <YandexMetrika />
         <AnalyticsEvents />
         <WebVitalsReporter />

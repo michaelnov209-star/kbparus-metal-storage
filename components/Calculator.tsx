@@ -926,7 +926,7 @@ export function Calculator({
   return (
     <section
       ref={calculatorRootRef}
-      className={`${styles.root}${productContext ? ` ${styles.productCalculator}` : ""}`}
+      className={`${styles.root} reveal${productContext ? ` ${styles.productCalculator}` : ""}`}
       data-character={profile.productType}
       data-testid="calculator"
       data-ui="calculator-v4"

@@ -269,22 +269,28 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
       )}
 
       <section className="product-info-grid" data-testid="product-details">
-        <article>
-          <h2>Характеристики</h2>
-          <div className="product-spec-table">
-            {product.specs.map((item) => (
-              <span key={item.label}>
-                <small>{item.label}</small>
-                <b>{item.value}</b>
-              </span>
-            ))}
+        <article className="product-info-card">
+          <div className="product-info-column">
+            <h2>Характеристики</h2>
+            <div className="product-spec-table">
+              {product.specs.map((item) => (
+                <span key={item.label}>
+                  <small>{item.label}</small>
+                  <b>{item.value}</b>
+                </span>
+              ))}
+            </div>
           </div>
-        </article>
-        <article>
-          <h2>Что входит в подбор</h2>
-          <ul>
-            {product.includes.map((item) => <li key={item}><PackageCheck size={18} /> {item}</li>)}
-          </ul>
+          <div className="product-info-column product-includes-column">
+            <h2>Что входит в подбор</h2>
+            <ul>
+              {product.includes.map((item) => (
+                <li key={item}>
+                  <PackageCheck size={18} /> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </article>
       </section>
 
