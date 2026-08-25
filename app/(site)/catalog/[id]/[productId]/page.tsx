@@ -213,20 +213,51 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
               </a>
             </div>
           ) : (
-            <>
-              <div className="product-hero-points" aria-label="Что учтем при подборе">
-                <span><Ruler size={16} /> Размеры склада</span>
-                <span><ShieldCheck size={16} /> Рабочую нагрузку</span>
-                <span><PackageCheck size={16} /> Способ загрузки</span>
-              </div>
-              <div className="product-price-row">
-                <strong>{getProductPriceLabel(product)}</strong>
-                <a className="line-primary" href="#product-request">
-                  Оставить заявку
-                </a>
-              </div>
-            </>
+            <div className="product-price-row">
+              <strong>{getProductPriceLabel(product)}</strong>
+              <a className="line-primary" href="#product-request">
+                Оставить заявку
+              </a>
+            </div>
           )}
+
+          <div className="product-hero-details" data-testid="product-details">
+            <section
+              className="product-hero-detail-column"
+              aria-labelledby="product-specifications-title"
+            >
+              <div className="product-hero-detail-heading">
+                <Ruler size={18} aria-hidden />
+                <h2 id="product-specifications-title">Характеристики</h2>
+              </div>
+              <dl className="product-hero-specs">
+                {product.specs.map((item) => (
+                  <div key={item.label}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            <section
+              className="product-hero-detail-column product-hero-includes"
+              aria-labelledby="product-selection-title"
+            >
+              <div className="product-hero-detail-heading">
+                <PackageCheck size={18} aria-hidden />
+                <h2 id="product-selection-title">Что входит в подбор</h2>
+              </div>
+              <ul>
+                {product.includes.map((item) => (
+                  <li key={item}>
+                    <ShieldCheck size={16} aria-hidden />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -267,32 +298,6 @@ export default async function CatalogProductPage({ params }: { params: Promise<{
           />
         </>
       )}
-
-      <section className="product-info-grid" data-testid="product-details">
-        <article className="product-info-card">
-          <div className="product-info-column">
-            <h2>Характеристики</h2>
-            <div className="product-spec-table">
-              {product.specs.map((item) => (
-                <span key={item.label}>
-                  <small>{item.label}</small>
-                  <b>{item.value}</b>
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="product-info-column product-includes-column">
-            <h2>Что входит в подбор</h2>
-            <ul>
-              {product.includes.map((item) => (
-                <li key={item}>
-                  <PackageCheck size={18} /> {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-      </section>
 
       {product.documents?.length ? (
         <section

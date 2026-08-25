@@ -87,6 +87,13 @@ describe("calculator lead form semantics", () => {
     expect(source).not.toMatch(/режим менеджера|режим клиента/i);
   });
 
+  it("keeps the calculator visible without waiting for a scroll reveal", () => {
+    expect(source).toContain(
+      'className={`${styles.root}${productContext ? ` ${styles.productCalculator}` : ""}`}'
+    );
+    expect(source).not.toContain("${styles.root} reveal");
+  });
+
   it("keeps object conditions visible and uses semantic condition icons", () => {
     expect(source).toContain(
       '<section className={styles.conditionsSection}>'

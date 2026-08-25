@@ -21,17 +21,20 @@ describe("product configurator profile safety", () => {
     expect(page).not.toContain("@/components/ProductConfigurator");
   });
 
-  it("places technical details after the calculator or request form", () => {
+  it("places technical details inside the product hero", () => {
     const page = fs.readFileSync(
       path.join(root, "app/(site)/catalog/[id]/[productId]/page.tsx"),
       "utf8"
     );
+    const heroIndex = page.indexOf('className={`product-hero');
     const interactionIndex = page.indexOf("{productCalculatorProfile ? (");
     const detailsIndex = page.indexOf(
-      '<section className="product-info-grid" data-testid="product-details">'
+      '<div className="product-hero-details" data-testid="product-details">'
     );
 
-    expect(interactionIndex).toBeGreaterThan(-1);
-    expect(detailsIndex).toBeGreaterThan(interactionIndex);
+    expect(heroIndex).toBeGreaterThan(-1);
+    expect(detailsIndex).toBeGreaterThan(heroIndex);
+    expect(detailsIndex).toBeLessThan(interactionIndex);
+    expect(page).not.toContain('<section className="product-info-grid"');
   });
 });

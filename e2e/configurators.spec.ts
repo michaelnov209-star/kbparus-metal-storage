@@ -68,6 +68,22 @@ const calculatorProductPaths = [
   "/catalog/sort-and-pipe-storage/automated-long-goods-tower"
 ] as const;
 
+test("кнопка товара открывает уже видимый калькулятор без дополнительной прокрутки", async ({
+  page
+}) => {
+  await page.route("**/api/leads", (route) => route.abort("blockedbyclient"));
+  await openPublicPage(page, CONFIGURATOR_PRODUCT_PATH);
+  await dismissAnalyticsPrompt(page);
+
+  const calculator = page.getByTestId("calculator");
+  await expect(calculator).not.toHaveClass(/\breveal\b/);
+  await expect(calculator).toHaveCSS("opacity", "1");
+
+  await page.getByRole("link", { name: "К параметрам" }).click();
+  await expect(calculator).toBeInViewport();
+  await expect(calculator).toBeVisible();
+});
+
 test("главный калькулятор меняет расчет и отправляет конфигурацию", async ({
   page
 }) => {
