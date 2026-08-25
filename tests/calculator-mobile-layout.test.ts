@@ -58,7 +58,7 @@ describe("calculator v4 responsive layout contract", () => {
       /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?position: sticky/
     );
     expect(css).toMatch(
-      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: 20px/
+      /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?top: var\(--v4-summary-sticky-top\)/
     );
     expect(css).toMatch(
       /@container calculator \(min-width: 1180px\)[\s\S]*?\.desktopSummary\s*\{[\s\S]*?overflow: visible/
@@ -74,6 +74,17 @@ describe("calculator v4 responsive layout contract", () => {
       /\.summaryFacts span,\s*[\r\n]+\.modalFacts span\s*\{[\s\S]*?font-size: 14px/
     );
     expect(verification).toContain("font-size: 13px");
+    expect(rules(".root")).toContain("--v4-progress-sticky-top: 96px");
+    expect(rules(".root")).toContain("--v4-summary-sticky-top: 190px");
+    expect(rules(".productCalculator")).toContain(
+      "--v4-progress-sticky-top: 20px"
+    );
+    expect(rules(".productCalculator")).toContain(
+      "--v4-summary-sticky-top: 114px"
+    );
+    expect(rules(".progress")).toContain(
+      "top: var(--v4-progress-sticky-top)"
+    );
   });
 
   it("keeps object conditions readable enough for buyers", () => {
