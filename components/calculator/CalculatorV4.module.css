@@ -647,6 +647,7 @@
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 11px;
+  container-type: inline-size;
 }
 
 .liveSpecification > div > span {
@@ -668,13 +669,10 @@
 }
 
 .dimensionsValue {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.22em;
+  display: block;
   min-width: 0;
-}
-
-.dimensionsValue > span {
+  font-size: clamp(12px, 7.2cqi, 17px);
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -1026,17 +1024,17 @@
 
 .optionGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .optionButton {
   display: grid;
-  grid-template-rows: 150px minmax(0, 1fr);
+  grid-template-rows: 230px minmax(0, 1fr);
   gap: 0;
   align-items: stretch;
   min-width: 0;
-  min-height: 270px;
+  min-height: 350px;
   padding: 0;
   overflow: hidden;
   color: var(--v4-ink);
@@ -1069,7 +1067,7 @@
 .optionVisual img {
   width: 100%;
   height: 100%;
-  padding: 4px;
+  padding: 2px;
   object-fit: contain;
 }
 
@@ -2078,8 +2076,8 @@
   }
 
   .optionButton {
-    grid-template-rows: 118px minmax(0, 1fr);
-    min-height: 224px;
+    grid-template-rows: 150px minmax(0, 1fr);
+    min-height: 256px;
   }
 
   .optionCopy {

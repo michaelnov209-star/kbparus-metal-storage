@@ -95,11 +95,13 @@ describe("calculator v4 responsive layout contract", () => {
       /\.nextButton,[\s\S]*?\.mobileAction\s*\{[\s\S]*?color: var\(--v4-ink\)/
     );
     expect(css).not.toMatch(/#(?:d83d06|c83a07|b93405)/i);
-    expect(css).not.toMatch(/--v4-accent-(?:dark|action|text):/);
+    expect(css).not.toMatch(/--v4-accent-(?:dark|action):/);
+    expect(css).toContain("--v4-accent-text: #b93600");
   });
 
   it("keeps all live specification cards visually equal", () => {
     const specification = rules(".liveSpecification");
+    const dimensions = rules(".dimensionsValue");
     const priceParts = rules(".liveSpecification .priceValue > span");
 
     expect(specification).toContain(
@@ -107,8 +109,22 @@ describe("calculator v4 responsive layout contract", () => {
     );
     expect(css).toContain(".liveSpecification > div > span");
     expect(css).not.toContain(".liveSpecification span {");
+    expect(dimensions).toContain("white-space: nowrap");
+    expect(dimensions).not.toContain("flex-wrap");
     expect(priceParts).toContain("font-size: inherit");
     expect(priceParts).toContain("white-space");
+  });
+
+  it("gives additional option images enough space to inspect the equipment", () => {
+    const optionGrid = rules(".optionGrid");
+    const optionButton = rules(".optionButton");
+
+    expect(optionGrid).toContain(
+      "grid-template-columns: repeat(2, minmax(0, 1fr))"
+    );
+    expect(optionButton).toContain(
+      "grid-template-rows: 230px minmax(0, 1fr)"
+    );
   });
 
   it("provides touch-sized value chips without noisy sliders", () => {

@@ -1908,11 +1908,12 @@ function DimensionsValue({
   lengthMm: number;
   widthMm: number;
 }) {
+  const formatDimension = (value: number) => value.toLocaleString("ru-RU");
+
   return (
     <span className={styles.dimensionsValue}>
-      <span>{lengthMm.toLocaleString("ru-RU")}</span>
-      <span>× {widthMm.toLocaleString("ru-RU")}</span>
-      <span>× {heightMm.toLocaleString("ru-RU")} мм</span>
+      {formatDimension(lengthMm)}×{formatDimension(widthMm)}×
+      {formatDimension(heightMm)}&nbsp;мм
     </span>
   );
 }
