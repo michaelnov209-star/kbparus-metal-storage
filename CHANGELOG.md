@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## 2026-08-25 — Строгий аудит зависимостей Vercel
+
+- Пять moderate-предупреждений npm сведены к одной транзитивной цепочке
+  `Payload -> Drizzle Kit -> @esbuild-kit -> esbuild 0.18.20`.
+- Только для устаревшего `@esbuild-kit/core-utils` закреплён безопасный
+  `esbuild 0.25.12`; широкого обновления или force-fix нет.
+- Добавлена контрактная проверка sync/async TypeScript transform, чтобы
+  несовместимая подмена не прошла в production незаметно.
+- `security:audit` теперь блокирует moderate/high/critical во всём дереве и
+  запускается в CI, общей quality-команде и Vercel build до публикации.
+
+Основные затронутые файлы:
+
+- `package.json`, `package-lock.json`
+- `scripts/security/verify-esbuild-override.mjs`
+- `.github/workflows/quality.yml`
+- `README.md`, `SECURITY.md`
+- `docs/operations/deployment-guide.md`
+- `docs/audits/security-and-repository-audit-2026-08-24.md`
+
+Что проверить после публикации:
+
+- Vercel install/build показывает 0 известных уязвимостей;
+- `npm run security:audit` проходит до CMS pipeline;
+- `/api/health` остаётся `ok`, `/admin` и публичный сайт открываются.
+
 ## 2026-08-25 — Единый товарный калькулятор и проверенные опции
 
 - Товарные калькуляторы приведены к возможностям главного: закреплённая модель сразу открывает параметры, результат и полноценную инженерную форму без дублирования заявки.

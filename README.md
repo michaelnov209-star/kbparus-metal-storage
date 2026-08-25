@@ -36,8 +36,8 @@ npm run dev                     # http://localhost:3000
 npm run lint                    # tsc --noEmit
 npm run test                    # vitest
 npm run build                   # production-сборка Next.js
-npm run security:audit          # high/critical уязвимости production-зависимостей
-npm run quality                 # lint + test + build одной командой
+npm run security:audit          # блокирует moderate/high/critical во всём дереве зависимостей
+npm run quality                 # lint + test + security audit + build одной командой
 ```
 
 Полная команда сборки на Vercel — `npm run vercel-build`. Подробнее — [`docs/handoffs/developer-handoff.md`](docs/handoffs/developer-handoff.md).
@@ -141,7 +141,7 @@ Payload admin доступен по `/admin`. Сейчас это не толь�
 Auto-deploy на Vercel из ветки `main` (1–3 минуты). Build pipeline — `npm run vercel-build`:
 
 ```
-conditional-production-migrate → conditional-current-state-sync →
+security:audit → conditional-production-migrate → conditional-current-state-sync →
 conditional-product-calculator-binding-sync → images:optimize → cms:check →
 cms:generate-types → cms:generate-importmap → cms:check → next build
 ```
@@ -172,6 +172,10 @@ cms:generate-types → cms:generate-importmap → cms:check → next build
 - Реальные секреты никогда не добавляются в Git; используются Vercel/GitHub
   Secrets и локальный `.env.local`.
 - Dependabot еженедельно проверяет npm и ежемесячно GitHub Actions.
+- Устаревшая цепочка `drizzle-kit -> @esbuild-kit/core-utils` получает через
+  npm override безопасный `esbuild 0.25.12`. Команда `security:audit`
+  дополнительно проверяет совместимость sync/async TypeScript transform и
+  блокирует Vercel build при любом новом риске уровня moderate и выше.
 
 ## Лицензия и владение
 

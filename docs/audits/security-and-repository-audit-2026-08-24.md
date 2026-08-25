@@ -43,13 +43,15 @@ Vercel. Критических уязвимостей в коде проекта
 - В текущих отслеживаемых файлах не найдены реальные ключи, токены, пароли,
   приватные ключи или строки webhook.
 
-## Остаточные риски
+## Контроль зависимостей
 
-`npm audit` оставляет пять moderate-предупреждений в цепочке
-`@payloadcms/db-postgres -> drizzle-kit -> @esbuild-kit`. Уязвимый esbuild
-используется CLI-инструментами генерации/миграций и не поднимает доступный
-пользователю dev-server в production. Совместимого upstream-исправления для
-этой цепочки сейчас нет; риск принят временно и контролируется Dependabot.
+Пять npm-предупреждений оказались одним advisory в цепочке
+`@payloadcms/db-postgres -> drizzle-kit -> @esbuild-kit -> esbuild 0.18.20`.
+Уязвимость относится к dev-server esbuild, который проект не запускает, но
+предупреждение устранено без ослабления аудита: вложенная копия закреплена на
+безопасной версии `0.25.12`. Совместимость используемых `transform` и
+`transformSync` проверяется отдельным security contract. Vercel и CI теперь
+блокируют любые уязвимости уровня moderate и выше.
 
 Вне репозитория нужно проверить:
 
@@ -68,7 +70,8 @@ PostgreSQL-счётчика.
 - `npm run lint`, `npm run test`, `npm run build`;
 - `npm run test:e2e`: 33 сценария на mobile, tablet и desktop;
 - `npm run perf:admin-bundle`;
-- `npm run security:audit`: 0 high, 0 critical;
+- `npm run security:audit`: 0 moderate, 0 high, 0 critical и успешный
+  контракт `@esbuild-kit/core-utils` с `esbuild 0.25.12`;
 - сканирование отслеживаемых Git-файлов на токены, приватные ключи,
   пароли и webhook URL.
 

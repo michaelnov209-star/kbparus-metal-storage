@@ -4,7 +4,7 @@ Production: <https://kbparus-metal-storage.vercel.app>
 
 ## Требования
 
-- Node.js 22;
+- Node.js 24.x (точная версия из `.nvmrc`);
 - npm с актуальным `package-lock.json`;
 - доступ к GitHub и Vercel-проекту `kbparus-metal-storage`;
 - production-переменные из `.env.example`.
@@ -28,7 +28,7 @@ npm run lint
 npm test
 npm run build
 node e2e/run.mjs
-npm audit --omit=dev --audit-level=high
+npm run security:audit
 ```
 
 Ожидаемый результат: TypeScript, unit, production build и весь E2E-набор
@@ -40,7 +40,8 @@ npm audit --omit=dev --audit-level=high
 Vercel запускает:
 
 ```text
-images:optimize
+security:audit
+→ images:optimize
 → cms:check
 → cms:generate-importmap
 → cms:check

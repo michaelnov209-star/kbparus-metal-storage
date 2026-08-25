@@ -17,12 +17,12 @@
     "images:og": "node scripts/media/build-social-preview.mjs",
     "prebuild": "npm run images:optimize && npm run admin:styles",
     "build": "next build",
-    "vercel-build": "node scripts/cms/conditional-production-migrate.mjs && node scripts/cms/conditional-current-state-sync.mjs && node scripts/cms/conditional-product-calculator-binding-sync.mjs && npm run images:optimize && npm run admin:styles && node scripts/cms/check.mjs && npm run cms:generate-types && node scripts/cms/safe-generate-importmap.mjs && node scripts/cms/check.mjs && next build",
+    "vercel-build": "npm run security:audit && node scripts/cms/conditional-production-migrate.mjs && node scripts/cms/conditional-current-state-sync.mjs && node scripts/cms/conditional-product-calculator-binding-sync.mjs && npm run images:optimize && npm run admin:styles && node scripts/cms/check.mjs && npm run cms:generate-types && node scripts/cms/safe-generate-importmap.mjs && node scripts/cms/check.mjs && next build",
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "quality": "npm run lint && npm run test && npm run build",
-    "security:audit": "npm audit --omit=dev --audit-level=high",
+    "quality": "npm run lint && npm run test && npm run security:audit && npm run build",
+    "security:audit": "npm audit --audit-level=moderate && node scripts/security/verify-esbuild-override.mjs",
     "perf:admin-bundle": "node scripts/performance/check-admin-bundle.mjs",
     "test:e2e": "npm run build && node e2e/run.mjs",
     "test:e2e:update": "npm run build && node e2e/run.mjs visual.spec.ts --update-snapshots",
@@ -78,6 +78,9 @@
     "vitest": "4.1.10"
   },
   "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    },
     "dompurify": "3.4.14",
     "nanoid": "3.3.18",
     "postcss": "8.5.23",
